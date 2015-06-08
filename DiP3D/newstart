@@ -1,0 +1,31 @@
+#!/bin/bash
+# Job name:
+#SBATCH --job-name=test
+#
+# Project:
+#SBATCH --account=nn9299k
+#
+# Wall clock limit:
+#SBATCH --time=160:00:00
+#
+# Max memory usage per task:
+#SBATCH --mem-per-cpu=3000
+#
+# Number of tasks (cores):
+#SBATCH --ntasks=8
+#
+#SBATCH --ntasks-per-node=8
+
+## Set up job environment
+source /site/bin/jobsetup
+module load openmpi.gnu
+ 
+cd ./src
+make clean
+make
+cd ../
+cp input.txt ./src/input.txt
+cp input.txt ./data/
+
+## For scampi and openmpi compiled applications the nodelist is picked up automatically by mpirun.
+mpirun /usit/abel/u1/sigvaldm/test/src/dust sphere.txt 
