@@ -1,0 +1,51 @@
+#!/bin/bash
+# Job name:
+#SBATCH --job-name=test
+#
+# Project:
+#SBATCH --account=nn9299k
+#
+# Wall clock limit:
+#SBATCH --time=160:00:00
+#
+# Max memory usage per task:
+#SBATCH --mem-per-cpu=3000
+#
+# Number of tasks (cores):
+#SBATCH --ntasks=8
+#
+#SBATCH --ntasks-per-node=8
+
+## Set up job environment
+source /cluster/bin/jobsetup
+module purge
+module load openmpi.gnu
+set -o errexit
+
+
+# Script should be executed at ~/local_data/YYMMDD_<description> ($SUBMITDIR)
+# DiP3D-folder relative to $SUBMITDIR
+EXECPATH="../../mn-fysrp-pic/DiP3D"
+
+cp -r $SUBMITDIR/$EXECPATH/* $SCRATCH/
+mkdir $SCRATCH/data
+cp $SUBMITDIR/input.txt $SCRATCH/data/
+chkfile data/*
+
+cd $SCRATCH/src
+make clean
+make
+cd ..
+
+mpirun $SCRATCH
+
+
+#cd ./src
+#make clean
+#make
+#cd ../
+#cp input.txt ./src/input.txt
+#cp input.txt ./data/
+
+## For scampi and openmpi compiled applications the nodelist is picked up automatically by mpirun.
+#mpirun /usit/abel/u1/sigvaldm/test/src/dust sphere.txt 
