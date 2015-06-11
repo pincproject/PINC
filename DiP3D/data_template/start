@@ -1,0 +1,45 @@
+#!/bin/bash
+# Job name:
+#SBATCH --job-name=test
+#
+# Project:
+#SBATCH --account=nn9299k
+#
+# Wall clock limit:
+#SBATCH --time=00:10:00
+#
+# Max memory usage per task:
+#SBATCH --mem-per-cpu=3G
+#
+# Number of tasks (cores):
+#SBATCH --ntasks=2
+#
+#SBATCH --ntasks-per-node=2
+
+## Set up job environment
+source /cluster/bin/jobsetup
+module purge
+module load openmpi.gnu/1.8.4	# DiP3D inline function ix must be fixed in order to compile with newer gcc
+set -o errexit
+
+# Script should be executed at ~/local_data/YYMMDD_<description> ($SUBMITDIR)
+# DiP3D folder relative to $SUBMITDIR
+EXECPATH="../../mn-fysrp-pic/DiP3D"
+
+# Copy source and input files to scratch area
+cp -r $SUBMITDIR/$EXECPATH/src $SCRATCH/
+cp $SUBMITDIR/input.txt $SCRATCH/
+cp $SUBMITDIR/sphere.txt $SCRATCH/
+
+# Create data folder and make sure data is copied back to calling folder
+mkdir $SCRATCH/data
+chkfile data/*
+
+# Build DiP3D
+cd $SCRATCH/src
+make clean
+make
+cd ..
+
+# Run simulation
+mpirun ./src/dust sphere.txt

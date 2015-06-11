@@ -1,0 +1,13 @@
+Dust shape elongated, "radius" of the main body r=5 grid cells, two cells per segment, dust type 2 cond, 3 insul
+
+ngx - ngy - ngz - ncontours - density - vx0 - vy0 - vz0 - torque -- workfunction in eV
+45 64 64  1                 1000    0.0     0.0  0.0    0.0     1
+Dust_movement
+0
+Dust_type
+3
+Dust_shape
+0
+Radius
+1.0
+
