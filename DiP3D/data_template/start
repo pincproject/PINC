@@ -35,7 +35,8 @@ echo "Time: $TIME" > $INFOFILE
 echo "Git:" >> $INFOFILE
 echo "  Tag: $TAG" >> $INFOFILE
 echo "  Hash: $HASH" >> $INFOFILE
-module list >> $INFOFILE
+mpirun --version | head -n 1 >> $INFOFILE
+gcc --version | head -n 1 >> $INFOFILE
 mv $INFOFILE $SUBMITDIR/
 
 # Copy source and input files to scratch area
