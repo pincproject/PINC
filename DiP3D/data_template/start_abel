@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Abel Job Script Template
+# Sigvald Marholm, 06.10.15
+#
 # Job name:
 #SBATCH --job-name=test
 #
@@ -14,6 +18,7 @@
 # Number of tasks (cores):
 #SBATCH --ntasks=2
 #
+# Number of tasks (cores) per node:
 #SBATCH --ntasks-per-node=2
 
 
@@ -24,21 +29,13 @@ module load openmpi.gnu/1.8.4	# DiP3D inline function ix must be fixed in order 
 set -o errexit
 
 # DiP3D folder relative to $SUBMITDIR
-EXECPATH="../../mn-fysrp-pic/DiP3D"
+export EXECPATH="../../mn-fysrp-pic/DiP3D"
+
+# Enable MPI
+export ADDCFLAGS=-DMPI
 
 # Store execution information
-INFOFILE="execinfo.txt"
-cd $EXECPATH
-HASH=`git rev-parse HEAD`
-TAG=`git describe --tags --abbrev=0 --always`
-TIME=`date +"%m.%d.%y %H:%M:%S"`
-echo "Time: $TIME" > $INFOFILE
-echo "Git:" >> $INFOFILE
-echo "  Tag: $TAG" >> $INFOFILE
-echo "  Hash: $HASH" >> $INFOFILE
-mpirun --version | head -n 1 >> $INFOFILE
-gcc --version | head -n 1 >> $INFOFILE
-mv $INFOFILE $SUBMITDIR/
+./execinfo.sh
 
 # Copy source and input files to scratch area
 cp -r $SUBMITDIR/$EXECPATH/src $SCRATCH/
@@ -57,3 +54,4 @@ cd ..
 
 # Run simulation
 mpirun ./src/dust sphere.txt
+
