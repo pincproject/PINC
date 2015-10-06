@@ -12,7 +12,7 @@ EXEC=   dust$(FILE_EXT)
 CC = mpicc
 ##
 ##
-CFLAGS= -DINSU $(CFLAGS_TRI) -Wall $(ADDFLAGS)
+CFLAGS= -DINSU $(CFLAGS_TRI) -Wall $(ADDCFLAGS)
 #-DRESTART
 #-Wall 
 #-DMPI

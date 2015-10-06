@@ -29,7 +29,10 @@ module load openmpi.gnu/1.8.4	# DiP3D inline function ix must be fixed in order 
 set -o errexit
 
 # DiP3D folder relative to $SUBMITDIR
-EXECPATH="../../mn-fysrp-pic/DiP3D"
+export EXECPATH="../../mn-fysrp-pic/DiP3D"
+
+# Enable MPI
+export ADDCFLAGS=-DMPI
 
 # Store execution information
 ./execinfo.sh
@@ -43,9 +46,6 @@ cp $SUBMITDIR/sphere.txt $SCRATCH/
 mkdir $SCRATCH/data
 chkfile data/*
 
-# Enable MPI
-export ADDCFLAGS=-DMPI
-
 # Build DiP3D
 cd $SCRATCH/src
 make clean
@@ -54,3 +54,4 @@ cd ..
 
 # Run simulation
 mpirun ./src/dust sphere.txt
+
