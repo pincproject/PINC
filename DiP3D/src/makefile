@@ -5,13 +5,14 @@
 ##      2007
 ##
 FILE_EXT = 
+ADDCFLAGS ?=	# Additional flags can be set running for instance "make ADDCFLAGS=-DMPI"
 ##
 EXEC=   dust$(FILE_EXT)
 ##
 CC = mpicc
 ##
 ##
-CFLAGS= -DINSU $(CFLAGS_TRI) -Wall -DMPI 
+CFLAGS= -DINSU $(CFLAGS_TRI) -Wall $(ADDFLAGS)
 #-DRESTART
 #-Wall 
 #-DMPI
