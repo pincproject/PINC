@@ -5,11 +5,11 @@
 ##	2015
 ##
 EXEC	= pinc
-CC		= gcc
-CFLAGS	= 
+CC	= gcc
+CFLAGS	= -std=c99
 
 $(EXEC):
-		$(CC) main.c -o $(EXEC)
+	$(CC) $(CFLAGS) main.c -o $(EXEC)
 
 clean:
-	rm $(EXEC) 
+	rm -f $(EXEC) *.o *~
