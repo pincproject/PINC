@@ -9,4 +9,4 @@
 
 rm -rf ../local_data/template
 mkdir -p ../local_data/template
-cp DiP3D/template/* ../local_data/template/
+cp DiP3D/data_template/* ../local_data/template/
