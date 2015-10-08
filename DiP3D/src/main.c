@@ -17,8 +17,8 @@ int main(int argc, char *argv[]){
 	 */
 
 	if(argc!=2){
-		fprintf(stderr,"Expects the input file as the only argument.\n");
-		return 1;
+		fprintf(stderr,"Expects one and only one argument (the input file).\n");
+		exit(EXIT_FAILURE);
 	}
 
 	dictionary* ini;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
 
 	if(ini==NULL){
 		fprintf(stderr,"Could not parse %s.\n",argv[1]);
-		return 1;
+		exit(EXIT_FAILURE);
 	}
 
 	for(int i=0;i<argc;i++){
