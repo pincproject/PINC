@@ -17,6 +17,10 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 
+# Added to includde INPUT and FILE_PATTERN
+
+@INCLUDE = doxyfile.inc
+
 # This tag specifies the encoding used for all characters in the config file
 # that follow. The default is UTF-8 which is also the encoding used for all text
 # before the first occurrence of this tag. Doxygen uses libiconv (or the iconv
@@ -58,7 +62,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = doc
+OUTPUT_DIRECTORY       = .
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
