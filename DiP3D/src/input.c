@@ -100,7 +100,7 @@ void parse_input(int argc, char *argv[]){
 
 	// PARSE GRID SECTION
 
-	char *Ng_str = 
+//	char *Ng_str = 
 
 	// PARSE PARTICLES SECTION
 

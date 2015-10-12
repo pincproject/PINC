@@ -3,7 +3,7 @@
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		PINC main routine.
- * @date		08.10.15
+ * @date		11.10.15
  *
  * PINC main header file. 
  * Holding the central function declarations comprising the PINC program.
@@ -12,9 +12,9 @@
 #ifndef PINC_H
 #define PINC_H
 
-/*
+/******************************************************************************
  * DEFINED IN INPUT.C
- */
+ *****************************************************************************/
 
 /**
  * @brief	Parse PINC's input argument and input file
@@ -29,9 +29,9 @@
  */
 void parse_input(int argc, char *argv[]);
 
-/*
+/******************************************************************************
  * DEFINED IN AUX.C
- */
+ *****************************************************************************/
 
 /**
  * @brief	Terminates PINC due to error.
