@@ -1,38 +1,31 @@
 /**
- * PINC (DiP3D)
- * Main file
- * Author: Sigvald Marholm
- * University of Oslo, Norway
- * 2015
+ * @file	    main.c
+ * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @copyright   University of Oslo, Norway
+ * @brief	    PINC main routine.
+ * @date        08.10.15
+ *
+ * Main routine for PINC (Particle-IN-Cell).
+ * Replaces old DiP3D main.c file by Wojciech Jacek Miloch.
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "iniparser.h"
+#include "pinc.h"
 
 int main(int argc, char *argv[]){
 
-	/**
+	/*
 	 * READ INPUT FILE
 	 */
+    parse_input(argc,argv);
 
-	if(argc!=2){
-		fprintf(stderr,"Expects one and only one argument (the input file).\n");
-		exit(EXIT_FAILURE);
-	}
 
-	dictionary* ini;
-	ini = iniparser_load(argv[1]);
+	/*
+	 * SUCCESSFUL EXIT
+	 */
 
-	if(ini==NULL){
-		fprintf(stderr,"Could not parse %s.\n",argv[1]);
-		exit(EXIT_FAILURE);
-	}
-
-	for(int i=0;i<argc;i++){
-		printf("argv[%i]=%s\n",i,argv[i]);
-	}
-
+	printf("PINC completed successfully!\n");
 	return 0;
 
 }

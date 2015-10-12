@@ -1,16 +1,29 @@
 ##
-##	PINC Makefile
-##	Author: Sigvald Marholm
-##	University of Oslo, Norway 
-##	2015
+## @file		makefile
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+## @copyright	University of Oslo, Norway
+## @brief		PINC makefile.
+## @date		10.10.15
 ##
 EXEC	= pinc
-CC	= gcc
-CFLAGS	= -std=c99 \
-		-Ilib/iniparser/src
+CC		= gcc
+CFLAGS	= -std=c11 -Wall\
+		-Isrc \
+		-Ilib/iniparser/src \
+		-lm
+DEPS	= src/pinc.h
+OBJ		= src/main.o src/input.o src/aux.o
+LIBOBJ	= lib/iniparser/libiniparser.a
+LIBDEPS	= lib/iniparser/src/iniparser.h
 
-$(EXEC): lib/iniparser/libiniparser.a src/main.c
-	$(CC) $(CFLAGS)  src/main.c lib/iniparser/libiniparser.a -o $(EXEC)
+src/%.o: src/%.c $(DEPS)
+	$(CC) -c $< -o $@ $(CFLAGS)
+
+$(EXEC): $(OBJ) $(LIBOBJ)
+	$(CC) $^ -o $@ $(CFLAGS)
+
+lib/iniparser/libiniparser.a: $(LIBDEPS)
+	cd lib/iniparser && $(MAKE)
 
 clean:
-	rm -f $(EXEC) *.o *~
+	rm -f $(EXEC) *~ src/*.o src/*~
