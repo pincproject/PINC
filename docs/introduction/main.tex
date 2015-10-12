@@ -52,9 +52,9 @@ The \mnfysrppic{} Git repository holds the official Particle-In-Cell (PIC) code 
 \section{Workflow}
 The \mnfysrppic{} repository utilizes what's called a Feature Branch Workflow\footnote{See more about various Git workflows here: https://www.atlassian.com/git/tutorials/comparing-workflows .} as illustrated in \reffig{featurebranch}. The reason for this is to allow several users to develop functions for the code independently with a minimum of conflicts. It also assures that a fully functioning version of the code is always accessible. Using Git also means that all previous revisions of the code are retrievable. This, along with information on which revision was used to generate a set of results, make the experiments reproducible. 
 
-More precisely, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
+To briefly explain the Feature Branch Workflow, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1 in the figure) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
 
-Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and merged back onto the master. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
+Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and its feature branch is merged back onto the master branch before being deleted. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the new solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
 
 \begin{figure}
 	\centering
@@ -63,7 +63,7 @@ Let's consider an example: One user starts implementing a new input settings sys
 	\label{fig:featurebranch}
 \end{figure}
 
-When creating a new feature branch it normally only exist locally. If it is desirable to access it from several computers, or to share it with other users before it is done, it is possible to push it to the central repository (the origin). This, however, presupposes some good practices from the user: The branch should have a decent and globally understandable name, it should not exist on the server for too long, and the number of feature branches on the server should be kept somewhat small.
+Feature branches normally only exist locally. If desirable, they can be pushed to the central repository (the origin) to make them accessible from several computers (for instance for collaboration). The origin should be kept clean, however, meaning that someone must be responsible to delete the branches after merging ensuring that only a few branches exist centrally. Only the repository administrator has the privilege to delete branches and cleaning the origin so other users should ask for permission before pushing new branches to the origin. Moreover, the branches pushed to origin should have globally understandable names.
 
 Finally, some revisions can be tagged with a version number, making it easier in publications to refer to a specific revision of the code. This should only be done with revisions on the master branch.
 
@@ -127,8 +127,9 @@ For working with the PIC code, your home folder should have the following sub-fo
 
 \lstinline$mn-fysrp-pic$ is the local working copy of the Git repository and is obtained by cloning the central repository as described in the previous section. \lstinline$mn-fysrp-pic/docs$ contain the documentation of the repository (this document) as well as auxiliary files used to create the documentation.
 
-The source code for DiP3D is located at \lstinline$mn-fysrp-pic/DiP3D/src$. The primary task of the repository is to act as a Version Control System (VCS) for the code (.c-files) within this folder. The repository should not hold object (.o) files, compiled and linked executables, binaries or similar. VCSs like Git only needs to keep track of the lines changed in text files which makes them very efficient. Other files such as executables and object files carry no real information to the programmer and must be re-stored in entirety every time it changes (after each compilation). Many such files can make the repository heavy. It also clutters the repository with unnecessary changes each time someone recompiles the whole program, causing unnecessary Git conflicts.
-The same is true for simulation files, which are incredibly large and not to be stored in the repository. There is also no reason to have version control on them; once a simulation is successfully run, and maybe even used in publications, it should be considered static. Simulations and their input files are also not, strictly speaking, part of the program, but rather something that changes from execution to execution.
+The source code for DiP3D is located at \lstinline$mn-fysrp-pic/DiP3D/src$. The primary task of the repository is to act as a Version Control System (VCS) for the code (.c-files) within this folder. The repository should not track object (.o) files, compiled and linked executables, binaries or similar. VCSs like Git only needs to keep track of the lines changed in text files which makes them very efficient. Other files such as executables and object files carry no real information to the programmer and must be re-stored in entirety every time it changes (after each compilation). Many such files can make the repository heavy. It also clutters the repository with unnecessary changes each time someone recompiles the whole program, causing unnecessary Git conflicts.
+
+Simulation data files should also not be part of the repository. They are also incredibly large and there is also no reason to have version control on them; once a simulation is successfully run, and maybe even used in publications, it should be considered static. Simulations and their input files are also not, strictly speaking, part of the program.
 
 Third party libraries shipped with the code are stored in \lstinline$mn-fysrp-pic/DiP3D/lib$.
 
@@ -177,5 +178,98 @@ On a plain desktop computer the code can be run without MPI like this:
 
 \lstinline$start_plain.sh$ creates a scratch folder within the data folder which acts the same way as scratch on Abel. This folder is deleted if the execution script is successfully run. The information files are generated also in this case.
 
+\subsection{Future Changes}
+As described above, it is necessary to make a copy of the program for each simulation. The reason for this is that the program looks for input files in a fixed relative path to the executable, and stores the output files in a fixed realtive path to the executable. This is about to change. Taking input file as an argument with possibility to specify output directory is in the making which will make execution of DiP3D much more convenient.
+
+In future revisions, the DiP3D program is to be compiled simply in it's source folder. Object files and executable will be omitted from the repository by using \lstinline$.gitignore$, and the program can be executed on input files on a completely different location. This will render the currently described folder structure and execution procedure obsolete. Until then, bear with me.
+
+\section{Coding Practices}
+The following conventions are used:
+
+\begin{enumerate}
+	\item Use tab for indentation, not spaces. One tab should be set equal in size to 4 spaces in editor.
+	\item Lines should not be wider than 80 columns/characters. Tip: Configure your editor to show an edge after column 80.
+	\item Variable and function names should be intuitive rather than short. \lstinline$wi1j1k$ is an example of a bad name. Possible exceptions are:
+		\begin{itemize}
+			\item Temporary variables declared within a very short scope. The content should be explained next to the declaration of the variable or otherwise obvious.
+			\item Variables with a mathematical origin that are commonly understood within the context of PIC codes. For instance, \lstinline$Ng$ is commonly used for number of grid points. \lstinline$x$ is commonly used for position. Such variables should be used a lot (or within a short scope) to justify having a short name. A rarely used variable should have a longer more descriptive name.
+		\end{itemize}
+	\item Variable and function names use underscore as delimeter (\lstinline$set_value()$) rather than camelCase (\lstinline$setValue()$).
+	\item Brackets occur on same line as function declaration. Correct:
+	\begin{lstlisting}
+		void my_function(){
+			if(a){
+				...
+			} else {
+				...
+			}
+		}
+	\end{lstlisting}
+	Wrong:
+	\begin{lstlisting}
+		void my_function()
+		{
+			if(a)
+			{
+				...
+			}
+			else
+			{
+				...
+			}
+		}
+	\end{lstlisting}\
+	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.
+	\item Globally available functions should be declared in a header file. Local functions (within one .c-file only) should be declared at the top of the .c-file before any functions are defined (mind the difference between function declaration and function definition). Local functions might as well be declared as static for performance.
+	\item Multi-line comments should be written the following way:
+	\begin{lstlisting}
+/*
+ * COMMENT
+ * COMMENT
+ */
+	 \end{lstlisting}
+	If desirable, the document can be visually divided into sections by comments formatted this way:
+	 \begin{lstlisting}
+/********************************************
+ * NEW SECTION
+ *******************************************/
+	 \end{lstlisting}
+	 The developer may have an indentation before the section comment to make it align properly within routines, but the last characters on the horizontal *-lines should be on column 80.
+	 \item Doxygen is used to auto-generate documentation of the code. Doxygen comments are written the following way (note the extra * on the first line):
+	 \begin{lstlisting}
+/**
+ * Doxygen interpretable comment
+ */
+	 \end{lstlisting}
+	 Each file starts with a Doxygen-comment looking something like this:
+	 \begin{lstlisting}
+/**
+ * @file		input.c
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @copyright		University of Oslo, Norway
+ * @brief		PINC main routine.
+ * @date		11.10.15
+ *
+ * Functions for parsing input to PINC.
+ * Replaces old DiP3D input.c file by Wojciech Jacek Miloch.
+ */	 	
+	 \end{lstlisting}
+	 All functions are documented by a Doxygen-comment looking something like this just in front of the function declaration. Example: 
+	 \begin{lstlisting}
+/**
+ * @brief	Parse PINC's input argument and input file
+ * @param	argc		Argument count
+ * @param	argv		Argument vector
+ * @return	void 
+ *
+ * This function performs a sanity check of argc and argv and reads the
+ * specified input file. It performs the necessary sanity checks of its
+ * data and stores the values. It also computes derived values.
+ * In case of failure it prints an error to stderr and terminates PINC.
+ */
+void parse_input(int argc, char *argv[]);
+	\end{lstlisting}
+	For functions declared in header-files, documentations goes in header files as well. For local functions, documentation goes in .c-file along with function declaration at the top of the document. The @-tags used in these examples are self-explanatory and are used by Doxygen to auto-generate information about all files and functions.
+\end{enumerate}
 
 \end{document}
