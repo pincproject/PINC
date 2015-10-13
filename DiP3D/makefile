@@ -31,27 +31,32 @@ LIBHEAD_= iniparser/src/iniparser.h
 LIBOBJ = $(patsubst %,$(LDIR)/%,$(LIBOBJ_))
 LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
+all: $(EXEC) doc
+
 $(EXEC): $(OBJ) $(LIBOBJ)
 	$(CC) $^ -o $@ $(CFLAGS)
+	@echo "PINC is built"
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
+	./check.sh $<
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	cd $(LDIR)/iniparser && $(MAKE)
 
 $(DDIR)/doxyfile.inc: $(DDIR)/doxyfile.mk
-	echo INPUT	= ../$(SDIR) ../$(HDIR)	> $(DDIR)/doxyfile.inc
-	echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxyfile.inc
+	@echo INPUT	= ../$(SDIR) ../$(HDIR)	> $(DDIR)/doxyfile.inc
+	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxyfile.inc
 
 doc: $(HEAD) $(SRC) $(DDIR)/doxyfile.inc
-	cd $(DDIR) && doxygen doxyfile.mk
-	cd $(DDIR)/latex && $(MAKE)
+	@echo "Making documentation"
+	@cd $(DDIR) && doxygen doxyfile.mk > /dev/null 2>&1
+	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
 
 cleandoc:
 	rm -f $(DDIR)/doxyfile.inc
 	rm -fr $(DDIR)/html $(DDIR)/latex
 
-clean:
+clean: cleandoc
 	rm -f $(EXEC) *~ $(SDIR)/*.o $(SDIR)/*~
 	cd $(LDIR)/iniparser && $(MAKE) veryclean
