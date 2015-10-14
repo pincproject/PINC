@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
 	 * SUCCESSFUL EXIT
 	 */
 
-	printf("PINC completed successfully!\n");
+	msg(STATUS,"PINC completed successfully!");
 	return 0;
 
 }

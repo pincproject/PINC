@@ -12,19 +12,45 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "pinc.h"
+#include <string.h>
 
-void pincerror(const char* restrict format,...){
+/******************************************************************************
+ * GLOBAL DEFINITIONS
+ *****************************************************************************/
+
+void msg(msg_kind kind, const char* restrict format,...){
 
 	// Retrieve argument list
 	va_list args;
 	va_start(args,format);
 
-	// Print error message and quit
-	fprintf(stderr,"PINC Error: ");
-	vfprintf(stderr,format,args);
-	fprintf(stderr,"\n");
-	exit(EXIT_FAILURE);	
+	// Set prefix to output and output stream
+	char *prefix = malloc(20*sizeof(char));
+	FILE *stream;
+	switch(kind){
+		case STATUS:
+			strcpy(prefix,"STATUS: ");
+			stream=stdout;
+			break;
+		case WARNING:
+			strcpy(prefix,"WARNING: ");
+			stream=stderr;
+			break;
+		case ERROR:
+			strcpy(prefix,"ERROR: ");
+			stream=stderr;
+			break;
+	}
 
+	// Print message
+	fprintf(stream,"%s",prefix);
+	vfprintf(stream,format,args);
+	fprintf(stream,"\n");
+
+	// Stop vararg
 	va_end(args);
+
+	// Quit if error
+	if(kind==ERROR) exit(EXIT_FAILURE);
 
 }

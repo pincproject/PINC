@@ -6,6 +6,7 @@
 \usepackage{gensymb}
 \usepackage[ddmmyy]{datetime}
 \usepackage{graphicx}
+\usepackage{xcolor}
 
 %
 % COMPILE USING PDFLATEX
@@ -24,22 +25,22 @@
 \title{Introduction to \mnfysrppic}
 \date{\today}
 
-%\lstdefinestyle{customc}{
-%  belowcaptionskip=1\baselineskip,
-%  breaklines=true,
-%  frame=l,
-%  xleftmargin=\parindent,
-%  language=C,
-%  showstringspaces=false,
-%  basicstyle=\footnotesize\ttfamily,
-%  keywordstyle=\bfseries\color{green!40!black},
-%  commentstyle=\itshape\color{purple!40!black},
-%  identifierstyle=\color{blue},
-%  stringstyle=\color{orange},
-%}
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=l,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
 
-%\lstset{language=C,style=customc,numbers=left}
-\lstset{language=bash}
+\lstset{language=C,style=customc,numbers=left}
+%\lstset{language=bash}
 
 \begin{document}
 
@@ -188,7 +189,7 @@ The following conventions are used:
 
 \begin{enumerate}
 	\item Use tab for indentation, not spaces. One tab should be set equal in size to 4 spaces in editor.
-	\item Lines should not be wider than 80 columns/characters. Tip: Configure your editor to show an edge after column 80.
+	\item Lines in files should not be wider than 80 columns/characters. Tip: Configure your editor to show an edge after column 80. Text output to terminal should also not be wider than 80 columns/characters (which is the default width of terminal windows).
 	\item Variable and function names should be intuitive rather than short. \lstinline$wi1j1k$ is an example of a bad name. Possible exceptions are:
 		\begin{itemize}
 			\item Temporary variables declared within a very short scope. The content should be explained next to the declaration of the variable or otherwise obvious.
@@ -220,7 +221,15 @@ The following conventions are used:
 		}
 	\end{lstlisting}\
 	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.
-	\item Globally available functions should be declared in a header file. Local functions (within one .c-file only) should be declared at the top of the .c-file before any functions are defined (mind the difference between function declaration and function definition). Local functions might as well be declared as static for performance.
+	\item Globally available functions should be declared in a header file. Local functions (within one translation unit/.c-file only) should be declared at the top of the .c-file before any functions are defined (mind the difference between function declaration and function definition). Local functions should normally be declared static for performance optimization. Inline declaration may also be used on often used small functions but the use of inline should not be exaggerated.
+	\item Whenever a function takes in a pointer to a variable that is not to be modified (e.g.\ a string) it should be declared const:
+	\begin{lstlisting}
+void function(const char *str);
+	\end{lstlisting}
+	This serves two purposes: (1) it prevents accidentally changing the content of the variable inside the function. (2) It tells other developers that this function will not change the content of this variable. If a local copy is to be made inside the function it needs to be recast to allow editing:
+	\begin{lstlisting}
+char *temp = (char*) str;
+	\end{lstlisting}
 	\item Multi-line comments should be written the following way:
 	\begin{lstlisting}
 /*

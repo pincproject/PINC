@@ -33,14 +33,20 @@ void parse_input(int argc, char *argv[]);
  * DEFINED IN AUX.C
  *****************************************************************************/
 
+typedef enum{STATUS,WARNING,ERROR} msg_kind;
+
 /**
- * @brief	Terminates PINC due to error.
+ * @brief	The PINC equivalent of printf().
+ * @brief	kind	STATUS, WARNING or ERROR depending on what to output.
  * @param	format	Error message with specification of how to interpret data.
  * @param	...		Data to be interpreted in message.
  * @return	void 
  *
- * Similar syntax to printf(). Appends \n automatically at end of line.
+ * This is the way to output information from PINC. Similar syntax to printf().
+ * In the case of an ERROR, the program is terminated. Appends end-of-line
+ * automatically at the end.
  */
-void pincerror(const char* restrict format,...);
+void msg(msg_kind kind, const char* restrict format,...);
+
 
 #endif // PINC_H
