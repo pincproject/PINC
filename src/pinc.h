@@ -52,7 +52,7 @@ typedef struct{
 	double *q;			///< Specie charge [elementary charges] (nSpecies elements)
 	double *m;			///< Specie mass [electron masses] (nSpecies elements)
 	int nSpecies;		///< Number of species
-	int nDim;			///< Number of dimensions (usually 3)
+	int nDims;			///< Number of dimensions (usually 3)
 } Population;
 
 /**
@@ -109,7 +109,7 @@ typedef struct{
 	int *nNodesProd;	///< Cumulative product of nNodes (nDim+1 elements)
 	int *compNode;		///< Computational node (nDim elements)
 	int *nCompNodes;	///< Number of computational nodes (nDim elements)
-	int nDim;			///< Number of dimensions (usually 3)
+	int nDims;			///< Number of dimensions (usually 3)
 	int nValues;		///< Number of values per node (usually 1 or 3)
 } Grid;
 
