@@ -50,9 +50,6 @@ int main(int argc, char **argv){
 	for(long int i=0;i<M;i++){
 		addTwo(arr,N);
 	}
-	for(long int i=0;i<M;i++){
-		addThree(arr,N);
-	}
 
 	tprobe("No choice");
 
@@ -61,17 +58,9 @@ int main(int argc, char **argv){
 		else addTwo(arr,N);
 	}
 	mode = 1;
-	for(long int i=0;i<M;i++){
-		if(mode) addThree(arr,N);
-		else addTwo(arr,N);
-	}
 
 	tprobe("Choice by if sentence");
 
-	for(long int i=0;i<M;i++){
-		(*myFunc)(arr,N);
-	}
-	myFunc=&addThree;
 	for(long int i=0;i<M;i++){
 		(*myFunc)(arr,N);
 	}
