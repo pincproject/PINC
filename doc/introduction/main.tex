@@ -7,6 +7,7 @@
 \usepackage[ddmmyy]{datetime}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{fancyvrb}
 
 %
 % COMPILE USING PDFLATEX
@@ -17,13 +18,15 @@
 \newcommand{\refapp}[1]{App.~\ref{app:#1}}
 \newcommand{\refsec}[1]{Sec.~\ref{sec:#1}}
 \renewcommand{\dateseparator}{.}
-\def\labelitemi{\tiny$\bullet$}
-\def\labelitemii{\tiny$\bullet$}
-\def\labelitemiii{\tiny$\bullet$}
+%\def\labelitemi{\tiny$\bullet$}
+%\def\labelitemii{\tiny$\bullet$}
+%\def\labelitemiii{\tiny$\bullet$}
 
 \author{Sigvald~Marholm}
 \title{Introduction to \mnfysrppic}
 \date{\today}
+
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{xleftmargin=0in}
 
 \lstdefinestyle{customc}{
   belowcaptionskip=1\baselineskip,
@@ -70,71 +73,77 @@ Finally, some revisions can be tagged with a version number, making it easier in
 
 As a summary: feature branches can have many revisions allowing the developer to go back in case of mistakes, for backup, and for sharing code with other developers. The master branch is holy and only fully functional features should be merged into it.
 
-If this section is unclear or more advice on Git is needed please refer to the ``Introduction to Git for \mnfysrppic{}'' available in \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
+If this section is unclear and more advice on Git is needed please refer to \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
 
 \section{Setting up a Local Copy}
 To access the repository and be able to make changes you need to set up a local copy. To get access you need an SSH key-pair (public and private keys). Unless you already have that you can run the following command\footnote{http://www.uio.no/tjenester/it/maskin/filer/versjonskontroll/git.html .}:
 
-\begin{lstlisting}
+\begin{verbatim}
 	ssh-keygen -t rsa -b 4096
-\end{lstlisting}
-
+\end{verbatim}
 This generates the following files:
+
 \begin{itemize}
-	\item Private key: \lstinline$~/.ssh/id_rsa$
-	\item Public key: \lstinline$~/.ssh/id_rsa.pub$
+	\item Private key: \verb$~/.ssh/id_rsa$
+	\item Public key: \verb$~/.ssh/id_rsa.pub$
 \end{itemize}
-The private key is private (hence the name) and should under no circumstance be shared with others. It is what you use to access the remote server. The public key cannot be used to log on to a remote server but is rather used by the remote server(s) to verify that an log on attempt is in fact you (i.e. that you have the private key).
+The private key is private (hence the name) and should under no circumstance be shared with others. It is what you use to authorize when logging into the remote server. The public key cannot be used to log in but is used by the remote server(s) to verify that you have the private key.
 
-Rename a copy of your public key to \lstinline$<username>.pub$ and mail it to the repository administrator (sigvald.marholm@fys.uio.no) who has to accept your request and forward the message to the UiO IT department.
+Rename a copy of your public key to \verb$<username>.pub$ where \verb$<username>$ is your UiO username, and mail it to the repository administrator (sigvaldm@fys.uio.no) and wait for approval.
 
-Next, configure your local git user like this:
+Next, configure your local git user using these commands:
 
-\begin{lstlisting}
+\begin{verbatim}
 	git config --global user.name '<username>'
 	git config --global user.email '<email>'
-\end{lstlisting}
+\end{verbatim}
 Go to the folder where you'd like your local copy (typically your home directory), and clone the central repository (origin) like this:
 
-\begin{lstlisting}
+\begin{verbatim}
 	git clone gitolite@git.uio.no:mn-fysrp-pic
-\end{lstlisting}
-A new folder with the name \lstinline$mn-fysrp-pic$ will be created. This is your local working copy.
+\end{verbatim}
+A new folder with the name \verb$mn-fysrp-pic$ will be created. This is your local working copy.
 
-To get access from other computers you have to copy your private key to \lstinline$~/.ssh/id_rsa$ on those computers as well, and run the configuration and cloning steps there as well. You should typically have a local copy on your work station as well as on a supercomputer. Perhaps also on your private laptop if you wish.
+If you want access from another computer (e.g.\ supercomputer) you have to copy your private key to \verb$~/.ssh/id_rsa$ on that computer, and run the configuration and cloning steps there as well. 
 
 \section{Folder Structure}
 For working with the PIC code, your home folder should have the following sub-folders (unimportant details omitted):
 
 \begin{itemize}
-	\item \lstinline$mn-fysrp-pic$
+	\item \verb$mn-fysrp-pic$
 	\begin{itemize}
-		\item \lstinline$DiP3D$
+		\item \verb$DiP3D$
 		\begin{itemize}
-			\item \lstinline$template$
-			\item \lstinline$src$
-			\item \lstinline$lib$
+			\item \verb$template$
+			\item \verb$src$
+			\item \verb$lib$
+			\item \verb$doc$
 		\end{itemize}
-		\item \lstinline$docs$
+		\item \verb$docs$
+		\item \verb$proof of concept$
 	\end{itemize}
-	\item \lstinline$local_data$
+	\item \verb$local_data$
 	\begin{itemize}
-		\item \lstinline$template$
-		\item \lstinline$YYMMDD_<simulation description 1>$
-		\item \lstinline$YYMMDD_<simulation description 2>$
-		\item \lstinline$...$
+		\item \verb$template$
+		\item \verb$YYMMDD_<simulation description 1>$
+		\item \verb$YYMMDD_<simulation description 2>$
+		\item \verb$...$
 	\end{itemize}
 \end{itemize}
 
-\lstinline$mn-fysrp-pic$ is the local working copy of the Git repository and is obtained by cloning the central repository as described in the previous section. \lstinline$mn-fysrp-pic/docs$ contain the documentation of the repository (this document) as well as auxiliary files used to create the documentation.
+\verb$mn-fysrp-pic$ is the local working copy of the Git repository and is obtained by cloning the central repository as described in the previous section. \verb$mn-fysrp-pic/docs$ contain the documentation of the repository (including this document) along with files used to create the documentation.
 
-The source code for DiP3D is located at \lstinline$mn-fysrp-pic/DiP3D/src$. The primary task of the repository is to act as a Version Control System (VCS) for the code (.c-files) within this folder. The repository should not track object (.o) files, compiled and linked executables, binaries or similar. VCSs like Git only needs to keep track of the lines changed in text files which makes them very efficient. Other files such as executables and object files carry no real information to the programmer and must be re-stored in entirety every time it changes (after each compilation). Many such files can make the repository heavy. It also clutters the repository with unnecessary changes each time someone recompiles the whole program, causing unnecessary Git conflicts.
+The source code for DiP3D is located at \verb$mn-fysrp-pic/DiP3D/src$. The primary task of the repository is to act as a Version Control System (VCS) for the code (.c-files) within this folder. The repository should not track object (.o) files, compiled and linked executables, binaries or similar. VCSs like Git only needs to keep track of the lines changed in text files which makes them very efficient. Other files such as executables and object files carry no real information to the programmer and must be re-stored in entirety every time it changes (after each compilation). Many such files can make the repository heavy. It also clutters the repository with unnecessary changes each time someone recompiles the whole program, causing unnecessary Git conflicts. For this reason these file types are added to \verb$.gitignore$.
 
-Simulation data files should also not be part of the repository. They are also incredibly large and there is also no reason to have version control on them; once a simulation is successfully run, and maybe even used in publications, it should be considered static. Simulations and their input files are also not, strictly speaking, part of the program.
+Third party, non-standard, libraries are shipped with the code in order to ensure consistent compilations amongst developers and on supercomputers. They are stored in \verb$mn-fysrp-pic/DiP3D/lib$ the way they are provided by the vendor, including necessary legal information.
 
-Third party libraries shipped with the code are stored in \lstinline$mn-fysrp-pic/DiP3D/lib$.
+Compilation of DiP3D is performed by running the makefile in \verb$mn-fysrp-pic/DiP3D$. This also executes the makefiles of third party libraries, and auto-generates documentation of all C-functions in \verb$mn-fysr-pic/DiP3D/doc$ using Doxygen. Both HTML and LaTeX-documentation is generated. 
 
-The \lstinline$local_data$ folder is created as follows:
+The \verb$mn-fysrp-pic/proof of concept$ folder is used to test smaller parts that shall later be part of the program.
+
+\emph{Note: The folder structure is partly an inheritance from old DiP3D which looks for files with a hard-coded path two steps up. A new main routine is being developed and once that is finished the folder structure will be flattened and simplified. The program will also likely be named PINC (Particle-IN-Cell).}
+
+Simulation data files should also not be part of the repository. They are incredibly large and there is also no reason to have version control on them; once a simulation is successfully run, and maybe even used in publications, it should be considered static. Simulations and their input files are also not, strictly speaking, part of the program. For this reason the \lstinline$local_data$ folder can be created as follows:
 
 \begin{lstlisting}
 	cd mn-fysrp-pic
@@ -147,7 +156,11 @@ After simulation is done, the simulation data sub-folders should be copied to \l
 
 The \lstinline$local_data/template$ folder contains example input files which serves as a starting point for making new simulation results. It is simply a copy of \lstinline$mn-fysrp-pic/DiP3D/template$. If for instance the format of the input files change, the template in the repository can be updated and \lstinline$setup_folders.sh$ can be run again to renew \lstinline$local_data/template$. All previously existing files in \lstinline$local_data/template$ will then be deleted, but all other files in \lstinline$local_data$ will persist.
 
-\section{Running a Simulation}
+\emph{Note: The local\_data folder will soon be deprecated when the new main routine is finished.}
+
+\section{Running a Simulation (Deprecated)}
+\emph{Note: Ignore this section. It will be replaced once PINC is ready.}
+
 Running a DiP3D simulation while keeping folders clean is easily done as described in this section.
 
 First, you should checkout from Git the revision of DiP3D you'd like to use. Next, a new simulation data folder must be made. Here, we use the template as a starting point (a previously run simulation would also work):
@@ -179,26 +192,18 @@ On a plain desktop computer the code can be run without MPI like this:
 
 \lstinline$start_plain.sh$ creates a scratch folder within the data folder which acts the same way as scratch on Abel. This folder is deleted if the execution script is successfully run. The information files are generated also in this case.
 
-\subsection{Future Changes}
-As described above, it is necessary to make a copy of the program for each simulation. The reason for this is that the program looks for input files in a fixed relative path to the executable, and stores the output files in a fixed realtive path to the executable. This is about to change. Taking input file as an argument with possibility to specify output directory is in the making which will make execution of DiP3D much more convenient.
-
-In future revisions, the DiP3D program is to be compiled simply in it's source folder. Object files and executable will be omitted from the repository by using \lstinline$.gitignore$, and the program can be executed on input files on a completely different location. This will render the currently described folder structure and execution procedure obsolete. Until then, bear with me.
-
 \section{Coding Practices}
-The following conventions are used:
+The following conventions are used (not complete):
 
-\begin{enumerate}
-	\item Use tab for indentation, not spaces. One tab should be set equal in size to 4 spaces in editor.
-	\item Lines in files should not be wider than 80 columns/characters. Tip: Configure your editor to show an edge after column 80. Text output to terminal should also not be wider than 80 columns/characters (which is the default width of terminal windows).
-	\item Variable and function names should be intuitive rather than short. \lstinline$wi1j1k$ is an example of a bad name. Possible exceptions are:
-		\begin{itemize}
-			\item Temporary variables declared within a very short scope. The content should be explained next to the declaration of the variable or otherwise obvious.
-			\item Variables with a mathematical origin that are commonly understood within the context of PIC codes. For instance, \lstinline$Ng$ is commonly used for number of grid points. \lstinline$x$ is commonly used for position. Such variables should be used a lot (or within a short scope) to justify having a short name. A rarely used variable should have a longer more descriptive name.
-		\end{itemize}
-	\item Variable and function names use underscore as delimeter (\lstinline$set_value()$) rather than camelCase (\lstinline$setValue()$).
-	\item Brackets occur on same line as function declaration. Correct:
+\subsection{Program Structure}
+
+\begin{itemize}
+	\item No global variables allowed.
+	\item Globally available functions of course must be declared in .h-file. Functions which are only used locally wihtin one .c-file should be declared in the top of that file (before any function definitions). Mind the difference between declaration and definition. Local functions should also be defined \lstinline$static$, but beware not to over-use \lstinline$inline$.
+	\item Do not pass big objects to functions, but rather pointers/addresses.
+	\item Brackets do not get separate lines. Correct:
 	\begin{lstlisting}
-		void my_function(){
+		void function(){
 			if(a){
 				...
 			} else {
@@ -208,7 +213,7 @@ The following conventions are used:
 	\end{lstlisting}
 	Wrong:
 	\begin{lstlisting}
-		void my_function()
+		void function()
 		{
 			if(a)
 			{
@@ -220,8 +225,7 @@ The following conventions are used:
 			}
 		}
 	\end{lstlisting}\
-	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.
-	\item Globally available functions should be declared in a header file. Local functions (within one translation unit/.c-file only) should be declared at the top of the .c-file before any functions are defined (mind the difference between function declaration and function definition). Local functions should normally be declared static for performance optimization. Inline declaration may also be used on often used small functions but the use of inline should not be exaggerated.
+	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.	
 	\item Whenever a function takes in a pointer to a variable that is not to be modified (e.g.\ a string) it should be declared const:
 	\begin{lstlisting}
 void function(const char *str);
@@ -230,20 +234,69 @@ void function(const char *str);
 	\begin{lstlisting}
 char *temp = (char*) str;
 	\end{lstlisting}
+	\item DiP3D (and many others) output way too much info to terminal. Computed values generally should not be output to terminal but to file. Only status messages, warnings and errors belong to the terminal. Use the PINC-specific command \lstinline$msg()$ to do this rather than \lstinline$printf()$ in order to ensure a consistent output behaviour. See documentation of \lstinline$msg()$ in Doxygen.
+\end{itemize}
+
+\subsection{Naming}
+
+\begin{itemize}
+	\item I have not yet determined whether to use \lstinline$underscore_names$ or \lstinline$camelCaseNames$. I always used underscore before, but have become fan of camelCase the last couple of years. Most common in C, however, is underscore. We'll see.
+	\item Variable and function names should be intuitive rather than short (e.g.\ \lstinline$kinetic_energy$ rather then \lstinline$knerg$). However, sometimes it is reasonable to use short names. Examples:
+		\begin{itemize}
+			\item \lstinline$temp$ is a perfectly understandable name for a temporary variable inside a sufficiently short scope.
+			\item \lstinline$i$ is a perfect name for a loop counter.
+			\item Established C conventions such as \lstinline$argc$ and \lstinline$argv$.
+			\item Variables with a mathematical origin that are commonly understood within the context of PIC codes. See below. Such variables should be used a lot (or within a short scope) to justify it having a short name.
+		\end{itemize}
+\end{itemize}
+
+Indices are used for many things in numerical simulations, especially so in particle-mesh codes. This is an attempt to get consistent use of indices both within the code and within mathematical expressions:
+
+\begin{itemize}
+	\item Time step is denoted $n$ (\lstinline$n$). The number of time steps is $N_t$ (\lstinline$Nt$).
+	\item Particles are counted using $i$ (\lstinline$i$). The number of particles is $N_p$ (\lstinline$Np$).
+	\item Particle species are counted using $s$ (\lstinline$s$). The number of species is $N_s$ (\lstinline$Ns$). The number of particles within each specie is denoted $N_{ps}$ (\lstinline$Nps$) such that $N_p=\sum_sN_{ps}$.
+	\item Particle position is given in small case, e.g\ $x_i$ (\lstinline$x[i]$) (considering 1D for this example. For 3D $(x_i,y_i,z_i)$ will likely be stored in one variable).
+	\item Dimension is denoted $d$ (\lstinline$d$) and $N_d$ (\lstinline$Nd$) is the number of dimensions.
+	\item Nodes in the grid are labelled $(j,k,l)$ or \lstinline$j$, \lstinline$k$ and \lstinline$l$ in C. $i$ is not used to avoid confusion with particle count. The number of grid points are denoted is $N_{gx}$, $N_{gy}$, $N_{gz}$ and $N_g=N_{gx}N_{gy}N_{gz}$, or alternatively, $N_{gd}$ such that $N_g=\prod_dN_{gd}$ and correspondingly in C.
+	\item The position of grid nodes is denoted by capital letters to distinguish them from particle positions (e.g.\ $X_j$ or \lstinline$X[j]$).
+	\item Grid quantities are indexed using a single index $p$ such that $p=j(N_{gy}N_{gz})+kN_{gz}+l$.
+\end{itemize}
+
+Inside scopes not dealing explicitly with particles it is of course completely valid to use $i, j$ to count other stuff.
+
+ 
+
+
+\subsection{Comments and Documentation}
+
+\begin{itemize}
 	\item Multi-line comments should be written the following way:
 	\begin{lstlisting}
 /*
- * COMMENT
- * COMMENT
+ * This is my comment.
+ * This is also my comment.
  */
-	 \end{lstlisting}
-	If desirable, the document can be visually divided into sections by comments formatted this way:
-	 \begin{lstlisting}
-/********************************************
- * NEW SECTION
- *******************************************/
-	 \end{lstlisting}
-	 The developer may have an indentation before the section comment to make it align properly within routines, but the last characters on the horizontal *-lines should be on column 80.
+	\end{lstlisting}
+	\newpage
+	\item If desirable, the document can be organized using sections and titles. Sections and titles look like this:
+	\begin{lstlisting}
+/*************************************************
+ * THIS IS A SECTION
+ ************************************************/
+
+void main(int argc, char *argv[]){
+
+	/*
+	 * THIS IS A TITLE
+	 */
+
+	int a = function();
+
+	\end{lstlisting}
+	The last character on the section comment should be on column 80.
+	
+	
 	 \item Doxygen is used to auto-generate documentation of the code. Doxygen comments are written the following way (note the extra * on the first line):
 	 \begin{lstlisting}
 /**
@@ -266,22 +319,27 @@ char *temp = (char*) str;
 	 All functions are documented by a Doxygen-comment looking something like this just in front of the function declaration. Example: 
 	 \begin{lstlisting}
 /**
- * @brief	Parse PINC's input argument and input file
- * @param	argc		Argument count
- * @param	argv		Argument vector
- * @return	void 
+ * @brief Brief one-line description of function
+ * @param	in	Integer in.
+ * @param[out]	out	Result is stored in this variable.
+ * @return	void
  *
- * This function performs a sanity check of argc and argv and reads the
- * specified input file. It performs the necessary sanity checks of its
- * data and stores the values. It also computes derived values.
- * In case of failure it prints an error to stderr and terminates PINC.
+ * More extensive description.
  */
-void parse_input(int argc, char *argv[]);
+void function(int in, int *out);
 	\end{lstlisting}
-	For functions declared in header-files, documentations goes in header files as well. For local functions, documentation goes in .c-file along with function declaration at the top of the document. The @-tags used in these examples are self-explanatory and are used by Doxygen to auto-generate information about all files and functions.
+	\item As a rule of thumb: Comment what functions does, not how. If ``how'' needs explanation probably the function should be rewritten. ``What'' is sufficiently documented in the Doxygen comment.
+\end{itemize}
+
+\subsection{Formatting and language}
+
+\begin{itemize}
+	\item English is the working language.
+	\item Use tab for indentation, not spaces. One tab should be set equal to 4 spaces.
+	\item Output printed to terminal should be no more than 80 columns/characters as this is the default terminal width.
+	\item Lines in source files should be no longer than TBD.
 	\item Whenever a date is to be written, for instance in a Doxygen comment, it is written dd.mm.yy.
 	\item Try to avoid incomplete sentences and poor language in comments, especially in Doxygen comments. End sentences with period.
-	\item English is the working language.
-\end{enumerate}
+\end{itemize}
 
 \end{document}

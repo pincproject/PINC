@@ -6,7 +6,7 @@
 ## @date		10.10.15
 ##
 EXEC	= pinc
-CC		= gcc
+CC		= mpicc
 CFLAGS	= -std=c11 -Wall -O3 \
 		-Ilib/iniparser/src \
 		-lm
@@ -18,7 +18,7 @@ LDIR	= lib
 DDIR	= doc
 
 HEAD_	= pinc.h
-SRC_	= main.c input.c aux.c
+SRC_	= main.c io.c particles.c
 OBJ_	= $(SRC_:.c=.o)
 
 HEAD	= $(patsubst %,$(HDIR)/%,$(HEAD_))
@@ -44,17 +44,17 @@ $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	cd $(LDIR)/iniparser && $(MAKE)
 
-$(DDIR)/doxyfile.inc: $(DDIR)/doxyfile.mk
-	@echo INPUT	= ../$(SDIR) ../$(HDIR)	> $(DDIR)/doxyfile.inc
-	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxyfile.inc
+$(DDIR)/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk
+	@echo INPUT	= ../../$(SDIR) ../../$(HDIR)	> $(DDIR)/doxygen/doxyfile.inc
+	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxygen/doxyfile.inc
 
 doc: $(HEAD) $(SRC) $(DDIR)/doxyfile.inc
 	@echo "Making documentation"
-	@cd $(DDIR) && doxygen doxyfile.mk > /dev/null 2>&1
+	@cd $(DDIR)/doxygen && doxygen doxyfile.mk > /dev/null 2>&1
 	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
 
 cleandoc:
-	rm -f $(DDIR)/doxyfile.inc
+	rm -f $(DDIR)/doxygen/doxyfile.inc
 	rm -fr $(DDIR)/html $(DDIR)/latex
 
 clean: cleandoc

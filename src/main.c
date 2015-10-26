@@ -11,21 +11,34 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <mpi.h>
 #include "pinc.h"
+#include "iniparser.h"
 
 int main(int argc, char *argv[]){
+
+	MPI_Init(&argc,&argv);
+	msg(STATUS,"PINC started.");
 
 	/*
 	 * READ INPUT FILE
 	 */
-    parse_input(argc,argv);
+	dictionary *ini = iniOpen(argc,argv);
+//	ini_complete_time(ini);
+//	ini_complete_grid(ini);
 
+	Population *pop = allocPopulation(ini);
 
 	/*
 	 * SUCCESSFUL EXIT
 	 */
 
+	freePopulation(pop);
+
+	iniparser_freedict(ini);
 	msg(STATUS,"PINC completed successfully!");
+
+	MPI_Finalize();
 	return 0;
 
 }
