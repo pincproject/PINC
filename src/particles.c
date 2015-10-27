@@ -26,7 +26,7 @@ Population *allocPopulation(dictionary *ini){
 	// Load data
 	int nSpecies;
 	long int *nAllocTotal = iniGetIntArr(ini,"population:nAlloc",&nSpecies);	// This is for all computing nodes
-	int nDim = iniGetNElements(ini,"grid:nCells");
+	int nDims = iniGetNElements(ini,"grid:nCells");
 
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
@@ -48,12 +48,12 @@ Population *allocPopulation(dictionary *ini){
 
 	// Store in struct
 	Population *pop = malloc(sizeof(Population));
-	pop->pos = malloc((long int)nDim*iStart[nSpecies]*sizeof(double));
-	pop->vel = malloc((long int)nDim*iStart[nSpecies]*sizeof(double));
+	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
+	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->q = iniGetDoubleArr(ini,"population:q",&nSpecies);
 	pop->m = iniGetDoubleArr(ini,"population:m",&nSpecies);
 	pop->nSpecies = nSpecies;
-	pop->nDim = nDim;
+	pop->nDims = nDims;
 	pop->iStart = iStart;
 	pop->iStop = iStop;
 	pop->energy = NULL;	// Assume unused for now
