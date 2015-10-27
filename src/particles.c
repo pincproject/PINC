@@ -42,7 +42,7 @@ Population *allocPopulation(dictionary *ini){
 
 	iStart[0] = 0;
 	for(int s=1;s<nSpecies+1;s++) iStart[s]=iStart[s-1]+nAlloc[s-1];
-	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]; // No particles yet
+	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]-1; // No particles yet, set stop before iStart.
 
 	free(nAlloc);
 
@@ -70,5 +70,11 @@ void freePopulation(Population *pop){
 	free(pop->m);
 	free(pop->energy);
 	free(pop);
+
+}
+
+void initPopulation(Population *pop){
+
+
 
 }
