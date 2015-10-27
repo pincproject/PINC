@@ -1,469 +1,492 @@
-/*DiP3D */
-/*Author: Wojciech Jacek Miloch */
-/*University of Oslo, Norway */
-/*2009*/
-/*last revised 05.03.2009*/
-#include <math.h>
-#include "const.h"
+/**
+ * @file		input.c
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @copyright	University of Oslo, Norway
+ * @brief		PINC main routine.
+ * @date		13.10.15
+ *
+ * Functions for parsing input to PINC.
+ * Replaces old DiP3D input.c file by Wojciech Jacek Miloch.
+ */
 
-/*function converting the intput.txt file into program readable file*/  
-void convert(void)
-{
-  FILE *open, *write;
-  char l;
-  open=my_file_open("input.txt", "r");
-  write=my_file_open("./src/newfile.dat", "w");  
-  do 
-    {
-      l=getc(open);
-      if(((l>='0') && (l <='9')) || l=='\n' || l=='E' || l=='.' || l=='-' || l==' ')
-	putc(l,write);
-    }
-  while(l!=EOF);  
-  fclose(open);
-  fclose(write);
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include "iniparser.h"
+#include "pinc.h"
+
+/******************************************************************************
+ * DECLARING LOCAL FUNCTIONS
+ *****************************************************************************/
+
+/**
+ * @brief	Splits a comma-separated list-string to an array of strings.
+ * @param	list	Comma-sepaprated list
+ * @return	A NULL-terminated array of NULL-terminated strings
+ *
+ * Example: when str="abc ,def, ghi", list2strarr(str); will return
+ * an array arr such that :
+ *
+ * arr[0]="abc"
+ * arr[1]="def"
+ * arr[2]="ghi"
+ * arr[3]=NULL
+ *
+ * Note that whitespaces are trimmed away. Remember to free string array. This
+ * can be done with free_strarr().
+ *
+ */
+static char** list_to_strarr(const char* list);
+
+/**
+ * @brief Frees dynamically allocated NULL-terminated array of strings
+ * @param	strarr	Pointer to array of strings
+ * @return	void
+ */
+static void free_strarr(char** strarr);
+
+/**
+ * @brief Gets number of elements in comma-separated list-string.
+ * @param	list	Comma-separated list
+ * @return	Number of elements in list. 0 if string is empty.
+ */
+static int list_getnelements(const char* list);
+
+/**
+ * @brief Gets number of elements in comma-separated entry in ini file
+ * @param	d		Dictionary to search
+ * @param	key		Key string to look for in iniparser dictionary
+ * @return	Number of elements in entry. 0 if entry does not exist.
+ *
+ * This function can be seen as an extension to iniparser in order to handle
+ * comma-separated entries. It is syntactically similar to the functions in
+ * iniparser.
+ */
+static int listparser_getnelements(const dictionary* d, const char* key);
+
+/**
+ * @brief Get the array of doubles associated to a key in ini file
+ * @param		d		Dictionary to search
+ * @param		key		Key string to look for in iniparser dictionary
+ * @param[out]	result	Pointer to pre-allocated array to store results in
+ * @return		void
+ *
+ * This function can be seen as an extension to iniparser in order to handle
+ * comma-separated entries. It is syntactically similar to the functions in
+ * iniparser.
+ *
+ * Array of results must be allocated before being passed to this function. The
+ * number of elements to allocate can be obtained by listparser_getnelements().
+ *
+ * listparser_getallocdouble() is similar to this but allocates memory.
+ */
+static void listparser_getdouble(	const dictionary *d, const char *key, 
+										double *result);
+
+/**
+ * @brief Get the array of doubles associated to a key in ini file
+ * @param			d		Dictionary to search
+ * @param			key		Key string to look for in iniparser dictionary
+ * @param[out]		count	Number of elements in returned array
+ * @return			Array of doubles
+ *
+ * This function can be seen as an extension to iniparser in order to handle
+ * comma-separated entries. It is syntactically similar to the functions in
+ * iniparser.
+ *
+ * listparser_getdouble() is similar to this but does not allocate memory.
+ */
+static double* listparser_getallocdouble(	const dictionary *d,
+											const char *key, int *count);
+
+/**
+ * @brief Get the array of integers associated to a key in ini file
+ * @param	d		Dictionary to search
+ * @param	key		Key string to look for in iniparser dictionary
+ * @param	result	Pointer to pre-allocated array to store results in
+ * @return	void
+ *
+ * This function can be seen as an extension to iniparser in order to handle
+ * comma-separated entries. It is syntactically similar to the functions in
+ * iniparser.
+ *
+ * Array of results must be allocated before being passed to this function. The
+ * number of elements to allocate can be obtained by listparser_getnelements().
+ */
+static void listparser_getint(	const dictionary *d, const char *key, 
+										int *result);
+
+/**
+ * @brief Get the array of integers associated to a key in ini file
+ * @param			d		Dictionary to search
+ * @param			key		Key string to look for in iniparser dictionary
+ * @param[out]		count	Number of elements in returned array
+ * @return			Array of integers
+ *
+ * This function can be seen as an extension to iniparser in order to handle
+ * comma-separated entries. It is syntactically similar to the functions in
+ * iniparser.
+ *
+ * listparser_getint() is similar to this but does not allocate memory.
+ */
+
+static int* listparser_getallocint(	const dictionary *d, const char *key, 
+									int *count);
+
+static void fprintarr(	FILE *stream, const char* restrict format,
+						void *arr, int count);
+
+/******************************************************************************
+ * DEFINING GLOBAL FUNCTIONS
+ *****************************************************************************/
+
+void parse_input(int argc, char *argv[]){
+
+	int nparams = 0;	// Used to hold the number of specified parameters
+
+	/*
+	 * OPEN INPUT FILE
+	 */
+
+	if(argc!=2)
+		msg(ERROR,"exactly one argument expected (the input file).");
+
+	dictionary* ini;
+	ini = iniparser_load(argv[1]);
+
+	if(ini==NULL) msg(ERROR,"Failed to open (or parse) %s.",argv[1]);
+
+	msg(STATUS,"parsing %s.",argv[1]);
+
+	/*
+	 * PREPARE OUTPUT DUMP FOR INPUT PARSE
+	 */
+
+	// This file can be used to retrieve information on how parsing went.
+
+	char *dumpfilename = iniparser_getstring(ini,"files:parsedump","");
+	FILE *dumpfile;
+	if(strcmp(dumpfilename,"")==0){
+		msg(WARNING,"no parsedump file specified. Using stdout.");
+		dumpfile = stdout;
+	} else if(strcmp(dumpfilename,"stdout")==0) {
+		dumpfile = stdout;
+	} else {
+		dumpfile = fopen(dumpfilename,"w");
+	}
+
+	/*
+	 * PARSE [time] SECTION
+	 */
+
+	fprintf(dumpfile,"Parsing [time]\n");
+
+	// Load input parameters from [time]
+	int Nt = iniparser_getint(ini,"time:Nt",0);
+	double T = iniparser_getdouble(ini,"time:T",0);
+	double dt = iniparser_getdouble(ini,"time:dt",0);
+
+	// Number of parameters specified
+	nparams = (Nt!=0) + (T!=0) + (dt!=0);
+
+	// Check for correct number of input parameters	
+	if(nparams<2) msg(ERROR,"[time] in %s is under-determined. "
+							"Specify 2 of these: Nt, T and dt.",argv[1]);
+
+	if(nparams>2) msg(ERROR,"[time] in %s is over-determined. "
+							"Specify only 2 of these: Nt, T and dt.",argv[1]);
+
+	// Compute non-specified input parameter
+	if(dt==0){
+		dt = T/Nt;
+		fprintf(dumpfile,"Computed dt.\n");
+	}
+	if(T==0){
+		T = Nt*dt;
+		fprintf(dumpfile,"Computed T.\n");
+	}
+	if(Nt==0){
+		Nt = (int) ceil(T/dt);
+		double dt_new = T/Nt;
+		fprintf(dumpfile,"Computed Nt.\n");
+		if(dt!=dt_new){
+			msg(WARNING,	"had to reduce dt from %f to %f to get "
+							"integer Nt.",dt,dt_new);
+			fprintf(dumpfile,"Reduced dt to get integer Nt.\n");
+		}
+		dt=dt_new;
+
+	}
+	fprintf(dumpfile,"Nt=%i\n",Nt);
+	fprintf(dumpfile,"T=%f Debye lengths (exact: %a)\n",T,T);
+	fprintf(dumpfile,"dt=%f Debye lengths (exact: %a)\n",dt,dt);
+
+
+	/*
+	 * PARSE GRID SECTION
+	 */
+
+	fprintf(dumpfile,"Parsing [grid]\n");
+
+	// Get dimensions specified by each parameters (0 if unspecified)
+	int Ng_dim = listparser_getnelements(ini,"grid:Ng");
+	int L_dim  = listparser_getnelements(ini,"grid:L");
+	int dx_dim = listparser_getnelements(ini,"grid:dx");
+
+	// Number of grid input parameters specified
+	nparams = (Ng_dim!=0) + (L_dim!=0) + (dx_dim!=0);
+
+	// Check for correct number of input parameters
+	if(nparams<2) msg(ERROR,"[grid] in %s is under-determined. "
+							"Specify 2 of these: Ng, L and dx.",argv[1]);
+
+	if(nparams>2) msg(ERROR,"[grid] in %s is over-determined. "
+							"Specify only 2 of these: Ng, L and dx.",argv[1]);
+
+	// Check for equal length of lists
+	if(Ng_dim==0 && L_dim!=dx_dim)
+		msg(ERROR,"L and dx have unequal number of elements.");
+
+	if(L_dim==0 && Ng_dim!=dx_dim)
+		msg(ERROR,"Ng and dx have unequal number of elements.");
+
+	if(dx_dim==0 && Ng_dim!=L_dim)
+		msg(ERROR,"Ng and L have unequal number of elements.");
+
+	// Get number of dimensions (one is zero, the other two equals dim)
+	int dim = (Ng_dim + L_dim + dx_dim)/2;
+
+	fprintf(dumpfile,"Dimensions=%i\n",dim);
+
+	// Check for valid number of dimensions
+	if(dim!=3) msg(ERROR,	"%i dimensions specified in [grid] but only 3D "
+							"simulations are supported.",dim);
+
+	// Load specified input parameters
+	int 	*Ng = malloc(dim*sizeof(int));
+	double	*L  = malloc(dim*sizeof(double));
+	double	*dx = malloc(dim*sizeof(double));
+	listparser_getint(ini,"grid:Ng",Ng);
+	listparser_getdouble(ini,"grid:L",L);
+	listparser_getdouble(ini,"grid:dx",dx);
+
+	// Compute non-specified input parameter
+	if(dx_dim==0){
+		fprintf(dumpfile,"Computed dx.\n");
+		for(int i=0;i<dim;i++){
+			dx[i] = L[i]/Ng[i];
+			//printf("	dx[%i]=%f.\n",i,dx[i]);
+		}
+	}
+	if(L_dim==0){
+		fprintf(dumpfile,"Computed L.\n");
+		for(int i=0;i<dim;i++){
+			L[i] = Ng[i]*dx[i];
+			//printf("	L[%i]=%f.\n",i,L[i]);
+		}
+	}
+	if(Ng_dim==0){
+		fprintf(dumpfile,"Computed Ng.\n");
+		for(int i=0;i<dim;i++){
+			Ng[i] = (int) ceil(L[i]/dx[i]);
+			double dx_new = L[i]/Ng[i];
+			//printf("	Ng[%i]=%i.",i,Ng[i]);
+			if(dx[i]!=dx_new){
+				msg(WARNING,	"had to reduce dx[%i] from %f to %f to get "
+								"integer Ng[%i].",i,dx[i],dx_new,i);
+				fprintf(dumpfile,
+					"Reduced dx[%i] to get integer Ng[%i].\n",i,i);
+			}
+			dx[i]=dx_new;
+		}
+	}
+
+	fprintf(dumpfile,"Ng=");
+	fprintarr(dumpfile,"%i",(void*)Ng,dim);
+	fprintf(dumpfile,"\n");
+	/*
+	printf("Ng=%i,%i,%i\n",Ng[0],Ng[1],Ng[2]);
+	printf("L=%f,%f,%f\n",L[0],L[1],L[2]);
+	printf("dx=%f,%f,%f\n",dx[0],dx[1],dx[2]);
+	*/
+
+	// PARSE PARTICLES SECTION
+
+	// Get number of particles per specie (Nps) and number of species (Ns)
+	int Ns=0, Ns_check=0;
+	int *Nps = listparser_getallocint(ini,"particles:Nps",&Ns);
+
+	// Get the specie charges
+	double *Q = listparser_getallocdouble(ini,"particles:Q",&Ns_check);
+	if(Ns_check!=Ns) msg(ERROR,"Q and Nps have unequal number of elements.");
+
+	// Get the specie masses
+	double *M = listparser_getallocdouble(ini,"particles:M",&Ns_check);
+	if(Ns_check!=Ns) msg(ERROR,"M and Nps have unequal number of elements.");
+
+	// CLOSE DUMPFILE
+
+	if(strcmp(dumpfilename,"") && strcmp(dumpfilename,"stdout"))
+		fclose(dumpfile);
+
+	// FREE MEMORY
+
+	iniparser_freedict(ini);
+
+	free(Nps);
+
+	free(Ng);
+	free(L);
+	free(dx);
+
 }
 
-/*read data and print the initial values in print.txt file*/
-void readdata(int arc, char *arv[]) 
-{
-  FILE *open,*write;
-  int i;
-  double Npel, Npio, Cs; /*plasma number, speed sound*/
-  
-#ifdef BEAM
-double Npbe;
-#endif  
-  double partpercell, dustvolume; 
-  double vxmax,vxmax1,vymax,vymax1,vzmax,vzmax1;
+/******************************************************************************
+ * DEFINING LOCAL FUNCTIONS
+ *****************************************************************************/
 
-  
-  open=my_file_open("./src/newfile.dat", "r");     
-  if(rank==0)
-    write=my_file_open("./data/print.txt", "w");
-	
-  fscanf(open,"%lf", &Lx);
-  if(rank==0)
-    fprintf(write,"System dimension, Lx:\t %f m\n", Lx);
-  fscanf(open,"%lf", &Ly);
-  if(rank==0)
-    fprintf(write,"System dimension, Ly:\t %f m\n", Ly);
-  fscanf(open,"%lf", &Lz);
-  if(rank==0)
-	fprintf(write,"System dimension, Lz:\t %f m\n", Lz);	
-  if((Lx>Lx_MAX) || (Ly>Ly_MAX) || (Lz>Lz_MAX))
-    {
-      if(rank==0)
-		{
-		printf("ERROR, chamber dimensions bigger than maximum values: Lx_MAX: %d, Ly_MAX: %d, Lz_MAX: %d. Simulation aborted\n", Lx_MAX, Ly_MAX, Lz_MAX);
-		fclose(open); fclose(write);
-		}  
-      //exit(-1);
-    }
-  fscanf(open, "%d", &ngx);
-  fscanf(open, "%d", &ngy);
-  fscanf(open, "%d", &ngz);
-  fscanf(open, "%lf", &dt); //time step 
-  fscanf(open, "%lf", &tmax);
-  
-  if(rank==0)
-    fprintf(write,"Number of grid points:\n x direction: %d\n y direction: %d\n z direction: %d\n", ngx,ngy,ngz);
+static void fprintarr(	FILE *stream, const char* restrict format,
+						void *arr, int count){
 
-  if(ngx>ngx_MAX)
-    {
-      if(rank==0)
-	{
-	  printf("ERROR, too many grid cells in x direction ngx=%d>ngx_MAX=%d\n", ngx, ngx_MAX);
-	  fclose(open); fclose(write);
-	}  
-      //exit(-1);
-    } 
+	barr
 
-  if(ngy>ngy_MAX)
-    {
-      if(rank==0)
-	{
-	  printf("ERROR, too many grid cells in y direction ngy=%d>ngy_MAX=%d\n", ngy, ngy_MAX);
-	  fclose(open); fclose(write); 
-	} 
-      //exit(-1);
-    }  
+	fprintf(stream,"%i",barr[0]);
+	for(int i=1;i<count;i++) fprintf(stream,",%i",barr[i]);
 
-  if(ngz>ngz_MAX)
-    {
-      if(rank==0)
-	{
-	  printf("ERROR, too many grid cells in y direction ngy=%d>ngy_MAX=%d\n", ngz, ngz_MAX);
-	  fclose(open); fclose(write); 
-	} 
-      //exit(-1);
-    }  
+}
 
-  dx=Lx*1.0/(ngx-1); //subtract 1 because ngx is number of gridpoints start from 0
-  dy=Ly*1.0/(ngy-1);
-  dz=Lz*1.0/(ngz-1);
+static int list_getnelements(const char* list){
 
-  if(rank==0)
-    {
-      fprintf(write,"Grid spacing dx:%f m\nGrid spacing dy:%f m\nGrid spacing dz:%f\n", dx, dy, dz);
-      fprintf(write,"Time step dt:%E  s \n", dt);
-      fprintf(write,"Time max:    %E  s \n", tmax);
-    }
+	if(list[0]=='\0') return 0;	// key not found
 
-  /*reading density of realpart particles*/
-  fscanf(open,"%lf", &dens[0]);
-  /*reading number of simulation particles*/
-  fscanf(open,"%ld", &npart[0]);
-  /*reading electron parameters*/  
-  fscanf(open,"%lf", &qm[0]); 
-  fscanf(open,"%lf", &debye[0]);  
-  fscanf(open,"%lf", &vdriftx[0]);
-  /*reading ion parameters*/
-  fscanf(open, "%lf", &charge[1]); //no of elem charges per real ion
-  fscanf(open, "%lf", &qm[1]);
-  fscanf(open,"%lf", &vdriftx[1]);  
-  fscanf(open, "%lf", &ti2te);
-  ti2te=1.0/ti2te;
-#ifdef BEAM
- /*reading ion beam*/
-  fscanf(open, "%lf", &vdriftx[2]);
-  fscanf(open, "%ld", &npart[2]);
-#endif
-  /*reading other parameters*/
-  // fscanf(open,"%d", &dustmove); //I do not use it any more, data in the dust input file
-  fscanf(open,"%lf %lf %lf", &Vpr_begin, &Vpr_end, &Vpr_step);
-  fscanf(open,"%lf", &Vbound);
-  fscanf(open,"%lf", &TOLERANCE);
-  fscanf(open,"%lf", &tolfloating);
-  /*reading photons*/
-  fscanf(open,"%lf", &ph_flux);
-  fscanf(open,"%lf", &ph_angle);
-  fscanf(open,"%lf", &ph_energy);
-  if(ph_flux != 0) 
-    photons=1; 
-  else 
-    photons=0;
-  /*reading diagnosics*/
-  fscanf(open,"%d", &diagint);
-  //allocate memory	
-  diagint_av=ivecmem(0, diagint-1);
-  diagint_st=ivecmem(0, diagint-1);
-  for(i=0; i< diagint; i++)
-	{     
-      fscanf(open,"%d %d", &diagint_st[i], &diagint_av[i]);
-      //temporary check in input.c
-      printf("%d\n",diagint_st[i]);
+	// Count elements
+	int count = 1;
+	for(int i=0;list[i];i++) count += (list[i]==',');
+
+	return count;
+
+}
+
+static int listparser_getnelements(const dictionary* d, const char* key){
+
+	char *list = iniparser_getstring((dictionary*)d,key,"");
+	return list_getnelements(list);
+
+}
+
+static void listparser_getint(	const dictionary *d, const char *key,
+								int *result){
+
+	char *list = iniparser_getstring((dictionary*)d,key,"");
+	char **strarr = list_to_strarr(list);
+	int count = list_getnelements(list);
+
+	for(int i=0;i<count;i++) result[i] = (int)strtol(strarr[i],NULL,10);
+
+	free_strarr(strarr);
+
+}
+
+static void listparser_getdouble(	const dictionary *d, const char *key, 
+									double *result){
+
+	char *list = iniparser_getstring((dictionary*)d,key,"");
+	char **strarr = list_to_strarr(list);
+	int count = list_getnelements(list);
+
+	for(int i=0;i<count;i++) result[i] = strtod(strarr[i],NULL);
+
+	free_strarr(strarr);
+
+}
+
+static int* listparser_getallocint(	const dictionary *d, const char *key, 
+									int *count){
+
+	*count = listparser_getnelements(d,key);
+	int *result = malloc(*count*sizeof(int));
+
+	listparser_getint(d,key,result);
+
+	return result;
+
+}
+
+static double* listparser_getallocdouble(	const dictionary *d,
+											const char *key, int *count){
+
+	*count = listparser_getnelements(d,key);
+	double *result = malloc(*count*sizeof(double));
+
+	listparser_getdouble(d,key,result);
+
+	return result;
+
+}
+
+
+static char** list_to_strarr(const char* list){
+
+	// Count elements in list (including NULL-element)
+	int count = 2;
+	char *temp = (char*)list;
+	while(*temp){
+		if(*temp==',') count++;
+		temp++;
 	}
-	
-  /*set some parameters*/
-  allpart=0;
 
-  //DUST VOLUME   
-	dustvolume=finddustvolume(arc,arv)*dx*dy*dz;
-//	printf("dust volume: %E\n", dustvolume);
-	//*dx*dy*dz;
-	
-   ratio=(dens[0]*(Lx*Ly*Lz-dustvolume))/npart[0]; //ratio real to sim, no particles introduced on the objects
-   /*initiate npart on different nodes*/
-   if(numtasks>1)
-    {
-      npartinit[0]=(int)((npart[0]*1.0)/(numtasks-1));
-      if((npart[0] % (numtasks-1))!= 0)
-	if(rank==0) printf("Warning: no of electrons != n*(numtasks-1), you have now %ld electrons\n", npartinit[0]*(numtasks-1));
-    }
-  else
-    npartinit[0]=npart[0];
+	// Allocate NULL-terminated array of NULL-terminated strings
+	char **result = 0;
+	result = malloc(count*sizeof(char*));
 
-  /*calculating & printing electron parameters*/
-   charge[0]=-Q;  
-   omegap[0]=sqrt((charge[0]*qm[0]*dens[0]*1.0)/EPS0); 
-   vthx[0]=vthy[0]=vthz[0]=omegap[0]*debye[0]; //isothermal
-   mass[0]=charge[0]/qm[0];  
-   tempx[0]=mass[0]*vthx[0]*vthx[0]; 
-   tempy[0]=mass[0]*vthy[0]*vthy[0];
-   tempz[0]=mass[0]*vthz[0]*vthz[0];
-   Npel=dens[0]*pow(debye[0],3)/ratio; //plasma param. for sim part, there is a ratio
-  /*check debye and dx dy, and Np*/
-   if(rank==0)
-     {
-	 //commented warnings are not necesarry
-     //  if((debye[0]>0.1*dx)|| (debye[0]>0.1*dy) || (debye[0]>0.1*dz) )
-	 //printf("WARNING, Debye length too big for given grid cell!!! Choose bigger dx or dy!!!%f \n", debye[0]/(0.1*dx));
-     //  if((3*debye[0]<dx)|| (3*debye[0]<dy) || (3*debye[0]<dz))
-	 //printf("WARNING, The grid cell is bigger than 3*Debyelenght!!! Choose smaller dx or dy!!!\n");
-       if(dt*omegap[0]>0.1)
-	 printf("WARNING, Integration time too large! Choose smaller dt!!!\n");
-       if(Npel<10)
-	 printf("WARNING, Plasma number: Nd>>1 is not fulfilled (Np<10), we have collisions which are not implemented in the code!\n");
-     }
-   if((numtasks>1) && (rank >0))
-     {
-       if(npart[0]>NPART_MAX)
-	 {
-	   if(rank==1)
-	     {
-	       printf("ERROR! Number of particles %ld  exceeds the maximum value: %d\n Aborting the simulation \n", npart[0], NPART_MAX);
-	     }
-	   //exit(-1);
-	 }  
-     }
-   else
-     if(npart[0]>NPART_MAX)
-       {
-	 if(rank==0)
-	   {
-		printf("ERROR! Number of particles %ld  exceeds the maximum value: %d\n Aborting the simulation \n", npart[0], NPART_MAX);
-	   }
-	 //exit(-1);
-       }  
-   
-    /*calculating ion parameters*/
-  /*if ions++, we need 0.5 ions for charge neutrality*/
-#ifdef BEAM 
-  npart[1]=(npart[0]/charge[1]-npart[2]);
-#else
-  npart[1]=npart[0]/charge[1]; 
-#endif
-  dens[1]=npart[1]*ratio/(Lx*Ly*Lz-dustvolume);  //real density
+	if(result){
 
-  if(numtasks>1)
-    {
-      npartinit[1]=(int)((npart[1]*1.0)/(numtasks-1));
-      if((npart[1] % (numtasks-1))!= 0)
-	if(rank==0) 
-	  printf("Warning: no of ions != n*(numtasks-1), you have now %ld ions\n", npartinit[1]*(numtasks-1));
-    }
-  else
-    npartinit[1]=npart[1]; //for the loop with different potenetials
- 
-  charge[1]=-charge[1]*charge[0]; //switch to real charge value
-  mass[1]=charge[1]/qm[1];
-  //omegap[1]=omegap[0]*sqrt(mass[0]/mass[1]);
-  omegap[1]=sqrt((charge[1]*qm[1]*dens[1]*1.0)/EPS0); 
-  debye[1]=debye[0]*sqrt(ti2te);
-  vthx[1]=vthy[1]=vthz[1]=omegap[1]*debye[1]; //isothermal ions
-  tempx[1]=mass[1]*vthx[1]*vthx[1]; 
-  tempy[1]=mass[1]*vthy[1]*vthy[1];
-  tempz[1]=mass[1]*vthz[1]*vthz[1];
-  Npio=dens[1]*pow(debye[1],3)/ratio; //plasma parameter, sim part
+		count=0;
+		char finished=0;
+		temp=(char*)list;
+		char *start=(char*)list;
+		char *stop=(char*)list;
 
- /************BEAM**************/
-#ifdef BEAM
- /*calculating and printing ion beam*/
-  /*BEAM BEAM*/
-  dens[2]=npart[2]*1.0*ratio/(Lx*Ly*Lz-dustvolume);
-  //necesarry for the loop with different potenetials
- if(numtasks>1)
-    {
-      npartinit[2]=(int)((npart[2]*1.0)/(numtasks-1));
-      if((npart[2] % (numtasks-1))!= 0)
-	if(rank==0) printf("Warning: no of beamions != n*(numtasks-1), you have now %d electrons\n", npartinit[2]*(numtasks-1));
-    }
-  else
-    npartinit[2]=npart[2];
+		while(!finished){
+			
+			if(*temp==',' || *temp=='\0'){
+				// New delimeter reached. Set stop of this element.
+				stop = temp-1;
 
-  charge[2]=charge[1]; //switch for real charge value
-  mass[2]=mass[1];
-  qm[2]=qm[1];
-  //omegap[2]=omegap[0]*sqrt(mass[0]/mass[1]);
-  //  debye[2]=debye[0]*sqrt(ti2te);
-  omegap[2]=sqrt((charge[2]*qm[2]*dens[2]*1.0)/EPS0); 
-  vthx[2]=vthy[2]=vthz[2]=0; //isothermal cold beam
-  tempx[2]=0; 
-  tempy[2]=0;
-  tempz[2]=0;
-  Npbe=dens[2]*pow(debye[2],3)/ratio; //plasma parameter for sim part
-#endif
-/**************BEAM END**********/
+				// Trim leading and trailing whitespaces
+				while(*start==' ' && start<stop) start++;
+				while(*stop==' '  && start<stop) stop--;
 
-	
-  /*change for simulation particles and add all particles*/
-  for(i=0; i<S; i++)
-    {    
-      mass[i]*=ratio;
-      charge[i]*=ratio;
-      tempx[i]*=ratio;
-      tempy[i]*=ratio;
-	  tempz[i]*=ratio;
-      dens[i]/=ratio;         	  
-      allpart+=npart[i]; //on each task
-    }  
-  if(numtasks>1)
-    allpart*=(numtasks-1);
+				// Length of string (excluding NULL-termination)
+				int len = stop-start+1;
 
-  /*total debye length*/
-  debyetotal=sqrt(debye[0]*debye[0]*debye[1]*debye[1]/(debye[0]*debye[0]+debye[1]*debye[1]));
-  /*Calculate particles per cell, homogenous in space*/
-  partpercell=allpart*dx*dy*dz/(Lx*Ly*Lz-dustvolume); //Number of cells used: volume = total - probe and divided by cellvolume
-  /*calculate Cs*/
-  Cs=sqrt((tempx[0]+tempx[1]*5/3)/mass[1]);
-  //and assign drift velocity on each task
-    for(i=0; i<S; i++)
-    {    
-      vdriftx[i]*=Cs; //on each task
-    }  
-  //FINISHED READING
-  fclose(open);
+				// Copy string
+				result[count] = malloc((len+1)*sizeof(char));
+				strncpy(result[count],start,len);
+				result[count][len]='\0';
 
+				// Set start of next element
+				start = temp+1;
+				count++;
+			}
 
-  /*check if time step is short enough for given parameters*/
-  //NOTE: important to assume proper Vpr_begin and Vpr_end .
-  for(i=0; i<S; i++)
-    {
-      vxmax=sqrt(vdriftx[i]*vdriftx[i]+4*vthx[i]*vthx[i]+fabs(qm[i]*2*Vpr_begin));
-      vxmax1=sqrt(vdriftx[i]*vdriftx[i]+4*vthx[i]*vthx[i]+fabs(qm[i]*2*Vpr_end));
-      vxmax = (vxmax > vxmax1) ? vxmax : vxmax1;
-      
-      vymax=sqrt(4*vthy[i]*vthy[i]+fabs(qm[i]*2*Vpr_begin));
-      vymax1=sqrt(4*vthy[i]*vthy[i]+fabs(qm[i]*2*Vpr_end));
-      vymax = (vymax > vymax1) ? vymax : vymax1;
-      
-	    vzmax=sqrt(4*vthz[i]*vthz[i]+fabs(qm[i]*2*Vpr_begin));
-      vzmax1=sqrt(4*vthz[i]*vthz[i]+fabs(qm[i]*2*Vpr_end));
-      vzmax = (vzmax > vzmax1) ? vzmax : vzmax1;
-	
-	if(rank==0){  
-	  printf("vdrift[%d]: %E and in Cs: %E\n", i,vdriftx[i],vdriftx[i]/Cs);
-		printf("vxmax[%d]: dx/dt %E vs %E\n", i,dx/dt,vxmax);
+			// Iterate
+			if(*temp=='\0') finished=1;
+			temp++;
 		}
-		
-	if((dx/dt)<=(vxmax))
-	{
-	  if(rank==0)
-	    {
-	      printf("!!!dt too large, particles can jump over one cell in x dir\n!!!put dt < %E\n",dx/vxmax); 
-	    }
-	  //exit(1);
-	}	
-      if((dy/dt)*1<=(vymax))
-	{
-	  if(rank==0)
-	    {
-	  printf("!!!dt too large, particles jump over one cell in y dir\n!!!put dt < %E\n", dy/vymax); 
-	    }
-	  // exit(1);
+
 	}
-    
-	  if((dz/dt)*1<=(vzmax))
-	{
-	  if(rank==0)
-	    {
-	  printf("!!!dt too large, particles jump over one cell in z dir\n!!!put dt < %E\n", dz/vzmax); 
-	    }
-	  //exit(1);
-	}
-	
-	
-    }
 
+	result[count]=NULL;
 
-  /*print the print.txt file*/  
+	return result;
 
-  if(rank==0)
-  {
-    
-  /*print electron parameters*/
-       fprintf(write, "\n\nINPUT PARAMETERS for electrons (3D system) %d\n", 0);
-       fprintf(write, "Charge               \t %E C\n", charge[0]/(ratio)); 
-       fprintf(write, "Charge to mass ratio \t %E C/kg\n", qm[0]);  
-       fprintf(write, "Mass                 \t %E kg\n", mass[0]/(ratio));
-       fprintf(write, "Plasma frequency:    \t %E 1/s\n",omegap[0]);
-       fprintf(write, "Debye length:        \t %E m\n", debye[0]);
-       fprintf(write, "Thermal velocity x:  \t %E m/s\n", vthx[0]);
-       fprintf(write, "Thermal velocity y:  \t %E m/s\n", vthy[0]);
-       fprintf(write, "Thermal velocity z:  \t %E m/s\n", vthz[0]);
-	   fprintf(write, "Temperature x:       \t %E eV\n", tempx[0]/(Q*ratio));
-       fprintf(write, "Temperature y:       \t %E eV\n", tempy[0]/(Q*ratio));
-	   fprintf(write, "Temperature z:       \t %E eV\n", tempz[0]/(Q*ratio));
-	   fprintf(write, "Drift vel. in x dir: \t %E m/s (%E Cs)\n", vdriftx[0], vdriftx[0]/Cs);
-       fprintf(write, "Density              \t %E 1/m3\n", dens[0]*ratio);
-       fprintf(write, "Charge density       \t %E 1/m3\n", charge[0]*dens[0]);
-       fprintf(write, "Plasma number, Np:   \t %E \n",Npel);
-       fprintf(write, "No. of sim. particles\t %ld \n", npart[0]);
-       fprintf(write, "Plasma/Simulation particles pr species:%E\n", ratio);
-	
-   /*print ion parameters*/
-      fprintf(write, "\n\nINPUT PARAMETERS for ions (3D system) %d\n", 1);
-      fprintf(write, "Charges              \t %E C \n", charge[1]/(ratio)); 
-      fprintf(write, "Charge to mass ratio \t %E C/kg \n", qm[1]);  
-      fprintf(write, "Mass                 \t %E kg\n", mass[1]/(ratio));
-      fprintf(write, "Plasma frequency:    \t %E 1/s\n",omegap[1]);
-      fprintf(write, "Debye length:        \t %E m\n", debye[1]);
-      fprintf(write, "Thermal velocity x:  \t %E m/s\n", vthx[1]);
-      fprintf(write, "Thermal velocity y:  \t %E m/s\n", vthy[1]);
-      fprintf(write, "Thermal velocity z:  \t %E m/s\n", vthz[1]);
-	   fprintf(write, "Temperature x:	\t %E eV\n", tempx[1]/(Q*ratio));
-      fprintf(write, "Temperature y:       \t %E eV\n", tempy[1]/(Q*ratio));
-      fprintf(write, "Temperature z:       \t %E eV\n", tempz[1]/(Q*ratio));
-	   fprintf(write, "Drift vel. in x dir: \t %E m/s (%E Cs) \n", vdriftx[1], vdriftx[1]/Cs);
-      fprintf(write, "Density              \t %E 1/m3\n", dens[1]*ratio);
-      fprintf(write, "Charge density       \t %E 1/m3\n", charge[1]*dens[1]);
-      fprintf(write, "Plasma number, Np:   \t %E \n",Npio);
-      fprintf(write, "No. of sim. particles\t %ld \n", npart[1]);
-      fprintf(write, "Plasma/Simulation particles pr species:\t%E \n", ratio);
- #ifdef BEAM   
-      fprintf(write, "\n\nINPUT PARAMETERS for beam (3D system) %d\n", 2);
-      fprintf(write, "Charges              \t %E C \n", charge[2]/(ratio)); 
-      fprintf(write, "Charge to mass ratio \t %E C/kg \n", qm[2]);  
-      fprintf(write, "Mass                 \t %E kg\n", mass[2]/(ratio));
-      fprintf(write, "Plasma frequency:    \t %E 1/s\n",omegap[2]);
-      fprintf(write, "Debye length:        \t %E m\n", debye[2]);
-      fprintf(write, "Thermal velocity x:  \t %E m/s\n", vthx[2]);
-      fprintf(write, "Thermal velocity y:  \t %E m/s\n", vthy[2]);
-      fprintf(write, "Thermal velocity z:  \t %E m/s\n", vthz[2]);
-	  fprintf(write, "Temperature x:       \t %E eV\n", tempx[2]/(Q*ratio));
-      fprintf(write, "Temperature y:       \t %E eV\n", tempy[2]/(Q*ratio));
-	  fprintf(write, "Temperature z:       \t %E eV\n", tempz[2]/(Q*ratio));
-	  fprintf(write, "Drift vel. in x dir: \t %E m/s (%E Cs)\n", vdriftx[2], vdriftx[2]/Cs);
-      fprintf(write, "Density              \t %E 1/m3\n", dens[2]*ratio);
-      fprintf(write, "Charge density       \t %E 1/m3\n", charge[2]*dens[2]);
-      fprintf(write, "Plasma number, Np:   \t %E \n",Npbe);
-      fprintf(write, "No. of sim. particles\t %ld \n", npart[2]);
-      fprintf(write, "Plasma/Simulation particles pr species:\t%E \n", ratio);
-#endif
-  
-      fprintf(write,"\nParticles per cell %E\n", partpercell);
-      partpercell=npartinit[0]*dx*dy*dz/(Lx*Ly*Lz-dustvolume); //volume = total - dust
-      if(numtasks>1)
-	    partpercell*=(numtasks-1);
-      fprintf(write,"\nElectrons per cell %E\n", partpercell);
-      fprintf(write,"Floating potential %E\n", tempx[0]*log(sqrt((tempx[0]*mass[1])/(tempx[1]*mass[0])))/charge[0]);
+}
 
-      printf("floating potential %E\n log %E\n", tempx[0]/charge[0], log(sqrt((tempx[0]*mass[1])/(tempx[1]*mass[0]))));
-      fprintf(write,"Total debye length %E\n", debyetotal);
-      fprintf(write, "Plasma number, Np  %E\n", debyetotal*debyetotal*debyetotal*dens[0]);
-      fprintf(write,"Cs (adiabatic ions) %E [m/s]\n", Cs);
-   
-   
-   
-      fprintf(write,"PROBE potential: initial:%f V, final: %f V, step: %f V\n", Vpr_begin, Vpr_end, Vpr_step);
-      fprintf(write, "\nBOUNDARY potential: %f V\n", Vbound);
-      fprintf(write, "TOLERANCE for Poisson's equation solver: %E\n", TOLERANCE);
-      fprintf(write, "Tolerance for the floating potential (conductor): %E\n", tolfloating);
-      printf("Completed: readdata(),\n Input parameters are printed in file ''print.txt''.\n");
-         
-    fclose(write);
-   }
-   
-  /*No particles on rank 0*/
-  if((numtasks>1) && (rank==0))
-    {
-      for(i=0; i<S; i++)
-	npartinit[i]=npart[i]=0;
-    }
+static void free_strarr(char** strarr){
 
-  /*initiate frequently used variables*/
-  pi=M_PI;
-  sqrt_two=sqrt(2);
-  sqrt_twopi=sqrt(2*M_PI);
-  sqrt_pi=sqrt(M_PI);  
-	
+	for(int i=0;strarr[i];i++) free(strarr[i]);
+	free(strarr);
 
-  //this is for ??
-		int ti;
-		ti=0;	
-  c0[ti]=c1[ti]=c2[ti]=c3[ti]=c4[ti]=c5[ti]=0;
-  	ti=1;	
-  c0[ti]=c1[ti]=c2[ti]=c3[ti]=c4[ti]=c5[ti]=0;
- } 
- 
+}
+
