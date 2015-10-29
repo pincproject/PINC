@@ -104,13 +104,16 @@ typedef struct{
  * @endcode
  */
 typedef struct{
-	double *val;		///< The values on the grid
-	int *nNodes;		///< The number of nodes per direction (nDim elements)
-	int *nNodesProd;	///< Cumulative product of nNodes (nDim+1 elements)
-	int *compNode;		///< Computational node (nDim elements)
-	int *nCompNodes;	///< Number of computational nodes (nDim elements)
-	int nDims;			///< Number of dimensions (usually 3)
-	int nValues;		///< Number of values per node (usually 1 or 3)
+	double *val;				///< The values on the grid
+	int *nNodes;				///< The number of nodes per direction (nDims elements)
+	int *nNodesProd;			///< Cumulative product of nNodes (nDims+1 elements)
+	int *compNode;				///< Computational node (nDim elements)
+	int *nCompNodes;			///< Number of computational nodes (nDim elements)
+	int *nGhostNodes;			///< Number of ghost nodes (2*nDims elements)
+	int *offset;				///< Offset from global reference frame
+	double *nTrueNodesRecip;	///< Reciprocal of (nNodes minus ghost nodes) (nDims elements)
+	int nDims;					///< Number of dimensions (usually 3)
+	int nValues;				///< Number of values per node (usually 1 or 3)
 } Grid;
 
 /******************************************************************************
