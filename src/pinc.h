@@ -261,14 +261,29 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements);
  * @param			key			Key string to look for
  * @param[out]		nElements	Number of elements in returned array
  * @return			array of integers
- * @see				iniGetStrArr(), iniGetDoubleArr(), iniparser_getint()
+ * @see				iniGetLongIntArr(), iniGetStrArr(), iniGetDoubleArr(), iniparser_getint()
  *
  * Remember to free result array using free(). 
  *
  * This function can be seen as an extension to iniparser in order to parse
  * comma-separated entries as arrays.
  */
-long int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
+int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
+
+/**
+ * @brief Get the array of long integers associated to a key.
+ * @param			ini			Dictionary to search
+ * @param			key			Key string to look for
+ * @param[out]		nElements	Number of elements in returned array
+ * @return			array of integers
+ * @see				iniGetIntArr()
+ *
+ * Remember to free result array using free(). 
+ *
+ * This function can be seen as an extension to iniparser in order to parse
+ * comma-separated entries as arrays.
+ */
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements);
 
 /**
  * @brief Get the array of doubles associated to a key.
