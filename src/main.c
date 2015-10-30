@@ -14,33 +14,44 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
+#include <gsl/gsl_rng.h>
 
 int main(int argc, char *argv[]){
 
+	/*
+	 * INITIALIZE THIRD PARTY LIBRARIES
+	 */
 	MPI_Init(&argc,&argv);
 	msg(STATUS,"PINC started.");
 
+	// Random Number Generator (RNG)
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+
 	/*
-	 * READ INPUT FILE
+	 * INITIALIZE PINC VARIABLES
 	 */
 	dictionary *ini = iniOpen(argc,argv);
-//	ini_complete_time(ini);
-//	ini_complete_grid(ini);
-
 	Population *pop = allocPopulation(ini);
 
 	/*
-	 * SUCCESSFUL EXIT
+	 * TEST ZONE
 	 */
 
+
+	/*
+	 * FINALIZE PINC VARIABLES
+	 */
 	freePopulation(pop);
-
 	iniparser_freedict(ini);
-	msg(STATUS,"PINC completed successfully!");
 
+	/*
+	 * FINALIZE THIRD PARTY LIBRARIES
+	 */
+	gsl_rng_free(rng);
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
-	return 0;
 
+	return 0;
 }
 
 

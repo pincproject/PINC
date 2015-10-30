@@ -9,7 +9,7 @@ EXEC	= pinc
 CC		= mpicc
 CFLAGS	= -std=c11 -Wall -O3 \
 		-Ilib/iniparser/src \
-		-lm
+		-lm -lgsl -lblas
 
 SDIR	= src
 ODIR	= src
@@ -18,7 +18,7 @@ LDIR	= lib
 DDIR	= doc
 
 HEAD_	= pinc.h
-SRC_	= main.c io.c particles.c
+SRC_	= main.c io.c aux.c population.c grid.c
 OBJ_	= $(SRC_:.c=.o)
 
 HEAD	= $(patsubst %,$(HDIR)/%,$(HEAD_))

@@ -18,15 +18,14 @@
  * @brief Contains a population of particles.
  * 
  * The position and velocity is stored in a flat manner, such that (x,y,z) of
- * particle 0 comes first, then (x,y,z) of particle 1, and so on (in the case
- * of nDim=3 dimensions). As an example, printing the (x,y,z) position of the
- * first 3 particles:
+ * particle 0 comes first, then (x,y,z) of particle 1, and so on (assuming 3D).
+ * As an example, printing the (x,y,z) position of the first 3 particles:
  *
  * @code
  *	Population pop;
  *  ...
  *	for(int i=0;i<3;i++){
- *		double *iPos = &pop.pos[i*pop.nDim];
+ *		double *iPos = &pop.pos[i*pop.nDims];
  *		printf("Particle %i is located at (%f,%f,%f).\n",i,iPos[0],iPos[1],iPos[2]);
  *	}
  * @endcode
@@ -39,9 +38,8 @@
  * specie. The last element is then simply the number of particles allocated
  * in total.
  *
- * energy[i] simply holds the energy of particle i, or if energy is not
+ * energy[i] simply holds the kinetic energy of particle i, or if energy is not
  * computed, energy points to NULL.
- *
  */
 typedef struct{
 	double *pos;		///< Position
@@ -56,41 +54,81 @@ typedef struct{
 } Population;
 
 /**
- * @brief Contains grid functions, for instance charge density or E-field.
- * 
- * Can represent both scalar fields and vector fields. For scalar fields
- * nValues=1, whereas vector fields typically have nValues=nDim=3. The nodes
- * are lexicographically ordered, i.e.\ node (0,0,0), (1,0,0), (2,0,0), ...,
- * (0,1,0), .... Thus for a 3-dimensional scalar field rho, the field value at
- * node (j,k,l) is accessed in the following manner:
+ * @brief Contains specification on how the grid is structured and decomposed.
+ *
+ * The total simulation domain can be split across several MPI nodes where the
+ * position J,K,L (in case of 3D) of each sub-domain is stored in node. nNodes
+ * represents the number of sub-domains along each dimension.
+ *
+ * nDims and nGPoints specifies the number of dimensions and the number of grid
+ * points along each of them in this node. The number of grid points include
+ * true grid points plus ghost grid points that are copied from the
+ * neighbouring MPI node. The number of ghost points copied from the neighbours
+ * is given in nGhosts. Consider the following 1D example grid:
+ *
+ * 	g	x	x	x	x	g	g
+ *
+ * It consists of nGPoints[0]=7 grid points but the leftmost and the two right-
+ * most are simply copied from the neighbours. Hence, nGhosts={1,2}. For
+ * several dimensions nGPoints first lists all ghosts on the lower edge along
+ * all dimensions then all ghosts on the upper edge.
+ *
+ * Position of particles and objects is normalized with respect to stepsize
+ * and can be specified in a global reference frame, or one local to the node.
+ * The local reference frame is defined such that a particle with integer
+ * position (j,k,l) would be located _on_ grid point (j,k,l). This makes it
+ * fast to determine the index of the nodes surrounding a particle. The offset
+ * between the global and the local reference frames is stored in offset for
+ * easy conversion, and the variable posToNode is handy for determining the
+ * node to which a particle belong (if it exits the sub-domain of this node),
+ * e.g. for 1D:
  *
  * @code
- *	Grid rho;
- *	...
- *  int p = j + k*rho.nNodes[0] + l*rho.nNodes[0]*rho.nNodes[1];
- *	printf("rho(%i,%i,%i)=%f\n",j,k,l,rho.val[p]);
+ *	J = (int)(posToNode[0]*pos[0]);
  * @endcode
  *
- * For convenience, nNodesProd contains the cumulative product of nNodes:
+ * Finally, nGPointsProd contains the cumulative products of nGPoints:
  *
  * @code
- *	nNodesProd[0]=1;						// Corresponding to a j-increment
- *	nNodesProd[1]=1*nNodes[0];				// Corresponding to a k-increment
- *	nNodesProd[2]=1*nNodes[0]*nNodes[1];	// Corresponding to an l-increment
+ *	nGPointsProd[0]=1;
+ *	nGPointsProd[1]=1*nGPoints[0];
+ *	nGPointsProd[2]=1*nGPoints[0]*nGPoints[1];
  *  ...
  * @endcode
  *
- * with the last element being the total number of nodes. Note that
- * nNodesProd[d] corresponds to an increment in direction d, and that this
- * can be useful for saving operations. For instance if rho(j,k,l) and
- * rho(j,k+1,l) is to be printed:
+ * nGPointsProd[nDims] will be the total number of grid points.
+ *
+ * @see Grid
+ */
+typedef struct{
+	int nDims;					///< Number of dimensions (usually 3)
+	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
+	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
+	int *nGhosts;				///< Number of ghost grid points (2*nDims elements)
+	int *node;					///< MPI node (nDims elements)
+	int *nNodes;				///< Number of MPI nodes (nDims elements)
+	int *offset;				///< Offset from global reference frame (nDims elements)
+	double *posToNode;			///< Factor for converting position to node (nDims elements)
+} Grid;
+
+/**
+ * @brief A quantity defined on a grid, for instance charge density.
+ * 
+ * Can represent both scalar and vector quantities. For scalar quantities
+ * nValues=1, whereas vector fields typically have nValues=nDims=3. The nodes
+ * are lexicographically ordered, i.e. node (0,0,0), (1,0,0), (2,0,0), ...,
+ * (0,1,0), .... Thus for a 3-dimensional scalar quantity rho, the field value
+ * at node (j,k,l) is accessed in the following manner:
  *
  * @code
- *  int p = j + k*rho.nNodesProd[1] + l*rho.nNodesProd[2];
- *	printf("rho(%i,%i,%i)=%f\n",j,k,l,rho.val[p]);
- *  p += rho.nNodesProd[1];
- *	printf("rho(%i,%i,%i)=%f\n",j,k+1,l,rho.val[p]);
+ *	Grid *rho;
+ *	...
+ *  int *nGPointsProd = rho->grid->nGPointsProd;
+ *  int p = j + k*nGPointsProd[1] + l*nGPointsProd[2];
+ *	printf("rho(%i,%i,%i)=%f\n",j,k,l,rho->val[p]);
  * @endcode
+ *
+ * Note that nGPointsProd[d] represents an increment of 1 in direction d.
  * 
  * For vector fields all values are stored one node at a time. For instance, to
  * print the vector value of E at node (j,k,l):
@@ -98,30 +136,24 @@ typedef struct{
  * @code
  *	Grid E;
  *	...
- *  int p = j + k*E.nNodesProd[1] + l*E.nNodesProd[2];
- *	double *pVal = &E.value[p*E.nValues];
+ *  int *nGPointsProd = E->grid->nGPointsProd;
+ *  int p = j + k*nGPointsProd[1] + l*nGPointsProd[2];
+ *	double *pVal = &E.val[p*E.nValues];
  *	printf("The field at node (%i,%i,%i) is (%f,%f,%f).\n",j,k,l,pVal[0],pVal[1],pVal[2]);
  * @endcode
  */
 typedef struct{
 	double *val;				///< The values on the grid
-	int *nNodes;				///< The number of nodes per direction (nDims elements)
-	int *nNodesProd;			///< Cumulative product of nNodes (nDims+1 elements)
-	int *compNode;				///< Computational node (nDim elements)
-	int *nCompNodes;			///< Number of computational nodes (nDim elements)
-	int *nGhostNodes;			///< Number of ghost nodes (2*nDims elements)
-	int *offset;				///< Offset from global reference frame
-	double *nTrueNodesRecip;	///< Reciprocal of (nNodes minus ghost nodes) (nDims elements)
-	int nDims;					///< Number of dimensions (usually 3)
 	int nValues;				///< Number of values per node (usually 1 or 3)
-} Grid;
+	Grid *grid;					///< Specifications of the grid
+} GridQuantity;
 
 /******************************************************************************
  * DEFINED IN IO.C
  *****************************************************************************/
 
 /**
- * Enumeration for message kinds
+ * @brief Defines different types of messages
  * @see msg()
  */
 typedef enum{
@@ -282,7 +314,52 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
  */
 void freeStrArr(char** strArr);
 
+/******************************************************************************
+ * DEFINED IN AUX.C
+ *****************************************************************************/
+
+/**
+ * @brief Returns the product of all elements in an integer array
+ * @param	a			Pointer to array
+ * @param	nElements	Number of elements in array
+ * @return	Product
+ */
+int intArrProd(const int *a, int nElements);
+
+/**
+ * @brief Returns the cumulative product of the elements in an integer array
+ * @param	a			pointer to array
+ * @param	nElements	Number of elements in array
+ * @return	Pointer to allocated array of size nElements+1
+ *
+ * The result will be given by:
+ * @code
+ *	result[0] = 1;
+ *	result[1] = a[0];
+ *	result[2] = a[0]*a[1];
+ *	...
+ * @endcode
+ */
+int *intArrCumProd(const int *a, int nElements);
+
+/**
+ * @brief Returns the product of all elements in an integer array
+ * @param	a			pointer to array
+ * @param	b			pointer to array
+ * @param	nElements	Number of elements in arrays
+ * @return	Pointer to allocated array of size nElements
+ */
+int *intArrMul(const int *a, const int *b, int nElements);
+
+/******************************************************************************
+ * DEFINED IN POPULATION.C
+ *****************************************************************************/
+Population *allocPopulation(const dictionary *ini);
 void freePopulation(Population *pop);
-Population *allocPopulation(dictionary *ini);
+/******************************************************************************
+ * DEFINED IN GRID.C
+ *****************************************************************************/
+
+
 
 #endif // PINC_H
