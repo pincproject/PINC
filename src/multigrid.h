@@ -24,10 +24,10 @@
 
 typedef struct{
   double *val;    ///< The values on the grid
-  int *nNodes;    ///< The number of nodes per direction (nDim elements)
-  int *nNodesProd;  ///< Cumulative product of nNodes (nDim+1 elements)
-  int *compNode;    ///< Computational node (nDim elements)
-  int *nCompNodes;  ///< Number of computational nodes (nDim elements)
+  int *nGPoints;    ///< The number of nodes per direction (nDim elements)
+  int *nGPointProd;  ///< Cumulative product of nNodes (nDim+1 elements)
+  int *node;    ///< Computational node (nDim elements)
+  int *nNodes;  ///< Number of computational nodes (nDim elements)
   int nDims;      ///< Number of dimensions (usually 3)
   int nValues;    ///< Number of values per node (usually 1 or 3)
 } Grid;
@@ -46,8 +46,11 @@ typedef struct {
 /*   void (*preSmooth)(void);
 */} Multigrid;
 
+//Useful functions
+int *getCompNode(const dictionary *ini);
+
 //Initialisers for the grid and multigrid structs
-Grid *allocGrid(dictionary *ini, int nValues);
+Grid *allocGrid(const dictionary *ini,const int nValues);
 
 void freeGrid(Grid *grid);
 

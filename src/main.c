@@ -25,6 +25,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * READ INPUT FILE
 	 */
+	 
 	dictionary *ini = iniOpen(argc,argv);
 //	ini_complete_time(ini);
 //	ini_complete_grid(ini);

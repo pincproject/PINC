@@ -2,9 +2,43 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include "multigrid.h"
+#include "pinc.h"
 
 
-Grid *allocGrid(dictionary *ini, int nValues){
+int *getCompNode(const dictionary *ini){
+
+/*    // Get MPI info
+    int nCompNodesTotal, rank;
+    MPI_Comm_size(MPI_COMM_WORLD,&nCompNodesTotal);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+    // Get ini info
+    int nDims;
+    long int *nCompNodes = iniGetIntArr(ini,"grid:nCompNode",&nDims);
+    int *nCompNodesProd = vCumProdInt(nCells,nDims);
+
+    // Sanity check
+    if(nCompNodesTotal!=nCompNodesProd[nDims])
+        msg(ERROR,"grid:nCompNodes doesn't match the number of MPI nodes").
+
+    // Determine compNode
+    int *compNode = malloc(nDims*sizeof(int));
+    for(int d=0;d<nDims;d++){
+
+        compNode[d] = rank % nCompNodes[d];
+        rank /= nCompNodes[d];
+
+    }*/
+
+    int *compNode = malloc(3*sizeof(int));
+
+    return compNode;
+
+
+}
+
+
+Grid *allocGrid(const dictionary *ini, const  int nValues){
 	/**
 	* This function initalises the grid struct, and sets all the parameters from
 	* the input file
@@ -12,6 +46,8 @@ Grid *allocGrid(dictionary *ini, int nValues){
 	* Output:	Grid *grid
 	*/
 
+	//Sanity check
+	//TBD
 
 	// Get MPI info
 	int nNodes, rank;
@@ -19,12 +55,7 @@ Grid *allocGrid(dictionary *ini, int nValues){
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	// Load data from ini
-
-
-
-
-
-
+	int nDims = iniGetNElements(ini, "grid:nCells");
 
 
 /*    grid->nDim = nDim;
@@ -41,11 +72,8 @@ Grid *allocGrid(dictionary *ini, int nValues){
     /* Store in Grid */
     Grid *grid = malloc(sizeof(Grid));
 
-	grid->nDim = nDim;
+	grid->nDims = nDims;
     grid->nValues = nValues;
-
-
-
 
     return grid;
 }
@@ -57,7 +85,7 @@ void freeGrid(Grid *grid){
 
 	/*free(grid->nValues);*/
 
-	return
+	return;
 }
 
 void allocMultigrid(void){
@@ -97,9 +125,6 @@ void allocMultigrid(void){
     	gridInit(&grid, nNodes, nDim, nValues);
     	multigrid->grids[i] = grid;
 	}*/
-
-
-
 
 	return ;
 }
