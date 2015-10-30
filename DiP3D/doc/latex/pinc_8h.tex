@@ -1,0 +1,86 @@
+\hypertarget{pinc_8h}{}\section{/home/gullik/\+Documents/\+Pi\+C/mn-\/fysrp-\/pic/\+Di\+P3\+D/src/pinc.h File Reference}
+\label{pinc_8h}\index{/home/gullik/\+Documents/\+Pi\+C/mn-\/fysrp-\/pic/\+Di\+P3\+D/src/pinc.\+h@{/home/gullik/\+Documents/\+Pi\+C/mn-\/fysrp-\/pic/\+Di\+P3\+D/src/pinc.\+h}}
+
+
+P\+I\+N\+C main routine.  
+
+
+\subsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{pinc_8h_a7daa50d9b329f39c9c905b7466d3455d}{}enum {\bfseries msg\+\_\+kind} \{ {\bfseries S\+T\+A\+T\+U\+S}, 
+{\bfseries W\+A\+R\+N\+I\+N\+G}, 
+{\bfseries E\+R\+R\+O\+R}
+ \}\label{pinc_8h_a7daa50d9b329f39c9c905b7466d3455d}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{pinc_8h_a8936b6e0080553a6d24710d459cf8853}{parse\+\_\+input} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Parse P\+I\+N\+C\textquotesingle{}s input argument and input file. \end{DoxyCompactList}\item 
+void \hyperlink{pinc_8h_a571064db559b63c461066f6ae7b5f137}{msg} (msg\+\_\+kind kind, const char $\ast$restrict format,...)
+\begin{DoxyCompactList}\small\item\em The P\+I\+N\+C equivalent of printf(). \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+P\+I\+N\+C main routine. 
+
+\begin{DoxyAuthor}{Author}
+Sigvald Marholm \href{mailto:sigvaldm@fys.uio.no}{\tt sigvaldm@fys.\+uio.\+no} 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+University of Oslo, Norway 
+\end{DoxyCopyright}
+\begin{DoxyDate}{Date}
+11.\+10.\+15
+\end{DoxyDate}
+P\+I\+N\+C main header file. Holding the central function declarations comprising the P\+I\+N\+C program. 
+
+\subsection{Function Documentation}
+\hypertarget{pinc_8h_a571064db559b63c461066f6ae7b5f137}{}\index{pinc.\+h@{pinc.\+h}!msg@{msg}}
+\index{msg@{msg}!pinc.\+h@{pinc.\+h}}
+\subsubsection[{msg(msg\+\_\+kind kind, const char $\ast$restrict format,...)}]{\setlength{\rightskip}{0pt plus 5cm}void msg (
+\begin{DoxyParamCaption}
+\item[{msg\+\_\+kind}]{kind, }
+\item[{const char $\ast$restrict}]{format, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}\label{pinc_8h_a571064db559b63c461066f6ae7b5f137}
+
+
+The P\+I\+N\+C equivalent of printf(). 
+
+kind S\+T\+A\+T\+U\+S, W\+A\+R\+N\+I\+N\+G or E\+R\+R\+O\+R depending on what to output. 
+\begin{DoxyParams}{Parameters}
+{\em format} & Error message with specification of how to interpret data. \\
+\hline
+{\em ...} & Data to be interpreted in message. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void
+\end{DoxyReturn}
+This is the way to output information from P\+I\+N\+C. Similar syntax to printf(). In the case of an E\+R\+R\+O\+R, the program is terminated. Appends end-\/of-\/line automatically at the end. \hypertarget{pinc_8h_a8936b6e0080553a6d24710d459cf8853}{}\index{pinc.\+h@{pinc.\+h}!parse\+\_\+input@{parse\+\_\+input}}
+\index{parse\+\_\+input@{parse\+\_\+input}!pinc.\+h@{pinc.\+h}}
+\subsubsection[{parse\+\_\+input(int argc, char $\ast$argv[])}]{\setlength{\rightskip}{0pt plus 5cm}void parse\+\_\+input (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]}}
+\end{DoxyParamCaption}
+)}\label{pinc_8h_a8936b6e0080553a6d24710d459cf8853}
+
+
+Parse P\+I\+N\+C\textquotesingle{}s input argument and input file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em argc} & Argument count \\
+\hline
+{\em argv} & Argument vector \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void
+\end{DoxyReturn}
+This function performs a sanity check of argc and argv and reads the specified input file. It performs the necessary sanity checks of its data and stores the values. It also computes derived values. In case of failure it prints an error to stderr and terminates P\+I\+N\+C. 

@@ -1,7 +1,7 @@
 ##
 ## @file		makefile
 ## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
-## @copyright	University of Oslo, Norway
+## @copyright		University of Oslo, Norway
 ## @brief		PINC makefile.
 ## @date		10.10.15
 ##
@@ -17,8 +17,8 @@ HDIR	= src
 LDIR	= lib
 DDIR	= doc
 
-HEAD_	= pinc.h
-SRC_	= main.c io.c particles.c
+HEAD_	= pinc.h multigrid.h
+SRC_	= main.c io.c particles.c multigrid.c
 OBJ_	= $(SRC_:.c=.o)
 
 HEAD	= $(patsubst %,$(HDIR)/%,$(HEAD_))

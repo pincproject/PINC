@@ -103,7 +103,7 @@ typedef struct{
  *	printf("The field at node (%i,%i,%i) is (%f,%f,%f).\n",j,k,l,pVal[0],pVal[1],pVal[2]);
  * @endcode
  */
-typedef struct{
+/*typedef struct{
 	double *val;		///< The values on the grid
 	int *nNodes;		///< The number of nodes per direction (nDim elements)
 	int *nNodesProd;	///< Cumulative product of nNodes (nDim+1 elements)
@@ -111,7 +111,7 @@ typedef struct{
 	int *nCompNodes;	///< Number of computational nodes (nDim elements)
 	int nDims;			///< Number of dimensions (usually 3)
 	int nValues;		///< Number of values per node (usually 1 or 3)
-} Grid;
+} Grid;*/
 
 /******************************************************************************
  * DEFINED IN IO.C
