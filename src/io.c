@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-//#include <string.h>
 #include <math.h>
 #include <mpi.h>
 #include "iniparser.h"
@@ -187,12 +186,25 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
 
 }
 
-long int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
 
 	char **strArr = iniGetStrArr(ini,key,nElements);
 
 	long int *result = malloc(*nElements*sizeof(long int));
 	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
+
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	int *result = malloc(*nElements*sizeof(int));
+	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,10);
 
 	freeStrArr(strArr);
 
