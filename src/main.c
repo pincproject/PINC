@@ -37,30 +37,33 @@ int main(int argc, char *argv[]){
 	 * TEST ZONE
 	 */
 
+	int nDims = 3;
+
 	Grid *grid = malloc(sizeof(Grid));
-	grid->nDims = 3;
-	grid->node = malloc(grid->nDims*sizeof(int));
+	grid->nDims = nDims;
+	grid->node = malloc(nDims*sizeof(int));
 	grid->node[0] = 1;
 	grid->node[1] = 1;
 	grid->node[2] = 1;
-	grid->nNodes = malloc(grid->nDims*sizeof(int));
-	grid->nNodes[0] = 1;
-	grid->nNodes[1] = 1;
-	grid->nNodes[2] = 1;
-	grid->nGPoints = malloc(grid->nDims*sizeof(int));
-	grid->nGPoints[0] = 16;
-	grid->nGPoints[1] = 16;
-	grid->nGPoints[2] = 16;
-	grid->nGhosts = malloc(grid->nDims*sizeof(int));
-	grid->nGhosts[0] = 0;
-	grid->nGhosts[1] = 0;
-	grid->nGhosts[2] = 0;
-	grid->posToNode = malloc(grid->nDims*sizeof(double));
-	grid->posToNode[0] = 1.0/16;
-	grid->posToNode[1] = 1.0/16;
-	grid->posToNode[2] = 1.0/16;
+	grid->nNodes = malloc(nDims*sizeof(int));
+	grid->nNodes[0] = 4;
+	grid->nNodes[1] = 4;
+	grid->nNodes[2] = 4;
+	grid->posToNode = malloc(nDims*sizeof(double));
+	grid->posToNode[0] = 1.0/128;
+	grid->posToNode[1] = 1.0/128;
+	grid->posToNode[2] = 1.0/128;
 
 	populateUniformly(ini,pop,grid,rng);
+
+	for(int s=0;s<pop->nSpecies;s++){
+		msg(STATUS,"specie %i",s);
+		msg(STATUS,"iStart=%i, iStop=%i, particles=%i",pop->iStart[s],pop->iStop[s],pop->iStop[s]-pop->iStart[s]+1);
+		for(long int i=pop->iStart[s];i<=pop->iStop[s];i++){
+			double *pos=&pop->pos[i*nDims];
+//			msg(STATUS,"particle at %f,%f,%f",pos[0],pos[1],pos[2]);
+		}
+	}
 
 
 	/*
