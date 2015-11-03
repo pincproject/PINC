@@ -17,13 +17,10 @@ HDIR	= src
 LDIR	= lib
 DDIR	= doc
 
-<<<<<<< HEAD
+
 HEAD_	= pinc.h multigrid.h
-SRC_	= main.c io.c particles.c multigrid.c
-=======
-HEAD_	= pinc.h
-SRC_	= main.c io.c aux.c population.c grid.c
->>>>>>> new_main
+SRC_	= main.c io.c aux.c population.c grid.c multigrid.c
+
 OBJ_	= $(SRC_:.c=.o)
 
 HEAD	= $(patsubst %,$(HDIR)/%,$(HEAD_))

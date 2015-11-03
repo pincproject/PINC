@@ -15,7 +15,6 @@
 #include "pinc.h"
 #include "iniparser.h"
 #include "multigrid.h"
-#include <gsl/gsl_rng.h>
 
 int main(int argc, char *argv[]){
 
@@ -25,32 +24,30 @@ int main(int argc, char *argv[]){
 	MPI_Init(&argc,&argv);
 	msg(STATUS,"PINC started.");
 
-	// Random Number Generator (RNG)
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
 	 
 	dictionary *ini = iniOpen(argc,argv);
-	Population *pop = allocPopulation(ini);
 
-	Grid *grid = allocGrid(ini, 1);
+	Grid *grid = allocGrid(ini);
 
+	GridQuantity *gridQuantity = allocGridQuantity(ini, grid);
+
+	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
+
+/*
 	msg(STATUS, "#Grid values per grid point = %d", grid->nValues);
-
+*/
 	/*
 	 * TEST ZONE
 	 */
 
 
 
-	freePopulation(pop);
-
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
-	freePopulation(pop);
 	freeGrid(grid);
 	iniparser_freedict(ini);
 
@@ -59,7 +56,6 @@ int main(int argc, char *argv[]){
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */
-	gsl_rng_free(rng);
 	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 

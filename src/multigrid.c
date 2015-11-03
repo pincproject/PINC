@@ -5,40 +5,7 @@
 #include "pinc.h"
 
 
-int *getCompNode(const dictionary *ini){
-
-/*    // Get MPI info
-    int nCompNodesTotal, rank;
-    MPI_Comm_size(MPI_COMM_WORLD,&nCompNodesTotal);
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
-    // Get ini info
-    int nDims;
-    long int *nCompNodes = iniGetIntArr(ini,"grid:nCompNode",&nDims);
-    int *nCompNodesProd = vCumProdInt(nCells,nDims);
-
-    // Sanity check
-    if(nCompNodesTotal!=nCompNodesProd[nDims])
-        msg(ERROR,"grid:nCompNodes doesn't match the number of MPI nodes").
-
-    // Determine compNode
-    int *compNode = malloc(nDims*sizeof(int));
-    for(int d=0;d<nDims;d++){
-
-        compNode[d] = rank % nCompNodes[d];
-        rank /= nCompNodes[d];
-
-    }*/
-
-    int *compNode = malloc(3*sizeof(int));
-
-    return compNode;
-
-
-}
-
-
-Grid *allocGrid(const dictionary *ini, const  int nValues){
+Grid *allocGrid(const dictionary *ini){
 	/**
 	* This function initalises the grid struct, and sets all the parameters from
 	* the input file
@@ -73,10 +40,11 @@ Grid *allocGrid(const dictionary *ini, const  int nValues){
     Grid *grid = malloc(sizeof(Grid));
 
 	grid->nDims = nDims;
-    grid->nValues = nValues;
 
     return grid;
 }
+
+
 
 void freeGrid(Grid *grid){
 	/**
@@ -88,7 +56,7 @@ void freeGrid(Grid *grid){
 	return;
 }
 
-void allocMultigrid(void){
+Multigrid *allocMultigrid(const dictionary *ini){
 	/**
 	* This function initalises the MultiGrid struct,
 	* Input: 	grid: 	pointer to finegrid struct
@@ -126,5 +94,30 @@ void allocMultigrid(void){
     	multigrid->grids[i] = grid;
 	}*/
 
-	return ;
+    Multigrid *multigrid = malloc(sizeof(Multigrid));
+
+
+    /*
+     * Test area pointer function
+    */
+    int strElements;
+    char **preSmoothName = iniGetStrArr(ini,"algorithms:preSmooth", &strElements);
+  	
+    printf("%s  \n",preSmoothName[0]);
+    preSmooth = &jacobian;
+
+  	preSmooth();
+
+	return multigrid;
+}
+
+void jacobian(void){
+	printf("Hello from Jacobian \n");
+	return;
+}
+
+void gaussSeidel(void){
+
+	printf("Hello from Gauss Seidel\n");
+	return;
 }
