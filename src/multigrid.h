@@ -3,7 +3,7 @@
 #define MULTIGRID_H
 
 /**
- * @file    multigrid.c
+ * @file    multigrid.h
  * @author    Gullik Vetvik Killie <gullikvk@fys.uio.no>
  * @copyright University of Oslo, Norway
  * @brief   Poisson Solver, Multigrid.
@@ -34,10 +34,9 @@ typedef struct {
 //Initialisers for the grid and multigrid structs
 Grid *allocGrid(const dictionary *ini);
 
+GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid);
 
-GridQuantity * allocGridQuantity(const dictionary *ini, Grid *grid);
-
-Multigrid *allocMultigrid(const dictionary *ini, const GridQuantity *gridQuantity);
+Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 
 
 

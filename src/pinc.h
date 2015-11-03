@@ -96,7 +96,7 @@ typedef struct{
  *  ...
  * @endcode
  *
- * nGPointsProd[nDims] will be the total number of grid points.
+ * nGPointsProd[nDims-1] will be the total number of grid points.
  *
  * @see Grid
  */
