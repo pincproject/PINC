@@ -31,8 +31,9 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv);
 
 	Grid *grid = allocGrid(ini);
+	gridParseDump(ini, grid);
 
-	GridQuantity *gridQuantity = allocGridQuantity(ini, grid);
+	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
 
 	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
 
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * TEST ZONE
 	 */
-
+	 multigrid->preSmooth();
 
 
 	/*
@@ -50,8 +51,6 @@ int main(int argc, char *argv[]){
 	 */
 	freeGrid(grid);
 	iniparser_freedict(ini);
-
-
 
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES

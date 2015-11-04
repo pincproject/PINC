@@ -28,22 +28,25 @@ typedef struct {
    //func Presmoother;
    //func PostSmoother;
    //func CoarseGridSolver;
+   void (*coarseSolv)(void);
+   void (*postSmooth)(void);
+   void (*preSmooth)(void);
 } Multigrid;
 
 
 //Initialisers for the grid and multigrid structs
 Grid *allocGrid(const dictionary *ini);
 
-GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid);
+GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 
 
+//Dumps the 
+void gridParseDump(dictionary *ini, Grid *grid);
 
 void gaussSeidel(void);
 void jacobian(void);
-void (*preSmooth)(void);
-
 
 void freeGrid(Grid *grid);
 

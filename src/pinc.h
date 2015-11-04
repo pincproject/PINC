@@ -53,6 +53,9 @@ typedef struct{
 	int nDims;			///< Number of dimensions (usually 3)
 } Population;
 
+/****************************************************************************
+***			Defined in multigrid.c temporarily
+****************************************************************************/
 /**
  * @brief Contains specification on how the grid is structured and decomposed.
  *
@@ -145,7 +148,7 @@ typedef struct{
 
 typedef struct{
 	double *val;				///< The values on the grid
-	int nValues;				///< Number of values per node (usually 1 or 3)
+	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
 } GridQuantity;
 

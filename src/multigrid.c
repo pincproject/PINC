@@ -45,7 +45,7 @@ Grid *allocGrid(const dictionary *ini){
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need ghost cells depth for all the boundaries");
+		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*Dim");
 	}
 	
 	// Calculate the number of grid points (True points + ghost points)
@@ -75,19 +75,6 @@ Grid *allocGrid(const dictionary *ini){
 		posToNode[i] = (double) offset[i] * dr[i];
 	}
 
-/*	msg(WARNING, "node[%d, %d, %d] has offset[] = [%d, %d, %d] and position[] = [%f, %f, %f]", \
-		node[0], node[1],node[2],offset[0], offset[1], offset[2], posToNode[0], posToNode[1], posToNode[2]);
-*/
-/*	printf("True Grid Points = %d \n", nTGPoints[0]);
-	printf("nGhosts = %d \n", nGhosts[0]);
-	printf("nBoundaries = %d \n", nBoundaries);
-	printf("Grid points: = %d \n", nGPoints[0]);
-	printf("nGPoints = %d \n", nGPoints[0]);
-
-	printf("I process %d, am node [%d, %d, %d] \n", rank, node[0], node[1],node[2]);
-
-	printf("nGPointsProd[nDims] = %d \n", nGPointsProd[nDims-1]);
-
     /* Store in Grid */
     Grid *grid = malloc(sizeof(Grid));
 
@@ -102,9 +89,6 @@ Grid *allocGrid(const dictionary *ini){
 
 
 	//Free all the variables used
-/*	free(nDims);
-*/
-
 
     return grid;
 }
@@ -121,9 +105,23 @@ void freeGrid(Grid *grid){
 	return;
 }
 
-GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid){
+GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	int nGridPoints = 1;		//#Grid points in all dimensions
+
+	for(int i = 0; i < nDims; i++){
+		nGridPoints *= nGPoints[i];
+	}
+
+	double *val = malloc(nGridPoints*nValues*sizeof(double));
+	
 	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
+	gridQuantity->grid = grid;
+	gridQuantity->nValues = nValues;
+	gridQuantity->val = val;
+
 
 	return gridQuantity;
 }
@@ -167,20 +165,18 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
     	multigrid->grids[i] = grid;
 	}*/
 
+
+
     Multigrid *multigrid = malloc(sizeof(Multigrid));
+    multigrid->preSmooth = &gaussSeidel;
 
     /*
      * Test area pointer function
     */
     /*int strElements;
-    char **preSmoothName = iniGetStrArr(ini,"algorithms:preSmooth", &strElements);
+    char **preSmoothName = iniparser_getstring(ini, "multigrid:");*/
   	
-    printf("%s  \n",preSmoothName[0]);*/
-    preSmooth = &gaussSeidel;
-
-  	preSmooth();
-
-	return multigrid;
+  	return multigrid;
 }
 
 void jacobian(void){
@@ -193,3 +189,24 @@ void gaussSeidel(void){
 	printf("Hello from Gauss Seidel\n");
 	return;
 }
+
+void gridParseDump(dictionary *ini,Grid *grid){
+	/******************************************
+	*	Writing information to the parsedump
+	*******************************************/
+	fMsg(ini,"parsedump", "Grids: \n");
+
+	fMsg(ini,"parsedump", "#Computational Nodes: ");
+	for(int i = 0; i < grid->nDims; i++){
+		fMsg(ini,"parsedump", "%d " , grid->nNodes[i]);
+	}
+
+	fMsg(ini,"parsedump", "\nTotal true grid points: ");
+	for(int i = 0; i < grid->nDims; i++){
+		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[i]- \
+			(grid->nGhosts[i] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[i]);
+	}
+
+	return;
+}
+
