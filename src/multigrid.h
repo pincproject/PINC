@@ -18,36 +18,31 @@
 #include "iniparser.h"
 
 
+
+/**
+ * @brief Contains the grids needed in a multigrid solver, as well as other specifications
+ * 
+ * 
+ *
+ *
+ */
 typedef struct {
-   Grid *grids;         ///< Grids levels in the multigrid. Each grid level has half nNodes of the previous
-   int nLevels;         ///< #Grid levels
-   int nCycles;         ///< Multigrid cycles we want to run
-   //Possible to store functions in an array, so we can define which is used 
-   //at initialization?
-   //
-   //func Presmoother;
-   //func PostSmoother;
-   //func CoarseGridSolver;
-   void (*coarseSolv)(void);
-   void (*postSmooth)(void);
-   void (*preSmooth)(void);
+   Grid *grids;         		///< Array of Grid structs of decreasing coarseness
+   int nLevels;         		///< #Grid levels
+   int nCycles;         		///< Multigrid cycles we want to run
+
+   void (*coarseSolv)(void);	///< Function pointer to a Coarse Grid Solver function
+   void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
+   void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
 } Multigrid;
 
 
 //Initialisers for the grid and multigrid structs
-Grid *allocGrid(const dictionary *ini);
-
-GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
-
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 
-
 //Dumps the 
-void gridParseDump(dictionary *ini, Grid *grid);
 
 void gaussSeidel(void);
 void jacobian(void);
-
-void freeGrid(Grid *grid);
 
 #endif // MULTIGRID_H
