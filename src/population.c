@@ -22,19 +22,19 @@ Population *allocPopulation(const dictionary *ini){
 
 	// Get MPI info
 	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	MPI_Comm_size(MPI_COMM_WORLD,&size);	// Presumes sanity check on nNodes by allocGrid()
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	// Load data
 	int nSpecies;
 	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",&nSpecies);	// This is for all computing nodes
 	int nDims = iniGetNElements(ini,"grid:nTGPoints");
-	if(nDims==0)	msg(ERROR,"grid:nTGPoints not found");
+	if(nDims==0) msg(ERROR,"grid:nTGPoints not found");
 
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
 	for(int s=0;s<nSpecies;s++){
-		nAlloc[s] = ceil(nAllocTotal[s]/size);
+		nAlloc[s] = ceil((double)nAllocTotal[s]/size);
 		if(nAlloc[s]*size!=nAllocTotal[s])
 			msg(WARNING,"increased number of allocated particles from %i to %i to get integer per computing node",
 				nAllocTotal[s],nAlloc[s]*size);
@@ -79,11 +79,17 @@ void freePopulation(Population *pop){
 
 void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng){
 
+	// Check that RNGs are syncrhonized across nodes
+//	int rank;
+//	MPI_Get_rank(MPI_COMM_WORLD,&rank);
+//	double random = gsl_rng_uniform_pos(rng);
+//	MPI_Bcast(random,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+	//TBD	
+
 	// Read from ini
 	int nSpecies, nDims;
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
 	int *nTGPoints = iniGetIntArr(ini,"grid:nTGPoints",&nDims);
-	
 
 	// Read from grid
 	int *node = grid->node;
@@ -92,16 +98,9 @@ void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid,
 
 	// Compute normalized length of global reference frame
 	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++){
-		L[d] = nNodes[d]*nTGPoints[d]-1;
-		msg(STATUS,"%i=L=nNodes*(nTGPoints-1)=%i*(%i-1)",L[d],nNodes[d],nTGPoints[d]);
-	}
-	msg(STATUS,"Domain size: %i,%i,%i",L[0],L[1],L[2]);
-	msg(STATUS,"nDims=%i",nDims);
+	for(int d=0;d<nDims;d++) L[d] = nNodes[d]*nTGPoints[d]-1;
 
 	for(int s=0;s<nSpecies;s++){
-
-		msg(STATUS,"specie %i",s);
 
 		// Start on first particle of this specie
 		long int iStart = pop->iStart[s];
@@ -137,11 +136,24 @@ void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid,
 
 		pop->iStop[s]=iStop;
 
-
-
 	}
 
-//	free(L);
-//	free(nParticles);
+	// Transform to local reference frame
+	int *offset = grid->offset;
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<=iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
+		}
+	}
+
+	free(L);
+	free(nParticles);
+	free(nTGPoints);
 
 }

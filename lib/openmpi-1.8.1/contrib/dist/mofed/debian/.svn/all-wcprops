@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/ompi/!svn/ver/31474/branches/v1.8.1/contrib/dist/mofed/debian
+END
+rules.in
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/ompi/!svn/ver/31474/branches/v1.8.1/contrib/dist/mofed/debian/rules.in
+END
+compat
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/ompi/!svn/ver/31474/branches/v1.8.1/contrib/dist/mofed/debian/compat
+END
+control.in
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/ompi/!svn/ver/31474/branches/v1.8.1/contrib/dist/mofed/debian/control.in
+END
+changelog.in
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/ompi/!svn/ver/31474/branches/v1.8.1/contrib/dist/mofed/debian/changelog.in
+END

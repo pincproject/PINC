@@ -9,12 +9,12 @@
  * Replaces old DiP3D main.c file by Wojciech Jacek Miloch.
  */
 
+#include <gsl/gsl_rng.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include <gsl/gsl_rng.h>
 
 int main(int argc, char *argv[]){
 
