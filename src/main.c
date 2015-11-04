@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
 	MPI_Init(&argc,&argv);
-	msg(STATUS,"PINC started.");
+	msg(STATUS|ONCE,"PINC started.");
 
 	// Random Number Generator (RNG)
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
@@ -54,16 +54,16 @@ int main(int argc, char *argv[]){
 	grid->posToNode[1] = 1.0/128;
 	grid->posToNode[2] = 1.0/128;
 
-	populateUniformly(ini,pop,grid,rng);
+//	populateUniformly(ini,pop,grid,rng);
 
-	for(int s=0;s<pop->nSpecies;s++){
-		msg(STATUS,"specie %i",s);
-		msg(STATUS,"iStart=%i, iStop=%i, particles=%i",pop->iStart[s],pop->iStop[s],pop->iStop[s]-pop->iStart[s]+1);
-		for(long int i=pop->iStart[s];i<=pop->iStop[s];i++){
-			double *pos=&pop->pos[i*nDims];
+//	for(int s=0;s<pop->nSpecies;s++){
+//		msg(STATUS,"specie %i",s);
+//		msg(STATUS,"iStart=%i, iStop=%i, particles=%i",pop->iStart[s],pop->iStop[s],pop->iStop[s]-pop->iStart[s]+1);
+//		for(long int i=pop->iStart[s];i<=pop->iStop[s];i++){
+//			double *pos=&pop->pos[i*nDims];
 //			msg(STATUS,"particle at %f,%f,%f",pos[0],pos[1],pos[2]);
-		}
-	}
+//		}
+//	}
 
 
 	/*
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */
 	gsl_rng_free(rng);
-	msg(STATUS,"PINC completed successfully!"); // Needs MPI
+	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;

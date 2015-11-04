@@ -157,9 +157,10 @@ typedef struct{
  * @see msg()
  */
 typedef enum{
-	STATUS,		///< Normal status output about the progress of execution.
-	WARNING,	///< Warning. Something might not be like the user intended.
-	ERROR		///< Error which makes the program unable to proceed. Program will stop.
+	STATUS = 0x00,		///< Normal status output about the progress of execution.
+	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
+	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
+	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
 } msgKind;
 
 /**

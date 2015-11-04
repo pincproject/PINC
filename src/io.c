@@ -102,7 +102,7 @@ void msg(msgKind kind, const char* restrict format,...){
 	// Set prefix to output and output stream
 	char prefix[16];
 	FILE *stream;
-	switch(kind){
+	switch(kind&0x0F){
 		case STATUS:
 			strcpy(prefix,"STATUS");
 			stream=stdout;
@@ -111,7 +111,7 @@ void msg(msgKind kind, const char* restrict format,...){
 			strcpy(prefix,"WARNING");
 			stream=stderr;
 			break;
-		case ERROR:		// Error in the usage of the program
+		case ERROR:
 			strcpy(prefix,"ERROR");
 			stream=stderr;
 			break;
@@ -121,15 +121,16 @@ void msg(msgKind kind, const char* restrict format,...){
 	sprintf(prefix,"%s (%i): ",prefix,rank);
 
 	// Print message
-	fprintf(stream,"%s",prefix);
-	vfprintf(stream,format,args);
-	fprintf(stream,"\n");
-
+	if(!(kind&ONCE) || rank==0){
+		fprintf(stream,"%s",prefix);
+		vfprintf(stream,format,args);
+		fprintf(stream,"\n");
+	}
 	// Stop vararg
 	va_end(args);
 
 	// Quit if error
-	if(kind==ERROR) exit(EXIT_FAILURE);
+	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
 
 }
 

@@ -9,7 +9,7 @@ EXEC	= pinc
 CC		= mpicc
 CFLAGS	= -std=c11 -Wall -O3 \
 		-Ilib/iniparser/src \
-		-lm -lgsl -lblas -static
+		-lm -lgsl -lblas
 
 SDIR	= src
 ODIR	= src
