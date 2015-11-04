@@ -45,7 +45,7 @@ Grid *allocGrid(const dictionary *ini){
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need 2 layers of ghost cells per dimension");
+		msg(ERROR, "Need ghost cells depth for all the boundaries");
 	}
 	
 	// Calculate the number of grid points (True points + ghost points)
@@ -75,10 +75,9 @@ Grid *allocGrid(const dictionary *ini){
 		posToNode[i] = (double) offset[i] * dr[i];
 	}
 
-
-	msg(WARNING, "node[%d, %d, %d] has offset[] = [%d, %d, %d] and position[] = [%d, %d, %d]", \
+/*	msg(WARNING, "node[%d, %d, %d] has offset[] = [%d, %d, %d] and position[] = [%f, %f, %f]", \
 		node[0], node[1],node[2],offset[0], offset[1], offset[2], posToNode[0], posToNode[1], posToNode[2]);
-
+*/
 /*	printf("True Grid Points = %d \n", nTGPoints[0]);
 	printf("nGhosts = %d \n", nGhosts[0]);
 	printf("nBoundaries = %d \n", nBoundaries);
@@ -87,7 +86,7 @@ Grid *allocGrid(const dictionary *ini){
 
 	printf("I process %d, am node [%d, %d, %d] \n", rank, node[0], node[1],node[2]);
 
-	printf("nGPointsProd[nDims] = %d \n", nGPointsProd[nDims-1]);*/
+	printf("nGPointsProd[nDims] = %d \n", nGPointsProd[nDims-1]);
 
     /* Store in Grid */
     Grid *grid = malloc(sizeof(Grid));
@@ -98,6 +97,8 @@ Grid *allocGrid(const dictionary *ini){
 	grid->nGhosts = nGhosts;
 	grid->node = node;
 	grid->nNodes = nNodes;
+	grid->offset = offset;
+	grid->posToNode = posToNode;
 
 
 	//Free all the variables used
