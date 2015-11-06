@@ -126,6 +126,7 @@ Grid *allocGrid(const dictionary *ini){
 
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
+	//Load data
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
 	int nTotPoints = 1;		//#Grid points in all dimensions
@@ -144,7 +145,6 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
-
 
 	return gridQuantity;
 }
@@ -170,7 +170,7 @@ void freeGridQuantity(GridQuantity *gridQuantity){
 	return;
 }
 
-void gridParseDump(dictionary *ini, Grid *grid,GridQuantity *gridQuantityd){
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 	/******************************************
 	*	Writing information to the parsedump
 	*******************************************/
@@ -190,5 +190,16 @@ void gridParseDump(dictionary *ini, Grid *grid,GridQuantity *gridQuantityd){
 
 	fMsg(ini,"parsedump", "\n \n");
 
+
+	/*
+	 *         	TEST AREA
+	 */
+	fMsg(ini, "parsedump", "TEST AREA \n \n");
+	fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
+	for(int i = 0; i < 5; i++){
+		fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
+	}
+
+	fMsg(ini,"parsedump", "\n \n");
 	return;
 }

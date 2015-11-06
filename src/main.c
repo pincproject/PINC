@@ -34,20 +34,46 @@ int main(int argc, char *argv[]){
 	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
 	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
 
+
+	/*
+	 * 	Test Area
+	 */
+	for(int i = 0; i < 5; i++){
+		gridQuantity->val[i] = 1.;
+	}
+
+	//Writing information to parsedump (debugging)
+	gridParseDump(ini, grid, gridQuantity);
+	multigridParseDump(ini, multigrid);
+
+	//Changing them from the multigrid struct
+	for(int i = 0; i < 5; i++){
+		multigrid->gridQuantities[0]->val[i] = 5.;
+	}
+
+	fMsg(ini, "parsedump", "\n CHANGING GRID VALUES FROM MULTIGRID \n");
+
+	//Check that both are changed
 	//Writing information to parsedump (debugging)
 	gridParseDump(ini, grid, gridQuantity);
 	multigridParseDump(ini, multigrid);
 
 
+	fMsg(ini, "parsedump", "\n CHANGING GRID VALUES BACK FROM GRIDQUANTITY \n");
 
-/*
-	msg(STATUS, "#Grid values per grid point = %d", grid->nValues);
-*/
+	for(int i = 0; i < 5; i++){
+		gridQuantity->val[i] = 1.;
+	}
+	gridParseDump(ini, grid, gridQuantity);
+	multigridParseDump(ini, multigrid);
+
+
 	/*
-	 * TEST ZONE
+	 *		TESTING DONE
+	 *		Results: accessible from both structs and cahnging them works for both places
 	 */
-/*	 multigrid->preSmooth();
-*/
+
+
 
 	/*
 	 * FINALIZE PINC VARIABLES
