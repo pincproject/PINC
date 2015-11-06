@@ -24,6 +24,9 @@ int main(int argc, char *argv[]){
 	MPI_Init(&argc,&argv);
 	msg(STATUS|ONCE,"PINC started.");
 
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
 	// Random Number Generator (RNG)
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
@@ -32,39 +35,42 @@ int main(int argc, char *argv[]){
 	 */
 	dictionary *ini = iniOpen(argc,argv);
 	Population *pop = allocPopulation(ini);
+	char *dataPath = "data/";
 
 	/*
 	 * TEST ZONE
 	 */
 
-	int nDims = 3;
+	Grid *grid = allocGrid(ini);
+	int *nGPoints = grid->nGPoints;
+	int *nGPointsProd = grid->nGPointsProd;
+	int *nNodes = grid->nNodes;
+	int *node = grid->node;
+	double *posToNode = grid->posToNode;
+	int nDims = grid->nDims;
+	msg(STATUS|ONCE,"nDims=%i",nDims);
+	msg(STATUS|ONCE,"nGPoints={%i,%i,%i}",nGPoints[0],nGPoints[1],nGPoints[2]);
+	msg(STATUS|ONCE,"nGPointsProd={%i,%i,%i,%i}",nGPointsProd[0],nGPointsProd[1],nGPointsProd[2],nGPointsProd[3]);
+	msg(STATUS,"node={%i,%i,%i}",node[0],node[1],node[2]);
+	msg(STATUS|ONCE,"nNodes={%i,%i,%i}",nNodes[0],nNodes[1],nNodes[2]);
+	msg(STATUS|ONCE,"posToNode={%f,%f,%f}",posToNode[0],posToNode[1],posToNode[2]);
+	msg(STATUS|ONCE,"1/128=%f",1.0/128.0);
 
-	Grid *grid = malloc(sizeof(Grid));
-	grid->nDims = nDims;
-	grid->node = malloc(nDims*sizeof(int));
-	grid->node[0] = 1;
-	grid->node[1] = 1;
-	grid->node[2] = 1;
-	grid->nNodes = malloc(nDims*sizeof(int));
-	grid->nNodes[0] = 4;
-	grid->nNodes[1] = 4;
-	grid->nNodes[2] = 4;
-	grid->posToNode = malloc(nDims*sizeof(double));
-	grid->posToNode[0] = 1.0/128;
-	grid->posToNode[1] = 1.0/128;
-	grid->posToNode[2] = 1.0/128;
+	posUniform(ini,pop,grid,rng);
+	gsl_rng_set(rng,mpiRank);
+	velMaxwell(ini,pop,rng);
 
-//	populateUniformly(ini,pop,grid,rng);
+	for(int s=0;s<pop->nSpecies;s++){
+		msg(STATUS,"specie %i",s);
+		msg(STATUS,"iStart=%i, iStop=%i, particles=%i",pop->iStart[s],pop->iStop[s],pop->iStop[s]-pop->iStart[s]+1);
+		for(long int i=pop->iStart[s];i<=pop->iStop[s];i++){
+			double *pos=&pop->pos[i*nDims];
+			double *vel=&pop->vel[i*nDims];
+			msg(STATUS,"particle %i: r={%3.2f,%3.2f,%3.2f}, v={%2.2f,%2.2f,%2.2f}",i,pos[0],pos[1],pos[2],vel[0],vel[1],vel[2]);
+		}
+	}
 
-//	for(int s=0;s<pop->nSpecies;s++){
-//		msg(STATUS,"specie %i",s);
-//		msg(STATUS,"iStart=%i, iStop=%i, particles=%i",pop->iStart[s],pop->iStop[s],pop->iStop[s]-pop->iStart[s]+1);
-//		for(long int i=pop->iStart[s];i<=pop->iStop[s];i++){
-//			double *pos=&pop->pos[i*nDims];
-//			msg(STATUS,"particle at %f,%f,%f",pos[0],pos[1],pos[2]);
-//		}
-//	}
-
+	writePopulation(dataPath,pop);
 
 	/*
 	 * FINALIZE PINC VARIABLES
@@ -81,5 +87,3 @@ int main(int argc, char *argv[]){
 
 	return 0;
 }
-
-

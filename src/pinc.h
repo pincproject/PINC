@@ -1,6 +1,7 @@
 /**
  * @file		pinc.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+ 				Gullik Vetvik Killie <gullikvk@gys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		PINC main header.
  * @date		11.10.15
@@ -53,6 +54,9 @@ typedef struct{
 	int nDims;			///< Number of dimensions (usually 3)
 } Population;
 
+/****************************************************************************
+***			Defined in grid.c
+****************************************************************************/
 /**
  * @brief Contains specification on how the grid is structured and decomposed.
  *
@@ -96,9 +100,10 @@ typedef struct{
  *  ...
  * @endcode
  *
- * nGPointsProd[nDims] will be the total number of grid points.
+ * nGPointsProd[nDims-1] will be the total number of grid points.
  *
- * @see Grid
+ * @see allocGrid
+ * @see GridQuantity
  */
 typedef struct{
 	int nDims;					///< Number of dimensions (usually 3)
@@ -110,6 +115,25 @@ typedef struct{
 	int *offset;				///< Offset from global reference frame (nDims elements)
 	double *posToNode;			///< Factor for converting position to node (nDims elements)
 } Grid;
+
+/**
+ * @brief Allocates the memory for the a grid struct as specified in the input file
+ * @param dictionary *ini
+ * @return Grid *grid
+ * 
+ * Allocates the memory for a grid struct and returns a pointer to it
+ *
+ * @see Grid
+ */
+
+Grid *allocGrid(const dictionary *ini);
+
+/**
+ * @brief Frees a grid struct (TBD)
+ */
+
+void freeGrid(Grid *grid);
+
 
 /**
  * @brief A quantity defined on a grid, for instance charge density.
@@ -142,11 +166,44 @@ typedef struct{
  *	printf("The field at node (%i,%i,%i) is (%f,%f,%f).\n",j,k,l,pVal[0],pVal[1],pVal[2]);
  * @endcode
  */
+
 typedef struct{
 	double *val;				///< The values on the grid
-	int nValues;				///< Number of values per node (usually 1 or 3)
+	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
 } GridQuantity;
+
+/**
+ * @brief Allocates the memory for the a grid struct as specified in the input file
+ * @param ini 				dictionary of the input file	
+ * @param grid 				grid struct 
+ * @param nValues			number of values per grid point.
+ * @return gridQuantity 	GridQuantity struct
+ *  
+ * 
+ *
+ * Allocates the memory for a GridQuantity struct and returns a pointer to it
+ *
+ * @see Grid
+ * @see gridQuantity
+ */
+
+GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
+
+/**
+ * @brief Frees the memory of a GridQuantity struct
+ */
+
+/**
+ * @brief Writes information about the grid structs to a parsefile
+ * @param ini 		dictionary of the input file	
+ * @param grid 		grid struct 
+ * @param nValues	number of values per grid point.
+ * @return void
+ *
+ * TBD
+ */
+void gridParseDump(dictionary *ini, Grid *grid);
 
 /******************************************************************************
  * DEFINED IN IO.C

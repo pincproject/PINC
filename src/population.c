@@ -14,6 +14,7 @@
 #include <mpi.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <hdf5.h>
 
 Population *allocPopulation(const dictionary *ini){
 
@@ -36,7 +37,7 @@ Population *allocPopulation(const dictionary *ini){
 	for(int s=0;s<nSpecies;s++){
 		nAlloc[s] = ceil((double)nAllocTotal[s]/size);
 		if(nAlloc[s]*size!=nAllocTotal[s])
-			msg(WARNING,"increased number of allocated particles from %i to %i to get integer per computing node",
+			msg(WARNING|ONCE,"increased number of allocated particles from %i to %i to get integer per computing node",
 				nAllocTotal[s],nAlloc[s]*size);
 	}
 
@@ -77,14 +78,7 @@ void freePopulation(Population *pop){
 
 }
 
-void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng){
-
-	// Check that RNGs are syncrhonized across nodes
-//	int rank;
-//	MPI_Get_rank(MPI_COMM_WORLD,&rank);
-//	double random = gsl_rng_uniform_pos(rng);
-//	MPI_Bcast(random,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
-	//TBD	
+void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng){
 
 	// Read from ini
 	int nSpecies, nDims;
@@ -123,7 +117,6 @@ void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid,
 			if(correctRange==nDims){
 				pos += nDims;
 				iStop++;
-//				msg(STATUS,"Keeping this");
 			}
 
 		}
@@ -156,4 +149,51 @@ void populateUniformly(const dictionary *ini, Population *pop, const Grid *grid,
 	free(nParticles);
 	free(nTGPoints);
 
+}
+
+void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
+
+	iniAssertEqualNElements(ini,3,"population:temperature","population:drift","population:nParticles");
+
+	int nSpecies;
+	double *temp = iniGetDoubleArr(ini,"population:temperature",&nSpecies);
+	double *velDrift = iniGetDoubleArr(ini,"population:drift",&nSpecies);
+
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		double velTh = sqrt(temp[s]/temp[0]);
+
+		for(long int i=iStart;i<=iStop;i++){
+
+			double *vel = &pop->vel[i*nDims];
+			for(int d=0;d<nDims;d++){
+				vel[d] = velDrift[s] + gsl_ran_gaussian_ziggurat(rng,velTh);
+			}
+		}
+	}
+}
+
+void writePopulation(const char *dataPath,Population *pop){
+
+	// TBD: avoid hard-coded path.
+	// TBD: check if file should be kept open between calls. Could have a struct
+	// of output file handling.
+
+	hid_t fileId = H5Fcreate("population.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+
+	hsize_t dims[2];
+	dims[0]=10;
+	dims[1]=20;
+
+	hid_t dataspaceId = H5Screate_simple(2,dims,NULL);
+	hid_t datasetId = H5Dcreate2(fileId,"/pos",H5T_IEEE_F64BE,dataspaceId,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+	H5Dclose(datasetId);
+	H5Sclose(dataspaceId);
+	H5Fclose(fileId);
 }
