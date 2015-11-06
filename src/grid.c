@@ -82,18 +82,18 @@ Grid *allocGrid(const dictionary *ini){
 	// Calculate the number of grid points (True points + ghost points)
 	int *nGPoints = malloc(nDims *sizeof(int));
 
-	for(int i = 0 ; i < nDims; i ++){
-		nGPoints[i] = nTGPoints[i];
-		nGPoints[i] += nGhosts[i];
-		nGPoints[i] += nGhosts[nDims + i];
+	for(int d = 0 ; d < nDims; d ++){
+		nGPoints[d] = nTGPoints[d];
+		nGPoints[d] += nGhosts[d];
+		nGPoints[d] += nGhosts[nDims + d];
 	}
 
 	//Cumulative products
 	int *nGPointsProd = malloc (nDims*sizeof(int));
 	int tempPoints = 1;
-	for(int i = 0; i < nDims; i++){
-		nGPointsProd[i] = tempPoints*nGPoints[i];
-		tempPoints = nGPointsProd[i];
+	for(int d = 0; d < nDims; d++){
+		nGPointsProd[d] = tempPoints*nGPoints[d];
+		tempPoints = nGPointsProd[d];
 	}
 
 	//Position of the subdomain in the total domain
@@ -101,9 +101,9 @@ Grid *allocGrid(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(int));
 	double *posToNode = malloc(nDims*sizeof(double));
 
-	for(int i = 0; i < nDims; i++){
-		offset[i] = node[i]*nTGPoints[i];
-		posToNode[i] = (double) offset[i] * dr[i];
+	for(int d = 0; d < nDims; d++){
+		offset[d] = node[d]*nTGPoints[d];
+		posToNode[d] = (double) offset[d] * dr[d];
 	}
 
 	//Free temporary variables
@@ -177,14 +177,14 @@ void gridParseDump(dictionary *ini, Grid *grid,GridQuantity *gridQuantityd){
 	fMsg(ini,"parsedump", "Grids: \n");
 
 	fMsg(ini,"parsedump", "#Computational Nodes: ");
-	for(int i = 0; i < grid->nDims; i++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[i]);
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
 	}
 
 	fMsg(ini,"parsedump", "\nTotal true grid points: ");
-	for(int i = 0; i < grid->nDims; i++){
-		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[i]- \
-			(grid->nGhosts[i] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[i]);
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
+			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
 	}
 
 
