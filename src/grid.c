@@ -76,23 +76,31 @@ Grid *allocGrid(const dictionary *ini){
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*Dim");
+		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*nDims");
 	}
 
 	// Calculate the number of grid points (True points + ghost points)
 	int *nGPoints = malloc(nDims *sizeof(int));
 
-	for(int i = 0 ; i < nDims; i ++){
-		nGPoints[i] = nTGPoints[i];
-		nGPoints[i] += nGhosts[i];
-		nGPoints[i] += nGhosts[nDims + i];
+	for(int d = 0 ; d < nDims; d ++){
+		nGPoints[d] = nTGPoints[d];
+		nGPoints[d] += nGhosts[d];
+		nGPoints[d] += nGhosts[nDims + d];
 	}
 
 	//Cumulative products
+<<<<<<< HEAD
 	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
 	nGPointsProd[0] = 1;
 	for(int i = 1; i < nDims+1; i++){
 		nGPointsProd[i] = nGPointsProd[i-1]*nGPoints[i-1];
+=======
+	int *nGPointsProd = malloc (nDims*sizeof(int));
+	int tempPoints = 1;
+	for(int d = 0; d < nDims; d++){
+		nGPointsProd[d] = tempPoints*nGPoints[d];
+		tempPoints = nGPointsProd[d];
+>>>>>>> multigrid
 	}
 
 	//Position of the subdomain in the total domain
@@ -100,10 +108,19 @@ Grid *allocGrid(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(int));
 	double *posToNode = malloc(nDims*sizeof(double));
 
+<<<<<<< HEAD
 	for(int i = 0; i < nDims; i++){
 		offset[i] = node[i]*nTGPoints[i];
 		posToNode[i] = (double)1/nTGPoints[i];
+=======
+	for(int d = 0; d < nDims; d++){
+		offset[d] = node[d]*nTGPoints[d];
+		posToNode[d] = (double) offset[d] * dr[d];
+>>>>>>> multigrid
 	}
+
+	//Free temporary variables
+	free(nTGPoints);
 
     /* Store in Grid */
     Grid *grid = malloc(sizeof(Grid));
@@ -117,65 +134,90 @@ Grid *allocGrid(const dictionary *ini){
 	grid->offset = offset;
 	grid->posToNode = posToNode;
 
-
-	//Free all the variables used
-
     return grid;
 }
 
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
+	//Load data
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	int nGridPoints = 1;		//#Grid points in all dimensions
+	int nTotPoints = 1;		//#Grid points in all dimensions
 
+	//Total grid points N^d
 	for(int i = 0; i < nDims; i++){
-		nGridPoints *= nGPoints[i];
+		nTotPoints *= nGPoints[i];
 	}
 
+<<<<<<< HEAD
 	double *val = malloc(nGridPoints*nValues*sizeof(double));
 
+=======
+	//Memory for values
+	double *val = malloc(nTotPoints*nValues*sizeof(double));
+
+	/* Store in gridQuantity */
+>>>>>>> multigrid
 	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
+
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
-
 
 	return gridQuantity;
 }
 
 
 void freeGrid(Grid *grid){
-	/**
-	 * This functions frees the memory stored in the grid
-	*/
 
-	/*free(grid->nValues);*/
+	free(grid->nGPoints);
+	free(grid->nGPointsProd);
+	free(grid->nGhosts);
+	free(grid->node);
+	free(grid->nNodes);
+	free(grid->offset);
+	free(grid->posToNode);
 
 	return;
 }
 
 void freeGridQuantity(GridQuantity *gridQuantity){
-	//TBD
+	
+	free(gridQuantity->val);
+
 	return;
 }
 
-void gridParseDump(dictionary *ini,Grid *grid){
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 	/******************************************
 	*	Writing information to the parsedump
 	*******************************************/
 	fMsg(ini,"parsedump", "Grids: \n");
 
 	fMsg(ini,"parsedump", "#Computational Nodes: ");
-	for(int i = 0; i < grid->nDims; i++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[i]);
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
 	}
 
 	fMsg(ini,"parsedump", "\nTotal true grid points: ");
-	for(int i = 0; i < grid->nDims; i++){
-		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[i]- \
-			(grid->nGhosts[i] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[i]);
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
+			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
 	}
 
+
+	fMsg(ini,"parsedump", "\n \n");
+
+
+	/*
+	 *         	TEST AREA
+	 */
+	fMsg(ini, "parsedump", "TEST AREA \n \n");
+	fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
+	for(int i = 0; i < 5; i++){
+		fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
+	}
+
+	fMsg(ini,"parsedump", "\n \n");
 	return;
 }
