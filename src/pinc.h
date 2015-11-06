@@ -192,7 +192,15 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 /**
  * @brief Frees the memory of a GridQuantity struct
+ * @param gridQuantity 		Gridquantity struct
+ *
+ * Frees the memory of the GridQuantity struct, since the Grid member of the struct 
+ * can be shared by several gridQuantity'ies it needs to be freed seperately
+ * @see freeGrid
  */
+
+void freeGridQuantity(GridQuantity *gridQuantity);
+
 
 /**
  * @brief Writes information about the grid structs to a parsefile
@@ -203,7 +211,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
  *
  * TBD
  */
-void gridParseDump(dictionary *ini, Grid *grid);
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
 
 /******************************************************************************
  * DEFINED IN IO.C

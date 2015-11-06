@@ -83,5 +83,12 @@ void gaussSeidel(void){
 	return;
 }
 
+void multigridParseDump(dictionary *ini, Multigrid *multigrid){
+
+	fMsg(ini,"parsedump", "Multigrids: \n");
+
+
+	return;
+}
 
 

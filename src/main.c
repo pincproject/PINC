@@ -31,11 +31,14 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv);
 
 	Grid *grid = allocGrid(ini);
-	gridParseDump(ini, grid);
-
 	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
-
 	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
+
+	//Writing information to parsedump (debugging)
+	gridParseDump(ini, grid, gridQuantity);
+	multigridParseDump(ini, multigrid);
+
+
 
 /*
 	msg(STATUS, "#Grid values per grid point = %d", grid->nValues);
@@ -43,13 +46,14 @@ int main(int argc, char *argv[]){
 	/*
 	 * TEST ZONE
 	 */
-	 multigrid->preSmooth();
-
+/*	 multigrid->preSmooth();
+*/
 
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
 	freeGrid(grid);
+	freeGridQuantity(gridQuantity);
 	iniparser_freedict(ini);
 
 	/*

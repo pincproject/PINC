@@ -17,8 +17,6 @@
 #include "pinc.h"
 #include "iniparser.h"
 
-
-
 /**
  * @brief Contains the grids needed in a multigrid solver, as well as other specifications
  * 
@@ -35,6 +33,8 @@ typedef struct {
    void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
 } Multigrid;
+
+void multigridParseDump(dictionary *ini, Multigrid *multigrid);
 
 
 //Initialisers for the grid and multigrid structs

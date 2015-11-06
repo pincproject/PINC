@@ -76,7 +76,7 @@ Grid *allocGrid(const dictionary *ini){
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*Dim");
+		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*nDims");
 	}
 	
 	// Calculate the number of grid points (True points + ghost points)
@@ -106,6 +106,9 @@ Grid *allocGrid(const dictionary *ini){
 		posToNode[i] = (double) offset[i] * dr[i];
 	}
 
+	//Free temporary variables
+	free(nTGPoints);
+
     /* Store in Grid */
     Grid *grid = malloc(sizeof(Grid));
 
@@ -118,9 +121,6 @@ Grid *allocGrid(const dictionary *ini){
 	grid->offset = offset;
 	grid->posToNode = posToNode;
 
-
-	//Free all the variables used
-
     return grid;
 }
 
@@ -128,15 +128,19 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	int nGridPoints = 1;		//#Grid points in all dimensions
+	int nTotPoints = 1;		//#Grid points in all dimensions
 
+	//Total grid points N^d
 	for(int i = 0; i < nDims; i++){
-		nGridPoints *= nGPoints[i];
+		nTotPoints *= nGPoints[i];
 	}
 
-	double *val = malloc(nGridPoints*nValues*sizeof(double));
-	
+	//Memory for values
+	double *val = malloc(nTotPoints*nValues*sizeof(double));
+
+	/* Store in gridQuantity */
 	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
+
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
@@ -147,21 +151,26 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
 
 void freeGrid(Grid *grid){
-	/**
-	 * This functions frees the memory stored in the grid
-	*/
 
-	/*free(grid->nValues);*/
+	free(grid->nGPoints);
+	free(grid->nGPointsProd);
+	free(grid->nGhosts);
+	free(grid->node);
+	free(grid->nNodes);
+	free(grid->offset);
+	free(grid->posToNode);
 
 	return;
 }
 
 void freeGridQuantity(GridQuantity *gridQuantity){
-	//TBD
+	
+	free(gridQuantity->val);
+
 	return;
 }
 
-void gridParseDump(dictionary *ini,Grid *grid){
+void gridParseDump(dictionary *ini, Grid *grid,GridQuantity *gridQuantityd){
 	/******************************************
 	*	Writing information to the parsedump
 	*******************************************/
@@ -177,6 +186,9 @@ void gridParseDump(dictionary *ini,Grid *grid){
 		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[i]- \
 			(grid->nGhosts[i] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[i]);
 	}
+
+
+	fMsg(ini,"parsedump", "\n \n");
 
 	return;
 }
