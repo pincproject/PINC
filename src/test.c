@@ -74,37 +74,48 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	msg(STATUS|ONCE, "Total grid points: \t %d, nGPointsProd = [%d , %d]",\
 	 totalGPoints, nGPointsProd[0], nGPointsProd[1]);
 
-	//Populate grid to 1.
+	//Populate grid to 0.
 	for(int g = 0; g < totalGPoints; g++){
 		gridQuantity->val[g]=0.;
 	}
 
 	//Lower x boundary
+	msg(STATUS, "Lower x");
+
 	int p = 0;
 	for(int j = 0; j < nGPoints[0]; j++){
 		gridQuantity->val[p] = 1.;
+		msg(STATUS, "p = %d", p);
 		p += 1;
 	}
 
-
 	//Lower y boundary
+	msg(STATUS, "Lower y");
+
 	p = 0;
-	for(int k = 0; k < nGPoints[0]; k++){
+	for(int k = 0; k < nGPoints[1]; k++){
 		gridQuantity->val[p] = 2.;
+		msg(STATUS, "p = %d", p);
 		p += nGPointsProd[1];
 	}
 	
 	//Higher x boundary
+	msg(STATUS, "Higher x");
+
 	p = 0 + (nGPoints[nDims-1]-1)*nGPointsProd[1];
 	for(int j = 0; j < nGPoints[0]; j++){
+		msg(STATUS, "p = %d", p);
 		gridQuantity->val[p] = 3.;
 		p += 1;
 	}
 
 	//Higher y boundary
-	p = 0;
-	for(int k = 0; k < nGPoints[0]; k++){
+	msg(STATUS, "Higher y");
+
+	p = nGPoints[nDims-2] - 1;
+	for(int k = 0; k < nGPoints[1]; k++){
 		gridQuantity->val[p] = 4.;
+		msg(STATUS, "p = %d", p);
 		p += nGPointsProd[1];
 	}
 
@@ -128,12 +139,27 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 	int *nGPointsProd = gridQuantity->grid->nGPointsProd;
 
 
-	fMsg(ini,"parsedump", "Dump of 2D grid: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+	fMsg(ini,"parsedump", "Dump of 2D/1D indexes: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+
 	int p = 0;
+
+
+	for(int k = 0; k < nGPoints[1]; k++){
+		for(int j = 0; j < nGPoints[0]; j++){	
+			fMsg(ini,"parsedump", "\t %d", p);
+			p++;
+		}
+		fMsg(ini,"parsedump", "\n ");	
+	}
+
+	fMsg(ini,"parsedump", "Dump of 2D/1D grid: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+
+	p = 0;
 	for(int k = 0; k < nGPoints[1]; k++){
 		for(int j = 0; j < nGPoints[0]; j++){
-			p++;
-			fMsg(ini,"parsedump", "\t %d", (int) gridQuantity->val[p]);		
+			fMsg(ini,"parsedump", "\t %d", (int) gridQuantity->val[p]);	
+/*			fMsg(ini,"parsedump", "\t %d", p);
+*/			p++;
 		}
 		fMsg(ini,"parsedump", "\n ");	
 	}
