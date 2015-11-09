@@ -98,11 +98,12 @@ void msg(msgKind kind, const char* restrict format,...){
 	// Retrieve argument list
 	va_list args;
 	va_start(args,format);
+	const int bufferSize = 132;
 
-	// Set prefix to output and output stream
-	char prefix[16];
+	// Set prefix and determine which output to use
+	char prefix[8];
 	FILE *stream;
-	switch(kind){
+	switch(kind&0x0F){
 		case STATUS:
 			strcpy(prefix,"STATUS");
 			stream=stdout;
@@ -111,25 +112,27 @@ void msg(msgKind kind, const char* restrict format,...){
 			strcpy(prefix,"WARNING");
 			stream=stderr;
 			break;
-		case ERROR:		// Error in the usage of the program
+		case ERROR:
 			strcpy(prefix,"ERROR");
 			stream=stderr;
 			break;
 	}
+
+	// Parse and assemble message
 	int rank;
+	char msg[bufferSize], buffer[bufferSize];
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	sprintf(prefix,"%s (%i): ",prefix,rank);
+	vsnprintf(msg,bufferSize,format,args);
+	snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
+	va_end(args);	
 
 	// Print message
-	fprintf(stream,"%s",prefix);
-	vfprintf(stream,format,args);
-	fprintf(stream,"\n");
-
-	// Stop vararg
-	va_end(args);
+	if(!(kind&ONCE) || rank==0){
+		fprintf(stream,"%s\n",buffer);
+	}
 
 	// Quit if error
-	if(kind==ERROR) exit(EXIT_FAILURE);
+	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
 
 }
 
@@ -156,7 +159,7 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
 	// Print
 	va_list args;
 	va_start(args,format);
-	vfprintf(file,format,args);	
+	vfprintf(file,format,args);
 	va_end(args);
 
 	// Close file
@@ -292,7 +295,7 @@ static char** listToStrArr(const char* restrict list){
 		char *stop=(char*)list;
 
 		while(!finished){
-			
+
 			if(*temp==',' || *temp=='\0'){
 				// New delimeter reached. Set stop of this element.
 				stop = temp-1;
@@ -352,7 +355,7 @@ static void listparser_getint(	const dictionary *d, const char *key,
 
 }
 
-static void listparser_getdouble(	const dictionary *d, const char *key, 
+static void listparser_getdouble(	const dictionary *d, const char *key,
 									double *result){
 
 	char *list = iniparser_getstring((dictionary*)d,key,"");
@@ -377,7 +380,7 @@ void ini_complete_time(dictionary *ini){
 	// Number of parameters specified
 	int nparams = (Nt!=0) + (T!=0) + (dt!=0);
 
-	// Check for correct number of input parameters	
+	// Check for correct number of input parameters
 	if(nparams<2) msg(ERROR,"[time] is under-determined. Specify 2 of these: Nt, T and dt.");
 	if(nparams>2) msg(ERROR,"[time] is over-determined. Specify only 2 of these: Nt, T and dt.");
 

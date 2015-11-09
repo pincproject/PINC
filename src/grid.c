@@ -1,6 +1,6 @@
 /**
  * @file		grid.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>, 
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  *				Gullik Vetvik Killie <gullikvk@gys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Grid-struct handling.
@@ -78,7 +78,7 @@ Grid *allocGrid(const dictionary *ini){
 	if(nBoundaries != 2*nDims){
 		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*nDims");
 	}
-	
+
 	// Calculate the number of grid points (True points + ghost points)
 	int *nGPoints = malloc(nDims *sizeof(int));
 
@@ -89,12 +89,10 @@ Grid *allocGrid(const dictionary *ini){
 	}
 
 	//Cumulative products
-	int *nGPointsProd = malloc (nDims*sizeof(int));
-	
-	int tempPoints = 1;
-	for(int d = 0; d < nDims; d++){
-		nGPointsProd[d] = tempPoints*nGPoints[d];
-		tempPoints = nGPointsProd[d];
+	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
+	nGPointsProd[0] = 1;
+	for(int i = 1; i < nDims+1; i++){
+		nGPointsProd[i] = nGPointsProd[i-1]*nGPoints[i-1];
 	}
 
 	//Position of the subdomain in the total domain
@@ -102,9 +100,9 @@ Grid *allocGrid(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(int));
 	double *posToNode = malloc(nDims*sizeof(double));
 
-	for(int d = 0; d < nDims; d++){
-		offset[d] = node[d]*nTGPoints[d];
-		posToNode[d] = (double) offset[d] * dr[d];
+	for(int i = 0; i < nDims; i++){
+		offset[i] = node[i]*nTGPoints[i];
+		posToNode[i] = (double)1/nTGPoints[i];
 	}
 
 	//Free temporary variables

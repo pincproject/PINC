@@ -9,7 +9,7 @@ EXEC	= pinc
 CC		= mpicc
 CFLAGS	= -std=c11 -Wall -O3 \
 		-Ilib/iniparser/src \
-		-lm -lgsl -lblas
+		-lm -lgsl -lblas -lhdf5
 
 SDIR	= src
 ODIR	= src
@@ -61,4 +61,6 @@ cleandoc:
 
 clean: cleandoc
 	rm -f $(EXEC) *~ $(SDIR)/*.o $(SDIR)/*~
+
+veryclean: clean
 	cd $(LDIR)/iniparser && $(MAKE) veryclean

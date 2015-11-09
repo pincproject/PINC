@@ -2,7 +2,9 @@
 **~
 **.a
 **.so.*
+**.lo
+**.la
 pinc
 parsedump.txt
-*.sublime*
-**.sublime
+**.sublime*
+**.h5
