@@ -90,6 +90,7 @@ Grid *allocGrid(const dictionary *ini){
 
 	//Cumulative products
 	int *nGPointsProd = malloc (nDims*sizeof(int));
+	
 	int tempPoints = 1;
 	for(int d = 0; d < nDims; d++){
 		nGPointsProd[d] = tempPoints*nGPoints[d];
