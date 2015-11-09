@@ -89,18 +89,10 @@ Grid *allocGrid(const dictionary *ini){
 	}
 
 	//Cumulative products
-<<<<<<< HEAD
 	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
 	nGPointsProd[0] = 1;
 	for(int i = 1; i < nDims+1; i++){
 		nGPointsProd[i] = nGPointsProd[i-1]*nGPoints[i-1];
-=======
-	int *nGPointsProd = malloc (nDims*sizeof(int));
-	int tempPoints = 1;
-	for(int d = 0; d < nDims; d++){
-		nGPointsProd[d] = tempPoints*nGPoints[d];
-		tempPoints = nGPointsProd[d];
->>>>>>> multigrid
 	}
 
 	//Position of the subdomain in the total domain
@@ -108,15 +100,9 @@ Grid *allocGrid(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(int));
 	double *posToNode = malloc(nDims*sizeof(double));
 
-<<<<<<< HEAD
 	for(int i = 0; i < nDims; i++){
 		offset[i] = node[i]*nTGPoints[i];
 		posToNode[i] = (double)1/nTGPoints[i];
-=======
-	for(int d = 0; d < nDims; d++){
-		offset[d] = node[d]*nTGPoints[d];
-		posToNode[d] = (double) offset[d] * dr[d];
->>>>>>> multigrid
 	}
 
 	//Free temporary variables
