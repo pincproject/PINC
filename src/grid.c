@@ -91,8 +91,8 @@ Grid *allocGrid(const dictionary *ini){
 	//Cumulative products
 	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
 	nGPointsProd[0] = 1;
-	for(int i = 1; i < nDims+1; i++){
-		nGPointsProd[i] = nGPointsProd[i-1]*nGPoints[i-1];
+	for(int d = 1; d < nDims+1; d++){
+		nGPointsProd[d] = nGPointsProd[d-1]*nGPoints[d-1];
 	}
 
 	//Position of the subdomain in the total domain
@@ -100,9 +100,9 @@ Grid *allocGrid(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(int));
 	double *posToNode = malloc(nDims*sizeof(double));
 
-	for(int i = 0; i < nDims; i++){
-		offset[i] = node[i]*nTGPoints[i];
-		posToNode[i] = (double)1/nTGPoints[i];
+	for(int d = 0; d < nDims; d++){
+		offset[d] = node[d]*nTGPoints[d];
+		posToNode[d] = (double)1/nTGPoints[d];
 	}
 
 	//Free temporary variables
@@ -131,8 +131,8 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	int nTotPoints = 1;		//#Grid points in all dimensions
 
 	//Total grid points N^d
-	for(int i = 0; i < nDims; i++){
-		nTotPoints *= nGPoints[i];
+	for(int d = 0; d < nDims; d++){
+		nTotPoints *= nGPoints[d];
 	}
 
 	//Memory for values
@@ -200,5 +200,10 @@ void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 	}
 
 	fMsg(ini,"parsedump", "\n \n");
+	return;
+}
+
+
+void dumpGridContents(dictionary *ini, GridQuantity *gridQuantity){
 	return;
 }

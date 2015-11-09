@@ -1,6 +1,7 @@
 /**
  * @file	    main.c
- * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
+ *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  * @copyright   University of Oslo, Norway
  * @brief	    PINC main routine.
  * @date        08.10.15
@@ -16,6 +17,7 @@
 #include "pinc.h"
 #include "iniparser.h"
 #include "multigrid.h" 
+#include "test.h"
 
 int main(int argc, char *argv[]){
 
@@ -41,40 +43,11 @@ int main(int argc, char *argv[]){
 	/*
 	 * 	Test Area
 	 */
-	for(int i = 0; i < 5; i++){
-		gridQuantity->val[i] = 1.;
-	}
-
-	//Writing information to parsedump (debugging)
-	gridParseDump(ini, grid, gridQuantity);
-	multigridParseDump(ini, multigrid);
-
-	//Changing them from the multigrid struct
-	for(int i = 0; i < 5; i++){
-		multigrid->gridQuantities[0]->val[i] = 5.;
-	}
-
-	fMsg(ini, "parsedump", "\n CHANGING GRID VALUES FROM MULTIGRID \n");
-
-	//Check that both are changed
-	//Writing information to parsedump (debugging)
-	gridParseDump(ini, grid, gridQuantity);
-	multigridParseDump(ini, multigrid);
+	
+/*	testGridAndMGStructs(ini, gridQuantity, multigrid);
+*/	testBoundarySendRecieve(ini, gridQuantity, multigrid);
 
 
-	fMsg(ini, "parsedump", "\n CHANGING GRID VALUES BACK FROM GRIDQUANTITY \n");
-
-	for(int i = 0; i < 5; i++){
-		gridQuantity->val[i] = 1.;
-	}
-	gridParseDump(ini, grid, gridQuantity);
-	multigridParseDump(ini, multigrid);
-
-
-	/*
-	 *		TESTING DONE
-	 *		Results: accessible from both structs and cahnging them works for both places
-	 */
 
 
 
