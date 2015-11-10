@@ -191,12 +191,15 @@ void writePopulation(const char *dataPath,Population *pop){
 
 	hid_t fileId = H5Fcreate("population.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
 
-	hsize_t dims[2];
-	dims[0]=10;
-	dims[1]=20;
+	const int arrSize = 2;
+	hsize_t dims[arrSize];
+	dims[0] = 1000;
+	dims[1] = pop->nDims;
 
-	hid_t dataspaceId = H5Screate_simple(2,dims,NULL);
+	hid_t dataspaceId = H5Screate_simple(arrSize,dims,NULL);
 	hid_t datasetId = H5Dcreate2(fileId,"/pos",H5T_IEEE_F64BE,dataspaceId,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+	H5Dwrite(datasetId, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &pop->pos);
 
 	H5Dclose(datasetId);
 	H5Sclose(dataspaceId);

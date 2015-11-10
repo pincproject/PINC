@@ -1,7 +1,7 @@
 /**
  * @file		grid.c
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- *				Gullik Vetvik Killie <gullikvk@gys.uio.no>
+ *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Grid-struct handling.
  * @date		30.10.15
@@ -119,7 +119,7 @@ Grid *allocGrid(const dictionary *ini){
 	grid->nNodes = nNodes;
 	grid->offset = offset;
 	grid->posToNode = posToNode;
-	grid-dr = dr;
+	grid->dr = dr;
 
     return grid;
 }

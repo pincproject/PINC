@@ -49,13 +49,15 @@ int main(int argc, char *argv[]){
 //	tMsg(timer,"velocity");
 //	free(timer);
 
-	Timer *timer = allocTimer(0);
-	for(int i=0;i<1000;i++){
-		writePopulation("test",pop);
-	}
-	tMsg(timer,"writePopulation times 1000");
 
-	freeTimer(timer);
+
+//	Timer *timer = allocTimer(0);
+//	for(int i=0;i<1000;i++){
+		writePopulation("test",pop);
+//	}
+//	tMsg(timer,"writePopulation times 1000");
+
+//	freeTimer(timer);
 
 
 	/*
