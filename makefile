@@ -38,7 +38,7 @@ LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 all: $(EXEC) doc
 
 $(EXEC): $(OBJ) $(LIBOBJ)
-	@echo "Linking"
+	@echo "Linking PINC"
 	@$(CC) $^ -o $@ $(CFLAGS)
 	@echo "PINC is built"
 
@@ -48,7 +48,7 @@ $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
-	@echo "Compiling iniparser"
+	@echo "Building iniparser"
 	@cd $(LDIR)/iniparser && $(MAKE) > /dev/null 2>&1
 
 $(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk
