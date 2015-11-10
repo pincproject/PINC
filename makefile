@@ -48,13 +48,16 @@ $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	cd $(LDIR)/iniparser && $(MAKE)
 
-$(DDIR)/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk
+$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk
 	@echo INPUT	= ../../$(SDIR) ../../$(HDIR)	> $(DDIR)/doxygen/doxyfile.inc
 	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxygen/doxyfile.inc
 
-doc: $(HEAD) $(SRC) $(DDIR)/doxyfile.inc
-	@echo "Making documentation"
+doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
+	@echo "Making documentation (run \"make latex\" to get pdf)"
 	@cd $(DDIR)/doxygen && doxygen doxyfile.mk > /dev/null 2>&1
+
+latex: doc
+	@echo "Making LaTeX documentation"
 	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
 
 cleandoc:
@@ -62,7 +65,8 @@ cleandoc:
 	rm -fr $(DDIR)/html $(DDIR)/latex
 
 clean: cleandoc
-	rm -f $(EXEC) *~ $(SDIR)/*.o $(SDIR)/*~
+	rm -f *~ $(SDIR)/*.o $(SDIR)/*~ gmon.out
 
 veryclean: clean
+	rm -f $(EXEC)
 	cd $(LDIR)/iniparser && $(MAKE) veryclean
