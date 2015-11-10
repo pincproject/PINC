@@ -47,3 +47,9 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
  * @brief Dumps a 2D grid to parsefile
  */
 void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity);
+
+/**
+ * @brief Dumps ghostvectors
+ */
+ 
+void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity);

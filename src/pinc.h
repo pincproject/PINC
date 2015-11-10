@@ -201,6 +201,27 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 void freeGridQuantity(GridQuantity *gridQuantity);
 
+/**
+ * @brief Gather the edges of a grid and returns a vector with them
+ * @param 	ini 				dictionary of the input file	
+ * @param 	gridQuantity		GridQuantity struct 
+ * @return 	ghostEdge 			vector containing ghost values (*double)
+ * 
+ * From a grid this function gathers the ghost layer, stores it in a 1D array
+ * and returns it.
+ * 
+ * In the case where the grid has several dimensions first the lower edge is stored
+ * for all dimensions, and then the upper edge is stored for each dimension
+ * So for a 2D case the vector looks like:
+ *
+ * 		ghostEdge[***x_min***|***y_min***|***x_max***|***y_max***]
+ *
+ * NOTE: 	ghostEdge vector should be considered for a member of grid structs
+ * 			to avoid allocating it each time	
+ *
+ */
+double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity);
+
 
 /**
  * @brief Writes information about the grid structs to a parsefile

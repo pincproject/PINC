@@ -60,7 +60,7 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 }
 
 void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
-
+	
 	msg(STATUS|ONCE, "Performing a manual test of boundary communication. Check parsedump");
 
 	//Gathering data from grid
@@ -68,65 +68,40 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	int *nGPoints = gridQuantity->grid->nGPoints;
 	int *nGPointsProd = gridQuantity->grid->nGPointsProd;
 	int totalGPoints = nGPointsProd[nDims];
-
-
-
+	
 	msg(STATUS|ONCE, "Total grid points: \t %d, nGPointsProd = [%d , %d]",\
 	 totalGPoints, nGPointsProd[0], nGPointsProd[1]);
 
-	//Populate grid to 0.
+	//Populate grid as 0.
 	for(int g = 0; g < totalGPoints; g++){
 		gridQuantity->val[g]=0.;
 	}
 
-	//Lower x boundary
-	msg(STATUS, "Lower x");
+	int l = 0;	//Lower edge
+	int h = 0;	//Higher edge
+	int b = 1;	//Edge counter
+	int temp = 1;
 
-	int p = 0;
-	for(int j = 0; j < nGPoints[0]; j++){
-		gridQuantity->val[p] = 1.;
-		msg(STATUS, "p = %d", p);
-		p += 1;
-	}
-
-	//Lower y boundary
-	msg(STATUS, "Lower y");
-
-	p = 0;
-	for(int k = 0; k < nGPoints[1]; k++){
-		gridQuantity->val[p] = 2.;
-		msg(STATUS, "p = %d", p);
-		p += nGPointsProd[1];
-	}
-	
-	//Higher x boundary
-	msg(STATUS, "Higher x");
-
-	p = 0 + (nGPoints[nDims-1]-1)*nGPointsProd[1];
-	for(int j = 0; j < nGPoints[0]; j++){
-		msg(STATUS, "p = %d", p);
-		gridQuantity->val[p] = 3.;
-		p += 1;
-	}
-
-	//Higher y boundary
-	msg(STATUS, "Higher y");
-
-	p = nGPoints[nDims-2] - 1;
-	for(int k = 0; k < nGPoints[1]; k++){
-		gridQuantity->val[p] = 4.;
-		msg(STATUS, "p = %d", p);
-		p += nGPointsProd[1];
-	}
-
-
-
-	//Change every boundary to #Boundary
-	for(int b = 0; b < 2*nDims; b++){
+	for(int d = 0; d < nDims; d++){
 		
+		l = 0;
+		temp *= nGPoints[d];
+		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
+
+		for(int g = 0; g < nGPoints[d]; g++){
+			gridQuantity->val[l] = (double) b;
+			gridQuantity->val[h] = (double) b + 1;
+
+			l += nGPointsProd[d];
+			h += nGPointsProd[d];
+		}
+
+		b += 2;
 	}
+
 	
 	dump2DGrid(ini, gridQuantity);
+	dumpGhostVector(ini, gridQuantity);
 
 	return;
 }
@@ -138,7 +113,6 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 	int *nGPoints = gridQuantity->grid->nGPoints;
 	int *nGPointsProd = gridQuantity->grid->nGPointsProd;
 
-
 	fMsg(ini,"parsedump", "Dump of 2D/1D indexes: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
 
 	int p = 0;
@@ -146,24 +120,46 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	for(int k = 0; k < nGPoints[1]; k++){
 		for(int j = 0; j < nGPoints[0]; j++){	
-			fMsg(ini,"parsedump", "\t %d", p);
+			fMsg(ini,"parsedump", "\t%d", p);
 			p++;
 		}
 		fMsg(ini,"parsedump", "\n ");	
 	}
 
-	fMsg(ini,"parsedump", "Dump of 2D/1D grid: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+	fMsg(ini,"parsedump", "\n Dump of 2D/1D grid: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
 
 	p = 0;
-	for(int k = 0; k < nGPoints[1]; k++){
-		for(int j = 0; j < nGPoints[0]; j++){
-			fMsg(ini,"parsedump", "\t %d", (int) gridQuantity->val[p]);	
-/*			fMsg(ini,"parsedump", "\t %d", p);
-*/			p++;
+	for(int k = 0; k < nGPoints[1]; k++){ //y-rows
+		for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+			fMsg(ini,"parsedump", "\t%d", (int) gridQuantity->val[p]);	
+			p++;
 		}
 		fMsg(ini,"parsedump", "\n ");	
 	}
 	
+	return;
+}
 
+void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity){
+
+	//Load
+	Grid *grid = gridQuantity->grid;
+	int *nGhosts = grid->nGhosts;
+	int *nGPoints = grid->nGPoints;
+	int nDims = grid->nDims;
+
+
+	double *ghostEdge = getGhostEdge(ini, gridQuantity);
+
+	int nGhostPoints = 0;
+	for(int g = 0; g < nDims; g++){
+		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
+	}
+
+	//Print GhostEdge
+	for(int w = 0; w < nGhostPoints; w++){
+		msg(STATUS, "ghostEdge[%d] = %d", w, (int) ghostEdge[w]);
+	}
+	
 	return;
 }
