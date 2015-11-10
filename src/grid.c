@@ -119,6 +119,7 @@ Grid *allocGrid(const dictionary *ini){
 	grid->nNodes = nNodes;
 	grid->offset = offset;
 	grid->posToNode = posToNode;
+	grid-dr = dr;
 
     return grid;
 }
@@ -158,12 +159,14 @@ void freeGrid(Grid *grid){
 	free(grid->nNodes);
 	free(grid->offset);
 	free(grid->posToNode);
+	free(grid->dr);
+	free(grid);
 
 	return;
 }
 
 void freeGridQuantity(GridQuantity *gridQuantity){
-	
+
 	free(gridQuantity->val);
 
 	return;
@@ -204,7 +207,7 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
 	}
 
 	/*
-	 *	NOTE! Look for a clearer way to do higher edge, 
+	 *	NOTE! Look for a clearer way to do higher edge,
 	 *  and not sure if it works for all dimensions
 	 */
 
@@ -212,7 +215,7 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
 	int h;
 	int temp = 1;
 	for(int d = 0; d < nDims; d++){
-		
+
 		temp *= nGPoints[d];
 		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
 
@@ -262,4 +265,3 @@ void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 	fMsg(ini,"parsedump", "\n \n");
 	return;
 }
-

@@ -41,27 +41,35 @@ int main(int argc, char *argv[]){
 	/*
 	 * TEST ZONE
 	 */
-
-	Timer *timer = allocTimer(0);
+//	Timer *timer = allocTimer(0);
 	posUniform(ini,pop,grid,rng);
-	tMsg(timer,"position");
+//	tMsg(timer,"position");
 	gsl_rng_set(rng,mpiRank);
 	velMaxwell(ini,pop,rng);
-	tMsg(timer,"velocity");
-	free(timer);
+//	tMsg(timer,"velocity");
+//	free(timer);
+
+	Timer *timer = allocTimer(0);
+	for(int i=0;i<1000;i++){
+		writePopulation("test",pop);
+	}
+	tMsg(timer,"writePopulation times 1000");
+
+	freeTimer(timer);
 
 
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
-	freePopulation(pop);
-	freeGrid(grid);
+//	freePopulation(pop);
+//	freeGrid(grid);
 	iniparser_freedict(ini);
 
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */
 	gsl_rng_free(rng);
+
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 

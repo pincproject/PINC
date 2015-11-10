@@ -232,6 +232,8 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
  */
 void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
 
+void writePopulation(const char *dataPath, Population *pop);
+
 /******************************************************************************
  * DEFINED IN GRID.C
  *****************************************************************************/

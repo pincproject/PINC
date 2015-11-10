@@ -5,10 +5,11 @@
 ## @brief		PINC makefile.
 ## @date		10.10.15
 ##
+
 EXEC	= pinc
 CC		= mpicc
-CADD	=			# Additional CFLAGS accessible from CLI
-COPT	=	-O3		# Optimization
+CADD	=# Additional CFLAGS accessible from CLI
+COPT	= -O3 # Optimization
 CFLAGS	=	-std=c11 -Wall\
 			-Ilib/iniparser/src\
 			-lm -lgsl -lblas -lhdf5 $(COPT) $(CADD)
