@@ -8,7 +8,18 @@
  * Small auxiliary functions.
  */
 
+#define _XOPEN_SOURCE 700
+
 #include "pinc.h"
+#include <time.h>
+#include <mpi.h>
+#include <stdarg.h>
+
+/******************************************************************************
+ * LOCAL FUNCTION DECLARATIONS
+ *****************************************************************************/
+
+static void tFormat(char *str, int len, const TimeSpec *time);
 
 /******************************************************************************
  * ARRAY FUNCTIONS
@@ -52,3 +63,86 @@ int intArrProd(const int *a, int nElements){
 /******************************************************************************
  * TIMING FUNCTIONS
  *****************************************************************************/
+
+ static void tFormat(char *str, int len, const TimeSpec *time){
+
+ 	long int sec = time->tv_sec;
+ 	long int nsec = time->tv_nsec;
+
+ 	if(sec>=1){
+ 		snprintf(str,len,"%6.2fs",(double)sec+(double)nsec/1000000000);
+ 	} else if(nsec>1000000) {
+ 		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
+ 	} else if(nsec>1000) {
+ 		snprintf(str,len,"%6.2fus",(double)nsec/1000);
+ 	} else {
+ 		snprintf(str,len,"%6.2fns",(double)nsec);
+ 	}
+ }
+
+void tMsg(Timer *timer, const char *restrict format, ...){
+
+	if(timer->rank>=0){
+		TimeSpec now, diff;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
+
+		if(format!=NULL){
+
+			// Take difference
+			diff.tv_sec = now.tv_sec-timer->previous.tv_sec;
+			diff.tv_nsec = now.tv_nsec-timer->previous.tv_nsec;
+
+			// Borrow from tv_sec if necessary
+			if(diff.tv_nsec<0){
+				diff.tv_sec-=1;
+				diff.tv_nsec+=1e9;
+			}
+
+			// Format time
+			const int strSize = 16;
+			char nowStr[strSize];
+			char diffStr[strSize];
+			tFormat(nowStr,strSize,&now);
+			tFormat(diffStr,strSize,&diff);
+
+			// Get message
+			const int bufferSize = 132;
+			char msg[bufferSize];
+			va_list args;
+			va_start(args,format);
+			vsnprintf(msg,bufferSize,format,args);
+			va_end(args);
+
+			// Print
+			char buffer[bufferSize];
+			snprintf(buffer,bufferSize,"TIMER (%i): [tot=%s, diff=%s] %s",timer->rank,nowStr,diffStr,msg);
+			fprintf(stdout,"%s\n",buffer);
+		}
+
+		// Store time of this call
+		//timer->previous = now;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
+	}
+}
+
+Timer *allocTimer(int rank){
+
+	// Get rank of this MPI node
+	int thisRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&thisRank);
+
+	// Assign struct
+	Timer *timer = malloc(sizeof(Timer));
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
+	if(rank==thisRank || rank<0){
+		timer->rank=thisRank;
+	} else {
+		timer->rank=-1;	// Deactivate this timer
+	}
+
+	return timer;
+}
+
+void freeTimer(Timer *timer){
+	free(timer);
+}

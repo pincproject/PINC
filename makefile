@@ -7,7 +7,9 @@
 ##
 EXEC	= pinc
 CC		= mpicc
-CFLAGS	= -std=c11 -Wall -O3 \
+CADD	=		# Additional CFLAGS accessible from CLI
+COPT	= -O3	# Optimization
+CFLAGS	= -std=c11 -Wall $(COPT) $(CADD) $\
 		-Ilib/iniparser/src \
 		-lm -lgsl -lblas -lhdf5
 

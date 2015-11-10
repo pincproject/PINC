@@ -73,7 +73,7 @@ dictionary* iniOpen(int argc, char *argv[]){
 
 	// Start new fmsg()-files (iterate through all files in [msgfiles] section)
 	int nKeys = iniparser_getsecnkeys(ini,"msgfiles");
-	char **keys = iniparser_getseckeys(ini,"msgfiles"); // don't free
+	char **keys = iniparser_getseckeys(ini,"msgfiles");
 	for(int i=0;i<nKeys;i++){
 
 		// Get filename corresponding to key
@@ -88,6 +88,9 @@ dictionary* iniOpen(int argc, char *argv[]){
 		}
 
 	}
+
+	// Note that keys should be freed but not keys[0] and so on.
+	free(keys);
 
 	return ini;
 
@@ -124,7 +127,7 @@ void msg(msgKind kind, const char* restrict format,...){
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	vsnprintf(msg,bufferSize,format,args);
 	snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
-	va_end(args);	
+	va_end(args);
 
 	// Print message
 	if(!(kind&ONCE) || rank==0){

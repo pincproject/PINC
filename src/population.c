@@ -50,6 +50,7 @@ Population *allocPopulation(const dictionary *ini){
 	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]-1; // No particles yet, set stop before iStart.
 
 	free(nAlloc);
+	free(nAllocTotal);
 
 	// Store in struct
 	Population *pop = malloc(sizeof(Population));
@@ -74,6 +75,8 @@ void freePopulation(Population *pop){
 	free(pop->q);
 	free(pop->m);
 	free(pop->energy);
+	free(pop->iStart);
+	free(pop->iStop);
 	free(pop);
 
 }
@@ -176,6 +179,8 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 			}
 		}
 	}
+	free(temp);
+	free(velDrift);
 }
 
 void writePopulation(const char *dataPath,Population *pop){

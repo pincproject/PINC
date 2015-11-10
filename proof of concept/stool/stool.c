@@ -208,6 +208,19 @@ void tprobe(const char * label){
 
 }
 
+startClock(TIC);
+clockStart(TOC);
+clockTime();
+clockDiff();
+timeProbe(START|DIFF);
+
+Time *time = allocTime();
+totTime(time,"msg");
+diffTime(time,"msg",i)
+freeTime(time);
+
+sWatch(RESTART)
+
 /*
  * FILE HANDLING FUNCTIONS (f-functions)
  *
