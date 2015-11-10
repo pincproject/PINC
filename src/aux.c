@@ -70,7 +70,7 @@ int intArrProd(const int *a, int nElements){
  	long int nsec = time->tv_nsec;
 
  	if(sec>=1){
- 		snprintf(str,len,"%6.2fs",(double)sec+(double)nsec/1000000000);
+ 		snprintf(str,len,"%6.2fs ",(double)sec+(double)nsec/1000000000);
  	} else if(nsec>1000000) {
  		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
  	} else if(nsec>1000) {

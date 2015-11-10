@@ -192,10 +192,11 @@ Population *allocPopulation(const dictionary *ini);
  */
 void freePopulation(Population *pop);
 
+
 /**
  * @brief	Assign particles uniformly distributed positions
  * @param			ini		Dictionary to input file
- * @param[in/out]	pop		Population of particles
+ * @param[in,out]	pop		Population of particles
  * @param			grid	Grid in which the particles are to be distributed
  * @param			rng		Random number generator
  * @return			void
@@ -218,7 +219,7 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
 /**
  * @brief	Assign particles Maxwellian distributed velocities
  * @param			ini		Dictionary to input file
- * @param[in/out]	pop		Population of particles
+ * @param[in,out]	pop		Population of particles
  * @param			rng		Random number generator
  * @return			void
  * @see velMaxwell()

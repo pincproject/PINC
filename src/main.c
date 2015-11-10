@@ -18,6 +18,7 @@
 
 int main(int argc, char *argv[]){
 
+
 	/*
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
@@ -46,8 +47,9 @@ int main(int argc, char *argv[]){
 	tMsg(timer,"position");
 	gsl_rng_set(rng,mpiRank);
 	velMaxwell(ini,pop,rng);
-	tMsg(timer,"velocity %i",3);
+	tMsg(timer,"velocity");
 	free(timer);
+
 
 	/*
 	 * FINALIZE PINC VARIABLES
