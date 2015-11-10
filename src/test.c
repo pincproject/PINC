@@ -60,26 +60,35 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 }
 
 void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
-	
+
 	msg(STATUS|ONCE, "Performing a manual test of boundary communication. Check parsedump");
 
 	//Gathering data from grid
-	int nDims = gridQuantity->grid->nDims;
-	int *nGPoints = gridQuantity->grid->nGPoints;
-	int *nGPointsProd = gridQuantity->grid->nGPointsProd;
-	int totalGPoints = nGPointsProd[nDims];
-	
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	int *nGPointsProd = grid->nGPointsProd;
+	int *node = grid->node;
+
 	msg(STATUS|ONCE, "Total grid points: \t %d, nGPointsProd = [%d , %d]",\
-	 totalGPoints, nGPointsProd[0], nGPointsProd[1]);
+	 nGPointsProd[nDims], nGPointsProd[0], nGPointsProd[1]);
+
+
+	//Get rank to put as grid values
+	//rank 1 grid has all values 1 and so on
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	//Populate grid as 0.
-	for(int g = 0; g < totalGPoints; g++){
-		gridQuantity->val[g]=0.;
+	for(int g = 0; g < nGPointsProd[nDims]; g++){
+		gridQuantity->val[g]= (double) rank;
 	}
 
-	int l = 0;	//Lower edge
+
+
+
+	/*int l = 0;	//Lower edge
 	int h = 0;	//Higher edge
-	int b = 1;	//Edge counter
 	int temp = 1;
 
 	for(int d = 0; d < nDims; d++){
@@ -97,16 +106,24 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 		}
 
 		b += 2;
+	}*/
+
+	if(rank == 0){
+		dump2DGrid(ini, gridQuantity);
+		dumpGhostVector(ini, gridQuantity);	
 	}
+	
 
 	
-	dump2DGrid(ini, gridQuantity);
-	dumpGhostVector(ini, gridQuantity);
-
+	
 	return;
 }
 
 void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
+	
+	int *node = gridQuantity->grid->node;
+
+	msg(STATUS, "I am node [%d,%d]", node[0], node[1]);
 	msg(STATUS|ONCE, "Dumps 2D grid to parsefile");
 
 	int nDims = gridQuantity->grid->nDims;

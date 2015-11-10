@@ -213,8 +213,16 @@ void freeGridQuantity(GridQuantity *gridQuantity);
  * In the case where the grid has several dimensions first the lower edge is stored
  * for all dimensions, and then the upper edge is stored for each dimension
  * So for a 2D case the vector looks like:
- *
- * 		ghostEdge[***x_min***|***y_min***|***x_max***|***y_max***]
+ *		\f[
+ * 		Edge = [\partial \vec{x}_{min}\;\;|\;\;\partial \vec{y}_{min}\;\;|\;\;\partial \vec{x}_{max}
+ *				\;\;|\;\;\partial \vec{y}_{max}]
+ *		\f]
+ * In 3D it will be:
+ * 		\f[ 
+ *			Edges = [\;\; \partial \vec{x}_{min} \;\;|\;\; \partial \vec{y}_min \;\;|\;\; \partial \vec{z}_{min}
+ *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;  
+ *					\partial \vec{z}_{max} ]
+ *		\f]
  *
  * NOTE: 	ghostEdge vector should be considered for a member of grid structs
  * 			to avoid allocating it each time	
