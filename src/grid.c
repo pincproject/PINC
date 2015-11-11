@@ -12,6 +12,11 @@
 
 #include "pinc.h"
 #include <mpi.h>
+/*******TEMPORARY*************/
+#include "test.h"
+/*******TEMPORARY*************/
+
+
 
 /******************************************************************************
  * DECLARATIONS
@@ -227,6 +232,127 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
 	return ghostEdge;
 
 }
+
+void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghosts){
+	msg(STATUS|ONCE, "Distributing ghosts");
+
+	//Picking up data
+	Grid *grid = gridQuantity->grid;
+	int *nGhosts = grid->nGhosts;
+	int *nGPoints = grid->nGPoints;
+	int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
+
+	//Allocate space for ghost vector
+	int nGhostPoints = 0;
+	for(int g = 0; g < nDims; g++){
+		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
+	}
+
+	//Gather lower edge ghosts
+	int l;
+	int w = 0;
+	for(int d = 0; d < nDims; d++){
+		l = 0;
+		for(int g = 0; g < nGPoints[d]; g++){
+			gridQuantity->val[l] = ghosts[w];
+
+			l += nGPointsProd[d];
+			w++;
+		}
+	}
+
+	/*
+	 *	NOTE! Look for a clearer way to do higher edge, 
+	 *  and not sure if it works for all dimensions
+	 */
+
+	//Gather higher edge ghosts
+	int h;
+	int temp = 1;
+	for(int d = 0; d < nDims; d++){
+		
+		temp *= nGPoints[d];
+		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
+
+		for(int g = 0; g < nGPoints[d]; g++){
+			gridQuantity->val[h] = ghosts[w];
+			if((grid->node[0] == 0) & (grid->node[1] == 0)){
+				msg(STATUS|ONCE, "%f", gridQuantity->val[h]);
+			}
+			h += nGPointsProd[d];
+			w++;
+		}
+	}
+
+	return;
+}
+
+ void swapGhosts(dictionary *ini, GridQuantity *gridQuantity){
+
+ 	// Get MPI info
+	int size, rank;
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+	//Load
+ 	Grid *grid = gridQuantity->grid;
+ 	int *node = grid->node;
+ 	int *nNodes = grid->nNodes;
+ 	int nDims = grid->nDims;
+ 	int *nGhosts = grid->nGhosts;
+ 	int *nGPoints = grid->nGPoints;
+
+ 	int nGhostPoints = 0;
+	for(int d = 0; d < nDims; d++){
+		nGhostPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
+	}
+
+ 	double *ghosts = getGhostEdge(ini, gridQuantity);
+
+ 	//Test stuffs
+ 	if(rank==0){
+ 		dumpGhostVector(ini, gridQuantity, ghosts);	
+ 	}
+ 	MPI_Barrier(MPI_COMM_WORLD);
+ 	if(rank==1){
+ 		dumpGhostVector(ini, gridQuantity, ghosts);	
+ 	}
+ 	
+
+ 	
+
+ 	if(rank == 0){
+  		MPI_Send(ghosts, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+  		MPI_Recv(ghosts, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+ 	}
+
+ 	if(rank == 1){
+ 		MPI_Send(ghosts, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+ 		MPI_Recv(ghosts, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+
+ 	}
+ 	MPI_Barrier(MPI_COMM_WORLD);
+ 	//Test stuffs
+ 	if(rank==1){
+ 		fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");	
+ 	}
+ 	if(rank==0){
+ 		dumpGhostVector(ini, gridQuantity, ghosts);	
+ 	}
+ 	MPI_Barrier(MPI_COMM_WORLD);
+ 	if(rank==1){
+ 		dumpGhostVector(ini, gridQuantity, ghosts);	
+ 	}
+
+ 	distributeGhosts(ini, gridQuantity, ghosts);
+
+
+ 	return;
+ }
+
 
 
 void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){

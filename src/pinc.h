@@ -230,6 +230,22 @@ void freeGridQuantity(GridQuantity *gridQuantity);
  */
 double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity);
 
+/**
+ * @brief 	Places the ghost vector on the grid again after swapping
+ * 
+ * More documentation TBD
+ */
+void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghosts);
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param dictionary 	*ini
+ * @param GridQuantity 	*gridQuantity
+ * 
+ * TBD
+ */
+
+ void swapGhosts(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
  * @brief Writes information about the grid structs to a parsefile
@@ -239,6 +255,20 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity);
  * @return void
  *
  * TBD
+ * 2 subdomains 2D grid example:
+ * @code
+	111111	222222
+	111111	222222
+	111111	222222
+	111111	222222
+
+	swapGhosts(ini, gridQuantity);
+
+	111112	122222
+	111112	122222
+	111112	122222
+	111112	122222	
+  @endcode
  */
 void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
 

@@ -76,8 +76,10 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 
 	//Get rank to put as grid values
 	//rank 1 grid has all values 1 and so on
-	int rank;
+	int rank, size;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+
 
 	//Populate grid as 0.
 	for(int g = 0; g < nGPointsProd[nDims]; g++){
@@ -107,14 +109,20 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 
 		b += 2;
 	}*/
-
-	if(rank == 0){
-		dump2DGrid(ini, gridQuantity);
-		dumpGhostVector(ini, gridQuantity);	
+	for(int r = 0; r < size; r++){
+		MPI_Barrier(MPI_COMM_WORLD);
+		if(rank == r){
+			dump2DGrid(ini, gridQuantity);
+		}
 	}
-	
-
-	
+	MPI_Barrier(MPI_COMM_WORLD);
+	swapGhosts(ini, gridQuantity);
+	for(int r = 0; r < size; r++){
+		MPI_Barrier(MPI_COMM_WORLD);
+		if(rank == r){
+			dump2DGrid(ini, gridQuantity);
+		}
+	}
 	
 	return;
 }
@@ -123,27 +131,29 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 	
 	int *node = gridQuantity->grid->node;
 
-	msg(STATUS, "I am node [%d,%d]", node[0], node[1]);
-	msg(STATUS|ONCE, "Dumps 2D grid to parsefile");
+	msg(STATUS|ONCE, "Dumps 2D grid to parsefile, node[%d,%d]",node[0], node[1]);
 
 	int nDims = gridQuantity->grid->nDims;
 	int *nGPoints = gridQuantity->grid->nGPoints;
 	int *nGPointsProd = gridQuantity->grid->nGPointsProd;
 
-	fMsg(ini,"parsedump", "Dump of 2D/1D indexes: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
 
 	int p = 0;
 
+	if(node[0] == 0 & node[1]==0){
 
-	for(int k = 0; k < nGPoints[1]; k++){
-		for(int j = 0; j < nGPoints[0]; j++){	
-			fMsg(ini,"parsedump", "\t%d", p);
-			p++;
-		}
+		fMsg(ini,"parsedump", "indexes: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+
+		for(int k = 0; k < nGPoints[1]; k++){
+			for(int j = 0; j < nGPoints[0]; j++){	
+				fMsg(ini,"parsedump", "\t%d", p);
+				p++;
+			}
 		fMsg(ini,"parsedump", "\n ");	
+		}
 	}
-
-	fMsg(ini,"parsedump", "\n Dump of 2D/1D grid: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+	
+	fMsg(ini,"parsedump", "\nDump of 2D/1D grid: (%dx%d) and node[%d,%d] \n \n", nGPoints[0], nGPoints[1],  node[0], node[1]);
 
 	p = 0;
 	for(int k = 0; k < nGPoints[1]; k++){ //y-rows
@@ -151,13 +161,13 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 			fMsg(ini,"parsedump", "\t%d", (int) gridQuantity->val[p]);	
 			p++;
 		}
-		fMsg(ini,"parsedump", "\n ");	
+		fMsg(ini,"parsedump", "\n");	
 	}
 	
 	return;
 }
 
-void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity){
+void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity, double *ghosts){
 
 	//Load
 	Grid *grid = gridQuantity->grid;
@@ -166,17 +176,20 @@ void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity){
 	int nDims = grid->nDims;
 
 
-	double *ghostEdge = getGhostEdge(ini, gridQuantity);
+	double *ghostEdge = ghosts;
 
 	int nGhostPoints = 0;
 	for(int g = 0; g < nDims; g++){
 		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
 	}
-
+	fMsg(ini , "parsedump", "\n******************************************************\n\n");
+	fMsg(ini , "parsedump", "node[%d,%d]: ghostEdge = \n", grid->node[0],grid->node[1]);
 	//Print GhostEdge
 	for(int w = 0; w < nGhostPoints; w++){
-		msg(STATUS, "ghostEdge[%d] = %d", w, (int) ghostEdge[w]);
+		fMsg(ini, "parsedump" , "%d,",(int) ghostEdge[w]);
 	}
+	fMsg(ini , "parsedump", "\n\n******************************************************\n");
+	
 	
 	return;
 }

@@ -43,7 +43,17 @@ void multigridParseDump(dictionary *ini, Multigrid *multigrid);
 //Initialisers for the grid and multigrid structs
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 
-//Dumps the 
+/**
+ * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
+ * @param Multigrid *multigrid
+ * 
+ * Since the finest grid is allocated seperately and used on it's own without 
+ * the multigrid struct, it is not freed in this destructor. 
+ * Variables freed: gridQuantity [1->end]
+ *
+ */
+void freeMultigrid(Multigrid *multigrid);
+
 
 void gaussSeidel(void);
 void jacobian(void);

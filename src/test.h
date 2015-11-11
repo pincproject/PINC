@@ -52,4 +52,4 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity);
  * @brief Dumps ghostvectors
  */
  
-void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity);
+void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity,double * ghosts);

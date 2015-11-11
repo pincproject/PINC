@@ -162,6 +162,21 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
   	return multigrid;
 }
 
+void freeMultigrid(Multigrid *multigrid){
+
+	GridQuantity **gridQuantities = multigrid->gridQuantities;
+	int nLevels = multigrid->nLevels;
+
+	for(int n = 1; n < nLevels; n++)
+	{	
+		freeGrid(gridQuantities[n]->grid);
+		freeGridQuantity(gridQuantities[n]);
+	}
+
+	return;
+}
+
+
 void jacobian(void){
 	printf("Hello from Jacobian \n");
 	return;
