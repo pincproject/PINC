@@ -7,8 +7,8 @@
  *
  *
  * Functions dealing with the initialisation and destruction of multigrid structures and
- * a multigrid solver containing restriction, prolongation operatorors and smoothers 
- * 
+ * a multigrid solver containing restriction, prolongation operatorors and smoothers
+ *
  */
 
 
@@ -22,7 +22,7 @@
 
 
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
-	
+
 
 	// Get MPI info
 	int size, rank;
@@ -31,11 +31,11 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 	//Load data
 	int nDims, nBoundaries;
-	
+
 	//Multigrid
 	int nLevels = iniparser_getint((dictionary *) ini, "multigrid:mgLevels", 0);
 	int nCycles = iniparser_getint((dictionary *) ini, "multigrid:mgCycles", 0);
-	
+
 	//Sanity checks
 	if(!nLevels){
 		msg(ERROR, "Multi Grid levels is 0, direct solver not implemented yet \n");
@@ -70,8 +70,8 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 	//Making the smaller grids (uses a lot of the logic in allocGrid and allocGridQuantity)
 	//Should think of a better solution here, but grid needs to have different values for each subgrid
-	
-	for(int i = 1; i < nLevels; i++){ 
+
+	for(int i = 1; i < nLevels; i++){
 	//Did we agree on a standard index when we aren't dealing with dim, spatial or particle ind?
 	//Maybe q would be okay, if that isn't used in population struct
 
@@ -91,7 +91,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 			//Cumulative products
 			int *nGPointsProd = malloc (nDims*sizeof(int));
-			
+
 			int tempPoints = 1;
 			for(int d = 0; d < nDims; d++){
 				nGPointsProd[d] = tempPoints*nGPoints[d];
@@ -106,7 +106,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			grid->nGPointsProd = nGPointsProd;
 			grid->nGhosts = nGhosts;
 			//The rest picks the information the fine grid
-			grid->node = gridQuantities[0]->grid->node;		
+			grid->node = gridQuantities[0]->grid->node;
 			grid->nNodes = gridQuantities[0]->grid->nNodes;
 			grid->offset = gridQuantities[0]->grid->offset;
 			grid->posToNode = gridQuantities[0]->grid->posToNode; 	//Not 100% sure this is correct
@@ -127,8 +127,8 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
     //Setting the algorithms to be used, pointer functions
     /*
-     *	Will be slightly messy when more options are added later, consider moving to a 
-     *	new function/file 
+     *	Will be slightly messy when more options are added later, consider moving to a
+     *	new function/file
      */
     char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
@@ -151,14 +151,14 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
     } else {
     	msg(ERROR, "No Coarse Grid Solver algorithm specified");
     }
-    
+
     //Free!
-			
+
 /*    printf("If this is the last I say, I'm bad and segfaults at freeing stuff \n");
 *//*    free(coarseSolverName);
     free(postSmoothName);
     free(preSmoothName);
-*/  	
+*/
   	return multigrid;
 }
 
@@ -168,7 +168,7 @@ void freeMultigrid(Multigrid *multigrid){
 	int nLevels = multigrid->nLevels;
 
 	for(int n = 1; n < nLevels; n++)
-	{	
+	{
 		freeGrid(gridQuantities[n]->grid);
 		freeGridQuantity(gridQuantities[n]);
 	}
@@ -208,5 +208,3 @@ void multigridParseDump(dictionary *ini, Multigrid *multigrid){
 
 	return;
 }
-
-

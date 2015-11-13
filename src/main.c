@@ -16,12 +16,10 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "multigrid.h" 
+#include "multigrid.h"
 #include "test.h"
 
 int main(int argc, char *argv[]){
-
-
 
 	/*
 	 * INITIALIZE THIRD PARTY LIBRARIES
@@ -32,7 +30,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-	 
+
 	dictionary *ini = iniOpen(argc,argv);
 
 	Grid *grid = allocGrid(ini);
@@ -43,7 +41,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * 	Test Area
 	 */
-	
+
 /*	testGridAndMGStructs(ini, gridQuantity, multigrid);
 */	testBoundarySendRecieve(ini, gridQuantity, multigrid);
 

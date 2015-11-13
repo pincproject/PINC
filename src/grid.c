@@ -1,14 +1,14 @@
 /**
- * @file		grid.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- *				Gullik Vetvik Killie <gullikvk@gys.uio.no>
- * @copyright	University of Oslo, Norway
- * @brief		Grid-struct handling.
- * @date		30.10.15
- *
- * Functions for handling particles: initialization and finalization of
- * particle structs, reading and writing of data and so on.
- */
+* @file		grid.c
+* @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+*				Gullik Vetvik Killie <gullikvk@gys.uio.no>
+* @copyright	University of Oslo, Norway
+* @brief		Grid-struct handling.
+* @date		30.10.15
+*
+* Functions for handling particles: initialization and finalization of
+* particle structs, reading and writing of data and so on.
+*/
 
 #include "pinc.h"
 #include <mpi.h>
@@ -19,18 +19,18 @@
 
 
 /******************************************************************************
- * DECLARATIONS
- *****************************************************************************/
+* DECLARATIONS
+*****************************************************************************/
 /**
- * @brief Returns the ND-index of this MPI node in the global reference frame
- * @param	ini		input settings
- * @return	The N-dimensional index of this MPI node
- */
+* @brief Returns the ND-index of this MPI node in the global reference frame
+* @param	ini		input settings
+* @return	The N-dimensional index of this MPI node
+*/
 static int *getNode(const dictionary *ini);
 
 /******************************************************************************
- * DEFINITIONS
- *****************************************************************************/
+* DEFINITIONS
+*****************************************************************************/
 
 static int *getNode(const dictionary *ini){
 
@@ -46,7 +46,7 @@ static int *getNode(const dictionary *ini){
 	// Sanity check
 	int totalNNodes = intArrProd(nNodes,nDims);
 	if(totalNNodes!=size)
-		msg(ERROR,"The product of grid:nNodes does not match the number of MPI processes");
+	msg(ERROR,"The product of grid:nNodes does not match the number of MPI processes");
 
 	// Determine node
 	int *node = malloc(nDims*sizeof(int));
@@ -77,7 +77,7 @@ Grid *allocGrid(const dictionary *ini){
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
 	int *nNodes = iniGetIntArr(ini, "grid:nNodes", &nDims);
-	double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
+	// double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
@@ -113,8 +113,8 @@ Grid *allocGrid(const dictionary *ini){
 	//Free temporary variables
 	free(nTGPoints);
 
-    /* Store in Grid */
-    Grid *grid = malloc(sizeof(Grid));
+	/* Store in Grid */
+	Grid *grid = malloc(sizeof(Grid));
 
 	grid->nDims = nDims;
 	grid->nGPoints = nGPoints;
@@ -125,7 +125,7 @@ Grid *allocGrid(const dictionary *ini){
 	grid->offset = offset;
 	grid->posToNode = posToNode;
 
-    return grid;
+	return grid;
 }
 
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
@@ -133,15 +133,22 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	//Load data
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	int nTotPoints = 1;		//#Grid points in all dimensions
+	int *nGhosts = grid->nGhosts;
+	int nTotPoints = 1;			//#Grid points in all dimensions
+	int nGhostPoints = 0;		//#Total ghost points
+
 
 	//Total grid points N^d
 	for(int d = 0; d < nDims; d++){
 		nTotPoints *= nGPoints[d];
 	}
+	for(int g = 0; g < nDims; g++){
+		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
+	}
 
 	//Memory for values
 	double *val = malloc(nTotPoints*nValues*sizeof(double));
+	double *halo = malloc(nGhostPoints*nValues*sizeof(double));
 
 	/* Store in gridQuantity */
 	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
@@ -149,6 +156,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
+	gridQuantity->halo = halo;
 
 	return gridQuantity;
 }
@@ -168,19 +176,20 @@ void freeGrid(Grid *grid){
 }
 
 void freeGridQuantity(GridQuantity *gridQuantity){
-	
+
 	free(gridQuantity->val);
 
 	return;
 }
 
-double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
+double *getHalo(dictionary *ini, GridQuantity *gridQuantity){
 
 	//Picking up data
 	Grid *grid = gridQuantity->grid;
 	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
 	int *nGPointsProd = grid->nGPointsProd;
+	double *halo = gridQuantity->halo;
 	int nDims = grid->nDims;
 
 	//Allocate space for ghost vector
@@ -189,19 +198,14 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
 		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
 	}
 
-	double *ghostEdge = malloc(nGhostPoints*sizeof(double));
 
-	for(int w = 0; w < nGhostPoints; w++){
-		ghostEdge[w] = 0.;
-	}
-
-	//Gather lower edge ghosts
+	//Gather lower edge halo
 	int l;
 	int w = 0;
 	for(int d = 0; d < nDims; d++){
 		l = 0;
 		for(int g = 0; g < nGPoints[d]; g++){
-			ghostEdge[w] = gridQuantity->val[l];
+			halo[w] = gridQuantity->val[l];
 
 			l += nGPointsProd[d];
 			w++;
@@ -209,34 +213,35 @@ double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity){
 	}
 
 	/*
-	 *	NOTE! Look for a clearer way to do higher edge, 
-	 *  and not sure if it works for all dimensions
-	 */
+	*	Note! Look for a clearer way to do higher edge,
+	*  and not sure if it works for all dimensions
+	*/
 
-	//Gather higher edge ghosts
+	//Gather higher edge halo
 	int h;
 	int temp = 1;
 	for(int d = 0; d < nDims; d++){
-		
+
 		temp *= nGPoints[d];
 		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
 
 		for(int g = 0; g < nGPoints[d]; g++){
-			ghostEdge[w] = gridQuantity->val[h];
+			halo[w] = gridQuantity->val[h];
 
 			h += nGPointsProd[d];
 			w++;
 		}
 	}
 
-	return ghostEdge;
+	return halo;
 
 }
 
-void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghosts){
-	msg(STATUS|ONCE, "Distributing ghosts");
+void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
+	msg(STATUS|ONCE, "Distributing halo");
 
 	//Picking up data
+	double *halo = gridQuantity->halo;
 	Grid *grid = gridQuantity->grid;
 	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
@@ -249,13 +254,13 @@ void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghost
 		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
 	}
 
-	//Gather lower edge ghosts
+	//Gather lower edge halo
 	int l;
 	int w = 0;
 	for(int d = 0; d < nDims; d++){
 		l = 0;
 		for(int g = 0; g < nGPoints[d]; g++){
-			gridQuantity->val[l] = ghosts[w];
+			gridQuantity->val[l] = halo[w];
 
 			l += nGPointsProd[d];
 			w++;
@@ -263,20 +268,20 @@ void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghost
 	}
 
 	/*
-	 *	NOTE! Look for a clearer way to do higher edge, 
-	 *  and not sure if it works for all dimensions
-	 */
+	*	NOTE! Look for a clearer way to do higher edge,
+	*  and not sure if it works for all dimensions
+	*/
 
-	//Gather higher edge ghosts
+	//Gather higher edge halo
 	int h;
 	int temp = 1;
 	for(int d = 0; d < nDims; d++){
-		
+
 		temp *= nGPoints[d];
 		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
 
 		for(int g = 0; g < nGPoints[d]; g++){
-			gridQuantity->val[h] = ghosts[w];
+			gridQuantity->val[h] = halo[w];
 			if((grid->node[0] == 0) & (grid->node[1] == 0)){
 				msg(STATUS|ONCE, "%f", gridQuantity->val[h]);
 			}
@@ -288,104 +293,103 @@ void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghost
 	return;
 }
 
- void swapGhosts(dictionary *ini, GridQuantity *gridQuantity){
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 
- 	// Get MPI info
+	// Get MPI info
 	int size, rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	//Load
- 	Grid *grid = gridQuantity->grid;
- 	int *node = grid->node;
- 	int *nNodes = grid->nNodes;
- 	int nDims = grid->nDims;
- 	int *nGhosts = grid->nGhosts;
- 	int *nGPoints = grid->nGPoints;
+	Grid *grid = gridQuantity->grid;
+	int *node = grid->node;
+	int *nNodes = grid->nNodes;
+	int nDims = grid->nDims;
+	int *nGhosts = grid->nGhosts;
+	int *nGPoints = grid->nGPoints;
 
- 	int nGhostPoints = 0;
+	int nGhostPoints = 0;
 	for(int d = 0; d < nDims; d++){
 		nGhostPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
 	}
 
- 	double *ghosts = getGhostEdge(ini, gridQuantity);
+	double *halo = getHalo(ini, gridQuantity);
 
- 	//Test stuffs
- 	if(rank==0){
- 		dumpGhostVector(ini, gridQuantity, ghosts);	
- 	}
- 	MPI_Barrier(MPI_COMM_WORLD);
- 	if(rank==1){
- 		dumpGhostVector(ini, gridQuantity, ghosts);	
- 	}
- 	
-
- 	
-
- 	if(rank == 0){
-  		MPI_Send(ghosts, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-  		MPI_Recv(ghosts, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
- 	}
-
- 	if(rank == 1){
- 		MPI_Send(ghosts, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
- 		MPI_Recv(ghosts, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
-
- 	}
- 	MPI_Barrier(MPI_COMM_WORLD);
- 	//Test stuffs
- 	if(rank==1){
- 		fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");	
- 	}
- 	if(rank==0){
- 		dumpGhostVector(ini, gridQuantity, ghosts);	
- 	}
- 	MPI_Barrier(MPI_COMM_WORLD);
- 	if(rank==1){
- 		dumpGhostVector(ini, gridQuantity, ghosts);	
- 	}
-
- 	distributeGhosts(ini, gridQuantity, ghosts);
-
-
- 	return;
- }
-
-
-
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
-	/******************************************
-	*	Writing information to the parsedump
-	*******************************************/
-	fMsg(ini,"parsedump", "Grids: \n");
-
-	fMsg(ini,"parsedump", "#Computational Nodes: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
+	//Test stuffs
+	if(rank==0){
+		dumpHalo(ini, gridQuantity);
 	}
-
-	fMsg(ini,"parsedump", "\nTotal true grid points: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
-			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(rank==1){
+		dumpHalo(ini, gridQuantity);
 	}
 
 
-	fMsg(ini,"parsedump", "\n \n");
 
 
-	/*
-	 *         	TEST AREA
-	 */
-	fMsg(ini, "parsedump", "TEST AREA \n \n");
-	fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
-	for(int i = 0; i < 5; i++){
-		fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
-	}
+	if(rank == 0){
+		MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+		MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
+			MPI_STATUS_IGNORE);
+		}
 
-	fMsg(ini,"parsedump", "\n \n");
-	return;
-}
+		if(rank == 1){
+			MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+			MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
+				MPI_STATUS_IGNORE);
 
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+			//Test stuffs
+			if(rank==1){
+				fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");
+			}
+			if(rank==0){
+				dumpHalo(ini, gridQuantity);
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+			if(rank==1){
+				dumpHalo(ini, gridQuantity);
+			}
+
+			distributeHalo(ini, gridQuantity);
+
+
+			return;
+		}
+
+
+
+		void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
+			/******************************************
+			*	Writing information to the parsedump
+			*******************************************/
+			fMsg(ini,"parsedump", "Grids: \n");
+
+			fMsg(ini,"parsedump", "#Computational Nodes: ");
+			for(int d = 0; d < grid->nDims; d++){
+				fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
+			}
+
+			fMsg(ini,"parsedump", "\nTotal true grid points: ");
+			for(int d = 0; d < grid->nDims; d++){
+				fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
+					(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
+				}
+
+
+				fMsg(ini,"parsedump", "\n \n");
+
+
+				/*
+				*         	TEST AREA
+				*/
+				fMsg(ini, "parsedump", "TEST AREA \n \n");
+				fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
+				for(int i = 0; i < 5; i++){
+					fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
+				}
+
+				fMsg(ini,"parsedump", "\n \n");
+				return;
+			}

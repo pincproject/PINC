@@ -7,7 +7,7 @@
  *
  * Test Area for PINC model, a place where some small test are made to see that small
  * parts of the code works as suspected. Mainly here to keep main.c clean and uncluttered
- * 
+ *
  * 		NOT TO BE INCLUDED IN FINAL PRODUCT
  */
 
@@ -17,19 +17,17 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "multigrid.h" 
-
-
+#include "multigrid.h"
 
 /**
- * @brief Tests that grids are accessible and editable from 
+ * @brief Tests that grids are accessible and editable from
  * GridQuantity and Multigrid structs
- * 
+ *
  * @param 	ini				dictionary
  * @param 	gridQuantity	GridQuantity
  * @param 	multigrid 		Multigrid
  *
- * Populates a few grid points from gridQuantity, dumps them in the parsefile, 
+ * Populates a few grid points from gridQuantity, dumps them in the parsefile,
  * changes them from multigrid, dumps them again. Then they are changed from gridQuantity
  * and dumped again
  *
@@ -51,5 +49,5 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity);
 /**
  * @brief Dumps ghostvectors
  */
- 
-void dumpGhostVector(dictionary *ini, GridQuantity *gridQuantity,double * ghosts);
+
+void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);

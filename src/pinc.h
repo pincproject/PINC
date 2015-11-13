@@ -17,7 +17,7 @@
 
 /**
  * @brief Contains a population of particles.
- * 
+ *
  * The position and velocity is stored in a flat manner, such that (x,y,z) of
  * particle 0 comes first, then (x,y,z) of particle 1, and so on (assuming 3D).
  * As an example, printing the (x,y,z) position of the first 3 particles:
@@ -120,7 +120,7 @@ typedef struct{
  * @brief Allocates the memory for the a grid struct as specified in the input file
  * @param dictionary *ini
  * @return Grid *grid
- * 
+ *
  * Allocates the memory for a grid struct and returns a pointer to it
  *
  * @see Grid
@@ -137,7 +137,7 @@ void freeGrid(Grid *grid);
 
 /**
  * @brief A quantity defined on a grid, for instance charge density.
- * 
+ *
  * Can represent both scalar and vector quantities. For scalar quantities
  * nValues=1, whereas vector fields typically have nValues=nDims=3. The nodes
  * are lexicographically ordered, i.e. node (0,0,0), (1,0,0), (2,0,0), ...,
@@ -153,7 +153,7 @@ void freeGrid(Grid *grid);
  * @endcode
  *
  * Note that nGPointsProd[d] represents an increment of 1 in direction d.
- * 
+ *
  * For vector fields all values are stored one node at a time. For instance, to
  * print the vector value of E at node (j,k,l):
  *
@@ -169,18 +169,19 @@ void freeGrid(Grid *grid);
 
 typedef struct{
 	double *val;				///< The values on the grid
+	double *halo;				///< Ghost cells surrounding true cells
 	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
 } GridQuantity;
 
 /**
  * @brief Allocates the memory for the a grid struct as specified in the input file
- * @param ini 				dictionary of the input file	
- * @param grid 				grid struct 
+ * @param ini 				dictionary of the input file
+ * @param grid 				grid struct
  * @param nValues			number of values per grid point.
  * @return gridQuantity 	GridQuantity struct
- *  
- * 
+ *
+ *
  *
  * Allocates the memory for a GridQuantity struct and returns a pointer to it
  *
@@ -194,7 +195,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
  * @brief Frees the memory of a GridQuantity struct
  * @param gridQuantity 		Gridquantity struct
  *
- * Frees the memory of the GridQuantity struct, since the Grid member of the struct 
+ * Frees the memory of the GridQuantity struct, since the Grid member of the struct
  * can be shared by several gridQuantity'ies it needs to be freed seperately
  * @see freeGrid
  */
@@ -203,13 +204,13 @@ void freeGridQuantity(GridQuantity *gridQuantity);
 
 /**
  * @brief Gather the edges of a grid and returns a vector with them
- * @param 	ini 				dictionary of the input file	
- * @param 	gridQuantity		GridQuantity struct 
+ * @param 	ini 				dictionary of the input file
+ * @param 	gridQuantity		GridQuantity struct
  * @return 	ghostEdge 			vector containing ghost values (*double)
- * 
+ *
  * From a grid this function gathers the ghost layer, stores it in a 1D array
  * and returns it.
- * 
+ *
  * In the case where the grid has several dimensions first the lower edge is stored
  * for all dimensions, and then the upper edge is stored for each dimension
  * So for a 2D case the vector looks like:
@@ -218,39 +219,39 @@ void freeGridQuantity(GridQuantity *gridQuantity);
  *				\;\;|\;\;\partial \vec{y}_{max}]
  *		\f]
  * In 3D it will be:
- * 		\f[ 
+ * 		\f[
  *			Edges = [\;\; \partial \vec{x}_{min} \;\;|\;\; \partial \vec{y}_min \;\;|\;\; \partial \vec{z}_{min}
- *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;  
+ *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;
  *					\partial \vec{z}_{max} ]
  *		\f]
  *
- * NOTE: 	ghostEdge vector should be considered for a member of grid structs
- * 			to avoid allocating it each time	
+ * Note: 	ghostEdge vector should be considered for a member of grid structs
+ * 			to avoid allocating it each time
  *
  */
-double *getGhostEdge(dictionary *ini, GridQuantity *gridQuantity);
+double *getHalo(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
  * @brief 	Places the ghost vector on the grid again after swapping
- * 
+ *
  * More documentation TBD
  */
-void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghosts);
+void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
  * @param dictionary 	*ini
  * @param GridQuantity 	*gridQuantity
- * 
+ *
  * TBD
  */
 
- void swapGhosts(dictionary *ini, GridQuantity *gridQuantity);
+ void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
  * @brief Writes information about the grid structs to a parsefile
- * @param ini 		dictionary of the input file	
- * @param grid 		grid struct 
+ * @param ini 		dictionary of the input file
+ * @param grid 		grid struct
  * @param nValues	number of values per grid point.
  * @return void
  *
@@ -267,7 +268,7 @@ void distributeGhosts(dictionary *ini, GridQuantity *gridQuantity, double *ghost
 	111112	122222
 	111112	122222
 	111112	122222
-	111112	122222	
+	111112	122222
   @endcode
  */
 void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
@@ -294,7 +295,7 @@ typedef enum{
  * @brief	kind	STATUS, WARNING or ERROR depending on what to output.
  * @param	format	Error message with specification of how to interpret data.
  * @param	...		Data to be interpreted in message.
- * @return	void 
+ * @return	void
  * @see msgKind, fMsg(), printf()
  *
  * This replaces printf() in the PINC context. Similar syntax to printf().
@@ -325,7 +326,7 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  * @brief	Opens PINC input ini-file specified in PINC's arguments.
  * @brief	argc	Argument count (as passed to PINC)
  * @param	argv	Arugment vector (as passed to PINC)
- * @return	Allocated iniparser dictionary holding data from ini-file 
+ * @return	Allocated iniparser dictionary holding data from ini-file
  *
  * Performs sanity check on argc and argv and opens the specified input file.
  * It also empties all files specified in msgfiles.
@@ -375,7 +376,7 @@ int iniGetNElements(const dictionary* ini, const char* key);
  * @see				freeStrArr(), listToStrArr()
  *
  * Output is similar to listToStrArr(). Remember to free result string array
- * using freeStrArr(). 
+ * using freeStrArr().
  *
  * This function can be seen as an extension to iniparser in order to parse
  * comma-separated entries as arrays.
@@ -390,7 +391,7 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements);
  * @return			array of integers
  * @see				iniGetLongIntArr(), iniGetStrArr(), iniGetDoubleArr(), iniparser_getint()
  *
- * Remember to free result array using free(). 
+ * Remember to free result array using free().
  *
  * This function can be seen as an extension to iniparser in order to parse
  * comma-separated entries as arrays.
@@ -405,7 +406,7 @@ int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
  * @return			array of integers
  * @see				iniGetIntArr()
  *
- * Remember to free result array using free(). 
+ * Remember to free result array using free().
  *
  * This function can be seen as an extension to iniparser in order to parse
  * comma-separated entries as arrays.
@@ -420,7 +421,7 @@ long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElement
  * @return			array of idoubles
  * @see				iniGetStrArr(), iniGetIntArr(), iniparser_getdouble()
  *
- * Remember to free result array using free(). 
+ * Remember to free result array using free().
  *
  * This function can be seen as an extension to iniparser in order to parse
  * comma-separated entries as arrays.
