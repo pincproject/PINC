@@ -15,6 +15,7 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
+#include <hdf5.h>
 
 int main(int argc, char *argv[]){
 
@@ -49,22 +50,30 @@ int main(int argc, char *argv[]){
 //	tMsg(timer,"velocity");
 //	free(timer);
 
-
-
-//	Timer *timer = allocTimer(0);
-//	for(int i=0;i<1000;i++){
-		writePopulation("test",pop);
+//	int nDims = pop->nDims;
+//	for(long int i=0;i<1000;i++){
+//		for(int d=0;d<nDims;d++){
+//			pop->pos[i*nDims+d]= i + (double)d/10;
+//		}
 //	}
-//	tMsg(timer,"writePopulation times 1000");
+	posDebug(ini,pop);
 
-//	freeTimer(timer);
+	Timer *timer = allocTimer(0);
+
+	hid_t file = h5openPopulation(ini,pop);
+	for(int n=0;n<3;n++){
+		h5writePopulation(pop,file,n);
+	}
+	H5Fclose(file);
+	tMsg(timer,"method 1");
+	freeTimer(timer);
 
 
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
-//	freePopulation(pop);
-//	freeGrid(grid);
+	freePopulation(pop);
+	freeGrid(grid);
 	iniparser_freedict(ini);
 
 	/*

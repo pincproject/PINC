@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <mpi.h>
+#include <hdf5.h>
 #include "iniparser.h"
 #include "pinc.h"
 
@@ -81,10 +82,18 @@ dictionary* iniOpen(int argc, char *argv[]){
 
 		// Make file empty (unless using stdout or stderr)
 		if(strcmp(fName,"")==0){
-			msg(WARNING,"%s not specified. Using stdout.",keys[i]);
+			msg(WARNING|ONCE,"%s not specified. Using stdout.",keys[i]);
 		} else if(strcmp(fName,"stdout")!=0 && strcmp(fName,"stderr")!=0) {
-			FILE *file = fopen(fName,"w");
-			fclose(file);
+
+			if(makeParentPath(fName))
+				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
+
+			// check whether file exists
+			FILE *fh = fopen(fName,"r");
+			if(fh!=NULL){
+				fclose(fh);
+				msg(ERROR|ONCE,"'%s' already exists.",fName);
+			}
 		}
 
 	}
@@ -256,6 +265,29 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
 	}
 
 	return nElements;
+
+}
+
+/******************************************************************************
+ * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
+ *****************************************************************************/
+
+hid_t createH5File(const char *fName, hid_t fcpList, hid_t fapList){
+
+	// Make sure parent folder exist
+	if(makeParentPath(fName))
+		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fName);
+
+	// check whether file exists
+	FILE *fh = fopen(fName,"r");
+	if(fh!=NULL){
+		fclose(fh);
+		msg(ERROR|ONCE,"'%s' already exists.",fName);
+	}
+
+	// create file
+	hid_t file = H5Fcreate(fName,H5F_ACC_EXCL,fcpList,fapList);
+	return file;
 
 }
 

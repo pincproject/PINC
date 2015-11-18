@@ -1,14 +1,14 @@
 ##
 ## @file		makefile
 ## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
-## @copyright		University of Oslo, Norway
+## @copyright	University of Oslo, Norway
 ## @brief		PINC makefile.
 ## @date		10.10.15
 ##
 
 EXEC	= pinc
 CC		= mpicc
-CADD	=# Additional CFLAGS accessible from CLI
+CADD	= # Additional CFLAGS accessible from CLI
 COPT	= -O3 # Optimization
 CFLAGS	=	-std=c11 -Wall\
 			-Ilib/iniparser/src\
@@ -19,7 +19,6 @@ ODIR	= src
 HDIR	= src
 LDIR	= lib
 DDIR	= doc
-
 
 HEAD_	= pinc.h multigrid.h
 SRC_	= main.c io.c aux.c population.c grid.c multigrid.c
@@ -57,11 +56,11 @@ $(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk
 	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) >> $(DDIR)/doxygen/doxyfile.inc
 
 doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
-	@echo "Making documentation (run \"make pdf\" to get LaTeX pdf)"
+	@echo "Making documentation (run \"make pdf\" to get pdf)"
 	@cd $(DDIR)/doxygen && doxygen doxyfile.mk > /dev/null 2>&1
 
 pdf: doc
-	@echo "Making LaTeX pdf"
+	@echo "Making PDF"
 	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
 
 cleandoc:
@@ -70,8 +69,8 @@ cleandoc:
 	@rm -fr $(DDIR)/html $(DDIR)/latex
 
 clean: cleandoc
-	@echo "Cleaning compilation files (run \"make veryclean\" to clean executable and iniparser)"
-	@rm -f *~ $(SDIR)/*.o $(SDIR)/*~ gmon.out
+	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
+	@rm -f *~ $(SDIR)/*.o $(SDIR)/*~ gmon.out *.h5 out.*.h5
 
 veryclean: clean
 	@echo "Cleaning executable and iniparser"

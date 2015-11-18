@@ -15,6 +15,7 @@
 
 #include "iniparser.h"
 #include <time.h>
+#include <hdf5.h>
 #include <gsl/gsl_rng.h>
 
 /******************************************************************************
@@ -217,6 +218,20 @@ void freePopulation(Population *pop);
 void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng);
 
 /**
+ * @brief	Assign particles artificial positions suitable for debugging
+ * @param			ini		Dictionary to input file
+ * @param[in,out]	pop		Population
+ *
+ * The amount of particles specified by population:nParticles in ini will be
+ * generated with values given by the following code:
+ *
+ * @code
+ *	pos[i*nDims+d] = 1000*mpiRank + i + (double)d/10 + (double)s/100;
+ * @endcode
+ */
+void posDebug(const dictionary *ini, Population *pop);
+
+/**
  * @brief	Assign particles Maxwellian distributed velocities
  * @param			ini		Dictionary to input file
  * @param[in,out]	pop		Population of particles
@@ -232,7 +247,23 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
  */
 void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
 
-void writePopulation(const char *dataPath, Population *pop);
+/**
+ * @brief	Creates .pop.h5-file to store population in
+ * @param	ini		Dictionary to input file specifying file name
+ * @param	pop		Population
+ * @return			HDF5 file identifier
+ */
+hid_t h5openPopulation(const dictionary *ini, Population *pop);
+
+/**
+ * @brief	Stores particles in Population in file
+ * @param	pop		Population
+ * @param	file	.pop.h5-file created with h5openPopulation()
+ * @param	n		Timestep to store as
+ * @return			void
+ * @see	h5openPopulation()
+ */
+void h5writePopulation(Population *pop, hid_t file, int n);
 
 /******************************************************************************
  * DEFINED IN GRID.C
@@ -480,6 +511,22 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
  */
 void freeStrArr(char** strArr);
 
+/**
+ * @brief Creates .h5-file
+ * @param	fName	File name
+ * @param	fcpList	File Creation Property List
+ * @param	acpList	File Access Property List
+ * @return	HDF5 file identifier
+ * @see		H5Fcreate(), H5Fclose()
+ *
+ * Contrary to H5Fcreate() this function creates parent directories unless they
+ * already exists. If a file already exists it will fail but contrary to
+ * H5Fcreate() it will fail gracefully with an ERROR.
+ *
+ * Close file with H5Fclose() as usual.
+ */
+hid_t createH5File(const char *fName, hid_t fcpList, hid_t fapList);
+
 /******************************************************************************
  * DEFINED IN AUX.C
  *****************************************************************************/
@@ -552,6 +599,34 @@ int *intArrCumProd(const int *a, int nElements);
  * @return	Pointer to allocated array of size nElements
  */
 int *intArrMul(const int *a, const int *b, int nElements);
+
+/**
+ * @brief Makes all parent directories of URL path
+ * @param	path	Path
+ * @return	0 for success, 1 for failure
+ *
+ * Examples:
+ *	path="dir/dir/file"	generates the folder "./dir/dir/"
+ *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
+ *  path="../dir/file" generates the folder "../dir/"
+ *	path="/dir/file" generates the folder "/dir/"
+ *
+ * Already existing folders are left as-is. This function can be used to ensure
+ * that the parent directories of its path exists.
+ */
+int makeParentPath(const char *path);
+
+/**
+ * @brief Concatenates two strings
+ * @param	a	First string
+ * @param	b	Second string
+ * @return		Pointer to concatenated string
+ * @see	strcat()
+ *
+ * Contrary to strcat() this function allocates a new string of suitable length.
+ * Make sure to run free().
+ */
+char *strAllocCat(const char *a, const char *b);
 
 
 

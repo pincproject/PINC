@@ -14,12 +14,24 @@
 #include <time.h>
 #include <mpi.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
 
 static void tFormat(char *str, int len, const TimeSpec *time);
+
+/**
+ * @brief Makes a directory
+ * @param	dir		Directory name
+ * @return	0 for success, 1 for failure
+ *
+ * dir can be a path but ancestors must exist. Directory will have permissions
+ * 0775.
+ */
+static int makeDir(const char *dir);
 
 /******************************************************************************
  * ARRAY FUNCTIONS
@@ -145,4 +157,53 @@ Timer *allocTimer(int rank){
 
 void freeTimer(Timer *timer){
 	free(timer);
+}
+
+char *strAllocCat(const char *a, const char *b){
+
+	int aLen = strlen(a);
+	int bLen = strlen(b);
+
+	char *result = malloc(aLen+bLen+1);
+
+	strcpy(result,a);
+	strcat(result,b);
+
+	return result;
+
+}
+
+static int makeDir(const char *dir){
+    struct stat st;
+    int status = 0;
+
+    if(stat(dir, &st) != 0){
+        if (mkdir(dir, 0775) != 0 && errno != EEXIST) status = -1;
+    } else if(!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        status = -1;
+    }
+
+    return(status);
+}
+
+int makeParentPath(const char *path){
+    char *pp;
+    char *sp;
+    int status;
+    char *copy = strdup(path);
+
+    status = 0;
+    pp = copy;
+    while (status == 0 && (sp = strchr(pp, '/')) != 0){
+        if (sp != pp){
+            *sp = '\0';
+            status = makeDir(copy);
+            *sp = '/';
+        }
+        pp = sp + 1;
+    }
+
+    free(copy);
+    return(status);
 }
