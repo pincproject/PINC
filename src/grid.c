@@ -261,12 +261,12 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
 		l = 0;
 		for(int g = 0; g < nGPoints[d]; g++){
 			gridQuantity->val[l] = halo[w];
-
 			l += nGPointsProd[d];
+			msg(STATUS|ONCE, "halo[%d] into val[%d]", w, l);
+
 			w++;
 		}
 	}
-
 	/*
 	*	NOTE! Look for a clearer way to do higher edge,
 	*  and not sure if it works for all dimensions
@@ -283,7 +283,6 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
 		for(int g = 0; g < nGPoints[d]; g++){
 			gridQuantity->val[h] = halo[w];
 			if((grid->node[0] == 0) & (grid->node[1] == 0)){
-				msg(STATUS|ONCE, "%f", gridQuantity->val[h]);
 			}
 			h += nGPointsProd[d];
 			w++;
@@ -305,91 +304,140 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 	int *node = grid->node;
 	int *nNodes = grid->nNodes;
 	int nDims = grid->nDims;
+	int nValues = gridQuantity->nValues;
 	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
 
-	int nGhostPoints = 0;
+	int nHaloPoints = 0;
 	for(int d = 0; d < nDims; d++){
-		nGhostPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
+		nHaloPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
 	}
 
 	double *halo = getHalo(ini, gridQuantity);
 
-	//Test stuffs
-	if(rank==0){
-		dumpHalo(ini, gridQuantity);
+	// //Test stuffs
+	// if(rank==0){
+	// 	dumpHalo(ini, gridQuantity);
+	// }
+	// MPI_Barrier(MPI_COMM_WORLD);
+	// if(rank==1){
+	// 	dumpHalo(ini, gridQuantity);
+	// }
+
+	int l = 0;	//Lower edge
+	int h = 0;	//Higher edge
+	int haloProgress = 0;
+
+	//Assigning lower edges
+	for(int d = 0; d < nDims; d++){
+		haloProgress += nGPoints[d];
+		if(node[d]==0){
+			msg(STATUS|ONCE, "node[%d,%d]", node[0], node[1]);
+			while(l<haloProgress){
+				halo[l] = 5.;
+				msg(STATUS|ONCE, "l = %d", l);
+				l++;
+			}
+		}
 	}
+
 	MPI_Barrier(MPI_COMM_WORLD);
-	if(rank==1){
-		dumpHalo(ini, gridQuantity);
+
+	if(rank == 2){
+		//Assigning top edge
+		for(int d = 0; d < nDims; d++){
+			msg(STATUS, "haloProgress = %d", haloProgress);
+			h = haloProgress;
+			haloProgress += nGPoints[d];
+			msg(STATUS, "haloProgress = %d", haloProgress);
+
+			if(node[d]==nNodes[d]-1){
+				msg(STATUS, "node[%d,%d]", node[0], node[1]);
+				while(h<haloProgress){
+					halo[h] = 6.;
+					msg(STATUS, "h = %d", h);
+					h++;
+				}
+			}
+		}
+	}
+
+	for(int r = 0;r < size; r++){
+		MPI_Barrier(MPI_COMM_WORLD);
+		if(rank == r){
+			fMsg(ini , "parsedump", "\n******************************************************\n\n");
+			fMsg(ini , "parsedump", "node[%d,%d]: halo = \n", grid->node[0],grid->node[1]);
+			//Print GhostEdge
+			for(int w = 0; w < nHaloPoints; w++){
+				fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
+			}
+			fMsg(ini , "parsedump", "\n\n******************************************************\n");
+		}
 	}
 
 
+	//
+	// if(rank == 0){
+	// 	MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+	// 	MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
+	// 		MPI_STATUS_IGNORE);
+	// 	}
+	//
+	// 	if(rank == 1){
+	// 		MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+	// 		MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
+	// 			MPI_STATUS_IGNORE);
+	// 		}
+	// 	MPI_Barrier(MPI_COMM_WORLD);
+	// 	//Test stuffs
+	// 	if(rank==1){
+	// 		fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");
+	// 	}
+		// if(rank==0){
+		// 	dumpHalo(ini, gridQuantity);
+		// }
+		// MPI_Barrier(MPI_COMM_WORLD);
+		// if(rank==1){
+		// 	dumpHalo(ini, gridQuantity);
+		// }
 
+		distributeHalo(ini, gridQuantity);
 
-	if(rank == 0){
-		MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-		MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
-			MPI_STATUS_IGNORE);
-		}
-
-		if(rank == 1){
-			MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-			MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
-				MPI_STATUS_IGNORE);
-
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-			//Test stuffs
-			if(rank==1){
-				fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");
-			}
-			if(rank==0){
-				dumpHalo(ini, gridQuantity);
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-			if(rank==1){
-				dumpHalo(ini, gridQuantity);
-			}
-
-			distributeHalo(ini, gridQuantity);
-
-
-			return;
+		return;
 		}
 
 
 
-		void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
-			/******************************************
-			*	Writing information to the parsedump
-			*******************************************/
-			fMsg(ini,"parsedump", "Grids: \n");
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
+	/******************************************
+	*	Writing information to the parsedump
+	*******************************************/
+	fMsg(ini,"parsedump", "Grids: \n");
 
-			fMsg(ini,"parsedump", "#Computational Nodes: ");
-			for(int d = 0; d < grid->nDims; d++){
-				fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
-			}
+	fMsg(ini,"parsedump", "#Computational Nodes: ");
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
+	}
 
-			fMsg(ini,"parsedump", "\nTotal true grid points: ");
-			for(int d = 0; d < grid->nDims; d++){
-				fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
-					(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
-				}
-
-
-				fMsg(ini,"parsedump", "\n \n");
+	fMsg(ini,"parsedump", "\nTotal true grid points: ");
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
+			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
+		}
 
 
-				/*
-				*         	TEST AREA
-				*/
-				fMsg(ini, "parsedump", "TEST AREA \n \n");
-				fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
-				for(int i = 0; i < 5; i++){
-					fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
-				}
+		fMsg(ini,"parsedump", "\n \n");
 
-				fMsg(ini,"parsedump", "\n \n");
-				return;
-			}
+
+		/*
+		*         	TEST AREA
+		*/
+		fMsg(ini, "parsedump", "TEST AREA \n \n");
+		fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
+		for(int i = 0; i < 5; i++){
+			fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
+		}
+
+		fMsg(ini,"parsedump", "\n \n");
+		return;
+	}

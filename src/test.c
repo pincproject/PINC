@@ -169,26 +169,26 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 void dumpHalo(dictionary *ini, GridQuantity *gridQuantity){
 
-	//Load
-	Grid *grid = gridQuantity->grid;
-	int *nGhosts = grid->nGhosts;
-	int *nGPoints = grid->nGPoints;
-	int nDims = grid->nDims;
-	double *halo = gridQuantity->halo;
-
-	int nGhostPoints = 0;
-	for(int g = 0; g < nDims; g++){
-		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
-	}
-
-	fMsg(ini , "parsedump", "\n******************************************************\n\n");
-	fMsg(ini , "parsedump", "node[%d,%d]: ghostEdge = \n", grid->node[0],grid->node[1]);
-	//Print GhostEdge
-	for(int w = 0; w < nGhostPoints; w++){
-		fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
-	}
-	fMsg(ini , "parsedump", "\n\n******************************************************\n");
-
+	// //Load
+	// Grid *grid = gridQuantity->grid;
+	// int *nGhosts = grid->nGhosts;
+	// int *nGPoints = grid->nGPoints;
+	// int nDims = grid->nDims;
+	// double *halo = gridQuantity->halo;
+	//
+	// int nGhostPoints = 0;
+	// for(int g = 0; g < nDims; g++){
+	// 	nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
+	// }
+	//
+	// fMsg(ini , "parsedump", "\n******************************************************\n\n");
+	// fMsg(ini , "parsedump", "node[%d,%d]: ghostEdge = \n", grid->node[0],grid->node[1]);
+	// //Print GhostEdge
+	// for(int w = 0; w < nGhostPoints; w++){
+	// 	fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
+	// }
+	// fMsg(ini , "parsedump", "\n\n******************************************************\n");
+	//
 
 	return;
 }

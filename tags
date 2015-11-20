@@ -100,7 +100,6 @@ Detailed Description	doc/latex/structGrid.tex	/^\\begin{DoxyCompactList}\\small\
 Detailed Description	doc/latex/structGridQuantity.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Specifications of the grid. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structMultigrid.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Function pointer to a Pre Smooth function. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structPopulation.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Number of dimensions (usually 3) \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
-Detailed Description	doc/latex/structTimer.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Rank of node or negative to turn off timer. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 ECLIPSE_DOC_ID	doc/doxygen/doxyfile.mk	/^ECLIPSE_DOC_ID         = org.doxygen.Project$/;"	m
 ENABLED_SECTIONS	doc/doxygen/doxyfile.mk	/^ENABLED_SECTIONS       =$/;"	m
 ENABLE_PREPROCESSING	doc/doxygen/doxyfile.mk	/^ENABLE_PREPROCESSING   = YES$/;"	m
@@ -404,7 +403,6 @@ Public Attributes	doc/latex/structGrid.tex	/^{\\ttfamily \\#include $<$pinc.\\+h
 Public Attributes	doc/latex/structGridQuantity.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structMultigrid.tex	/^{\\ttfamily \\#include $<$multigrid.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structPopulation.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
-Public Attributes	doc/latex/structTimer.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
 Q	src/old/const.h	21;"	d
 Q	src/old/triang/const.h	21;"	d
 QCH_FILE	doc/doxygen/doxyfile.mk	/^QCH_FILE               =$/;"	m
@@ -532,7 +530,6 @@ TYPEDEF_HIDES_STRUCT	doc/doxygen/doxyfile.mk	/^TYPEDEF_HIDES_STRUCT   = NO$/;"	m
 T_SINK	src/old/triang/triangulate.h	70;"	d
 T_X	src/old/triang/triangulate.h	68;"	d
 T_Y	src/old/triang/triangulate.h	69;"	d
-Timer Struct Reference	doc/latex/structTimer.tex	/^\\hypertarget{structTimer}{}\\section{Timer Struct Reference}$/;"	s
 UML_LIMIT_NUM_FIELDS	doc/doxygen/doxyfile.mk	/^UML_LIMIT_NUM_FIELDS   = 10$/;"	m
 UML_LOOK	doc/doxygen/doxyfile.mk	/^UML_LOOK               = NO$/;"	m
 USE_HTAGS	doc/doxygen/doxyfile.mk	/^USE_HTAGS              = NO$/;"	m
@@ -767,7 +764,6 @@ details	doc/html/structGrid.html	/^<a name="details" id="details"><\/a><h2 class
 details	doc/html/structGridQuantity.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structMultigrid.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structPopulation.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
-details	doc/html/structTimer.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/test_8c.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/test_8h.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 dhist	src/old/const.h	/^FILE *dhist;$/;"	v
@@ -1160,7 +1156,7 @@ get_vertex_positions	src/old/triang/monotone.c	/^static int get_vertex_positions
 gpcolumn	src/old/const.h	/^MPI_Datatype gpcolumn;$/;"	v
 gpcolumn	src/old/triang/const.h	/^MPI_Datatype gpcolumn;$/;"	v
 grid	src/pinc.h	/^	Grid *grid;					\/\/\/< Specifications of the grid$/;"	m	struct:__anon3
-gridParseDump	src/grid.c	/^		void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){$/;"	f
+gridParseDump	src/grid.c	/^void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){$/;"	f
 gridQuantities	src/multigrid.h	/^   GridQuantity **gridQuantities;   \/\/\/< Array of Grid structs of decreasing coarseness$/;"	m	struct:__anon5
 gridtype	src/old/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
 gridtype	src/old/triang/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
@@ -1873,7 +1869,6 @@ pub-attribs	doc/html/structGrid.html	/^<tr class="heading"><td colspan="2"><h2 c
 pub-attribs	doc/html/structGridQuantity.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 pub-attribs	doc/html/structMultigrid.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 pub-attribs	doc/html/structPopulation.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
-pub-attribs	doc/html/structTimer.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 q	src/old/const.h	/^  double q;$/;"	m	struct:d_particle
 q	src/old/triang/const.h	/^  double q;$/;"	m	struct:d_particle
 q	src/pinc.h	/^	double *q;			\/\/\/< Specie charge [elementary charges] (nSpecies elements)$/;"	m	struct:__anon1
