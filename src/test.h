@@ -51,3 +51,29 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity);
  */
 
 void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+
+/**
+ * @brief Writes information about the grid structs to a parsefile
+ * @param ini 		dictionary of the input file
+ * @param grid 		grid struct
+ * @param nValues	number of values per grid point.
+ * @return void
+ *
+ * TBD
+ * 2 subdomains 2D grid example:
+ * @code
+	111111	222222
+	111111	222222
+	111111	222222
+	111111	222222
+
+	swapGhosts(ini, gridQuantity);
+
+	111112	122222
+	111112	122222
+	111112	122222
+	111112	122222
+  @endcode
+ */
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);

@@ -19,7 +19,7 @@
 
 
 /******************************************************************************
-* DECLARATIONS
+* DECLARATIONS, local functions only used by this file
 *****************************************************************************/
 /**
 * @brief Returns the ND-index of this MPI node in the global reference frame
@@ -27,6 +27,55 @@
 * @return	The N-dimensional index of this MPI node
 */
 static int *getNode(const dictionary *ini);
+
+/**
+ * @brief Gather the edges of a grid and returns a vector with them
+ * @param 	ini 				dictionary of the input file
+ * @param 	gridQuantity		GridQuantity struct
+ * @return 	ghostEdge 			vector containing ghost values (*double)
+ *
+ * From a grid this function gathers the ghost layer, stores it in a 1D array
+ * and returns it.
+ *
+ * In the case where the grid has several dimensions first the lower edge is stored
+ * for all dimensions, and then the upper edge is stored for each dimension
+ * So for a 2D case the vector looks like:
+ *		\f[
+ * 		Edge = [\partial \vec{x}_{min}\;\;|\;\;\partial \vec{y}_{min}\;\;|\;\;\partial \vec{x}_{max}
+ *				\;\;|\;\;\partial \vec{y}_{max}]
+ *		\f]
+ * In 3D it will be:
+ * 		\f[
+ *			Edges = [\;\; \partial \vec{x}_{min} \;\;|\;\; \partial \vec{y}_min \;\;|\;\; \partial \vec{z}_{min}
+ *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;
+ *					\partial \vec{z}_{max} ]
+ *		\f]
+ *
+ * Note: 	ghostEdge vector should be considered for a member of grid structs
+ * 			to avoid allocating it each time
+ *
+ */
+double *getHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+/**
+ * @brief 	Places the ghost vector on the grid again after swapping
+ *
+ * More documentation TBD
+ */
+void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param dictionary 	*ini
+ * @param GridQuantity 	*gridQuantity
+ *
+ * TBD
+ */
+
+ void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+// Sigvalds halo functions
+
 
 /******************************************************************************
 * DEFINITIONS
@@ -198,7 +247,6 @@ double *getHalo(dictionary *ini, GridQuantity *gridQuantity){
 		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
 	}
 
-
 	//Gather lower edge halo
 	int l;
 	int w = 0;
@@ -314,11 +362,12 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 	}
 
 	double *halo = getHalo(ini, gridQuantity);
+	// getHalo2()
 
 	// //Test stuffs
-	// if(rank==0){
-	// 	dumpHalo(ini, gridQuantity);
-	// }
+	if(rank==0){
+		dumpHalo(ini, gridQuantity);
+	}
 	// MPI_Barrier(MPI_COMM_WORLD);
 	// if(rank==1){
 	// 	dumpHalo(ini, gridQuantity);
@@ -394,7 +443,7 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 	// 		fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");
 	// 	}
 		// if(rank==0){
-		// 	dumpHalo(ini, gridQuantity);
+			// dumpHalo(ini, gridQuantity);
 		// }
 		// MPI_Barrier(MPI_COMM_WORLD);
 		// if(rank==1){
@@ -405,39 +454,3 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 
 		return;
 		}
-
-
-
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
-	/******************************************
-	*	Writing information to the parsedump
-	*******************************************/
-	fMsg(ini,"parsedump", "Grids: \n");
-
-	fMsg(ini,"parsedump", "#Computational Nodes: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
-	}
-
-	fMsg(ini,"parsedump", "\nTotal true grid points: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
-			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
-		}
-
-
-		fMsg(ini,"parsedump", "\n \n");
-
-
-		/*
-		*         	TEST AREA
-		*/
-		fMsg(ini, "parsedump", "TEST AREA \n \n");
-		fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
-		for(int i = 0; i < 5; i++){
-			fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
-		}
-
-		fMsg(ini,"parsedump", "\n \n");
-		return;
-	}

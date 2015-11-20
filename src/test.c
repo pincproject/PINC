@@ -80,13 +80,10 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
 
 
-	//Populate grid as 0.
+	//Populate grid as rank.
 	for(int g = 0; g < nGPointsProd[nDims]; g++){
 		gridQuantity->val[g]= (double) rank;
 	}
-
-
-
 
 	/*int l = 0;	//Lower edge
 	int h = 0;	//Higher edge
@@ -166,6 +163,40 @@ void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	return;
 }
+
+void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
+	/******************************************
+	*	Writing information to the parsedump
+	*******************************************/
+	fMsg(ini,"parsedump", "Grids: \n");
+
+	fMsg(ini,"parsedump", "#Computational Nodes: ");
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
+	}
+
+	fMsg(ini,"parsedump", "\nTotal true grid points: ");
+	for(int d = 0; d < grid->nDims; d++){
+		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
+			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
+		}
+
+
+		fMsg(ini,"parsedump", "\n \n");
+
+
+		/*
+		*         	TEST AREA
+		*/
+		fMsg(ini, "parsedump", "TEST AREA \n \n");
+		fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
+		for(int i = 0; i < 5; i++){
+			fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
+		}
+
+		fMsg(ini,"parsedump", "\n \n");
+		return;
+	}
 
 void dumpHalo(dictionary *ini, GridQuantity *gridQuantity){
 

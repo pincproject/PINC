@@ -1156,7 +1156,7 @@ get_vertex_positions	src/old/triang/monotone.c	/^static int get_vertex_positions
 gpcolumn	src/old/const.h	/^MPI_Datatype gpcolumn;$/;"	v
 gpcolumn	src/old/triang/const.h	/^MPI_Datatype gpcolumn;$/;"	v
 grid	src/pinc.h	/^	Grid *grid;					\/\/\/< Specifications of the grid$/;"	m	struct:__anon3
-gridParseDump	src/grid.c	/^void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){$/;"	f
+gridParseDump	src/test.c	/^void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){$/;"	f
 gridQuantities	src/multigrid.h	/^   GridQuantity **gridQuantities;   \/\/\/< Array of Grid structs of decreasing coarseness$/;"	m	struct:__anon5
 gridtype	src/old/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
 gridtype	src/old/triang/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
@@ -1287,42 +1287,53 @@ kenergy	src/old/const.h	/^  double kenergy;$/;"	m	struct:particle
 kenergy	src/old/triang/const.h	/^  double kenergy;$/;"	m	struct:particle
 key	lib/iniparser/src/dictionary.h	/^    char        **  key ;   \/** List of string keys *\/$/;"	m	struct:_dictionary_
 l00001	doc/html/aux_8c.html	/^<p>The result will be given by: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;result[0] = 1;<\/div>$/;"	a
-l00001	doc/html/grid_8c.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111    222222<\/div>$/;"	a
 l00001	doc/html/io_8c.html	/^<p>Example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;iniAssertEqualNElements(ini,3,&quot;mySec:a&quot;,&quot;mySec:b&quot;,&quot;mySec:c&quot;);<\/div>$/;"	a
 l00001	doc/html/multigrid_8h_source.html	/^<a href="multigrid_8h.html">Go to the documentation of this file.<\/a><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;<span class="preprocessor">#ifndef MULTIGRID_H<\/span><\/div>$/;"	a
 l00001	doc/html/pinc_8h.html	/^<p>Example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;iniAssertEqualNElements(ini,3,&quot;mySec:a&quot;,&quot;mySec:b&quot;,&quot;mySec:c&quot;);<\/div>$/;"	a
 l00001	doc/html/pinc_8h.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111    222222<\/div>$/;"	a
 l00001	doc/html/pinc_8h.html	/^<p>The result will be given by: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;result[0] = 1;<\/div>$/;"	a
 l00001	doc/html/pinc_8h_source.html	/^<a href="pinc_8h.html">Go to the documentation of this file.<\/a><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;<\/div>$/;"	a
+l00001	doc/html/test_8c.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111    222222<\/div>$/;"	a
+l00001	doc/html/test_8h.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111    222222<\/div>$/;"	a
 l00001	doc/html/test_8h_source.html	/^<a href="test_8h.html">Go to the documentation of this file.<\/a><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;<\/div>$/;"	a
 l00002	doc/html/aux_8c.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;result[1] = a[0];<\/div>$/;"	a
-l00002	doc/html/grid_8c.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;111111    222222<\/div>$/;"	a
 l00002	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;<span class="preprocessor">#define MULTIGRID_H<\/span><\/div>$/;"	a
 l00002	doc/html/pinc_8h.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;111111    222222<\/div>$/;"	a
 l00002	doc/html/pinc_8h.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;result[1] = a[0];<\/div>$/;"	a
+l00002	doc/html/test_8c.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;111111    222222<\/div>$/;"	a
+l00002	doc/html/test_8h.html	/^<div class="line"><a name="l00002"><\/a><span class="lineno">    2<\/span>&#160;111111    222222<\/div>$/;"	a
 l00003	doc/html/aux_8c.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;result[2] = a[0]*a[1];<\/div>$/;"	a
-l00003	doc/html/grid_8c.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;111111    222222<\/div>$/;"	a
 l00003	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;<\/div>$/;"	a
 l00003	doc/html/pinc_8h.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;111111    222222<\/div>$/;"	a
 l00003	doc/html/pinc_8h.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;result[2] = a[0]*a[1];<\/div>$/;"	a
+l00003	doc/html/test_8c.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;111111    222222<\/div>$/;"	a
+l00003	doc/html/test_8h.html	/^<div class="line"><a name="l00003"><\/a><span class="lineno">    3<\/span>&#160;111111    222222<\/div>$/;"	a
 l00004	doc/html/aux_8c.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;...<\/div>$/;"	a
-l00004	doc/html/grid_8c.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;111111    222222<\/div>$/;"	a
 l00004	doc/html/pinc_8h.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;...<\/div>$/;"	a
 l00004	doc/html/pinc_8h.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;111111    222222<\/div>$/;"	a
-l00005	doc/html/grid_8c.html	/^<div class="line"><a name="l00005"><\/a><span class="lineno">    5<\/span>&#160;<\/div>$/;"	a
+l00004	doc/html/test_8c.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;111111    222222<\/div>$/;"	a
+l00004	doc/html/test_8h.html	/^<div class="line"><a name="l00004"><\/a><span class="lineno">    4<\/span>&#160;111111    222222<\/div>$/;"	a
 l00005	doc/html/pinc_8h.html	/^<div class="line"><a name="l00005"><\/a><span class="lineno">    5<\/span>&#160;<\/div>$/;"	a
-l00006	doc/html/grid_8c.html	/^<div class="line"><a name="l00006"><\/a><span class="lineno">    6<\/span>&#160;swapGhosts(ini, gridQuantity);<\/div>$/;"	a
+l00005	doc/html/test_8c.html	/^<div class="line"><a name="l00005"><\/a><span class="lineno">    5<\/span>&#160;<\/div>$/;"	a
+l00005	doc/html/test_8h.html	/^<div class="line"><a name="l00005"><\/a><span class="lineno">    5<\/span>&#160;<\/div>$/;"	a
 l00006	doc/html/pinc_8h.html	/^<div class="line"><a name="l00006"><\/a><span class="lineno">    6<\/span>&#160;swapGhosts(ini, gridQuantity);<\/div>$/;"	a
-l00007	doc/html/grid_8c.html	/^<div class="line"><a name="l00007"><\/a><span class="lineno">    7<\/span>&#160;<\/div>$/;"	a
+l00006	doc/html/test_8c.html	/^<div class="line"><a name="l00006"><\/a><span class="lineno">    6<\/span>&#160;swapGhosts(ini, gridQuantity);<\/div>$/;"	a
+l00006	doc/html/test_8h.html	/^<div class="line"><a name="l00006"><\/a><span class="lineno">    6<\/span>&#160;swapGhosts(ini, gridQuantity);<\/div>$/;"	a
 l00007	doc/html/pinc_8h.html	/^<div class="line"><a name="l00007"><\/a><span class="lineno">    7<\/span>&#160;<\/div>$/;"	a
-l00008	doc/html/grid_8c.html	/^<div class="line"><a name="l00008"><\/a><span class="lineno">    8<\/span>&#160;111112    122222<\/div>$/;"	a
+l00007	doc/html/test_8c.html	/^<div class="line"><a name="l00007"><\/a><span class="lineno">    7<\/span>&#160;<\/div>$/;"	a
+l00007	doc/html/test_8h.html	/^<div class="line"><a name="l00007"><\/a><span class="lineno">    7<\/span>&#160;<\/div>$/;"	a
 l00008	doc/html/pinc_8h.html	/^<div class="line"><a name="l00008"><\/a><span class="lineno">    8<\/span>&#160;111112    122222<\/div>$/;"	a
-l00009	doc/html/grid_8c.html	/^<div class="line"><a name="l00009"><\/a><span class="lineno">    9<\/span>&#160;111112    122222<\/div>$/;"	a
+l00008	doc/html/test_8c.html	/^<div class="line"><a name="l00008"><\/a><span class="lineno">    8<\/span>&#160;111112    122222<\/div>$/;"	a
+l00008	doc/html/test_8h.html	/^<div class="line"><a name="l00008"><\/a><span class="lineno">    8<\/span>&#160;111112    122222<\/div>$/;"	a
 l00009	doc/html/pinc_8h.html	/^<div class="line"><a name="l00009"><\/a><span class="lineno">    9<\/span>&#160;111112    122222<\/div>$/;"	a
-l00010	doc/html/grid_8c.html	/^<div class="line"><a name="l00010"><\/a><span class="lineno">   10<\/span>&#160;111112    122222<\/div>$/;"	a
+l00009	doc/html/test_8c.html	/^<div class="line"><a name="l00009"><\/a><span class="lineno">    9<\/span>&#160;111112    122222<\/div>$/;"	a
+l00009	doc/html/test_8h.html	/^<div class="line"><a name="l00009"><\/a><span class="lineno">    9<\/span>&#160;111112    122222<\/div>$/;"	a
 l00010	doc/html/pinc_8h.html	/^<div class="line"><a name="l00010"><\/a><span class="lineno">   10<\/span>&#160;111112    122222<\/div>$/;"	a
-l00011	doc/html/grid_8c.html	/^<div class="line"><a name="l00011"><\/a><span class="lineno">   11<\/span>&#160;111112    122222<\/div>$/;"	a
+l00010	doc/html/test_8c.html	/^<div class="line"><a name="l00010"><\/a><span class="lineno">   10<\/span>&#160;111112    122222<\/div>$/;"	a
+l00010	doc/html/test_8h.html	/^<div class="line"><a name="l00010"><\/a><span class="lineno">   10<\/span>&#160;111112    122222<\/div>$/;"	a
 l00011	doc/html/pinc_8h.html	/^<div class="line"><a name="l00011"><\/a><span class="lineno">   11<\/span>&#160;111112    122222<\/div>$/;"	a
+l00011	doc/html/test_8c.html	/^<div class="line"><a name="l00011"><\/a><span class="lineno">   11<\/span>&#160;111112    122222<\/div>$/;"	a
+l00011	doc/html/test_8h.html	/^<div class="line"><a name="l00011"><\/a><span class="lineno">   11<\/span>&#160;111112    122222<\/div>$/;"	a
 l00013	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00013"><\/a><span class="lineno">   13<\/span>&#160;<span class="preprocessor">#ifndef PINC_H<\/span><\/div>$/;"	a
 l00014	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00014"><\/a><span class="lineno">   14<\/span>&#160;<span class="preprocessor">#define PINC_H<\/span><\/div>$/;"	a
 l00015	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00015"><\/a><span class="lineno">   15<\/span>&#160;<\/div>$/;"	a
@@ -1372,8 +1383,10 @@ l00053	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00053"><\/a><s
 l00053	doc/html/test_8h_source.html	/^<div class="line"><a name="l00053"><\/a><span class="lineno">   53<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a2d3c3da424b6448ae9d673224a567c89">dumpHalo<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
 l00054	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a731d4fee658e2ea4fb2d7dcd6e1b9d9d">freeMultigrid<\/a>(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multigrid);<\/div>$/;"	a
 l00054	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">   54<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">nDims<\/a>;          <\/div>$/;"	a
+l00054	doc/html/test_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<\/div>$/;"	a
 l00055	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<\/div>$/;"	a
 l00055	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;} <a class="code" href="structPopulation.html">Population<\/a>;<\/div>$/;"	a
+l00055	doc/html/test_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<\/div>$/;"	a
 l00056	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<\/div>$/;"	a
 l00056	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<\/div>$/;"	a
 l00057	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel(<span class="keywordtype">void<\/span>);<\/div>$/;"	a
@@ -1383,6 +1396,7 @@ l00058	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00058"><\/a><s
 l00059	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<\/div>$/;"	a
 l00059	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<span class="comment">****************************************************************************\/<\/span><\/div>$/;"	a
 l00060	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<span class="preprocessor">#endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
+l00079	doc/html/test_8h_source.html	/^<div class="line"><a name="l00079"><\/a><span class="lineno">   79<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a152e3b46e53b507a39e045730bb20308">gridParseDump<\/a>(dictionary *ini, <a class="code" href="structGrid.html">Grid<\/a> *grid, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
 l00108	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00108"><\/a><span class="lineno"><a class="line" href="structGrid.html">  108<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
 l00109	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00109"><\/a><span class="lineno"><a class="line" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">  109<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">nDims<\/a>;                  <\/div>$/;"	a
 l00110	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00110"><\/a><span class="lineno"><a class="line" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">  110<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">nGPoints<\/a>;              <\/div>$/;"	a
