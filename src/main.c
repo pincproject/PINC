@@ -42,8 +42,9 @@ int main(int argc, char *argv[]){
 	 * 	Test Area
 	 */
 
-/*	testGridAndMGStructs(ini, gridQuantity, multigrid);
-*/	testBoundarySendRecieve(ini, gridQuantity, multigrid);
+//	testGridAndMGStructs(ini, gridQuantity, multigrid);
+//	testBoundarySendRecieve(ini, gridQuantity, multigrid);
+	testGetSlice(ini, gridQuantity);
 
 	/*
 	 * FINALIZE PINC VARIABLES

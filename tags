@@ -1149,6 +1149,8 @@ gen_dust3D	src/old/triang/grid.c	/^void gen_dust3D(int arc, char *arv[])$/;"	f
 generate_random_ordering	src/old/triang/misc.c	/^int generate_random_ordering(n)$/;"	f
 getHalo	src/grid.c	/^double *getHalo(dictionary *ini, GridQuantity *gridQuantity){$/;"	f
 getNode	src/grid.c	/^static int *getNode(const dictionary *ini){$/;"	f	file:
+getSlice	src/grid.c	/^void getSlice(double *slice, const double *val, const long int *nGPointsProd,$/;"	f
+getSliceInner	src/grid.c	/^double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,$/;"	f
 getXPos	doc/html/search/search.js	/^function getXPos(item)$/;"	f
 getYPos	doc/html/search/search.js	/^function getYPos(item)$/;"	f
 get_angle	src/old/triang/monotone.c	/^static double get_angle(vp0, vpnext, vp1)$/;"	f	file:

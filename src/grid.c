@@ -72,10 +72,32 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
  * TBD
  */
 
- void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
 
-// Sigvalds halo functions
+/**********************************************************
+ *	Inline functions
+ *********************************************************/
 
+double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
+											const int *points, const long int finalMul){
+
+	if(*mul==finalMul){
+		for(int j=0;j<*mul;j++) *(nextGhost++) = *((*valp)++);
+		*valp += (*mul)*(*points-1);
+	} else {
+		for(int j=0; j<*points;j++)
+			nextGhost = getSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+	}
+	return nextGhost;
+}
+
+void getSlice(double *slice, const double *val, const long int *nGPointsProd,
+							const int *nGPoints, int nDims, int d, int offset){
+
+	val += offset*nGPointsProd[d];
+
+	getSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
+}
 
 /******************************************************************************
 * DEFINITIONS
@@ -143,7 +165,7 @@ Grid *allocGrid(const dictionary *ini){
 	}
 
 	//Cumulative products
-	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
+	long int *nGPointsProd = malloc ((nDims+1)*sizeof(long int));
 	nGPointsProd[0] = 1;
 	for(int d = 1; d < nDims+1; d++){
 		nGPointsProd[d] = nGPointsProd[d-1]*nGPoints[d-1];
@@ -237,7 +259,7 @@ double *getHalo(dictionary *ini, GridQuantity *gridQuantity){
 	Grid *grid = gridQuantity->grid;
 	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
-	int *nGPointsProd = grid->nGPointsProd;
+	long int *nGPointsProd = grid->nGPointsProd;
 	double *halo = gridQuantity->halo;
 	int nDims = grid->nDims;
 
@@ -293,7 +315,7 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
 	Grid *grid = gridQuantity->grid;
 	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
-	int *nGPointsProd = grid->nGPointsProd;
+	long int *nGPointsProd = grid->nGPointsProd;
 	int nDims = grid->nDims;
 
 	//Allocate space for ghost vector
@@ -342,87 +364,110 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
 
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 
-	// Get MPI info
-	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
 	//Load
 	Grid *grid = gridQuantity->grid;
-	int *node = grid->node;
-	int *nNodes = grid->nNodes;
 	int nDims = grid->nDims;
-	int nValues = gridQuantity->nValues;
-	int *nGhosts = grid->nGhosts;
 	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	double *val = gridQuantity->val;
 
-	int nHaloPoints = 0;
-	for(int d = 0; d < nDims; d++){
-		nHaloPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
-	}
+	int d = 2;
+	int offset = 0;
+	int nSlicePoints = nGPoints[0]*nGPoints[1]*nGPoints[2];
+	nSlicePoints /= nGPoints[d];
 
-	double *halo = getHalo(ini, gridQuantity);
-	// getHalo2()
+	double *slice = malloc(nSlicePoints*sizeof(double));
 
-	// //Test stuffs
-	if(rank==0){
-		dumpHalo(ini, gridQuantity);
-	}
-	// MPI_Barrier(MPI_COMM_WORLD);
-	// if(rank==1){
+	getSlice(slice, val, nGPointsProd, nGPoints, nDims, d, offset);
+
+	// msg(STATUS,"Size of slice %d", nSlicePoints);
+	// for(int p = 0; p < nSlicePoints; p++) slice[p] = 1.;
+	msg(STATUS, "**Slice obtained**");
+	for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
+
+	// // Get MPI info
+	// int size, rank;
+	// MPI_Comm_size(MPI_COMM_WORLD,&size);
+	// MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+
+
+	//Load
+	// Grid *grid = gridQuantity->grid;
+	// int *node = grid->node;
+	// int *nNodes = grid->nNodes;
+	// int nDims = grid->nDims;
+	// int nValues = gridQuantity->nValues;
+	// int *nGhosts = grid->nGhosts;
+	// int *nGPoints = grid->nGPoints;
+
+	// int nHaloPoints = 0;
+	// for(int d = 0; d < nDims; d++){
+	// 	nHaloPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
+	// }
+	//
+	// double *halo = getHalo(ini, gridQuantity);
+	// // getHalo2()
+	//
+	// // //Test stuffs
+	// if(rank==0){
 	// 	dumpHalo(ini, gridQuantity);
 	// }
-
-	int l = 0;	//Lower edge
-	int h = 0;	//Higher edge
-	int haloProgress = 0;
-
-	//Assigning lower edges
-	for(int d = 0; d < nDims; d++){
-		haloProgress += nGPoints[d];
-		if(node[d]==0){
-			msg(STATUS|ONCE, "node[%d,%d]", node[0], node[1]);
-			while(l<haloProgress){
-				halo[l] = 5.;
-				msg(STATUS|ONCE, "l = %d", l);
-				l++;
-			}
-		}
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	if(rank == 2){
-		//Assigning top edge
-		for(int d = 0; d < nDims; d++){
-			msg(STATUS, "haloProgress = %d", haloProgress);
-			h = haloProgress;
-			haloProgress += nGPoints[d];
-			msg(STATUS, "haloProgress = %d", haloProgress);
-
-			if(node[d]==nNodes[d]-1){
-				msg(STATUS, "node[%d,%d]", node[0], node[1]);
-				while(h<haloProgress){
-					halo[h] = 6.;
-					msg(STATUS, "h = %d", h);
-					h++;
-				}
-			}
-		}
-	}
-
-	for(int r = 0;r < size; r++){
-		MPI_Barrier(MPI_COMM_WORLD);
-		if(rank == r){
-			fMsg(ini , "parsedump", "\n******************************************************\n\n");
-			fMsg(ini , "parsedump", "node[%d,%d]: halo = \n", grid->node[0],grid->node[1]);
-			//Print GhostEdge
-			for(int w = 0; w < nHaloPoints; w++){
-				fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
-			}
-			fMsg(ini , "parsedump", "\n\n******************************************************\n");
-		}
-	}
+	// // MPI_Barrier(MPI_COMM_WORLD);
+	// // if(rank==1){
+	// // 	dumpHalo(ini, gridQuantity);
+	// // }
+	//
+	// int l = 0;	//Lower edge
+	// int h = 0;	//Higher edge
+	// int haloProgress = 0;
+	//
+	// //Assigning lower edges
+	// for(int d = 0; d < nDims; d++){
+	// 	haloProgress += nGPoints[d];
+	// 	if(node[d]==0){
+	// 		msg(STATUS|ONCE, "node[%d,%d]", node[0], node[1]);
+	// 		while(l<haloProgress){
+	// 			halo[l] = 5.;
+	// 			msg(STATUS|ONCE, "l = %d", l);
+	// 			l++;
+	// 		}
+	// 	}
+	// }
+	//
+	// MPI_Barrier(MPI_COMM_WORLD);
+	//
+	// if(rank == 2){
+	// 	//Assigning top edge
+	// 	for(int d = 0; d < nDims; d++){
+	// 		msg(STATUS, "haloProgress = %d", haloProgress);
+	// 		h = haloProgress;
+	// 		haloProgress += nGPoints[d];
+	// 		msg(STATUS, "haloProgress = %d", haloProgress);
+	//
+	// 		if(node[d]==nNodes[d]-1){
+	// 			msg(STATUS, "node[%d,%d]", node[0], node[1]);
+	// 			while(h<haloProgress){
+	// 				halo[h] = 6.;
+	// 				msg(STATUS, "h = %d", h);
+	// 				h++;
+	// 			}
+	// 		}
+	// 	}
+	// }
+	//
+	// for(int r = 0;r < size; r++){
+	// 	MPI_Barrier(MPI_COMM_WORLD);
+	// 	if(rank == r){
+	// 		fMsg(ini , "parsedump", "\n******************************************************\n\n");
+	// 		fMsg(ini , "parsedump", "node[%d,%d]: halo = \n", grid->node[0],grid->node[1]);
+	// 		//Print GhostEdge
+	// 		for(int w = 0; w < nHaloPoints; w++){
+	// 			fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
+	// 		}
+	// 		fMsg(ini , "parsedump", "\n\n******************************************************\n");
+	// 	}
+	// }
 
 
 	//
@@ -450,7 +495,7 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 		// 	dumpHalo(ini, gridQuantity);
 		// }
 
-		distributeHalo(ini, gridQuantity);
+		// distributeHalo(ini, gridQuantity);
 
 		return;
 		}

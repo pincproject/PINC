@@ -20,6 +20,7 @@
 #include "multigrid.h"
 #include "test.h"
 
+
 void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
 
 	Grid *grid = gridQuantity->grid;
@@ -66,7 +67,7 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	Grid *grid = gridQuantity->grid;
 	int nDims = grid->nDims;
 	// int *nGPoints = grid->nGPoints;
-	int *nGPointsProd = grid->nGPointsProd;
+	long int *nGPointsProd = grid->nGPointsProd;
 	// int *node = grid->node;
 
 	msg(STATUS|ONCE, "Total grid points: \t %d, nGPointsProd = [%d , %d]",\
@@ -108,7 +109,7 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	for(int r = 0; r < size; r++){
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(rank == r){
-			dump2DGrid(ini, gridQuantity);
+			dumpGrid(ini, gridQuantity);
 		}
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -116,51 +117,61 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	for(int r = 0; r < size; r++){
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(rank == r){
-			dump2DGrid(ini, gridQuantity);
+			dumpGrid(ini, gridQuantity);
 		}
 	}
 
 	return;
 }
 
+void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){
+	msg(STATUS|ONCE, "Performing manual test of getSlice, see parsefile");
 
-void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity){
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	msg(STATUS, "nGPoints = [%d,%d,%d]", nGPoints[0],nGPoints[1],nGPoints[2]);
 
-	int *node = gridQuantity->grid->node;
+	int nLayerPoints = nGPoints[0]*nGPoints[1];
+	int ind = 0;
 
-	msg(STATUS|ONCE, "Dumps 2D grid to parsefile, node[%d,%d]",node[0], node[1]);
+	for(int l = 0; l < nDims; l++){
+		for(int p = 0; p < nLayerPoints; p++){
+			gridQuantity->val[ind] = ind;
+			ind++;
+		}
+	}
 
-	// int nDims = gridQuantity->grid->nDims;
-	int *nGPoints = gridQuantity->grid->nGPoints;
-	// int *nGPointsProd = gridQuantity->grid->nGPointsProd;
+	swapHalo(ini, gridQuantity);
 
+	dumpGrid(ini, gridQuantity);
 
-	int p = 0;
+}
 
-	if((node[0] == 0) & (node[1]==0)){
+void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 
-		fMsg(ini,"parsedump", "indexes: (%dx%d) \n \n", nGPoints[0], nGPoints[1]);
+	Grid *grid = gridQuantity->grid;
+	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
 
-		for(int k = 0; k < nGPoints[1]; k++){
-			for(int j = 0; j < nGPoints[0]; j++){
-				fMsg(ini,"parsedump", "\t%d ", p);
-				p++;
+	msg(STATUS|ONCE, "Dumps 2D grid to parsefile");
+
+	fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+	 			nGPoints[0], nGPoints[1], nGPoints[2]);
+
+	//Cycles trough and prints the grid (not optimized)
+	int p;
+	for(int l = 0; l < nGPoints[2]; l++){
+		fMsg(ini, "parsedump", "\t\t\t\t\t l = %d \n", l);
+		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
+			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+				p = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
+				fMsg(ini,"parsedump", "%5d", (int) gridQuantity->val[p]);
 			}
-		fMsg(ini,"parsedump", "\n ");
+			fMsg(ini,"parsedump", "\n\n");
 		}
 	}
-
-	fMsg(ini,"parsedump", "\nDump of 2D/1D grid: (%dx%d) and node[%d,%d] \n \n", nGPoints[0], nGPoints[1],  node[0], node[1]);
-
-	p = 0;
-	for(int k = 0; k < nGPoints[1]; k++){ //y-rows
-		for(int j = 0; j < nGPoints[0]; j++){ //x-rows
-			fMsg(ini,"parsedump", "\t%d", (int) gridQuantity->val[p]);
-			p++;
-		}
-		fMsg(ini,"parsedump", "\n");
-	}
-
 	return;
 }
 
@@ -197,29 +208,3 @@ void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 		fMsg(ini,"parsedump", "\n \n");
 		return;
 	}
-
-void dumpHalo(dictionary *ini, GridQuantity *gridQuantity){
-
-	// //Load
-	// Grid *grid = gridQuantity->grid;
-	// int *nGhosts = grid->nGhosts;
-	// int *nGPoints = grid->nGPoints;
-	// int nDims = grid->nDims;
-	// double *halo = gridQuantity->halo;
-	//
-	// int nGhostPoints = 0;
-	// for(int g = 0; g < nDims; g++){
-	// 	nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
-	// }
-	//
-	// fMsg(ini , "parsedump", "\n******************************************************\n\n");
-	// fMsg(ini , "parsedump", "node[%d,%d]: ghostEdge = \n", grid->node[0],grid->node[1]);
-	// //Print GhostEdge
-	// for(int w = 0; w < nGhostPoints; w++){
-	// 	fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
-	// }
-	// fMsg(ini , "parsedump", "\n\n******************************************************\n");
-	//
-
-	return;
-}

@@ -41,16 +41,22 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 
 void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
 
+/*
+ * temporary for testing slice function
+ */
+
+void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
+
 /**
  * @brief Dumps a 2D grid to parsefile
  */
-void dump2DGrid(dictionary *ini, GridQuantity *gridQuantity);
+void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
  * @brief Dumps ghostvectors
  */
 
-void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);
+// void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);
 
 
 /**
@@ -77,3 +83,6 @@ void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);
   @endcode
  */
 void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
+
+//Functions used from grid that aren't in pinc.h
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity);

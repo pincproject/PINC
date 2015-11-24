@@ -19,10 +19,7 @@
 #include "multigrid.h"
 #include "pinc.h"
 
-
-
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
-
 
 	// Get MPI info
 	int size, rank;
@@ -50,12 +47,12 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
 	int nValues = gridQuantity->nValues;
 
-	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
-	for(int d = 0; d < nDims; d++){
-		if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
-			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
-		}
-	}
+	// // Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
+	// for(int d = 0; d < nDims; d++){
+	// 	if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
+	// 		msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
+	// 	}
+	// }
 
 	//Declare gridQuantity array
 	GridQuantity **gridQuantities = malloc(nLevels * sizeof(GridQuantity));

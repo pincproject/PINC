@@ -106,13 +106,13 @@ typedef struct{
  * @see GridQuantity
  */
 typedef struct{
-	int nDims;					///< Number of dimensions (usually 3)
-	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
-	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
-	int *nGhosts;				///< Number of ghost grid points (2*nDims elements)
-	int *node;					///< MPI node (nDims elements)
-	int *nNodes;				///< Number of MPI nodes (nDims elements)
-	int *offset;				///< Offset from global reference frame (nDims elements)
+	int nDims;							///< Number of dimensions (usually 3)
+	int *nGPoints;					///< The number of grid points per dimension (nDims elements)
+	long int *nGPointsProd;	///< Cumulative product of nGPoints (nDims+1 elements)
+	int *nGhosts;						///< Number of ghost grid points (2*nDims elements)
+	int *node;							///< MPI node (nDims elements)
+	int *nNodes;						///< Number of MPI nodes (nDims elements)
+	int *offset;						///< Offset from global reference frame (nDims elements)
 	double *posToNode;			///< Factor for converting position to node (nDims elements)
 } Grid;
 
@@ -202,76 +202,9 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 void freeGridQuantity(GridQuantity *gridQuantity);
 
-/**
- * @brief Gather the edges of a grid and returns a vector with them
- * @param 	ini 				dictionary of the input file
- * @param 	gridQuantity		GridQuantity struct
- * @return 	ghostEdge 			vector containing ghost values (*double)
- *
- * From a grid this function gathers the ghost layer, stores it in a 1D array
- * and returns it.
- *
- * In the case where the grid has several dimensions first the lower edge is stored
- * for all dimensions, and then the upper edge is stored for each dimension
- * So for a 2D case the vector looks like:
- *		\f[
- * 		Edge = [\partial \vec{x}_{min}\;\;|\;\;\partial \vec{y}_{min}\;\;|\;\;\partial \vec{x}_{max}
- *				\;\;|\;\;\partial \vec{y}_{max}]
- *		\f]
- * In 3D it will be:
- * 		\f[
- *			Edges = [\;\; \partial \vec{x}_{min} \;\;|\;\; \partial \vec{y}_min \;\;|\;\; \partial \vec{z}_{min}
- *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;
- *					\partial \vec{z}_{max} ]
- *		\f]
- *
- * Note: 	ghostEdge vector should be considered for a member of grid structs
- * 			to avoid allocating it each time
- *
- */
-double *getHalo(dictionary *ini, GridQuantity *gridQuantity);
 
-/**
- * @brief 	Places the ghost vector on the grid again after swapping
- *
- * More documentation TBD
- */
-void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
 
-/**
- * @brief Send and recieves the overlapping layers of the subdomains
- * @param dictionary 	*ini
- * @param GridQuantity 	*gridQuantity
- *
- * TBD
- */
 
- void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
-
-/**
- * @brief Writes information about the grid structs to a parsefile
- * @param ini 		dictionary of the input file
- * @param grid 		grid struct
- * @param nValues	number of values per grid point.
- * @return void
- *
- * TBD
- * 2 subdomains 2D grid example:
- * @code
-	111111	222222
-	111111	222222
-	111111	222222
-	111111	222222
-
-	swapGhosts(ini, gridQuantity);
-
-	111112	122222
-	111112	122222
-	111112	122222
-	111112	122222
-  @endcode
- */
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
 
 
 
