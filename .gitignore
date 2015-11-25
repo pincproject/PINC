@@ -8,4 +8,8 @@ pinc
 parsedump.txt
 **.sublime*
 **.h5
+<<<<<<< HEAD
 *tags*
+=======
+gmon.out
+>>>>>>> new_main

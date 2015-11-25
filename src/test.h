@@ -48,18 +48,6 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
 
 /**
- * @brief Dumps a 2D grid to parsefile
- */
-void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
-
-/**
- * @brief Dumps ghostvectors
- */
-
-// void dumpHalo(dictionary *ini, GridQuantity *gridQuantity);
-
-
-/**
  * @brief Writes information about the grid structs to a parsefile
  * @param ini 		dictionary of the input file
  * @param grid 		grid struct
@@ -75,7 +63,4 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
 	111111	222222
  * @endcode
  */
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
-
-//Functions used from grid that aren't in pinc.h
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);

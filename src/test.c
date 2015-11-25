@@ -8,7 +8,6 @@
  * Test Area for PINC model, a place where some small test are made to see that small
  * parts of the code works as suspected. Here in case one of the develpment test is needed
  * later, then it can be useful to have it stored here.
- *
  * 		NOT TO BE INCLUDED IN FINAL PRODUCT
  */
 
@@ -22,7 +21,6 @@
 
 
 void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
-
 	Grid *grid = gridQuantity->grid;
 
 	for(int i = 0; i < 5; i++){
@@ -32,7 +30,6 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	msg(STATUS|ONCE, "Performing a manual test of grid structs");
 
 	//Writing information to parsedump (debugging)
-	gridParseDump(ini, grid, gridQuantity);
 	multigridParseDump(ini, multigrid);
 
 	//Changing them from the multigrid struct
@@ -44,7 +41,7 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 
 	//Check that both are changed
 	//Writing information to parsedump (debugging)
-	gridParseDump(ini, grid, gridQuantity);
+	dumpGrid(ini, gridQuantity);
 	multigridParseDump(ini, multigrid);
 
 
@@ -53,7 +50,7 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	for(int i = 0; i < 5; i++){
 		gridQuantity->val[i] = 1.;
 	}
-	gridParseDump(ini, grid, gridQuantity);
+	dumpGrid(ini,gridQuantity);
 	multigridParseDump(ini, multigrid);
 
 	return;
@@ -80,47 +77,6 @@ void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multig
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
 
-
-	//Populate grid as rank.
-	for(int g = 0; g < nGPointsProd[nDims]; g++){
-		gridQuantity->val[g]= (double) rank;
-	}
-
-	/*int l = 0;	//Lower edge
-	int h = 0;	//Higher edge
-	int temp = 1;
-
-	for(int d = 0; d < nDims; d++){
-
-		l = 0;
-		temp *= nGPoints[d];
-		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
-
-		for(int g = 0; g < nGPoints[d]; g++){
-			gridQuantity->val[l] = (double) b;
-			gridQuantity->val[h] = (double) b + 1;
-
-			l += nGPointsProd[d];
-			h += nGPointsProd[d];
-		}
-
-		b += 2;
-	}*/
-	for(int r = 0; r < size; r++){
-		MPI_Barrier(MPI_COMM_WORLD);
-		if(rank == r){
-			dumpGrid(ini, gridQuantity);
-		}
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	swapHalo(ini, gridQuantity);
-	for(int r = 0; r < size; r++){
-		MPI_Barrier(MPI_COMM_WORLD);
-		if(rank == r){
-			dumpGrid(ini, gridQuantity);
-		}
-	}
-
 	return;
 }
 
@@ -146,7 +102,6 @@ void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){
 	swapHalo(ini, gridQuantity);
 
 	dumpGrid(ini, gridQuantity);
-
 }
 
 void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
@@ -175,37 +130,3 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 	}
 	return;
 }
-
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
-	/******************************************
-	*	Writing information to the parsedump
-	*******************************************/
-	fMsg(ini,"parsedump", "Grids: \n");
-
-	fMsg(ini,"parsedump", "#Computational Nodes: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
-	}
-
-	fMsg(ini,"parsedump", "\nTotal true grid points: ");
-	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
-			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
-		}
-
-
-		fMsg(ini,"parsedump", "\n \n");
-
-
-		/*
-		*         	TEST AREA
-		*/
-		fMsg(ini, "parsedump", "TEST AREA \n \n");
-		fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
-		for(int i = 0; i < 5; i++){
-			fMsg(ini, "parsedump", "%f ", gridQuantity->val[0]);
-		}
-
-		fMsg(ini,"parsedump", "\n \n");
-		return;
-	}

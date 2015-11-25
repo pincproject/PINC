@@ -103,10 +103,10 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			grid->nGPointsProd = nGPointsProd;
 			grid->nGhosts = nGhosts;
 			//The rest picks the information the fine grid
-			grid->node = gridQuantities[0]->grid->node;
-			grid->nNodes = gridQuantities[0]->grid->nNodes;
+			grid->subdomain = gridQuantities[0]->grid->subdomain;
+			grid->nSubdomains = gridQuantities[0]->grid->nSubdomains;
 			grid->offset = gridQuantities[0]->grid->offset;
-			grid->posToNode = gridQuantities[0]->grid->posToNode; 	//Not 100% sure this is correct
+			grid->posToSubdomain = gridQuantities[0]->grid->posToSubdomain; 	//Not 100% sure this is correct
 
 			GridQuantity *gridQuantity = allocGridQuantity(ini, grid, nValues);
 

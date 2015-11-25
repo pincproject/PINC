@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
+#include <hdf5.h>
+
 #include "pinc.h"
 #include "iniparser.h"
 #include "multigrid.h"
@@ -21,11 +23,14 @@
 
 int main(int argc, char *argv[]){
 
+
 	/*
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
 	MPI_Init(&argc,&argv);
-	msg(STATUS,"PINC started.");
+
+	msg(STATUS|ONCE,"PINC started.");
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -45,17 +50,21 @@ int main(int argc, char *argv[]){
 //	testBoundarySendRecieve(ini, gridQuantity, multigrid);
 	testGetSlice(ini, gridQuantity);
 
+
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
-	freeGrid(grid);
-	freeGridQuantity(gridQuantity);
-	iniparser_freedict(ini);
+
+	// freeGrid(grid);
+	// freeGridQuantity(gridQuantity);
+	// iniparser_freedict(ini);
 
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */
-	msg(STATUS,"PINC completed successfully!"); // Needs MPI
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;

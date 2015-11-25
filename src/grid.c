@@ -1,14 +1,14 @@
 /**
-* @file		grid.c
-* @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
-*						Gullik Vetvik Killie <gullikvk@gys.uio.no>
-* @copyright	University of Oslo, Norway
-* @brief		Grid-struct handling.
-* @date		30.10.15
-*
-* Functions for handling particles: initialization and finalization of
-* particle structs, reading and writing of data and so on.
-*/
+ * @file		grid.c
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+ *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @copyright	University of Oslo, Norway
+ * @brief		Grid-struct handling.
+ * @date		30.10.15
+ *
+ * Functions for handling particles: initialization and finalization of
+ * particle structs, reading and writing of data and so on.
+ */
 
 #include "pinc.h"
 #include <mpi.h>
@@ -22,11 +22,11 @@
 * DECLARATIONS,
 *****************************************************************************/
 /**
-* @brief Returns the ND-index of this MPI node in the global reference frame
-* @param	ini		input settings
-* @return	The N-dimensional index of this MPI node
-*/
-static int *getNode(const dictionary *ini);
+ * @brief Returns the ND-index of this MPI node in the global reference frame
+ * @param	ini		input settings
+ * @return	The N-dimensional index of this MPI node
+ */
+static int *getSubdomain(const dictionary *ini);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
@@ -162,33 +162,33 @@ void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset
 * DEFINITIONS
 *****************************************************************************/
 
-static int *getNode(const dictionary *ini){
+static int *getSubdomain(const dictionary *ini){
 
 	// Get MPI info
-	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Get ini info
 	int nDims;
-	int *nNodes = (int*)iniGetIntArr(ini,"grid:nNodes",&nDims);
+	int *nSubdomains = (int*)iniGetIntArr(ini,"grid:nSubdomains",&nDims);
 
 	// Sanity check
-	int totalNNodes = intArrProd(nNodes,nDims);
-	if(totalNNodes!=size)
-	msg(ERROR,"The product of grid:nNodes does not match the number of MPI processes");
+	int totalNSubdomains = intArrProd(nSubdomains,nDims);
+	if(totalNSubdomains!=mpiSize)
+		msg(ERROR|ONCE,"The product of grid:nSubdomains does not match the number of MPI processes");
 
-	// Determine node
-	int *node = malloc(nDims*sizeof(int));
+	// Determine subdomain of this MPI node
+	int *subdomain = malloc(nDims*sizeof(int));
 	for(int d=0;d<nDims;d++){
 
-		node[d] = rank % nNodes[d];
-		rank /= nNodes[d];
+		subdomain[d] = mpiRank % nSubdomains[d];
+		mpiRank /= nSubdomains[d];
 
 	}
 
-	free(nNodes);
-	return node;
+	free(nSubdomains);
+	return subdomain;
 
 }
 
@@ -216,8 +216,8 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 	setSlice(slice2, gridQuantity, sliceDim, offset);
 	setSlice(slice, gridQuantity, sliceDim, offset2);
 
-	msg(STATUS, "**Slice obtained**");
-	for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
+	// msg(STATUS, "**Slice obtained**");
+	// for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
 
 
 	return;
@@ -227,23 +227,23 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 Grid *allocGrid(const dictionary *ini){
 
 	//Sanity check
-	iniAssertEqualNElements(ini, 3,"grid:nNodes","grid:nTGPoints", "grid:dr");
+	iniAssertEqualNElements(ini, 3,"grid:nSubdomains","grid:nTGPoints", "grid:dr");
 
 	// Get MPI info
-	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Load data from ini
 	int nDims, nBoundaries;
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
-	int *nNodes = iniGetIntArr(ini, "grid:nNodes", &nDims);
-	// double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
+	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
+	double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*nDims");
+		msg(ERROR|ONCE, "Need ghost cells depth for all the boundaries: 2*nDims");
 	}
 
 	// Calculate the number of grid points (True points + ghost points)
@@ -256,20 +256,17 @@ Grid *allocGrid(const dictionary *ini){
 	}
 
 	//Cumulative products
-	long int *nGPointsProd = malloc ((nDims+1)*sizeof(long int));
-	nGPointsProd[0] = 1;
-	for(int d = 1; d < nDims+1; d++){
-		nGPointsProd[d] = nGPointsProd[d-1]*nGPoints[d-1];
-	}
+	long int *nGPointsProd = longIntArrCumProd(nGPoints,nDims);
+	int *nSubdomainsProd = intArrCumProd(nSubdomains,nDims);
 
 	//Position of the subdomain in the total domain
-	int *node = getNode(ini);
+	int *subdomain = getSubdomain(ini);
 	int *offset = malloc(nDims*sizeof(int));
-	double *posToNode = malloc(nDims*sizeof(double));
+	double *posToSubdomain = malloc(nDims*sizeof(double));
 
 	for(int d = 0; d < nDims; d++){
-		offset[d] = node[d]*nTGPoints[d];
-		posToNode[d] = (double)1/nTGPoints[d];
+		offset[d] = subdomain[d]*nTGPoints[d];
+		posToSubdomain[d] = (double)1/nTGPoints[d];
 	}
 
 	//Free temporary variables
@@ -282,10 +279,15 @@ Grid *allocGrid(const dictionary *ini){
 	grid->nGPoints = nGPoints;
 	grid->nGPointsProd = nGPointsProd;
 	grid->nGhosts = nGhosts;
-	grid->node = node;
-	grid->nNodes = nNodes;
+	grid->subdomain = subdomain;
+	grid->nSubdomains = nSubdomains;
+	grid->nSubdomainsProd = nSubdomainsProd;
 	grid->offset = offset;
-	grid->posToNode = posToNode;
+	grid->posToSubdomain = posToSubdomain;
+	grid->dr = dr;
+	grid->mpiSize = mpiSize;
+	grid->mpiRank = mpiRank;
+	grid->h5 = 0;	// Must be activated separately
 
 	return grid;
 }
@@ -296,6 +298,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
 	int *nGhosts = grid->nGhosts;
+	long int *nGPointsProd = grid->nGPointsProd;
 	int nTotPoints = 1;			//#Grid points in all dimensions
 	int nGhostPoints = 0;		//#Total ghost points
 
@@ -310,7 +313,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 
 	//Memory for values
 	double *val = malloc(nTotPoints*nValues*sizeof(double));
-	double *halo = malloc(nGhostPoints*nValues*sizeof(double));
+	double *slice = malloc(nGPointsProd[nDims-1]*nValues*sizeof(double));
 
 	/* Store in gridQuantity */
 	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
@@ -318,7 +321,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
-	gridQuantity->halo = halo;
+	gridQuantity->slice = slice;
 
 	return gridQuantity;
 }
@@ -328,10 +331,13 @@ void freeGrid(Grid *grid){
 	free(grid->nGPoints);
 	free(grid->nGPointsProd);
 	free(grid->nGhosts);
-	free(grid->node);
-	free(grid->nNodes);
+	free(grid->subdomain);
+	free(grid->nSubdomains);
+	free(grid->nSubdomainsProd);
 	free(grid->offset);
-	free(grid->posToNode);
+	free(grid->posToSubdomain);
+	free(grid->dr);
+	free(grid);
 
 	return;
 }
