@@ -118,10 +118,9 @@ typedef struct{
 	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
 	int nGhostLayers;			///< Number of ghost layers in grid
 	double *dr;					///< Step-size (nDims elements)
-//} Grid;
-	int *nGhosts;
-	hid_t h5;
-//typedef struct{
+} Grid;
+
+typedef struct{
 	int mpiRank;				///< MPI rank
 	int mpiSize;				///< MPI size
 	int *subdomain;				///< MPI node (nDims elements)
@@ -129,8 +128,7 @@ typedef struct{
 	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
 	int *offset;				///< Offset from global reference frame (nDims elements)
 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
-//} MpiInfo;
-} Grid;
+} MpiInfo;
 
  /**
   * @brief A quantity defined on a grid, for instance charge density.
@@ -167,6 +165,7 @@ typedef struct{
 	double *val;				///< The values on the grid
 	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
+	hid_t h5;					///< h5-file
 } GridQuantity;
 
  typedef struct timespec TimeSpec;
@@ -179,11 +178,6 @@ typedef struct{
 	TimeSpec previous;			///< Time of previous call
 	int rank;					///< Rank of node or negative to turn off timer
 } Timer;
-
-typedef struct{
-	int mpiRank;
-	int mpiSize;
-} MpiInfo;
 
 /******************************************************************************
  * DEFINED IN POPULATION.C

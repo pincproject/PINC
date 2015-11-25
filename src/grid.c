@@ -60,7 +60,7 @@ static int *getSubdomain(const dictionary *ini){
 Grid *allocGrid(const dictionary *ini){
 
 	//Sanity check
-	iniAssertEqualNElements(ini, 3,"grid:nSubdomains","grid:nTGPoints", "grid:dr");
+	iniAssertEqualNElements(ini, 2,"grid:nTGPoints", "grid:dr");
 
 	// Get MPI info
 	int mpiSize, mpiRank;
@@ -120,9 +120,47 @@ Grid *allocGrid(const dictionary *ini){
 	grid->dr = dr;
 	grid->mpiSize = mpiSize;
 	grid->mpiRank = mpiRank;
-	grid->h5 = 0;	// Must be activated separately
 
     return grid;
+}
+
+MpiInfo *allocMpiInfo(const dictionary *ini){
+	//Sanity check
+	iniAssertEqualNElements(ini, 2,"grid:nSubdomains","grid:nTGPoints");
+
+	// Get MPI info
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	// Load data from ini
+	int nDims;
+	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
+	int *nSubdomainsProd = intArrCumProd(nSubdomains,nDims);
+
+	//Position of the subdomain in the total domain
+	int *subdomain = getSubdomain(ini);
+	int *offset = malloc(nDims*sizeof(int));
+	double *posToSubdomain = malloc(nDims*sizeof(double));
+
+	for(int d = 0; d < nDims; d++){
+		offset[d] = subdomain[d]*nTGPoints[d];
+		posToSubdomain[d] = (double)1/nTGPoints[d];
+	}
+
+    /* Store in Grid */
+    MpiInfo *mpiInfo = malloc(sizeof(MpiInfo));
+
+	mpiInfo->subdomain = subdomain;
+	mpiInfo->nSubdomains = nSubdomains;
+	mpiInfo->nSubdomainsProd = nSubdomainsProd;
+	mpiInfo->offset = offset;
+	mpiInfo->posToSubdomain = posToSubdomain;
+	mpiInfo->dr = dr;
+	mpiInfo->mpiSize = mpiSize;
+	mpiInfo->mpiRank = mpiRank;
+
+    return mpiInfo;
 }
 
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
@@ -146,8 +184,20 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
+	gridQuantity->h5 = 0;	// Must be activated separately
 
 	return gridQuantity;
+}
+
+void freeMpiInfo(MpiInfo *mpiInfo){
+
+	free(mpiInfo->subdomain);
+	free(mpiInfo->nSubdomains);
+	free(mpiInfo->nSubdomainsProd);
+	free(mpiInfo->offset);
+	free(mpiInfo->posToSubdomain);
+	free(mpiInfo);
+
 }
 
 
