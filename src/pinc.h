@@ -112,21 +112,25 @@
   * @see allocGrid
   * @see GridQuantity
   */
- typedef struct{
- 	int nDims;					///< Number of dimensions (usually 3)
- 	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
- 	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
- 	int *nGhosts;				///< Number of ghost grid points (2*nDims elements)
- 	int *subdomain;				///< MPI node (nDims elements)
- 	int *nSubdomains;			///< Number of MPI nodes (nDims elements)
-	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
- 	int *offset;				///< Offset from global reference frame (nDims elements)
- 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+typedef struct{
+	int nDims;					///< Number of dimensions (usually 1-3)
+	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
+	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
+	int nGhostLayers;			///< Number of ghost layers in grid
 	double *dr;					///< Step-size (nDims elements)
+//} Grid;
+	int *nGhosts;
+	hid_t h5;
+//typedef struct{
 	int mpiRank;				///< MPI rank
 	int mpiSize;				///< MPI size
-	hid_t h5;					///< h5 file
- } Grid;
+	int *subdomain;				///< MPI node (nDims elements)
+	int *nSubdomains;			///< Number of MPI nodes (nDims elements)
+	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
+	int *offset;				///< Offset from global reference frame (nDims elements)
+	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+//} MpiInfo;
+} Grid;
 
  /**
   * @brief A quantity defined on a grid, for instance charge density.
