@@ -1,7 +1,7 @@
 /**
 * @file		grid.c
 * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
-*				Gullik Vetvik Killie <gullikvk@gys.uio.no>
+*						Gullik Vetvik Killie <gullikvk@gys.uio.no>
 * @copyright	University of Oslo, Norway
 * @brief		Grid-struct handling.
 * @date		30.10.15
@@ -75,7 +75,7 @@ void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
 
 /**********************************************************
- *	Inline functions
+ *	Local functions
  *********************************************************/
 
 double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
@@ -91,12 +91,45 @@ double *getSliceInner(double *nextGhost, const double **valp, const long int *mu
 	return nextGhost;
 }
 
-void getSlice(double *slice, const double *val, const long int *nGPointsProd,
-							const int *nGPoints, int nDims, int d, int offset){
+void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset){
+
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int *nGPoints = grid->nGPoints;
+
+	const double *val = gridQuantity->val;
 
 	val += offset*nGPointsProd[d];
 
 	getSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
+}
+
+const double *setSliceInner(const double *nextGhost, double **valp, const long int *mul,
+	const int *points, const long int finalMul){
+
+		if(*mul==finalMul){
+			for(int j=0;j<*mul;j++) *((*valp)++) = *(nextGhost++);
+			*valp += (*mul)*(*points-1);
+		} else {
+			for(int j=0; j<*points;j++)
+				nextGhost = giveSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+		}
+		return nextGhost;
+
+}
+
+void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset){
+
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int *nGPoints = grid->nGPoints;
+
+	double *val = gridQuantity->val;
+
+	val += offset*nGPointsProd[d];
+	setSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
 }
 
 /******************************************************************************
@@ -368,17 +401,22 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 	Grid *grid = gridQuantity->grid;
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	long int *nGPointsProd = grid->nGPointsProd;
-	double *val = gridQuantity->val;
+	// long int *nGPointsProd = grid->nGPointsProd;
 
-	int d = 2;
+	int sliceDim = 1;
 	int offset = 0;
-	int nSlicePoints = nGPoints[0]*nGPoints[1]*nGPoints[2];
-	nSlicePoints /= nGPoints[d];
+	int offset2= nGPoints[sliceDim] -1;
+	int nSlicePoints = 1;
+	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
+	nSlicePoints /= nGPoints[sliceDim];
 
 	double *slice = malloc(nSlicePoints*sizeof(double));
+	double *slice2 = malloc(nSlicePoints*sizeof(double));
 
-	getSlice(slice, val, nGPointsProd, nGPoints, nDims, d, offset);
+	getSlice(slice, gridQuantity, sliceDim, offset);
+	getSlice(slice2, gridQuantity, sliceDim, offset2);
+	giveSlice(slice2, gridQuantity, sliceDim, offset);
+	giveSlice(slice, gridQuantity, sliceDim, offset2);
 
 	// msg(STATUS,"Size of slice %d", nSlicePoints);
 	// for(int p = 0; p < nSlicePoints; p++) slice[p] = 1.;

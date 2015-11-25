@@ -141,6 +141,7 @@ void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){
 			ind++;
 		}
 	}
+	dumpGrid(ini, gridQuantity);
 
 	swapHalo(ini, gridQuantity);
 
