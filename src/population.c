@@ -24,7 +24,7 @@ Population *allocPopulation(const dictionary *ini){
 
 	// Get MPI info
 	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);	// Presumes sanity check on nNodes by allocGrid()
+	MPI_Comm_size(MPI_COMM_WORLD,&size);	// Presumes sanity check on nSubdomains by allocGrid()
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	// Load data
@@ -90,13 +90,13 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
 	int *nTGPoints = iniGetIntArr(ini,"grid:nTGPoints",&nDims);
 
 	// Read from grid
-	int *node = grid->node;
-	int *nNodes = grid->nNodes;
-	double *posToNode = grid->posToNode;
+	int *subdomain = grid->subdomain;
+	int *nSubdomains = grid->nSubdomains;
+	double *posToSubdomain = grid->posToSubdomain;
 
 	// Compute normalized length of global reference frame
 	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++) L[d] = nNodes[d]*nTGPoints[d]-1;
+	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*nTGPoints[d]-1;
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -114,7 +114,7 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
 
 			// Count the number of dimensions where the particle resides in the range of this node
 			int correctRange = 0;
-			for(int d=0;d<nDims;d++) correctRange += (node[d] == (int)(posToNode[d]*pos[d]));
+			for(int d=0;d<nDims;d++) correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
 //			msg(STATUS,"pos of particle %i: %f,%f,%f",i,pos[0],pos[1],pos[2]);
 
 			// Iterate only if particle resides in this sub-domain.
@@ -160,8 +160,13 @@ void posDebug(const dictionary *ini, Population *pop){
 	int nSpecies;
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
 
-	int mpiRank;
+	int mpiRank, mpiSize;
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+
+	for(int s=0;s<nSpecies;s++){
+		nParticles[s] /= mpiSize;
+	}
 
 	int nDims = pop->nDims;
 
@@ -210,29 +215,32 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	free(velDrift);
 }
 
-hid_t h5openPopulation(const dictionary *ini, Population *pop){
+void createPopulationH5(const dictionary *ini, Population *pop){
 
 	// Get MPI rank and size
 	int mpiSize;
 	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
 
-	// Create H5-file using MPI-I/O
+	// Determine filename
 	char *fName = iniparser_getstring((dictionary *)ini,"files:output","");	// don't free
 	char *fTotName = strAllocCat(fName,".pop.h5");
+
+	// Create file with MPI-I/O access
 	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
 	hid_t file = createH5File(fTotName,H5P_DEFAULT,pList);
 	H5Pclose(pList);
+
 	free(fTotName);
 
-	// Create groups and free them
+	// Create groups
 	hid_t group;
 	group = H5Gcreate(file,"/pos",H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 	H5Gclose(group);
 	group = H5Gcreate(file,"/vel",H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 	H5Gclose(group);
 
-	char name[64];	// int is max 5 digits + "/pos/" + '\0'
+	char name[18];	// int is max 5 digits + "/pos/specie " + '\0'
 
 	int nSpecies = pop->nSpecies;
 	for(int s=0;s<nSpecies;s++){
@@ -243,63 +251,69 @@ hid_t h5openPopulation(const dictionary *ini, Population *pop){
 		sprintf(name,"/vel/specie %i",s);
 		group = H5Gcreate(file,name,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 		H5Gclose(group);
-
-		for(int r=0;r<mpiSize;r++){
-			sprintf(name,"/pos/specie %i/node %i",s,r);
-			group = H5Gcreate(file,name,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-			H5Gclose(group);
-
-			sprintf(name,"/vel/specie %i/node %i",s,r);
-			group = H5Gcreate(file,name,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-			H5Gclose(group);
-		}
-
 	}
 
-	return file;
+	pop->h5 = file;
 }
 
-void h5writePopulation(Population *pop, hid_t file, int n){
+void writePopulationH5(Population *pop, double posN, double velN){
 
-	int mpiRank;
+	int mpiRank, mpiSize;
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
 
 	int nSpecies = pop->nSpecies;
-	long int *nParticles = malloc(nSpecies*sizeof(long int));
-	for(int s=0;s<nSpecies;s++){
-		nParticles[s] = pop->iStop[s] - pop->iStart[s] + 1;
-	}
 
 	const int arrSize = 2;
-	hsize_t fileDims[arrSize];
-	hsize_t memDims[arrSize];
+	hsize_t fileDims[arrSize];		// Dimensions of array in file
+	hsize_t memDims[arrSize];		// Dimensions of array in memory
+	hsize_t offset[arrSize];		// Where in file to store memory
 	fileDims[1] = pop->nDims;
 	memDims[1] = pop->nDims;
+	offset[1] = 0;
+
+	long int *nParticlesAllSubdomains = malloc((mpiSize+1)*sizeof(long int));
+	nParticlesAllSubdomains[0] = 0;
 
 	for(int s=0;s<nSpecies;s++){
 
-		//dims[0] = nParticles[s];
-		fileDims[0] = nParticles[s];
-		memDims[0] = nParticles[s];
+		/*
+		 * DETERMINE NUMBER OF PARTICLES TO STORE AND AT WHICH OFFSET
+		 */
+		long int nParticlesThisSubdomain = pop->iStop[s] - pop->iStart[s] + 1;
+		MPI_Allgather(&nParticlesThisSubdomain,1,MPI_LONG,&nParticlesAllSubdomains[1],1,MPI_LONG,MPI_COMM_WORLD);
+
+		// Cumulative sum
+		for(int r=1;r<=mpiSize;r++){
+			nParticlesAllSubdomains[r] += nParticlesAllSubdomains[r-1];
+		}
+
+		fileDims[0] = nParticlesAllSubdomains[mpiSize];
+		memDims[0] = nParticlesThisSubdomain;
+		offset[0] = nParticlesAllSubdomains[mpiRank];
 
 		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
 		hid_t fileSpace = H5Screate_simple(arrSize,fileDims,NULL);
 
+		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,memDims,NULL);
+
+		/*
+		 * STORE DATA COLLECTIVELY
+		 */
 		hid_t pList = H5Pcreate(H5P_DATASET_XFER);
-	    H5Pset_dxpl_mpio(pList, H5FD_MPIO_INDEPENDENT);
+	    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
 
 		char name[64];
 		hid_t dataset;
 
-		sprintf(name,"/pos/specie %i/node %i/%i",s,mpiRank,n);
-		msg(STATUS,"name=%s",name);
-		dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+		sprintf(name,"/pos/specie %i/n=%.1f",s,posN);
+		dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->pos[pop->iStart[s]*pop->nDims]);
 		H5Dclose(dataset);
 
-		sprintf(name,"/vel/specie %i/node %i/%i",s,mpiRank,n);
-		dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+		sprintf(name,"/vel/specie %i/n=%.1f",s,velN);
+		dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->vel[pop->iStart[s]*pop->nDims]);
 		H5Dclose(dataset);
 
@@ -308,87 +322,5 @@ void h5writePopulation(Population *pop, hid_t file, int n){
 		H5Pclose(pList);
 
 	}
-	free(nParticles);
-}
-
-void h5writePopulation2(Population *pop, hid_t file, int n){
-
-	int mpiRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
-
-	int nSpecies = pop->nSpecies;
-	long int *nParticles = malloc(nSpecies*sizeof(long int));
-	for(int s=0;s<nSpecies;s++){
-		nParticles[s] = pop->iStop[s] - pop->iStart[s] + 1;
-	}
-
-	const int arrSize = 2;
-	hsize_t fileDims[arrSize];
-	hsize_t memDims[arrSize];
-	hsize_t maxDims[arrSize];
-	fileDims[1] = pop->nDims;
-	memDims[1] = pop->nDims;
-	maxDims[1] = pop->nDims;
-
-	// Setting up chunks
-	double fillvalue = 0;
-	hsize_t chunk_dims[arrSize];
-	chunk_dims[0] = 1;
-	chunk_dims[1] = pop->nDims;
-	hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(cparms, arrSize, chunk_dims);
-//    H5Pset_fill_value (cparms, H5T_NATIVE_DOUBLE, &fillvalue);
-
-	// Collective I/O
-	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
-	H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
-
-	for(int s=0;s<nSpecies;s++){
-
-		//dims[0] = nParticles[s];
-		fileDims[0] = 0;
-		memDims[0] = 0;
-		maxDims[0] = 100000;//H5S_UNLIMITED;
-
-		hid_t memSpace = H5Screate_simple(arrSize,memDims,maxDims);
-//		hid_t fileSpace = H5Screate_simple(arrSize,fileDims,maxDims);
-
-		char name[20];
-		hid_t dataset;
-
-		sprintf(name,"/pos/%i/%i",s,n);
-		dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,memSpace,H5P_DEFAULT,cparms,H5P_DEFAULT);
-		H5Sclose(memSpace);
-
-		hid_t fileSpace = H5Dget_space(dataset);
-		H5Sget_simple_extent_dims(fileSpace,fileDims,maxDims);
-		hsize_t offset[arrSize];
-		msg(STATUS,"fileDims: %i %i",fileDims[0],fileDims[1]);
-		memDims[0] = 100;
-		memSpace = H5Screate_simple(arrSize,memDims,maxDims);
-		offset[0] = fileDims[0];
-		offset[1] = 0;
-		fileDims[0] += memDims[0];
-		msg(STATUS,"fileDims: %i %i",fileDims[0],fileDims[1]);
-		msg(STATUS,"offset: %i %i",offset[0],offset[1]);
-		H5Dset_extent(dataset,fileDims);
-		fileSpace = H5Dget_space(dataset);
-		H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, offset, NULL, memDims, NULL);
-
-		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->pos[pop->iStart[s]*pop->nDims]);
-		H5Dclose(dataset);
-/*
-		sprintf(name,"/vel/%i/%i",s,n);
-		dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,cparms,H5P_DEFAULT);
-		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->vel[pop->iStart[s]*pop->nDims]);
-		H5Dclose(dataset);
-*/
-		H5Sclose(fileSpace);
-		H5Sclose(memSpace);
-
-	}
-
-	H5Pclose(pList);
-	H5Pclose(cparms);
-	free(nParticles);
+	free(nParticlesAllSubdomains);
 }

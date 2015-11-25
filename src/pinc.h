@@ -59,13 +59,16 @@
  	double *m;			///< Specie mass [electron masses] (nSpecies elements)
  	int nSpecies;		///< Number of species
  	int nDims;			///< Number of dimensions (usually 3)
+	int mpiRank;		///< MPI Rank
+	int mpiSize;		///< MPI Size
+	hid_t h5;			///< h5-file
  } Population;
 
  /**
   * @brief Contains specification on how the grid is structured and decomposed.
   *
   * The total simulation domain can be split across several MPI nodes where the
-  * position J,K,L (in case of 3D) of each sub-domain is stored in node. nNodes
+  * position J,K,L (in case of 3D) of each sub-domain is stored in node. nSubdomains
   * represents the number of sub-domains along each dimension.
   *
   * nDims and nGPoints specifies the number of dimensions and the number of grid
@@ -114,11 +117,15 @@
  	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
  	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
  	int *nGhosts;				///< Number of ghost grid points (2*nDims elements)
- 	int *node;					///< MPI node (nDims elements)
- 	int *nNodes;				///< Number of MPI nodes (nDims elements)
+ 	int *subdomain;				///< MPI node (nDims elements)
+ 	int *nSubdomains;			///< Number of MPI nodes (nDims elements)
+	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
  	int *offset;				///< Offset from global reference frame (nDims elements)
- 	double *posToNode;			///< Factor for converting position to node (nDims elements)
+ 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
 	double *dr;					///< Step-size (nDims elements)
+	int mpiRank;				///< MPI rank
+	int mpiSize;				///< MPI size
+	hid_t h5;					///< h5 file
  } Grid;
 
  /**
@@ -152,11 +159,11 @@
   *	printf("The field at node (%i,%i,%i) is (%f,%f,%f).\n",j,k,l,pVal[0],pVal[1],pVal[2]);
   * @endcode
   */
- typedef struct{
- 	double *val;				///< The values on the grid
- 	int nValues;				///< Number of values per grid point (usually 1 or 3)
- 	Grid *grid;					///< Specifications of the grid
- } GridQuantity;
+typedef struct{
+	double *val;				///< The values on the grid
+	int nValues;				///< Number of values per grid point (usually 1 or 3)
+	Grid *grid;					///< Specifications of the grid
+} GridQuantity;
 
  typedef struct timespec TimeSpec;
 
@@ -164,10 +171,15 @@
   * @brief	Timer struct for simple profiling
   * @see allocTimer(), freeTimer(), tMsg()
   */
- typedef struct{
- 	TimeSpec previous;			///< Time of previous call
- 	int rank;					///< Rank of node or negative to turn off timer
- } Timer;
+typedef struct{
+	TimeSpec previous;			///< Time of previous call
+	int rank;					///< Rank of node or negative to turn off timer
+} Timer;
+
+typedef struct{
+	int mpiRank;
+	int mpiSize;
+} MpiInfo;
 
 /******************************************************************************
  * DEFINED IN POPULATION.C
@@ -253,7 +265,7 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  * @param	pop		Population
  * @return			HDF5 file identifier
  */
-hid_t h5openPopulation(const dictionary *ini, Population *pop);
+void createPopulationH5(const dictionary *ini, Population *pop);
 
 /**
  * @brief	Stores particles in Population in file
@@ -263,7 +275,7 @@ hid_t h5openPopulation(const dictionary *ini, Population *pop);
  * @return			void
  * @see	h5openPopulation()
  */
-void h5writePopulation(Population *pop, hid_t file, int n);
+void writePopulationH5(Population *pop, double posN, double velN);
 
 /******************************************************************************
  * DEFINED IN GRID.C

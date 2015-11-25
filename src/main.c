@@ -25,9 +25,7 @@ int main(int argc, char *argv[]){
 	 */
 	MPI_Init(&argc,&argv);
 	msg(STATUS|ONCE,"PINC started.");
-
-	int mpiRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Random Number Generator (RNG)
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
@@ -45,7 +43,7 @@ int main(int argc, char *argv[]){
 //	Timer *timer = allocTimer(0);
 	posUniform(ini,pop,grid,rng);
 //	tMsg(timer,"position");
-	gsl_rng_set(rng,mpiRank);
+	gsl_rng_set(rng,grid->mpiRank);
 	velMaxwell(ini,pop,rng);
 //	tMsg(timer,"velocity");
 //	free(timer);
@@ -58,16 +56,21 @@ int main(int argc, char *argv[]){
 //	}
 	posDebug(ini,pop);
 
+/*
 	Timer *timer = allocTimer(0);
-
-	hid_t file = h5openPopulation(ini,pop);
+	createPopulationH5(ini,pop);
+	tMsg(timer,"allocate");
 	for(int n=0;n<3;n++){
-		h5writePopulation(pop,file,n);
+		writePopulationH5(pop,n,n+0.5);
 	}
-	H5Fclose(file);
 	tMsg(timer,"method 1");
+	for(int n=0;n<3;n++){
+		writePopulationH52(pop,n,n+0.5,mpiInfo);
+	}
+	tMsg(timer,"method 2");
+	H5Fclose(pop->h5);
 	freeTimer(timer);
-
+*/
 
 	/*
 	 * FINALIZE PINC VARIABLES
@@ -81,6 +84,7 @@ int main(int argc, char *argv[]){
 	 */
 	gsl_rng_free(rng);
 
+	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 

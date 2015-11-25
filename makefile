@@ -35,7 +35,7 @@ LIBHEAD_= iniparser/src/iniparser.h
 LIBOBJ = $(patsubst %,$(LDIR)/%,$(LIBOBJ_))
 LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
-all: $(EXEC) doc
+all: $(EXEC) cleantestdata doc
 
 $(EXEC): $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"
@@ -68,9 +68,13 @@ cleandoc:
 	@rm -f $(DDIR)/doxygen/doxyfile.inc
 	@rm -fr $(DDIR)/html $(DDIR)/latex
 
-clean: cleandoc
+cleantestdata:
+	@echo "Cleaning test data"
+	@rm -f test.*.h5 parsedump.txt
+
+clean: cleandoc cleantestdata
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
-	@rm -f *~ $(SDIR)/*.o $(SDIR)/*~ gmon.out *.h5 out.*.h5
+	@rm -f *~ $(SDIR)/*.o $(SDIR)/*~ gmon.out
 
 veryclean: clean
 	@echo "Cleaning executable and iniparser"

@@ -21,62 +21,62 @@
  * @param	ini		input settings
  * @return	The N-dimensional index of this MPI node
  */
-static int *getNode(const dictionary *ini);
+static int *getSubdomain(const dictionary *ini);
 
 /******************************************************************************
  * DEFINITIONS
  *****************************************************************************/
 
-static int *getNode(const dictionary *ini){
+static int *getSubdomain(const dictionary *ini){
 
 	// Get MPI info
-	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Get ini info
 	int nDims;
-	int *nNodes = (int*)iniGetIntArr(ini,"grid:nNodes",&nDims);
+	int *nSubdomains = (int*)iniGetIntArr(ini,"grid:nSubdomains",&nDims);
 
 	// Sanity check
-	int totalNNodes = intArrProd(nNodes,nDims);
-	if(totalNNodes!=size)
-		msg(ERROR,"The product of grid:nNodes does not match the number of MPI processes");
+	int totalNSubdomains = intArrProd(nSubdomains,nDims);
+	if(totalNSubdomains!=mpiSize)
+		msg(ERROR|ONCE,"The product of grid:nSubdomains does not match the number of MPI processes");
 
-	// Determine node
-	int *node = malloc(nDims*sizeof(int));
+	// Determine subdomain of this MPI node
+	int *subdomain = malloc(nDims*sizeof(int));
 	for(int d=0;d<nDims;d++){
 
-		node[d] = rank % nNodes[d];
-		rank /= nNodes[d];
+		subdomain[d] = mpiRank % nSubdomains[d];
+		mpiRank /= nSubdomains[d];
 
 	}
 
-	free(nNodes);
-	return node;
+	free(nSubdomains);
+	return subdomain;
 
 }
 
 Grid *allocGrid(const dictionary *ini){
 
 	//Sanity check
-	iniAssertEqualNElements(ini, 3,"grid:nNodes","grid:nTGPoints", "grid:dr");
+	iniAssertEqualNElements(ini, 3,"grid:nSubdomains","grid:nTGPoints", "grid:dr");
 
 	// Get MPI info
-	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Load data from ini
 	int nDims, nBoundaries;
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
-	int *nNodes = iniGetIntArr(ini, "grid:nNodes", &nDims);
+	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
 	double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
 
 	//More sanity check
 	if(nBoundaries != 2*nDims){
-		msg(ERROR, "Need ghost cells depth for all the boundaries: 2*nDims");
+		msg(ERROR|ONCE, "Need ghost cells depth for all the boundaries: 2*nDims");
 	}
 
 	// Calculate the number of grid points (True points + ghost points)
@@ -89,20 +89,17 @@ Grid *allocGrid(const dictionary *ini){
 	}
 
 	//Cumulative products
-	int *nGPointsProd = malloc ((nDims+1)*sizeof(int));
-	nGPointsProd[0] = 1;
-	for(int d = 1; d < nDims+1; d++){
-		nGPointsProd[d] = nGPointsProd[d-1]*nGPoints[d-1];
-	}
+	int *nGPointsProd = intArrCumProd(nGPoints,nDims);
+	int *nSubdomainsProd = intArrCumProd(nSubdomains,nDims);
 
 	//Position of the subdomain in the total domain
-	int *node = getNode(ini);
+	int *subdomain = getSubdomain(ini);
 	int *offset = malloc(nDims*sizeof(int));
-	double *posToNode = malloc(nDims*sizeof(double));
+	double *posToSubdomain = malloc(nDims*sizeof(double));
 
 	for(int d = 0; d < nDims; d++){
-		offset[d] = node[d]*nTGPoints[d];
-		posToNode[d] = (double)1/nTGPoints[d];
+		offset[d] = subdomain[d]*nTGPoints[d];
+		posToSubdomain[d] = (double)1/nTGPoints[d];
 	}
 
 	//Free temporary variables
@@ -115,11 +112,15 @@ Grid *allocGrid(const dictionary *ini){
 	grid->nGPoints = nGPoints;
 	grid->nGPointsProd = nGPointsProd;
 	grid->nGhosts = nGhosts;
-	grid->node = node;
-	grid->nNodes = nNodes;
+	grid->subdomain = subdomain;
+	grid->nSubdomains = nSubdomains;
+	grid->nSubdomainsProd = nSubdomainsProd;
 	grid->offset = offset;
-	grid->posToNode = posToNode;
+	grid->posToSubdomain = posToSubdomain;
 	grid->dr = dr;
+	grid->mpiSize = mpiSize;
+	grid->mpiRank = mpiRank;
+	grid->h5 = 0;	// Must be activated separately
 
     return grid;
 }
@@ -155,10 +156,11 @@ void freeGrid(Grid *grid){
 	free(grid->nGPoints);
 	free(grid->nGPointsProd);
 	free(grid->nGhosts);
-	free(grid->node);
-	free(grid->nNodes);
+	free(grid->subdomain);
+	free(grid->nSubdomains);
+	free(grid->nSubdomainsProd);
 	free(grid->offset);
-	free(grid->posToNode);
+	free(grid->posToSubdomain);
 	free(grid->dr);
 	free(grid);
 
@@ -240,13 +242,13 @@ void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity){
 
 	fMsg(ini,"parsedump", "#Computational Nodes: ");
 	for(int d = 0; d < grid->nDims; d++){
-		fMsg(ini,"parsedump", "%d " , grid->nNodes[d]);
+		fMsg(ini,"parsedump", "%d " , grid->nSubdomains[d]);
 	}
 
 	fMsg(ini,"parsedump", "\nTotal true grid points: ");
 	for(int d = 0; d < grid->nDims; d++){
 		fMsg(ini, "parsedump", "%d ", (grid->nGPoints[d]- \
-			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nNodes[d]);
+			(grid->nGhosts[d] + grid->nGhosts[grid->nDims +1]))*grid->nSubdomains[d]);
 	}
 
 
