@@ -37,7 +37,6 @@ int main(int argc, char *argv[]){
 	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
 	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
 
-
 	/*
 	 * 	Test Area
 	 */
