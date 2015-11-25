@@ -115,8 +115,8 @@
 typedef struct{
 	int nDims;					///< Number of dimensions (usually 1-3)
 	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
-	int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
-	int nGhostLayers;			///< Number of ghost layers in grid
+	long int *nGPointsProd;		///< Cumulative product of nGPoints (nDims+1 elements)
+	int *nGhosts;				///< Number of ghost layers in grid
 	double *dr;					///< Step-size (nDims elements)
 } Grid;
 
@@ -163,6 +163,7 @@ typedef struct{
   */
 typedef struct{
 	double *val;				///< The values on the grid
+	double *slice;			///< Slices of the grid sent to other subdomains
 	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
 	hid_t h5;					///< h5-file
@@ -225,7 +226,7 @@ void freePopulation(Population *pop);
  *
  * Beware that this function do not assign any velocity to the particles.
  */
-void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng);
+void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
 
 /**
  * @brief	Assign particles artificial positions suitable for debugging
@@ -315,8 +316,22 @@ void freeGrid(Grid *grid);
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 /**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param dictionary 	*ini
+ * @param GridQuantity 	*gridQuantity
+ *
+ * TBD
+ * Frees the memory of the GridQuantity struct, since the Grid member of the struct
+ * can be shared by several gridQuantity'ies it needs to be freed seperately
+ * @see freeGrid
+ */
+
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+/**
  * @brief Frees the memory of a GridQuantity struct
  * @param gridQuantity 		Gridquantity struct
+ * @return void
  *
  * Frees the memory of the GridQuantity struct, since the Grid member of the struct
  * can be shared by several gridQuantity'ies it needs to be freed seperately
@@ -325,19 +340,8 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 void freeGridQuantity(GridQuantity *gridQuantity);
 
-
-/**
- * @brief Writes information about the grid structs to a parsefile
- * @param ini 		dictionary of the input file
- * @param grid 		grid struct
- * @param nValues	number of values per grid point.
- * @return void
- *
- * TBD
- */
-void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
-
-
+void freeMpiInfo(MpiInfo *mpiInfo);
+MpiInfo *allocMpiInfo(const dictionary *ini);
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -602,6 +606,22 @@ int intArrProd(const int *a, int nElements);
 int *intArrCumProd(const int *a, int nElements);
 
 /**
+ * @brief Returns the cumulative product of the elements in an long integer array
+ * @param	a			pointer to array
+ * @param	nElements	Number of elements in array
+ * @return	Pointer to allocated array of size nElements+1
+ *
+ * The result will be given by:
+ * @code
+ *	result[0] = 1;
+ *	result[1] = a[0];
+ *	result[2] = a[0]*a[1];
+ *	...
+ * @endcode
+ */
+long int *longIntArrCumProd(const int *a, int nElements);
+
+/**
  * @brief Returns the product of all elements in an integer array
  * @param	a			pointer to array
  * @param	b			pointer to array
@@ -637,7 +657,6 @@ int makeParentPath(const char *path);
  * Make sure to run free().
  */
 char *strAllocCat(const char *a, const char *b);
-
 
 
 #endif // PINC_H

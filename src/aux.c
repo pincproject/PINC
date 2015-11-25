@@ -62,6 +62,19 @@ int *intArrCumProd(const int *a, int nElements){
 
 }
 
+long int *longIntArrCumProd(const int *a, int nElements){
+
+	long int *result = malloc((nElements+1)*sizeof(*result));
+	result[0]=1;
+
+	for(int i=1;i<nElements+1;i++){
+		result[i]=result[i-1]*a[i-1];
+	}
+
+	return result;
+
+}
+
 int intArrProd(const int *a, int nElements){
 
 	int result = 1;

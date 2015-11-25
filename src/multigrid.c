@@ -19,11 +19,8 @@
 #include "multigrid.h"
 #include "pinc.h"
 
-
-
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
-
-
+/*
 	// Get MPI info
 	int size, rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -50,12 +47,12 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
 	int nValues = gridQuantity->nValues;
 
-	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
-	for(int d = 0; d < nDims; d++){
-		if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
-			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
-		}
-	}
+	// // Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
+	// for(int d = 0; d < nDims; d++){
+	// 	if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
+	// 		msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
+	// 	}
+	// }
 
 	//Declare gridQuantity array
 	GridQuantity **gridQuantities = malloc(nLevels * sizeof(GridQuantity));
@@ -70,7 +67,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 	//Making the smaller grids (uses a lot of the logic in allocGrid and allocGridQuantity)
 	//Should think of a better solution here, but grid needs to have different values for each subgrid
-
+/*
 	for(int i = 1; i < nLevels; i++){
 	//Did we agree on a standard index when we aren't dealing with dim, spatial or particle ind?
 	//Maybe q would be okay, if that isn't used in population struct
@@ -90,7 +87,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			}
 
 			//Cumulative products
-			int *nGPointsProd = malloc (nDims*sizeof(int));
+			long int *nGPointsProd = malloc (nDims*sizeof(int));
 
 			int tempPoints = 1;
 			for(int d = 0; d < nDims; d++){
@@ -106,7 +103,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			grid->nGPointsProd = nGPointsProd;
 			grid->nGhosts = nGhosts;
 			//The rest picks the information the fine grid
-			grid->subdomain = gridQuantities[0]->grid->subdomain;		
+			grid->subdomain = gridQuantities[0]->grid->subdomain;
 			grid->nSubdomains = gridQuantities[0]->grid->nSubdomains;
 			grid->offset = gridQuantities[0]->grid->offset;
 			grid->posToSubdomain = gridQuantities[0]->grid->posToSubdomain; 	//Not 100% sure this is correct
@@ -114,7 +111,8 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			GridQuantity *gridQuantity = allocGridQuantity(ini, grid, nValues);
 
 			gridQuantities[i] = gridQuantity;
-
+*/
+/*
 	}
 
 	//Store in multigrid struct
@@ -130,6 +128,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
      *	Will be slightly messy when more options are added later, consider moving to a
      *	new function/file
      */
+/*
     char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
     char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
@@ -158,9 +157,25 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 *//*    free(coarseSolverName);
     free(postSmoothName);
     free(preSmoothName);
-*/
+
   	return multigrid;
+*/
 }
+
+void freeMultigrid(Multigrid *multigrid){
+
+	GridQuantity **gridQuantities = multigrid->gridQuantities;
+	int nLevels = multigrid->nLevels;
+
+	for(int n = 1; n < nLevels; n++)
+	{
+		freeGrid(gridQuantities[n]->grid);
+		freeGridQuantity(gridQuantities[n]);
+	}
+
+	return;
+}
+
 
 void jacobian(void){
 	printf("Hello from Jacobian \n");
