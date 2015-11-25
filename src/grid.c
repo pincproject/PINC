@@ -19,7 +19,7 @@
 
 
 /******************************************************************************
-* DECLARATIONS, local functions only used by this file
+* DECLARATIONS,
 *****************************************************************************/
 /**
 * @brief Returns the ND-index of this MPI node in the global reference frame
@@ -29,50 +29,74 @@
 static int *getNode(const dictionary *ini);
 
 /**
- * @brief Gather the edges of a grid and returns a vector with them
- * @param 	ini 				dictionary of the input file
- * @param 	gridQuantity		GridQuantity struct
- * @return 	ghostEdge 			vector containing ghost values (*double)
+ * @brief Extracts a (dim-1) dimensional slice of grid values.
+ * @param double *slice 	empty array of size slice
+ * @param GridQuantity *gridQuantity
+ * @param int d 					perpendicular direction to slice
+ * @param int offset 			offset of slice
+ * @return double *slice
  *
- * From a grid this function gathers the ghost layer, stores it in a 1D array
- * and returns it.
+ * This function gets extracts a slice from a N dimensional grid. The integer d
+ * decides in which direction the slice is perpendicular to, and the offset decides
+ * which which slice it picks out. It needs a preallocated slice array where
+ * the extracted slice will be stored.
  *
- * In the case where the grid has several dimensions first the lower edge is stored
- * for all dimensions, and then the upper edge is stored for each dimension
- * So for a 2D case the vector looks like:
- *		\f[
- * 		Edge = [\partial \vec{x}_{min}\;\;|\;\;\partial \vec{y}_{min}\;\;|\;\;\partial \vec{x}_{max}
- *				\;\;|\;\;\partial \vec{y}_{max}]
- *		\f]
- * In 3D it will be:
- * 		\f[
- *			Edges = [\;\; \partial \vec{x}_{min} \;\;|\;\; \partial \vec{y}_min \;\;|\;\; \partial \vec{z}_{min}
- *					\;\;|\;\; \partial \vec{x}_{max} \;\;|\;\;  \partial \vec{y}_{max} \;\;|\;\;
- *					\partial \vec{z}_{max} ]
- *		\f]
+ * 2D example: Here we have a 5x4 grid and we want to extract a slice corresponding
+ * to the second row, where x (d=0) is a constant 1.
  *
- * Note: 	ghostEdge vector should be considered for a member of grid structs
- * 			to avoid allocating it each time
+ * @code
+ * 15   16   17   18   19
  *
- */
-double *getHalo(dictionary *ini, GridQuantity *gridQuantity);
+ * 10   11   12   13   14
+ *
+ *  5    6    7    8    9
+
+ *  0    1    2    3    4
+ * @endcode
+ *
+ * @code
+	 getSlice(slice, gridQuantity, 0, 1);
+ * @code
+ * After running this the slice array consists of
+ * slice = \f( [1, 6, 11, 16] \f)
+ *
+ * @see setSlice
+ * @see swapHalo
+ **/
+
+void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset);
 
 /**
- * @brief 	Places the ghost vector on the grid again after swapping
+ * @brief places a (dim-1) dimensional slice onto a selected slice on the  grid.
+ * @param const double *slice
+ * @param GridQuantity *gridQuantity
+ * @param const int d 				(perpendicular direction to slice)
+ * @param const int offset 		(offset of slice)
+ * @return Gridquantity *gridQuantity
  *
- * More documentation TBD
- */
-void distributeHalo(dictionary *ini, GridQuantity *gridQuantity);
-
-/**
- * @brief Send and recieves the overlapping layers of the subdomains
- * @param dictionary 	*ini
- * @param GridQuantity 	*gridQuantity
+ * This function places a a slice on a grid. If we have a slice and want to
+ * insert it onto a grid this function is used.
  *
- * TBD
- */
-
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+ * Example: We have a 1D slice consisting of 6 2s and want to insert it onto
+ * the third row, from the bottom.
+ * @code
+ *	111111
+ *	111111
+ *	111111
+ *	111111
+ *
+ *	setSlice(slice, gridQuantity, 0, 2);
+ *
+ *	111111
+ *	222222
+ *	111111
+ *	111111
+ * @endcode
+ *
+ * @see setSlice
+ * @see swapHalo
+ **/
+void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset);
 
 /**********************************************************
  *	Local functions
@@ -113,7 +137,7 @@ const double *setSliceInner(const double *nextGhost, double **valp, const long i
 			*valp += (*mul)*(*points-1);
 		} else {
 			for(int j=0; j<*points;j++)
-				nextGhost = giveSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+				nextGhost = setSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
 		}
 		return nextGhost;
 
@@ -131,6 +155,8 @@ void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset
 	val += offset*nGPointsProd[d];
 	setSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
 }
+
+
 
 /******************************************************************************
 * DEFINITIONS
@@ -165,6 +191,38 @@ static int *getNode(const dictionary *ini){
 	return node;
 
 }
+
+
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
+
+	//Load
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	// long int *nGPointsProd = grid->nGPointsProd;
+
+	int sliceDim = 1;
+	int offset = 0;
+	int offset2= nGPoints[sliceDim] -1;
+	int nSlicePoints = 1;
+	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
+	nSlicePoints /= nGPoints[sliceDim];
+
+	double *slice = malloc(nSlicePoints*sizeof(double));
+	double *slice2 = malloc(nSlicePoints*sizeof(double));
+
+	getSlice(slice, gridQuantity, sliceDim, offset);
+	getSlice(slice2, gridQuantity, sliceDim, offset2);
+	setSlice(slice2, gridQuantity, sliceDim, offset);
+	setSlice(slice, gridQuantity, sliceDim, offset2);
+
+	msg(STATUS, "**Slice obtained**");
+	for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
+
+
+	return;
+}
+
 
 Grid *allocGrid(const dictionary *ini){
 
@@ -265,7 +323,6 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	return gridQuantity;
 }
 
-
 void freeGrid(Grid *grid){
 
 	free(grid->nGPoints);
@@ -285,255 +342,3 @@ void freeGridQuantity(GridQuantity *gridQuantity){
 
 	return;
 }
-
-double *getHalo(dictionary *ini, GridQuantity *gridQuantity){
-
-	//Picking up data
-	Grid *grid = gridQuantity->grid;
-	int *nGhosts = grid->nGhosts;
-	int *nGPoints = grid->nGPoints;
-	long int *nGPointsProd = grid->nGPointsProd;
-	double *halo = gridQuantity->halo;
-	int nDims = grid->nDims;
-
-	//Allocate space for ghost vector
-	int nGhostPoints = 0;
-	for(int g = 0; g < nDims; g++){
-		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
-	}
-
-	//Gather lower edge halo
-	int l;
-	int w = 0;
-	for(int d = 0; d < nDims; d++){
-		l = 0;
-		for(int g = 0; g < nGPoints[d]; g++){
-			halo[w] = gridQuantity->val[l];
-
-			l += nGPointsProd[d];
-			w++;
-		}
-	}
-
-	/*
-	*	Note! Look for a clearer way to do higher edge,
-	*  and not sure if it works for all dimensions
-	*/
-
-	//Gather higher edge halo
-	int h;
-	int temp = 1;
-	for(int d = 0; d < nDims; d++){
-
-		temp *= nGPoints[d];
-		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
-
-		for(int g = 0; g < nGPoints[d]; g++){
-			halo[w] = gridQuantity->val[h];
-
-			h += nGPointsProd[d];
-			w++;
-		}
-	}
-
-	return halo;
-
-}
-
-void distributeHalo(dictionary *ini, GridQuantity *gridQuantity){
-	msg(STATUS|ONCE, "Distributing halo");
-
-	//Picking up data
-	double *halo = gridQuantity->halo;
-	Grid *grid = gridQuantity->grid;
-	int *nGhosts = grid->nGhosts;
-	int *nGPoints = grid->nGPoints;
-	long int *nGPointsProd = grid->nGPointsProd;
-	int nDims = grid->nDims;
-
-	//Allocate space for ghost vector
-	int nGhostPoints = 0;
-	for(int g = 0; g < nDims; g++){
-		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
-	}
-
-	//Gather lower edge halo
-	int l;
-	int w = 0;
-	for(int d = 0; d < nDims; d++){
-		l = 0;
-		for(int g = 0; g < nGPoints[d]; g++){
-			gridQuantity->val[l] = halo[w];
-			l += nGPointsProd[d];
-			msg(STATUS|ONCE, "halo[%d] into val[%d]", w, l);
-
-			w++;
-		}
-	}
-	/*
-	*	NOTE! Look for a clearer way to do higher edge,
-	*  and not sure if it works for all dimensions
-	*/
-
-	//Gather higher edge halo
-	int h;
-	int temp = 1;
-	for(int d = 0; d < nDims; d++){
-
-		temp *= nGPoints[d];
-		h = (nGPointsProd[nDims] - 1) - (temp - nGPointsProd[d]);
-
-		for(int g = 0; g < nGPoints[d]; g++){
-			gridQuantity->val[h] = halo[w];
-			if((grid->node[0] == 0) & (grid->node[1] == 0)){
-			}
-			h += nGPointsProd[d];
-			w++;
-		}
-	}
-
-	return;
-}
-
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
-
-	//Load
-	Grid *grid = gridQuantity->grid;
-	int nDims = grid->nDims;
-	int *nGPoints = grid->nGPoints;
-	// long int *nGPointsProd = grid->nGPointsProd;
-
-	int sliceDim = 1;
-	int offset = 0;
-	int offset2= nGPoints[sliceDim] -1;
-	int nSlicePoints = 1;
-	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
-	nSlicePoints /= nGPoints[sliceDim];
-
-	double *slice = malloc(nSlicePoints*sizeof(double));
-	double *slice2 = malloc(nSlicePoints*sizeof(double));
-
-	getSlice(slice, gridQuantity, sliceDim, offset);
-	getSlice(slice2, gridQuantity, sliceDim, offset2);
-	giveSlice(slice2, gridQuantity, sliceDim, offset);
-	giveSlice(slice, gridQuantity, sliceDim, offset2);
-
-	// msg(STATUS,"Size of slice %d", nSlicePoints);
-	// for(int p = 0; p < nSlicePoints; p++) slice[p] = 1.;
-	msg(STATUS, "**Slice obtained**");
-	for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
-
-	// // Get MPI info
-	// int size, rank;
-	// MPI_Comm_size(MPI_COMM_WORLD,&size);
-	// MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
-
-
-	//Load
-	// Grid *grid = gridQuantity->grid;
-	// int *node = grid->node;
-	// int *nNodes = grid->nNodes;
-	// int nDims = grid->nDims;
-	// int nValues = gridQuantity->nValues;
-	// int *nGhosts = grid->nGhosts;
-	// int *nGPoints = grid->nGPoints;
-
-	// int nHaloPoints = 0;
-	// for(int d = 0; d < nDims; d++){
-	// 	nHaloPoints += (nGhosts[d]+nGhosts[d +nDims])*nGPoints[d];
-	// }
-	//
-	// double *halo = getHalo(ini, gridQuantity);
-	// // getHalo2()
-	//
-	// // //Test stuffs
-	// if(rank==0){
-	// 	dumpHalo(ini, gridQuantity);
-	// }
-	// // MPI_Barrier(MPI_COMM_WORLD);
-	// // if(rank==1){
-	// // 	dumpHalo(ini, gridQuantity);
-	// // }
-	//
-	// int l = 0;	//Lower edge
-	// int h = 0;	//Higher edge
-	// int haloProgress = 0;
-	//
-	// //Assigning lower edges
-	// for(int d = 0; d < nDims; d++){
-	// 	haloProgress += nGPoints[d];
-	// 	if(node[d]==0){
-	// 		msg(STATUS|ONCE, "node[%d,%d]", node[0], node[1]);
-	// 		while(l<haloProgress){
-	// 			halo[l] = 5.;
-	// 			msg(STATUS|ONCE, "l = %d", l);
-	// 			l++;
-	// 		}
-	// 	}
-	// }
-	//
-	// MPI_Barrier(MPI_COMM_WORLD);
-	//
-	// if(rank == 2){
-	// 	//Assigning top edge
-	// 	for(int d = 0; d < nDims; d++){
-	// 		msg(STATUS, "haloProgress = %d", haloProgress);
-	// 		h = haloProgress;
-	// 		haloProgress += nGPoints[d];
-	// 		msg(STATUS, "haloProgress = %d", haloProgress);
-	//
-	// 		if(node[d]==nNodes[d]-1){
-	// 			msg(STATUS, "node[%d,%d]", node[0], node[1]);
-	// 			while(h<haloProgress){
-	// 				halo[h] = 6.;
-	// 				msg(STATUS, "h = %d", h);
-	// 				h++;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	//
-	// for(int r = 0;r < size; r++){
-	// 	MPI_Barrier(MPI_COMM_WORLD);
-	// 	if(rank == r){
-	// 		fMsg(ini , "parsedump", "\n******************************************************\n\n");
-	// 		fMsg(ini , "parsedump", "node[%d,%d]: halo = \n", grid->node[0],grid->node[1]);
-	// 		//Print GhostEdge
-	// 		for(int w = 0; w < nHaloPoints; w++){
-	// 			fMsg(ini, "parsedump" , "%d,",(int) halo[w]);
-	// 		}
-	// 		fMsg(ini , "parsedump", "\n\n******************************************************\n");
-	// 	}
-	// }
-
-
-	//
-	// if(rank == 0){
-	// 	MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-	// 	MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD,
-	// 		MPI_STATUS_IGNORE);
-	// 	}
-	//
-	// 	if(rank == 1){
-	// 		MPI_Send(halo, nGhostPoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-	// 		MPI_Recv(halo, nGhostPoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD,
-	// 			MPI_STATUS_IGNORE);
-	// 		}
-	// 	MPI_Barrier(MPI_COMM_WORLD);
-	// 	//Test stuffs
-	// 	if(rank==1){
-	// 		fMsg(ini,"parsedump", "\n*****\nSwap\n*****\n");
-	// 	}
-		// if(rank==0){
-			// dumpHalo(ini, gridQuantity);
-		// }
-		// MPI_Barrier(MPI_COMM_WORLD);
-		// if(rank==1){
-		// 	dumpHalo(ini, gridQuantity);
-		// }
-
-		// distributeHalo(ini, gridQuantity);
-
-		return;
-		}

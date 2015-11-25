@@ -87,7 +87,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			}
 
 			//Cumulative products
-			int *nGPointsProd = malloc (nDims*sizeof(int));
+			long int *nGPointsProd = malloc (nDims*sizeof(int));
 
 			int tempPoints = 1;
 			for(int d = 0; d < nDims; d++){

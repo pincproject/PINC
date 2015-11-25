@@ -192,6 +192,16 @@ typedef struct{
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 /**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param dictionary 	*ini
+ * @param GridQuantity 	*gridQuantity
+ *
+ * TBD
+ */
+
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+
+/**
  * @brief Frees the memory of a GridQuantity struct
  * @param gridQuantity 		Gridquantity struct
  *
@@ -201,12 +211,6 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
  */
 
 void freeGridQuantity(GridQuantity *gridQuantity);
-
-
-
-
-
-
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -435,7 +439,6 @@ void freePopulation(Population *pop);
 /******************************************************************************
  * DEFINED IN GRID.C
  *****************************************************************************/
-
 
 
 #endif // PINC_H

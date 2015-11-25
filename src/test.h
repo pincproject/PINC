@@ -73,14 +73,7 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
 	111111	222222
 	111111	222222
 	111111	222222
-
-	swapGhosts(ini, gridQuantity);
-
-	111112	122222
-	111112	122222
-	111112	122222
-	111112	122222
-  @endcode
+ * @endcode
  */
 void gridParseDump(dictionary *ini, Grid *grid, GridQuantity *gridQuantity);
 
