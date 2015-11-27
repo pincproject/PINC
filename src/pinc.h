@@ -326,7 +326,7 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
  * @see freeGrid
  */
 
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
 
 /**
  * @brief Frees the memory of a GridQuantity struct

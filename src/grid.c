@@ -181,10 +181,8 @@ static int *getSubdomain(const dictionary *ini){
 	// Determine subdomain of this MPI node
 	int *subdomain = malloc(nDims*sizeof(int));
 	for(int d=0;d<nDims;d++){
-
 		subdomain[d] = mpiRank % nSubdomains[d];
 		mpiRank /= nSubdomains[d];
-
 	}
 
 	free(nSubdomains);
@@ -193,32 +191,40 @@ static int *getSubdomain(const dictionary *ini){
 }
 
 
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
+
+	//Load MpiInfo
+	int mpiRank = mpiInfo->mpiRank;
+	int mpiSize = mpiInfo->mpiSize;
+	int *subdomain = mpiInfo->subdomain;
 
 	//Load
 	Grid *grid = gridQuantity->grid;
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	// long int *nGPointsProd = grid->nGPointsProd;
 
 	int sliceDim = 1;
 	int offset = 0;
-	int offset2= nGPoints[sliceDim] -1;
 	int nSlicePoints = 1;
 	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
 	nSlicePoints /= nGPoints[sliceDim];
 
 	double *slice = malloc(nSlicePoints*sizeof(double));
-	double *slice2 = malloc(nSlicePoints*sizeof(double));
 
 	getSlice(slice, gridQuantity, sliceDim, offset);
-	getSlice(slice2, gridQuantity, sliceDim, offset2);
-	setSlice(slice2, gridQuantity, sliceDim, offset);
-	setSlice(slice, gridQuantity, sliceDim, offset2);
 
-	// msg(STATUS, "**Slice obtained**");
-	// for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
-	
+	if((mpiRank == 0)&&(mpiRank == 1))	getSlice(slice, gridQuantity, sliceDim, offset);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if(mpiRank == 0) MPI_Send(slice, nSlicePoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+	if(mpiRank == 1) MPI_Send(slice, nSlicePoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(mpiRank == 0) MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	if(mpiRank == 1) MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+	setSlice(slice, gridQuantity, sliceDim, offset);
+
 
 	return;
 }

@@ -52,6 +52,9 @@ int main(int argc, char *argv[]){
 	 * FINALIZE PINC VARIABLES
 	 */
 
+	// testGetSlice(ini, gridQuantity);
+	testSwapHalo(ini, gridQuantity, mpiInfo);
+
 
 	freeMpiInfo(mpiInfo);
 	freePopulation(pop);

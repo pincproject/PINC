@@ -36,9 +36,6 @@ typedef struct {
    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
 } Multigrid;
 
-void multigridParseDump(dictionary *ini, Multigrid *multigrid);
-
-
 //Initialisers for the grid and multigrid structs
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 

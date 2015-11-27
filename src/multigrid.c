@@ -187,24 +187,3 @@ void gaussSeidel(void){
 	printf("Hello from Gauss Seidel\n");
 	return;
 }
-
-void multigridParseDump(dictionary *ini, Multigrid *multigrid){
-
-	fMsg(ini,"parsedump", "Multigrids: \n");
-
-	fMsg(ini, "parsedump", "nCycles \t %d \n", multigrid->nCycles);
-	fMsg(ini, "parsedump", "nLevels \t %d \n", multigrid->nLevels);
-
-	/*
-	 *         	TEST AREA
-	 */
-	fMsg(ini, "parsedump", "TEST AREA \n \n");
-
-
-	fMsg(ini, "parsedump", "Values in the grid in first x values, not sorted: \t");
-	for(int i = 0; i < 5; i++){
-		fMsg(ini, "parsedump", "%f ", multigrid->gridQuantities[0]->val[0]);
-	}
-
-	return;
-}
