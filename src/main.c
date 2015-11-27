@@ -38,26 +38,27 @@ int main(int argc, char *argv[]){
 
 	dictionary *ini = iniOpen(argc,argv);
 
+	Population *pop = allocPopulation(ini);
 	Grid *grid = allocGrid(ini);
 	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
 	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
+	MpiInfo *mpiInfo = allocMpiInfo(ini);
 
 	/*
 	 * 	Test Area
 	 */
 
-//	testGridAndMGStructs(ini, gridQuantity, multigrid);
-//	testBoundarySendRecieve(ini, gridQuantity, multigrid);
-	testGetSlice(ini, gridQuantity);
-
-
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
 
-	// freeGrid(grid);
-	// freeGridQuantity(gridQuantity);
-	// iniparser_freedict(ini);
+
+	freeMpiInfo(mpiInfo);
+	freePopulation(pop);
+	freeGrid(grid);
+	freeGridQuantity(gridQuantity);
+//	freeMultigrid(multigrid);
+	iniparser_freedict(ini);
 
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES

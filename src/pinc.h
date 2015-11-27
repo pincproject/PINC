@@ -112,21 +112,23 @@
   * @see allocGrid
   * @see GridQuantity
   */
- typedef struct{
- 	int nDims;					///< Number of dimensions (usually 3)
- 	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
- 	long int *nGPointsProd;			///< Cumulative product of nGPoints (nDims+1 elements)
- 	int *nGhosts;				///< Number of ghost grid points (2*nDims elements)
- 	int *subdomain;				///< MPI node (nDims elements)
- 	int *nSubdomains;			///< Number of MPI nodes (nDims elements)
-	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
- 	int *offset;				///< Offset from global reference frame (nDims elements)
- 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+typedef struct{
+	int nDims;					///< Number of dimensions (usually 1-3)
+	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
+	long int *nGPointsProd;		///< Cumulative product of nGPoints (nDims+1 elements)
+	int *nGhosts;				///< Number of ghost layers in grid
 	double *dr;					///< Step-size (nDims elements)
+} Grid;
+
+typedef struct{
 	int mpiRank;				///< MPI rank
 	int mpiSize;				///< MPI size
-	hid_t h5;					///< h5 file
- } Grid;
+	int *subdomain;				///< MPI node (nDims elements)
+	int *nSubdomains;			///< Number of MPI nodes (nDims elements)
+	int *nSubdomainsProd;		///< Cumulative product of nSubdomains
+	int *offset;				///< Offset from global reference frame (nDims elements)
+	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+} MpiInfo;
 
  /**
   * @brief A quantity defined on a grid, for instance charge density.
@@ -164,6 +166,7 @@ typedef struct{
 	double *slice;			///< Slices of the grid sent to other subdomains
 	int nValues;				///< Number of values per grid point (usually 1 or 3)
 	Grid *grid;					///< Specifications of the grid
+	hid_t h5;					///< h5-file
 } GridQuantity;
 
  typedef struct timespec TimeSpec;
@@ -176,11 +179,6 @@ typedef struct{
 	TimeSpec previous;			///< Time of previous call
 	int rank;					///< Rank of node or negative to turn off timer
 } Timer;
-
-typedef struct{
-	int mpiRank;
-	int mpiSize;
-} MpiInfo;
 
 /******************************************************************************
  * DEFINED IN POPULATION.C
@@ -228,7 +226,7 @@ void freePopulation(Population *pop);
  *
  * Beware that this function do not assign any velocity to the particles.
  */
-void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng);
+void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
 
 /**
  * @brief	Assign particles artificial positions suitable for debugging
@@ -341,6 +339,9 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
  */
 
 void freeGridQuantity(GridQuantity *gridQuantity);
+
+void freeMpiInfo(MpiInfo *mpiInfo);
+MpiInfo *allocMpiInfo(const dictionary *ini);
 
 /******************************************************************************
  * DEFINED IN IO.C

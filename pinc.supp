@@ -91,3 +91,25 @@
    fun:xmlParse*
    ...
 }
+
+# MORE MPIRUN OCCURRED ON 25.11.15
+# NB: This is only if ./valgrind.sh is run in front of mpirun which it shouldnt.
+# It should be like this: mpirun -np 4 ./valgrind.sh ./pinc input.ini
+
+#{
+#   <insert_a_suppression_name_here>
+#   Memcheck:Leak
+#   ...
+#   fun:orte_*
+#   ...
+#}
+
+#{
+#   <insert_a_suppression_name_here>
+#   Memcheck:Leak
+#   fun:malloc
+#   ...
+#   obj:/usr/bin/orterun
+#   obj:/usr/bin/orterun
+#   fun:(below main)
+#}

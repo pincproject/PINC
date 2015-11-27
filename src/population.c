@@ -82,17 +82,17 @@ void freePopulation(Population *pop){
 
 }
 
-void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const gsl_rng *rng){
+void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
 
 	// Read from ini
 	int nSpecies, nDims;
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
 	int *nTGPoints = iniGetIntArr(ini,"grid:nTGPoints",&nDims);
 
-	// Read from grid
-	int *subdomain = grid->subdomain;
-	int *nSubdomains = grid->nSubdomains;
-	double *posToSubdomain = grid->posToSubdomain;
+	// Read from mpiInfo
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	double *posToSubdomain = mpiInfo->posToSubdomain;
 
 	// Compute normalized length of global reference frame
 	int *L = malloc(nDims*sizeof(int));
@@ -136,7 +136,7 @@ void posUniform(const dictionary *ini, Population *pop, const Grid *grid, const 
 	}
 
 	// Transform to local reference frame
-	int *offset = grid->offset;
+	int *offset = mpiInfo->offset;
 	for(int s=0;s<nSpecies;s++){
 
 		long int iStart = pop->iStart[s];

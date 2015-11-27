@@ -20,7 +20,7 @@
 #include "pinc.h"
 
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
-
+/*
 	// Get MPI info
 	int size, rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -67,7 +67,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 	//Making the smaller grids (uses a lot of the logic in allocGrid and allocGridQuantity)
 	//Should think of a better solution here, but grid needs to have different values for each subgrid
-
+/*
 	for(int i = 1; i < nLevels; i++){
 	//Did we agree on a standard index when we aren't dealing with dim, spatial or particle ind?
 	//Maybe q would be okay, if that isn't used in population struct
@@ -111,7 +111,8 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 			GridQuantity *gridQuantity = allocGridQuantity(ini, grid, nValues);
 
 			gridQuantities[i] = gridQuantity;
-
+*/
+/*
 	}
 
 	//Store in multigrid struct
@@ -127,6 +128,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
      *	Will be slightly messy when more options are added later, consider moving to a
      *	new function/file
      */
+/*
     char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
     char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
@@ -155,8 +157,9 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 *//*    free(coarseSolverName);
     free(postSmoothName);
     free(preSmoothName);
-*/
+
   	return multigrid;
+*/
 }
 
 void freeMultigrid(Multigrid *multigrid){

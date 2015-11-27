@@ -227,7 +227,7 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 Grid *allocGrid(const dictionary *ini){
 
 	//Sanity check
-	iniAssertEqualNElements(ini, 3,"grid:nSubdomains","grid:nTGPoints", "grid:dr");
+	iniAssertEqualNElements(ini, 2,"grid:nTGPoints", "grid:dr");
 
 	// Get MPI info
 	int mpiSize, mpiRank;
@@ -238,7 +238,6 @@ Grid *allocGrid(const dictionary *ini){
 	int nDims, nBoundaries;
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
-	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
 	double *dr = iniGetDoubleArr(ini, "grid:dr", &nDims);
 
 	//More sanity check
@@ -257,6 +256,35 @@ Grid *allocGrid(const dictionary *ini){
 
 	//Cumulative products
 	long int *nGPointsProd = longIntArrCumProd(nGPoints,nDims);
+
+	//Free temporary variables
+	free(nTGPoints);
+
+	/* Store in Grid */
+	Grid *grid = malloc(sizeof(Grid));
+
+	grid->nDims = nDims;
+	grid->nGPoints = nGPoints;
+	grid->nGPointsProd = nGPointsProd;
+	grid->nGhosts = nGhosts;
+	grid->dr = dr;
+
+	return grid;
+}
+
+MpiInfo *allocMpiInfo(const dictionary *ini){
+	//Sanity check
+	iniAssertEqualNElements(ini, 2,"grid:nSubdomains","grid:nTGPoints");
+
+	// Get MPI info
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	// Load data from ini
+	int nDims;
+	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
+	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nSubdomainsProd = intArrCumProd(nSubdomains,nDims);
 
 	//Position of the subdomain in the total domain
@@ -269,27 +297,20 @@ Grid *allocGrid(const dictionary *ini){
 		posToSubdomain[d] = (double)1/nTGPoints[d];
 	}
 
-	//Free temporary variables
+    /* Store in Grid */
+    MpiInfo *mpiInfo = malloc(sizeof(MpiInfo));
+
+	mpiInfo->subdomain = subdomain;
+	mpiInfo->nSubdomains = nSubdomains;
+	mpiInfo->nSubdomainsProd = nSubdomainsProd;
+	mpiInfo->offset = offset;
+	mpiInfo->posToSubdomain = posToSubdomain;
+	mpiInfo->mpiSize = mpiSize;
+	mpiInfo->mpiRank = mpiRank;
+
 	free(nTGPoints);
 
-	/* Store in Grid */
-	Grid *grid = malloc(sizeof(Grid));
-
-	grid->nDims = nDims;
-	grid->nGPoints = nGPoints;
-	grid->nGPointsProd = nGPointsProd;
-	grid->nGhosts = nGhosts;
-	grid->subdomain = subdomain;
-	grid->nSubdomains = nSubdomains;
-	grid->nSubdomainsProd = nSubdomainsProd;
-	grid->offset = offset;
-	grid->posToSubdomain = posToSubdomain;
-	grid->dr = dr;
-	grid->mpiSize = mpiSize;
-	grid->mpiRank = mpiRank;
-	grid->h5 = 0;	// Must be activated separately
-
-	return grid;
+    return mpiInfo;
 }
 
 GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
@@ -308,22 +329,34 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 		nTotPoints *= nGPoints[d];
 	}
 	for(int g = 0; g < nDims; g++){
-		nGhostPoints += (nGhosts[g]+nGhosts[g +nDims])*nGPoints[g];
+		nGhostPoints += (nGhosts[g]+nGhosts[g+nDims])*nGPoints[g];
 	}
 
 	//Memory for values
-	double *val = malloc(nTotPoints*nValues*sizeof(double));
-	double *slice = malloc(nGPointsProd[nDims-1]*nValues*sizeof(double));
+	double *val = malloc(nTotPoints*nValues*sizeof(*val));
+	double *slice = malloc(nGPointsProd[nDims-1]*nValues*sizeof(*slice));
 
 	/* Store in gridQuantity */
-	GridQuantity *gridQuantity = malloc(sizeof(GridQuantity));
+	GridQuantity *gridQuantity = malloc(sizeof(*gridQuantity));
 
 	gridQuantity->grid = grid;
 	gridQuantity->nValues = nValues;
 	gridQuantity->val = val;
+	gridQuantity->h5 = 0;	// Must be activated separately
 	gridQuantity->slice = slice;
 
 	return gridQuantity;
+}
+
+void freeMpiInfo(MpiInfo *mpiInfo){
+
+	free(mpiInfo->subdomain);
+	free(mpiInfo->nSubdomains);
+	free(mpiInfo->nSubdomainsProd);
+	free(mpiInfo->offset);
+	free(mpiInfo->posToSubdomain);
+	free(mpiInfo);
+
 }
 
 void freeGrid(Grid *grid){
@@ -331,20 +364,15 @@ void freeGrid(Grid *grid){
 	free(grid->nGPoints);
 	free(grid->nGPointsProd);
 	free(grid->nGhosts);
-	free(grid->subdomain);
-	free(grid->nSubdomains);
-	free(grid->nSubdomainsProd);
-	free(grid->offset);
-	free(grid->posToSubdomain);
 	free(grid->dr);
 	free(grid);
 
-	return;
 }
 
 void freeGridQuantity(GridQuantity *gridQuantity){
 
 	free(gridQuantity->val);
+	free(gridQuantity->slice);
+	free(gridQuantity);
 
-	return;
 }
