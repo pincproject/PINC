@@ -218,7 +218,7 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity){
 
 	// msg(STATUS, "**Slice obtained**");
 	// for(int p = 0; p < nSlicePoints; p++) msg(STATUS, "%f", slice[p]);
-
+	
 
 	return;
 }
