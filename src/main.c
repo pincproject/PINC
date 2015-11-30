@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
 	freePopulation(pop);
 	freeGrid(grid);
 	freeGridQuantity(gridQuantity);
-//	freeMultigrid(multigrid);
+	freeMultigrid(multigrid);
 	iniparser_freedict(ini);
 
 	/*

@@ -30,10 +30,10 @@ static int *getSubdomain(const dictionary *ini);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
- * @param double *slice 	empty array of size slice
- * @param GridQuantity *gridQuantity
- * @param int d 					perpendicular direction to slice
- * @param int offset 			offset of slice
+ * @param *slice 			empty array of size slice
+ * @param *gridQuantity		GridQuantity struct
+ * @param d					perpendicular direction to slice
+ * @param offset 			offset of slice
  * @return double *slice
  *
  * This function gets extracts a slice from a N dimensional grid. The integer d
@@ -56,7 +56,7 @@ static int *getSubdomain(const dictionary *ini);
  *
  * @code
 	 getSlice(slice, gridQuantity, 0, 1);
- * @code
+ * @endcode
  * After running this the slice array consists of
  * slice = \f( [1, 6, 11, 16] \f)
  *
@@ -68,11 +68,11 @@ void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset
 
 /**
  * @brief places a (dim-1) dimensional slice onto a selected slice on the  grid.
- * @param const double *slice
- * @param GridQuantity *gridQuantity
- * @param const int d 				(perpendicular direction to slice)
- * @param const int offset 		(offset of slice)
- * @return Gridquantity *gridQuantity
+ * @param *slice		slice containing a layer of values
+ * @param *gridQuantity	Grid struct, containing values
+ * @param d 			(perpendicular direction to slice)
+ * @param offset 		(offset of slice)
+ * @return *gridQuantity
  *
  * This function places a a slice on a grid. If we have a slice and want to
  * insert it onto a grid this function is used.
@@ -95,8 +95,34 @@ void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset
  *
  * @see setSlice
  * @see swapHalo
- **/
+ */
 void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset);
+
+
+/**
+ * @brief Gets, sends, recieves and sets a slice, using MPI
+ * @param nSlicePoints		Length of the slice array
+ * @param offsetTake 		Offset of slice to get
+ * @param offsetSet 		Offset of where to set slice
+ * @param d					Dimension
+ * @param reciever 			mpiRank of subdomain to recieve slice
+ * @param sender 			mpiRank of subdomain,
+							this node is to recieve from
+ * @param mpiRank 			mpiRank of this node
+ * @param *gridQuantity
+ *
+ * This exchanges the slices between two predetermined subdomains, belonging
+ * to different computernodes. It uses the getSlice and setSlice functions to
+ * extract and set the slices, while the communication is done with MPI_Send
+ * and MPI_Recv.
+ *
+ * @see getSlice
+ * @see setSlice
+ * @see swapHalo
+ */
+void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
+					const int offsetPlace, const int d, const int reciever,
+					const int sender, const int mpiRank, GridQuantity *gridQuantity);
 
 /**********************************************************
  *	Local functions
@@ -156,6 +182,19 @@ void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset
 	setSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
 }
 
+void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
+					const int offsetPlace, const int d, const int reciever,
+					const int sender, const int mpiRank, GridQuantity *gridQuantity){
+
+	double *slice = gridQuantity->slice;
+
+	getSlice(slice, gridQuantity, d, offsetTake);
+	//Send and recieve (Need to check out if using one of the more sophisticated send
+	//functinos to MPI could be used)
+	MPI_Send(slice, nSlicePoints, MPI_DOUBLE, reciever, mpiRank, MPI_COMM_WORLD);
+	MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	setSlice(slice, gridQuantity, d, offsetPlace);
+}
 
 
 /******************************************************************************
@@ -191,39 +230,58 @@ static int *getSubdomain(const dictionary *ini){
 }
 
 
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
 	int mpiSize = mpiInfo->mpiSize;
 	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 
 	//Load
 	Grid *grid = gridQuantity->grid;
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
+	double *slice = gridQuantity->slice;
 
-	int sliceDim = 1;
-	int offset = 0;
+	//Local temporary variables
+	int reciever, sender;
 	int nSlicePoints = 1;
+	int offsetTake, offsetPlace;
 	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
-	nSlicePoints /= nGPoints[sliceDim];
+	nSlicePoints *= 1./nGPoints[d];
 
-	double *slice = malloc(nSlicePoints*sizeof(double));
+	/*****************************************************
+	 *			Sending and recieving upper
+	******************************************************/
+	offsetTake = nGPoints[d]-1;
+	offsetPlace = 0;
+	reciever = (mpiRank + nSubdomainsProd[d]);
+	sender = (mpiRank - nSubdomainsProd[d]);
 
-	getSlice(slice, gridQuantity, sliceDim, offset);
+	//Here we need an implementation of the boundary conditions, I will probably put in a function called boundaryCond(...)
+	//here, or alternatively deal with the boundary some other place
+	if(subdomain[d] == nSubdomains[d] - 1) reciever -= 2*nSubdomainsProd[d];
+	if(subdomain[d] == 0) sender += 2*nSubdomainsProd[d];
 
-	if((mpiRank == 0)&&(mpiRank == 1))	getSlice(slice, gridQuantity, sliceDim, offset);
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+					sender, mpiRank, gridQuantity);
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	/*****************************************************
+	 *			Sending and recieving lower
+	******************************************************/
+	offsetTake = 1;
+	offsetPlace = nGPoints[d]-1;
+	reciever = (mpiRank - nSubdomainsProd[d]);
+	sender = (mpiRank + nSubdomainsProd[d]);
 
-	if(mpiRank == 0) MPI_Send(slice, nSlicePoints, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-	if(mpiRank == 1) MPI_Send(slice, nSlicePoints, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
-	if(mpiRank == 0) MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	if(mpiRank == 1) MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	//Boundary
+	if(subdomain[d] == nSubdomains[d] - 1) sender -= 2*nSubdomainsProd[d];
+	if(subdomain[d] == 0) reciever += 2*nSubdomainsProd[d];
 
-	setSlice(slice, gridQuantity, sliceDim, offset);
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+					sender, mpiRank, gridQuantity);
 
 
 	return;
@@ -329,6 +387,8 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	int nTotPoints = 1;			//#Grid points in all dimensions
 	int nGhostPoints = 0;		//#Total ghost points
 
+	//Temp variables
+	int largestDim = 0;
 
 	//Total grid points N^d
 	for(int d = 0; d < nDims; d++){
@@ -337,10 +397,13 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	for(int g = 0; g < nDims; g++){
 		nGhostPoints += (nGhosts[g]+nGhosts[g+nDims])*nGPoints[g];
 	}
+	for(int d = 0; d < nDims; d++){
+		if(nGPoints[d] > largestDim) largestDim = nGPoints[d];
+	}
 
-	//Memory for values
+	//Memory for values and slices
 	double *val = malloc(nTotPoints*nValues*sizeof(*val));
-	double *slice = malloc(nGPointsProd[nDims-1]*nValues*sizeof(*slice));
+	double *slice = malloc(largestDim*nValues*sizeof(*slice));
 
 	/* Store in gridQuantity */
 	GridQuantity *gridQuantity = malloc(sizeof(*gridQuantity));

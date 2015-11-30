@@ -317,16 +317,22 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param dictionary 	*ini
- * @param GridQuantity 	*gridQuantity
+ * @param ini			dictionary
+ * @param *gridQuantity	GridQuantity struct
+ * @param *mpiInfo		MpiInfo struct
+ * @param d				Along which dimension it should exhange ghost cells
  *
- * TBD
- * Frees the memory of the GridQuantity struct, since the Grid member of the struct
- * can be shared by several gridQuantity'ies it needs to be freed seperately
- * @see freeGrid
+ * This function gets the ghost layers for the subdomains, by extracting the
+ * outer layer of the true grid (total grid - ghost layer), and then sending it
+ * to the neighboring subdomains. Then the subdomain places the ghost layers it
+ * recieves in it's outer layer. It exhanges the ghost layer perpendicular to
+ * the dimension it recieves as an input parameter.
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see getSendRecvSetSlice
  */
 
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Frees the memory of a GridQuantity struct
@@ -342,6 +348,48 @@ void freeGridQuantity(GridQuantity *gridQuantity);
 
 void freeMpiInfo(MpiInfo *mpiInfo);
 MpiInfo *allocMpiInfo(const dictionary *ini);
+
+/******************************************************************************
+ *		DEFINED IN MULTIGRID.H
+ *****************************************************************************/
+
+/**
+  * @brief Contains the grids needed in a multigrid solver, as well as other specifications
+  * @param ini 			Input file, contains specification for the run
+  * @param gridQuantity  Grid with quantities and grid specifications as a memmber
+  *
+  * The finest grid, grid 0, links to the grid used in the rest of the program, the other grids
+  * in the grid array is coarser grids used in the
+  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for now the only
+  * options are Gauss-Seidel Red-Black (gaussSeidel). More TBD.
+  */
+ typedef struct {
+    GridQuantity **gridQuantities;   ///< Array of Grid structs of decreasing coarseness
+    int nLevels;         			///< #Grid levels
+    int nCycles;         			///< Multigrid cycles we want to run
+
+    void (*coarseSolv)(void);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
+ } Multigrid;
+
+Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
+
+ /**
+  * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
+  * @param Multigrid *multigrid
+  *
+  * Since the finest grid is allocated seperately and used on it's own without
+  * the multigrid struct, it is not freed in this destructor.
+  * Variables freed: gridQuantity [1->end]
+  *
+  */
+ void freeMultigrid(Multigrid *multigrid);
+
+
+ void gaussSeidel(void);
+ void jacobian(void);
+
 
 /******************************************************************************
  * DEFINED IN IO.C

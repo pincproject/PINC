@@ -89,7 +89,7 @@ void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo)
 		}
 	}
 
-	swapHalo(ini, gridQuantity, mpiInfo);
+	swapHalo(ini, gridQuantity, mpiInfo, 1);
 
 	if(mpiRank == 0) fMsg(ini, "parsedump", "\n\nSwapping halos\n\n");
 
