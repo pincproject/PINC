@@ -234,7 +234,6 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
-	int mpiSize = mpiInfo->mpiSize;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
@@ -243,7 +242,6 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int
 	Grid *grid = gridQuantity->grid;
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	double *slice = gridQuantity->slice;
 
 	//Local temporary variables
 	int reciever, sender;
@@ -383,7 +381,6 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
 	int *nGhosts = grid->nGhosts;
-	long int *nGPointsProd = grid->nGPointsProd;
 	int nTotPoints = 1;			//#Grid points in all dimensions
 	int nGhostPoints = 0;		//#Total ghost points
 

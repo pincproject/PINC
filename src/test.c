@@ -56,6 +56,14 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	return;
 }
 
+void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo){
+	msg(STATUS|ONCE, "Hello from GaussSeidel test");
+
+
+
+	return;
+}
+
 void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
 
 	//Load MPI info

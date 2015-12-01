@@ -50,6 +50,12 @@ void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
 void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
 
 /**
+ * Short testing routine of Gauss-Seidel RB algorithm
+ */
+void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo);
+
+
+/**
  * @brief Writes information about the grid structs to a parsefile
  * @param ini 		dictionary of the input file
  * @param grid 		grid struct
