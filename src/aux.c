@@ -172,15 +172,31 @@ void freeTimer(Timer *timer){
 	free(timer);
 }
 
-char *strAllocCat(const char *a, const char *b){
+char *strAllocCat(int n, ...){
 
-	int aLen = strlen(a);
-	int bLen = strlen(b);
+	va_list args;
+	va_start(args,n);
 
-	char *result = malloc(aLen+bLen+1);
+	int len = 0;
 
-	strcpy(result,a);
-	strcat(result,b);
+	for(int i=0;i<n;i++){
+		char *s = va_arg(args,char*);
+		len += strlen(s);
+	}
+
+	va_end(args);
+
+	char *result = malloc(len+1);	// Remember '\0'
+
+	va_start(args,n);
+
+	char *s = va_arg(args,char*);
+	strcpy(result,s);
+
+	for(int i=1;i<n;i++){
+		s = va_arg(args,char*);
+		strcat(result,s);
+	}
 
 	return result;
 

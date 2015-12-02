@@ -272,21 +272,42 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
  * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
  *****************************************************************************/
 
-hid_t createH5File(const char *fName, hid_t fcpList, hid_t fapList){
+hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt){
+
+
+	// Determine filename
+	char *fPrefix = iniparser_getstring((dictionary *)ini,"files:output","");	// don't free
+
+	// Add separator if filename prefix (not just folder) is specified
+	char sep[2] = "\0\0";
+	char lastchar = fPrefix[strlen(fPrefix)-1];
+	if(strcmp(fPrefix,".")==0) sep[0]='/';
+	else if(lastchar!='/') sep[0]='_';
+
+	char *fTotName = strAllocCat(6,fPrefix,sep,fName,".",fSubExt,".h5");
+
+	// Create file with MPI-I/O access
+	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
+	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
+
 
 	// Make sure parent folder exist
 	if(makeParentPath(fName))
-		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fName);
+		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fTotName);
 
 	// check whether file exists
-	FILE *fh = fopen(fName,"r");
+	FILE *fh = fopen(fTotName,"r");
 	if(fh!=NULL){
 		fclose(fh);
-		msg(ERROR|ONCE,"'%s' already exists.",fName);
+		msg(ERROR|ONCE,"'%s' already exists.",fTotName);
 	}
 
 	// create file
-	hid_t file = H5Fcreate(fName,H5F_ACC_EXCL,fcpList,fapList);
+	hid_t file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
+	H5Pclose(pList);
+
+	free(fTotName);
+
 	return file;
 
 }

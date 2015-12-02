@@ -28,7 +28,6 @@ int main(int argc, char *argv[]){
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
 	MPI_Init(&argc,&argv);
-
 	msg(STATUS|ONCE,"PINC started.");
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -37,28 +36,53 @@ int main(int argc, char *argv[]){
 	 */
 
 	dictionary *ini = iniOpen(argc,argv);
-
 	Population *pop = allocPopulation(ini);
 	Grid *grid = allocGrid(ini);
-	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 1);
-	Multigrid *multigrid = allocMultigrid(ini, gridQuantity);
+	GridQuantity *gridQuantity = allocGridQuantity(ini, grid, 2);
 	MpiInfo *mpiInfo = allocMpiInfo(ini);
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
 	/*
 	 * 	Test Area
 	 */
 
+	posDebug(ini,pop);
+	// posUniform(ini,pop,mpiInfo,rng);
+	gridValDebug(gridQuantity,mpiInfo);
+	gsl_rng_set(rng,mpiInfo->mpiRank);
+	velMaxwell(ini,pop,rng);
+
+	int nValues = gridQuantity->nValues;
+	double *denorm = malloc(nValues*sizeof(*denorm));
+	double *dimen = malloc(nValues*sizeof(*dimen));
+	for(int d=0;d<nValues;d++){
+		denorm[d] = 1000+(double)d/10;
+		dimen[d] = 100+d+(double)d/10;
+	}
+
+	createGridQuantityH5(ini,gridQuantity,mpiInfo,denorm,dimen,"rho");
+	createPopulationH5(ini,pop,mpiInfo,"pop");
+
+	int N=3;
+	for(int n=0;n<N;n++){
+		writeGridQuantityH5(gridQuantity,mpiInfo,(double)n);
+		writePopulationH5(pop,mpiInfo,(double)n,(double)n+0.5);
+	}
+
+	closeGridQuantityH5(gridQuantity);
+	closePopulationH5(pop);
+
+
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
-
 
 	freeMpiInfo(mpiInfo);
 	freePopulation(pop);
 	freeGrid(grid);
 	freeGridQuantity(gridQuantity);
-//	freeMultigrid(multigrid);
 	iniparser_freedict(ini);
+	gsl_rng_free(rng);
 
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
