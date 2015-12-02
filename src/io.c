@@ -28,8 +28,24 @@
 #define BUFFSIZE 128
 
 /******************************************************************************
- * DECLARING LOCAL LIST PARSING FUNCTIONS
+ * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
+
+ /**
+  * @brief Makes all parent directories of URL path
+  * @param	path	Path
+  * @return	0 for success, 1 for failure
+  *
+  * Examples:
+  *	path="dir/dir/file"	generates the folder "./dir/dir/"
+  *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
+  *  path="../dir/file" generates the folder "../dir/"
+  *	path="/dir/file" generates the folder "/dir/"
+  *
+  * Already existing folders are left as-is. This function can be used to ensure
+  * that the parent directories of its path exists.
+  */
+ int makeParentPath(const char *path);
 
 /**
  * @brief	Splits a comma-separated list-string to an array of strings.

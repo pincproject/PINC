@@ -314,10 +314,10 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  *
  * The file will have four attributes of size nDims attached to the root group
  * ("/") which is useful for interpreting the data. These are:
- *	Position denormalization factor
- *	Position dimensionalizing factor
- *	Velocity denormalization factor
- *	Velocity dimensionalizing factor
+ *	- Position denormalization factor
+ *	- Position dimensionalizing factor
+ *	- Velocity denormalization factor
+ *	- Velocity dimensionalizing factor
  *
  * The position denormalization factor can be multiplied to the integer axis to
  * convert it to be in terms of Debye lengths. Another multiplication by axis
@@ -413,15 +413,63 @@ void freeMpiInfo(MpiInfo *mpiInfo);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param	ini				Input file dictionary
- * @param	gridQuantity 	GridQuantity
+ * @param ini			dictionary
+ * @param *gridQuantity	GridQuantity struct
+ * @param *mpiInfo		MpiInfo struct
+ * @param d				Along which dimension it should exhange ghost cells
  *
- * TBD
- * Frees the memory of the GridQuantity struct, since the Grid member of the struct
- * can be shared by several gridQuantity'ies it needs to be freed seperately
- * @see freeGrid
+ * This function gets the ghost layers for the subdomains, by extracting the
+ * outer layer of the true grid (total grid - ghost layer), and then sending it
+ * to the neighboring subdomains. Then the subdomain places the ghost layers it
+ * recieves in it's outer layer. It exhanges the ghost layer perpendicular to
+ * the dimension it recieves as an input parameter.
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see getSendRecvSetSlice
  */
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity);
+void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
+
+/******************************************************************************
+ *		DEFINED IN MULTIGRID.H
+ *****************************************************************************/
+
+/**
+  * @brief Contains the grids needed in a multigrid solver, as well as other specifications
+  * @param ini 			Input file, contains specification for the run
+  * @param gridQuantity  Grid with quantities and grid specifications as a memmber
+  *
+  * The finest grid, grid 0, links to the grid used in the rest of the program, the other grids
+  * in the grid array is coarser grids used in the
+  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for now the only
+  * options are Gauss-Seidel Red-Black (gaussSeidel). More TBD.
+  */
+typedef struct {
+    GridQuantity **gridQuantities;   ///< Array of Grid structs of decreasing coarseness
+    int nLevels;         			///< #Grid levels
+    int nCycles;         			///< Multigrid cycles we want to run
+
+    void (*coarseSolv)(void);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
+} Multigrid;
+
+Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
+
+ /**
+  * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
+  * @param Multigrid *multigrid
+  *
+  * Since the finest grid is allocated seperately and used on it's own without
+  * the multigrid struct, it is not freed in this destructor.
+  * Variables freed: gridQuantity [1->end]
+  *
+  */
+ void freeMultigrid(Multigrid *multigrid);
+
+
+ void gaussSeidel(void);
+ void jacobian(void);
+
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -606,17 +654,18 @@ void freeStrArr(char** strArr);
  *
  * The file will be stored in the folder specified by "files:output" in the
  * input file. Examples of valid values of "files:output":
- *	output = data/
- *  output = ./data/
- *	output = ../data/
- *	output = ~/data/
- *	output = /home/me/data/
+ *	- output = data/
+ *  - output = ./data/
+ *	- output = ../data/
+ *	- output = ~/data/
+ *	- output = /home/me/data/
  *
  * However, this variable also allows the user to specify a prefix to each file.
  * This is indicated by _not_ ending the variable with '/'. For instance:
- *	output = prefix
- *	output = data/prefix
- * will output files such a "prefix_rho.grid.h5".
+ *	- output = prefix
+ *	- output = data/prefix
+ *
+ * This will output files such a "prefix_rho.grid.h5".
  *
  * Contrary to H5Fcreate() this function creates parent directories unless they
  * already exists. If a file already exists it will fail but contrary to
@@ -651,8 +700,8 @@ void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo);
  * @param	ini				Dictionary to input file
  * @param	gridQuantity	GridQuantity
  * @param	mpiInfo			MpiInfo
- * @param	denorm			Denormalization factors
- * @param	dimen			Dimensionalizing factors
+ * @param	denorm			Quantity denormalization factors
+ * @param	dimen			Quantity dimensionalizing factors
  * @param	fName			Filename
  * @return	void
  * @see writeGridQuantityH5(), closeGridQuantityH5()
@@ -675,10 +724,10 @@ void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo);
  *
  * The file will have four attributes of size nDims attached to the root group
  * ("/") which is useful for interpreting the data. These are:
- *	Axis denormalization factor
- *	Axis dimensionalizing factor
- *	Quantity denormalization factor
- *	Quantity dimensionalizing factor
+ *	- Axis denormalization factor
+ *	- Axis dimensionalizing factor
+ *	- Quantity denormalization factor
+ *	- Quantity dimensionalizing factor
  *
  * The axis denormalization factor can be multiplied to the integer axis to
  * convert it to be in terms of Debye lengths. Another multiplication by axis
@@ -800,22 +849,6 @@ long int *longIntArrCumProd(const int *a, int nElements);
  * @return	Pointer to allocated array of size nElements
  */
 int *intArrMul(const int *a, const int *b, int nElements);
-
-/**
- * @brief Makes all parent directories of URL path
- * @param	path	Path
- * @return	0 for success, 1 for failure
- *
- * Examples:
- *	path="dir/dir/file"	generates the folder "./dir/dir/"
- *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
- *  path="../dir/file" generates the folder "../dir/"
- *	path="/dir/file" generates the folder "/dir/"
- *
- * Already existing folders are left as-is. This function can be used to ensure
- * that the parent directories of its path exists.
- */
-int makeParentPath(const char *path);
 
 /**
  * @brief Concatenates strings
