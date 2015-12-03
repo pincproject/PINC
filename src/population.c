@@ -1,5 +1,5 @@
 /**
- * @file		particles.c
+ * @file		population.c
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Particle handling.
@@ -21,13 +21,13 @@
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
 
- /**
-  * @brief Transforms particles to local reference frame
-  * @param	pop			Population of particles
-  * @param	mpiInfo		MPI information about the reference frames
-  * @return	void
-  * @see toGlobalFrame()
-  */
+/**
+ * @brief Transforms particles to local reference frame
+ * @param	pop			Population of particles
+ * @param	mpiInfo		MPI information about the reference frames
+ * @return	void
+ * @see toGlobalFrame()
+ */
 void toLocalFrame(Population *pop, const MpiInfo *mpiInfo);
 
 /**
