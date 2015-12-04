@@ -18,6 +18,7 @@ ASCIILINESZ	lib/iniparser/src/iniparser.c	14;"	d	file:
 AUTOLINK_SUPPORT	doc/doxygen/doxyfile.mk	/^AUTOLINK_SUPPORT       = YES$/;"	m
 ArrStruct	proof of concept/global variables/main.c	/^struct ArrStruct{$/;"	s	file:
 BINARY_TOC	doc/doxygen/doxyfile.mk	/^BINARY_TOC             = NO$/;"	m
+BOLTZMANN	src/pinc.h	25;"	d
 BOUND	src/old/const.h	50;"	d
 BOUND	src/old/triang/const.h	50;"	d
 BRIEF_MEMBER_DESC	doc/doxygen/doxyfile.mk	/^BRIEF_MEMBER_DESC      = YES$/;"	m
@@ -106,11 +107,13 @@ D_INSU	src/old/const.h	53;"	d
 D_INSU	src/old/triang/const.h	53;"	d
 Detailed Description	doc/latex/multigrid_8h.tex	/^\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structGrid.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Step-\\\/size (n\\+Dims elements) \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
-Detailed Description	doc/latex/structGridQuantity.tex	/^\\begin{DoxyCompactList}\\small\\item\\em h5-\\\/file \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
+Detailed Description	doc/latex/structGridQuantity.tex	/^\\begin{DoxyCompactList}\\small\\item\\em H\\+D\\+F5 file space description. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
+Detailed Description	doc/latex/structMpiInfo.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Factor for converting position to subdomain (n\\+Dims elements) \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structMultigrid.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Function pointer to a Pre Smooth function. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
-Detailed Description	doc/latex/structPopulation.tex	/^\\begin{DoxyCompactList}\\small\\item\\em h5-\\\/file \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
+Detailed Description	doc/latex/structPopulation.tex	/^\\begin{DoxyCompactList}\\small\\item\\em H\\+D\\+F5 file handler. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structTimer.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Rank of node or negative to turn off timer. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 ECLIPSE_DOC_ID	doc/doxygen/doxyfile.mk	/^ECLIPSE_DOC_ID         = org.doxygen.Project$/;"	m
+ELECTRON_MASS	src/pinc.h	26;"	d
 ENABLED_SECTIONS	doc/doxygen/doxyfile.mk	/^ENABLED_SECTIONS       =$/;"	m
 ENABLE_PREPROCESSING	doc/doxygen/doxyfile.mk	/^ENABLE_PREPROCESSING   = YES$/;"	m
 ENUM_VALUES_PER_LINE	doc/doxygen/doxyfile.mk	/^ENUM_VALUES_PER_LINE   = 4$/;"	m
@@ -212,7 +215,7 @@ GPSCRIPT	proof of concept/stool/stool.h	18;"	d
 GProf	doc/introduction/main.tex	/^Finally, beware that running Valgrind degrades execution speed.$/;"	u
 GRAPHICAL_HIERARCHY	doc/doxygen/doxyfile.mk	/^GRAPHICAL_HIERARCHY    = YES$/;"	m
 GROUP_GRAPHS	doc/doxygen/doxyfile.mk	/^GROUP_GRAPHS           = YES$/;"	m
-Grid	src/pinc.h	/^} Grid;$/;"	t	typeref:struct:__anon2
+Grid	src/pinc.h	/^} Grid;$/;"	t	typeref:struct:__anon3
 Grid   Quantity Struct Reference	doc/latex/structGridQuantity.tex	/^\\hypertarget{structGridQuantity}{}\\section{Grid\\+Quantity Struct Reference}$/;"	s
 Grid Struct Reference	doc/latex/structGrid.tex	/^\\hypertarget{structGrid}{}\\section{Grid Struct Reference}$/;"	s
 GridQuantity	src/pinc.h	/^} GridQuantity;$/;"	t	typeref:struct:__anon4
@@ -345,7 +348,7 @@ Mass_0	src/old/triang/const.h	19;"	d
 Mass_1	src/old/const.h	20;"	d
 Mass_1	src/old/triang/const.h	20;"	d
 Mpi   Info Struct Reference	doc/latex/structMpiInfo.tex	/^\\hypertarget{structMpiInfo}{}\\section{Mpi\\+Info Struct Reference}$/;"	s
-MpiInfo	src/pinc.h	/^} MpiInfo;$/;"	t	typeref:struct:__anon3
+MpiInfo	src/pinc.h	/^} MpiInfo;$/;"	t	typeref:struct:__anon2
 Multigrid	src/multigrid.h	/^ } Multigrid;$/;"	t	typeref:struct:__anon7
 Multigrid Struct Reference	doc/latex/structMultigrid.tex	/^\\hypertarget{structMultigrid}{}\\section{Multigrid Struct Reference}$/;"	s
 NCYCLES	src/old/const.h	317;"	d
@@ -375,6 +378,8 @@ NR_ENDD	src/old/shortcuts.c	24;"	d	file:
 NR_ENDD	src/old/triang/shortcuts.c	24;"	d	file:
 NVALS	lib/iniparser/src/dictionary.c	359;"	d	file:
 Naming Conventions	doc/introduction/main.tex	/^\\section{Coding Practices}$/;"	u
+Nd	script/distribution.py	/^Nd = vel.shape[1]	# Number of dimensions$/;"	v
+Np	script/distribution.py	/^Np = vel.shape[0]	# Number of particles$/;"	v
 OBJ	makefile	/^OBJ		= $(patsubst %,$(ODIR)\/%,$(OBJ_))$/;"	m
 OBJS	lib/iniparser/Makefile	/^OBJS = $(SRCS:.c=.o)$/;"	m
 OBJ_	makefile	/^OBJ_	= $(SRC_:.c=.o)$/;"	m
@@ -414,12 +419,12 @@ PROJECT_NAME	doc/doxygen/doxyfile.mk	/^PROJECT_NAME           = "PINC"$/;"	m
 PROJECT_NUMBER	doc/doxygen/doxyfile.mk	/^PROJECT_NUMBER         =$/;"	m
 PRSEG	src/old/const.h	57;"	d
 PRSEG	src/old/triang/const.h	57;"	d
-Population	src/pinc.h	/^ } Population;$/;"	t	typeref:struct:__anon1
+Population	src/pinc.h	/^} Population;$/;"	t	typeref:struct:__anon1
 Population Struct Reference	doc/latex/structPopulation.tex	/^\\hypertarget{structPopulation}{}\\section{Population Struct Reference}$/;"	s
 Program Structure	doc/introduction/main.tex	/^In functions not dealing with particle or grid quantities it is perfectly valid to use e.g. \\lstinline$i$ or \\lstinline$j$ as loop counters for generic purposes. Please also see the documentation of the \\lstinline$Grid$ and \\lstinline$Population$ structs to get a better understanding of naming conventions.$/;"	u
 Public Attributes	doc/latex/structGrid.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structGridQuantity.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
-Public Attributes	doc/latex/structMpiInfo.tex	/^\\label{structMpiInfo}\\index{Mpi\\+Info@{Mpi\\+Info}}$/;"	u
+Public Attributes	doc/latex/structMpiInfo.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structMultigrid.tex	/^{\\ttfamily \\#include $<$multigrid.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structPopulation.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
 Public Attributes	doc/latex/structTimer.tex	/^{\\ttfamily \\#include $<$pinc.\\+h$>$}$/;"	u
@@ -551,7 +556,7 @@ TYPEDEF_HIDES_STRUCT	doc/doxygen/doxyfile.mk	/^TYPEDEF_HIDES_STRUCT   = NO$/;"	m
 T_SINK	src/old/triang/triangulate.h	70;"	d
 T_X	src/old/triang/triangulate.h	68;"	d
 T_Y	src/old/triang/triangulate.h	69;"	d
-TimeSpec	src/pinc.h	/^ typedef struct timespec TimeSpec;$/;"	t	typeref:struct:timespec
+TimeSpec	src/pinc.h	/^typedef struct timespec TimeSpec;$/;"	t	typeref:struct:timespec
 Timer	src/pinc.h	/^} Timer;$/;"	t	typeref:struct:__anon5
 Timer Struct Reference	doc/latex/structTimer.tex	/^\\hypertarget{structTimer}{}\\section{Timer Struct Reference}$/;"	s
 Tools	doc/introduction/main.tex	/^\\end{itemize}$/;"	s
@@ -687,6 +692,8 @@ clockend	src/old/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockend	src/old/triang/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockstart	src/old/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockstart	src/old/triang/const.h	/^clock_t clockstart, clockend;$/;"	v
+closeGridQuantityH5	src/grid.c	/^void closeGridQuantityH5(GridQuantity *gridQuantity){$/;"	f
+closePopulationH5	src/population.c	/^void closePopulationH5(Population *pop){$/;"	f
 coarseSolv	src/multigrid.h	/^    void (*coarseSolv)(void);	\/\/\/< Function pointer to a Coarse Grid Solver function$/;"	m	struct:__anon7
 cond_present	src/old/const.h	/^int cond_present,dustmove;$/;"	v
 cond_present	src/old/triang/const.h	/^int cond_present,dustmove;$/;"	v
@@ -706,8 +713,9 @@ convert_matrix	src/old/fmg/nrutil.c	/^float **convert_matrix(float *a, long nrl,
 copy	src/old/fmg/fmg.c	/^void copy(double ***aout, double ***ain, int nx, int ny, int nz)$/;"	f
 copy0	src/old/fmg/fmg.c	/^void copy0(double ***aout, double *ain, int nx, int ny, int nz)$/;"	f
 copyfinal	src/old/fmg/fmg.c	/^void copyfinal(double *aout, double ***ain, int nx, int ny, int nz)$/;"	f
-createH5File	src/io.c	/^hid_t createH5File(const char *fName, hid_t fcpList, hid_t fapList){$/;"	f
-createPopulationH5	src/population.c	/^void createPopulationH5(const dictionary *ini, Population *pop){$/;"	f
+createGridQuantityH5	src/grid.c	/^void createGridQuantityH5(const dictionary *ini, GridQuantity *gridQuantity, const MpiInfo *mpiInfo,$/;"	f
+createH5File	src/io.c	/^hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt){$/;"	f
+createPopulationH5	src/population.c	/^void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName){$/;"	f
 createResults	doc/html/search/search.js	/^function createResults()$/;"	f
 create_currentarrays	src/old/grid.c	/^void create_currentarrays(void)$/;"	f
 create_currentarrays	src/old/triang/grid.c	/^void create_currentarrays(void)$/;"	f
@@ -787,6 +795,7 @@ debyetotal	src/old/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
 debyetotal	src/old/triang/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
 define-members	doc/html/aux_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"><\/a>$/;"	a
 define-members	doc/html/io_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"><\/a>$/;"	a
+define-members	doc/html/pinc_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"><\/a>$/;"	a
 define-members	doc/html/test_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"><\/a>$/;"	a
 dens	src/old/const.h	/^double dens[S]; \/*number density*\/$/;"	v
 dens	src/old/triang/const.h	/^double dens[S]; \/*number density*\/$/;"	v
@@ -799,8 +808,10 @@ details	doc/html/main_8c.html	/^<a name="details" id="details"><\/a><h2 class="g
 details	doc/html/multigrid_8c.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/multigrid_8h.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/pinc_8h.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
+details	doc/html/population_8c.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structGrid.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structGridQuantity.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
+details	doc/html/structMpiInfo.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structMultigrid.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structPopulation.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
 details	doc/html/structTimer.html	/^<a name="details" id="details"><\/a><h2 class="groupheader">Detailed Description<\/h2>$/;"	a
@@ -856,7 +867,7 @@ dpartq	src/old/const.h	/^double **dpartq, **rdpartq;$/;"	v
 dpartq	src/old/triang/const.h	/^double **dpartq, **rdpartq;$/;"	v
 dphifl	src/old/const.h	/^double *dphifl;$/;"	v
 dphifl	src/old/triang/const.h	/^double *dphifl;$/;"	v
-dr	src/pinc.h	/^	double *dr;					\/\/\/< Step-size (nDims elements)$/;"	m	struct:__anon2
+dr	src/pinc.h	/^	double *dr;					\/\/\/< Step-size (nDims elements)$/;"	m	struct:__anon3
 dr2v2	src/old/const.h	/^double *dmass, *dustrho, *dmass_centr_y, *dmass_centr_x, *dmass_centr_z, *dmomI, **dr2v2;$/;"	v
 dr2v2	src/old/triang/const.h	/^double *dmass, *dustrho, *dmass_centr_y, *dmass_centr_x, *dmass_centr_z, *dmomI, **dr2v2;$/;"	v
 dradius	src/old/const.h	/^double *dradius;$/;"	v
@@ -1017,6 +1028,7 @@ dustzdz	src/old/const.h	/^double **dustx, **dusty, **dustz, **dusta, **dustb, **
 dustzdz	src/old/triang/const.h	/^double **dustx, **dusty, **dustz, **dusta, **dustb, **dustxdx, **dustydy, **dustzdz, **dustbdy;$/;"	v
 dustzdzold	src/old/const.h	/^double ** dustxdxold, **dustydyold, **dustzdzold;$/;"	v
 dustzdzold	src/old/triang/const.h	/^double ** dustxdxold, **dustydyold, **dustzdzold;$/;"	v
+dv	script/distribution.py	/^dv = 1$/;"	v
 dvecmem	src/old/shortcuts.c	/^double *dvecmem(long nl,long nh)$/;"	f
 dvecmem	src/old/triang/shortcuts.c	/^double *dvecmem(long nl,long nh)$/;"	f
 dvector	src/old/fmg/nrutil.c	/^double *dvector(long nl, long nh)$/;"	f
@@ -1081,7 +1093,7 @@ elrot_z_y1	src/old/const.h	/^double *elrot_z_x1, *elrot_z_x2, *elrot_y_x1, *elro
 elrot_z_y1	src/old/triang/const.h	/^double *elrot_z_x1, *elrot_z_x2, *elrot_y_x1, *elrot_y_x2, *elrot_z_y1, *elrot_z_y2, *elrot_y_z1, *elrot_y_z2, *elrot_x_y1, *elrot_x_y2, *elrot_x_z1, *elrot_x_z2;$/;"	v
 elrot_z_y2	src/old/const.h	/^double *elrot_z_x1, *elrot_z_x2, *elrot_y_x1, *elrot_y_x2, *elrot_z_y1, *elrot_z_y2, *elrot_y_z1, *elrot_y_z2, *elrot_x_y1, *elrot_x_y2, *elrot_x_z1, *elrot_x_z2;$/;"	v
 elrot_z_y2	src/old/triang/const.h	/^double *elrot_z_x1, *elrot_z_x2, *elrot_y_x1, *elrot_y_x2, *elrot_z_y1, *elrot_z_y2, *elrot_y_z1, *elrot_y_z2, *elrot_x_y1, *elrot_x_y2, *elrot_x_z1, *elrot_x_z2;$/;"	v
-energy	src/pinc.h	/^ 	double *energy;		\/\/\/< Kinetic energy$/;"	m	struct:__anon1
+energy	src/pinc.h	/^	double *energy;		\/\/\/< Kinetic energy$/;"	m	struct:__anon1
 enum-members	doc/html/pinc_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"><\/a>$/;"	a
 epe	src/old/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
 epe	src/old/triang/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
@@ -1104,6 +1116,7 @@ fMsg	src/io.c	/^void fMsg(dictionary *ini, const char* restrict fNameKey, const 
 factorial	proof of concept/get slice/main.s	/^factorial:$/;"	l
 factorial	proof of concept/tail call recursion/main.c	/^long int factorial(long int n){$/;"	f
 factorial	proof of concept/tail call recursion/main.s	/^factorial:$/;"	l
+file	script/distribution.py	/^file = h5py.File('..\/test_pop.pop.h5','r')$/;"	v
 files	doc/html/dir_68267d1309a1af8e8297ef4c3efbcdba.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="files"><\/a>$/;"	a
 fill0	src/old/fmg/fmg.c	/^void fill0(double ***u, int nx, int ny, int nz)$/;"	f
 find_new_roots	src/old/triang/construct.c	/^static int find_new_roots(segnum)$/;"	f	file:
@@ -1180,9 +1193,11 @@ func-members	doc/html/main_8c.html	/^<tr class="heading"><td colspan="2"><h2 cla
 func-members	doc/html/multigrid_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/multigrid_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/pinc_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
+func-members	doc/html/population_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/test_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/test_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 gaussSeidel	src/multigrid.c	/^void gaussSeidel(void){$/;"	f
+gaussian	script/distribution.py	/^gaussian   = ((1\/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2\/vth)**2)$/;"	v
 gen_bgnd	src/old/generate.c	/^void gen_bgnd(void)$/;"	f
 gen_bgnd	src/old/generate_bug.c	/^void gen_bgnd(void)$/;"	f
 gen_bgnd	src/old/triang/generate.c	/^void gen_bgnd(void)$/;"	f
@@ -1237,12 +1252,15 @@ get_vertex_positions	src/old/triang/monotone.c	/^static int get_vertex_positions
 ghostIndices	proof of concept/get boundary/scrabble.c	/^int *ghostIndices = malloc(...);$/;"	v
 gpcolumn	src/old/const.h	/^MPI_Datatype gpcolumn;$/;"	v
 gpcolumn	src/old/triang/const.h	/^MPI_Datatype gpcolumn;$/;"	v
-grid	src/pinc.h	/^	Grid *grid;					\/\/\/< Specifications of the grid$/;"	m	struct:__anon4
+grid	src/pinc.h	/^	Grid *grid;			\/\/\/< Specifications of the grid$/;"	m	struct:__anon4
 gridQuantities	src/multigrid.h	/^    GridQuantity **gridQuantities;   \/\/\/< Array of Grid structs of decreasing coarseness$/;"	m	struct:__anon7
+gridValDebug	src/grid.c	/^void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo){$/;"	f
 gridtype	src/old/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
 gridtype	src/old/triang/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
-h5	src/pinc.h	/^	hid_t h5;					\/\/\/< h5-file$/;"	m	struct:__anon4
-h5	src/pinc.h	/^	hid_t h5;			\/\/\/< h5-file$/;"	m	struct:__anon1
+h5	src/pinc.h	/^	hid_t h5;			\/\/\/< HDF5 file handler$/;"	m	struct:__anon1
+h5	src/pinc.h	/^	hid_t h5;			\/\/\/< HDF5 file handler$/;"	m	struct:__anon4
+h5FileSpace	src/pinc.h	/^	hid_t h5FileSpace;	\/\/\/< HDF5 file space description$/;"	m	struct:__anon4
+h5MemSpace	src/pinc.h	/^	hid_t h5MemSpace;	\/\/\/< HDF5 memory space description$/;"	m	struct:__anon4
 hash	lib/iniparser/src/dictionary.h	/^    unsigned     *  hash ;  \/** List of hash values for keys *\/$/;"	m	struct:_dictionary_
 hi	src/old/triang/triangulate.h	/^  point_t hi, lo;		\/* max\/min y-values *\/$/;"	m	struct:__anon10
 history	src/old/const.h	/^FILE * history;$/;"	v
@@ -1254,11 +1272,12 @@ home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  main.c File Refere
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  multigrid.c File Reference	doc/latex/multigrid_8c.tex	/^\\hypertarget{multigrid_8c}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/multigrid.c File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  multigrid.h File Reference	doc/latex/multigrid_8h.tex	/^\\hypertarget{multigrid_8h}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/multigrid.h File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  pinc.h File Reference	doc/latex/pinc_8h.tex	/^\\hypertarget{pinc_8h}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/pinc.h File Reference}$/;"	s
+home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  population.c File Reference	doc/latex/population_8c.tex	/^\\hypertarget{population_8c}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/population.c File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  test.c File Reference	doc/latex/test_8c.tex	/^\\hypertarget{test_8c}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/test.c File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  test.h File Reference	doc/latex/test_8h.tex	/^\\hypertarget{test_8h}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/test.h File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src Directory Reference	doc/latex/dir_68267d1309a1af8e8297ef4c3efbcdba.tex	/^\\hypertarget{dir_68267d1309a1af8e8297ef4c3efbcdba}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src Directory Reference}$/;"	s
-iStart	src/pinc.h	/^ 	long int *iStart;	\/\/\/< First index of specie s (nSpecies+1 elements)$/;"	m	struct:__anon1
-iStop	src/pinc.h	/^ 	long int *iStop;	\/\/\/< Last index of specie s (nSpecies elements)$/;"	m	struct:__anon1
+iStart	src/pinc.h	/^	long int *iStart;	\/\/\/< First index of specie s (nSpecies+1 elements)$/;"	m	struct:__anon1
+iStop	src/pinc.h	/^	long int *iStop;	\/\/\/< Last index of specie s (nSpecies elements)$/;"	m	struct:__anon1
 iavvel	src/old/const.h	/^FILE *eavvel, *iavvel;$/;"	v
 iavvel	src/old/triang/const.h	/^FILE *eavvel, *iavvel;$/;"	v
 idens	src/old/const.h	/^FILE *pot2Dclr,*pot2D,*efx,*efy, *efz,*frho,*idens,*edens;$/;"	v
@@ -1378,6 +1397,7 @@ l00001	doc/html/pinc_8h.html	/^<div class="fragment"><div class="line"><a name="
 l00001	doc/html/pinc_8h.html	/^<p>Example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;iniAssertEqualNElements(ini,3,&quot;mySec:a&quot;,&quot;mySec:b&quot;,&quot;mySec:c&quot;);<\/div>$/;"	a
 l00001	doc/html/pinc_8h.html	/^<p>The result will be given by: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;result[0] = 1;<\/div>$/;"	a
 l00001	doc/html/pinc_8h_source.html	/^<a href="pinc_8h.html">Go to the documentation of this file.<\/a><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;<\/div>$/;"	a
+l00001	doc/html/population_8c.html	/^<div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;pos[i*nDims+d] = 1000*mpiRank + i + (double)d\/10 + (double)s\/100;<\/div>$/;"	a
 l00001	doc/html/test_8c.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111 222222<\/div>$/;"	a
 l00001	doc/html/test_8h.html	/^<p>TBD 2 subdomains 2D grid example: <\/p><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;111111 222222<\/div>$/;"	a
 l00001	doc/html/test_8h_source.html	/^<a href="test_8h.html">Go to the documentation of this file.<\/a><div class="fragment"><div class="line"><a name="l00001"><\/a><span class="lineno">    1<\/span>&#160;<\/div>$/;"	a
@@ -1427,12 +1447,18 @@ l00020	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00020"><\/a><s
 l00020	doc/html/test_8h_source.html	/^<div class="line"><a name="l00020"><\/a><span class="lineno">   20<\/span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="multigrid_8h.html">multigrid.h<\/a>&quot;<\/span><\/div>$/;"	a
 l00021	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00021"><\/a><span class="lineno">   21<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
 l00021	doc/html/test_8h_source.html	/^<div class="line"><a name="l00021"><\/a><span class="lineno">   21<\/span>&#160;<\/div>$/;"	a
-l00022	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00022"><\/a><span class="lineno">   22<\/span>&#160;<span class="comment"> * DECLARING DATATYPES<\/span><\/div>$/;"	a
+l00022	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00022"><\/a><span class="lineno">   22<\/span>&#160;<span class="comment"> * DEFINING PHYSICAL CONSTANTS (following SI standard)<\/span><\/div>$/;"	a
 l00023	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00023"><\/a><span class="lineno">   23<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
 l00024	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00024"><\/a><span class="lineno">   24<\/span>&#160;<\/div>$/;"	a
+l00025	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00025"><\/a><span class="lineno">   25<\/span>&#160;<span class="preprocessor">#define BOLTZMANN 1.3806488e-23<\/span><\/div>$/;"	a
+l00026	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00026"><\/a><span class="lineno">   26<\/span>&#160;<span class="preprocessor">#define ELECTRON_MASS 9.10938215e-31<\/span><\/div>$/;"	a
+l00027	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00027"><\/a><span class="lineno">   27<\/span>&#160;<\/div>$/;"	a
 l00028	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00028"><\/a><span class="lineno"><a class="line" href="structMultigrid.html">   28<\/a><\/span>&#160; <span class="keyword">typedef<\/span> <span class="keyword">struct <\/span>{<\/div>$/;"	a
+l00028	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00028"><\/a><span class="lineno">   28<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
 l00029	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00029"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a22176def0401b114e6d0b54562a01fd9">   29<\/a><\/span>&#160;    <a class="code" href="structGridQuantity.html">GridQuantity<\/a> **<a class="code" href="structMultigrid.html#a22176def0401b114e6d0b54562a01fd9">gridQuantities<\/a>;   <\/div>$/;"	a
+l00029	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00029"><\/a><span class="lineno">   29<\/span>&#160;<span class="comment"> * DECLARING DATATYPES<\/span><\/div>$/;"	a
 l00030	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00030"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#ad067de0a3c5d381d7d346974014c4fd6">   30<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMultigrid.html#ad067de0a3c5d381d7d346974014c4fd6">nLevels<\/a>;                    <\/div>$/;"	a
+l00030	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00030"><\/a><span class="lineno">   30<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
 l00031	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00031"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#af0c28a790e2c1f9c0890e3d8c2f99c72">   31<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMultigrid.html#af0c28a790e2c1f9c0890e3d8c2f99c72">nCycles<\/a>;                    <\/div>$/;"	a
 l00032	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00032"><\/a><span class="lineno">   32<\/span>&#160;<\/div>$/;"	a
 l00033	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00033"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#ad9b9e3ca426c3f99c1173f7c01fad8b5">   33<\/a><\/span>&#160;    void (*coarseSolv)(void);   <\/div>$/;"	a
@@ -1458,163 +1484,166 @@ l00050	doc/html/test_8h_source.html	/^<div class="line"><a name="l00050"><\/a><s
 l00051	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00051"><\/a><span class="lineno">   51<\/span>&#160;<\/div>$/;"	a
 l00051	doc/html/test_8h_source.html	/^<div class="line"><a name="l00051"><\/a><span class="lineno">   51<\/span>&#160;<\/div>$/;"	a
 l00052	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00052"><\/a><span class="lineno">   52<\/span>&#160; <span class="keywordtype">void<\/span> gaussSeidel(<span class="keywordtype">void<\/span>);<\/div>$/;"	a
-l00052	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00052"><\/a><span class="lineno"><a class="line" href="structPopulation.html">   52<\/a><\/span>&#160; <span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
 l00053	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00053"><\/a><span class="lineno">   53<\/span>&#160; <span class="keywordtype">void<\/span> jacobian(<span class="keywordtype">void<\/span>);<\/div>$/;"	a
-l00053	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00053"><\/a><span class="lineno"><a class="line" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">   53<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">pos<\/a>;        <\/div>$/;"	a
 l00054	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<\/div>$/;"	a
-l00054	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno"><a class="line" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">   54<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">vel<\/a>;        <\/div>$/;"	a
 l00055	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
-l00055	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">   55<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">energy<\/a>;     <\/div>$/;"	a
 l00055	doc/html/test_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#ab1bbc1f8111182c3bd03d6e9107b06dc">testGaussSeidel<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity,<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00056	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">   56<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">iStart<\/a>;   <\/div>$/;"	a
 l00056	doc/html/test_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<\/div>$/;"	a
-l00057	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">   57<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">iStop<\/a>;    <\/div>$/;"	a
 l00057	doc/html/test_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<\/div>$/;"	a
-l00058	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno"><a class="line" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">   58<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">q<\/a>;          <\/div>$/;"	a
-l00059	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">   59<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">m<\/a>;          <\/div>$/;"	a
-l00060	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a9051c27415dc8b3dfe991970dbadd37f">   60<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a9051c27415dc8b3dfe991970dbadd37f">nSpecies<\/a>;       <\/div>$/;"	a
-l00061	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">   61<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">nDims<\/a>;          <\/div>$/;"	a
-l00062	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a793a2a5755007125bcef12414f2f6c73">   62<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a793a2a5755007125bcef12414f2f6c73">mpiRank<\/a>;        <\/div>$/;"	a
-l00063	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a65af23e6d95777c49833bef2162ac5b8">   63<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a65af23e6d95777c49833bef2162ac5b8">mpiSize<\/a>;        <\/div>$/;"	a
-l00064	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">   64<\/a><\/span>&#160;    hid_t <a class="code" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">h5<\/a>;           <\/div>$/;"	a
-l00065	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno">   65<\/span>&#160; } <a class="code" href="structPopulation.html">Population<\/a>;<\/div>$/;"	a
-l00066	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00066"><\/a><span class="lineno">   66<\/span>&#160;<\/div>$/;"	a
+l00061	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno"><a class="line" href="structPopulation.html">   61<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00062	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno"><a class="line" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">   62<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">pos<\/a>;        <\/div>$/;"	a
+l00063	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno"><a class="line" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">   63<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">vel<\/a>;        <\/div>$/;"	a
+l00064	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">   64<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">energy<\/a>;     <\/div>$/;"	a
+l00065	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">   65<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">iStart<\/a>;   <\/div>$/;"	a
+l00066	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00066"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">   66<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">iStop<\/a>;    <\/div>$/;"	a
+l00067	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00067"><\/a><span class="lineno"><a class="line" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">   67<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">q<\/a>;          <\/div>$/;"	a
+l00068	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00068"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">   68<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">m<\/a>;          <\/div>$/;"	a
+l00069	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00069"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a9051c27415dc8b3dfe991970dbadd37f">   69<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a9051c27415dc8b3dfe991970dbadd37f">nSpecies<\/a>;       <\/div>$/;"	a
+l00070	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00070"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">   70<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structPopulation.html#a0a5a82937fa0a2a9b99dc9c4bc2cd2be">nDims<\/a>;          <\/div>$/;"	a
+l00071	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00071"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">   71<\/a><\/span>&#160;    hid_t <a class="code" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">h5<\/a>;           <\/div>$/;"	a
+l00072	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00072"><\/a><span class="lineno">   72<\/span>&#160;} <a class="code" href="structPopulation.html">Population<\/a>;<\/div>$/;"	a
+l00073	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00073"><\/a><span class="lineno">   73<\/span>&#160;<\/div>$/;"	a
 l00074	doc/html/test_8h_source.html	/^<div class="line"><a name="l00074"><\/a><span class="lineno">   74<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a92b8d534f9a206863e8b406694e7c716">dumpGrid<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
-l00115	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00115"><\/a><span class="lineno"><a class="line" href="structGrid.html">  115<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
-l00116	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00116"><\/a><span class="lineno"><a class="line" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">  116<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">nDims<\/a>;                  <\/div>$/;"	a
-l00117	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00117"><\/a><span class="lineno"><a class="line" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">  117<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">nGPoints<\/a>;              <\/div>$/;"	a
-l00118	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00118"><\/a><span class="lineno"><a class="line" href="structGrid.html#a08c1481d294cdbbbbb0a49e2f5993c82">  118<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#a08c1481d294cdbbbbb0a49e2f5993c82">nGPointsProd<\/a>;     <\/div>$/;"	a
-l00119	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00119"><\/a><span class="lineno"><a class="line" href="structGrid.html#a28a6b702153eec2ba5d1cea647d574fc">  119<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#a28a6b702153eec2ba5d1cea647d574fc">nGhosts<\/a>;               <\/div>$/;"	a
-l00120	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00120"><\/a><span class="lineno"><a class="line" href="structGrid.html#a4756f8528b20ff7b984d43a739381120">  120<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGrid.html#a4756f8528b20ff7b984d43a739381120">dr<\/a>;                 <\/div>$/;"	a
-l00121	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00121"><\/a><span class="lineno">  121<\/span>&#160;} <a class="code" href="structGrid.html">Grid<\/a>;<\/div>$/;"	a
-l00122	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00122"><\/a><span class="lineno">  122<\/span>&#160;<\/div>$/;"	a
-l00123	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00123"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html">  123<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
-l00124	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00124"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">  124<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">mpiRank<\/a>;                <\/div>$/;"	a
-l00125	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00125"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">  125<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">mpiSize<\/a>;                <\/div>$/;"	a
-l00126	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00126"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">  126<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">subdomain<\/a>;             <\/div>$/;"	a
-l00127	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00127"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">  127<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">nSubdomains<\/a>;           <\/div>$/;"	a
-l00128	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00128"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">  128<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">nSubdomainsProd<\/a>;       <\/div>$/;"	a
-l00129	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00129"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ac641c6b285e155c1a9beee18ec2be6ef">  129<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#ac641c6b285e155c1a9beee18ec2be6ef">offset<\/a>;                <\/div>$/;"	a
-l00130	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00130"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a884fa4342db637275dcf043b8c44ca0c">  130<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structMpiInfo.html#a884fa4342db637275dcf043b8c44ca0c">posToSubdomain<\/a>;     <\/div>$/;"	a
-l00131	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00131"><\/a><span class="lineno">  131<\/span>&#160;} <a class="code" href="structMpiInfo.html">MpiInfo<\/a>;<\/div>$/;"	a
-l00132	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00132"><\/a><span class="lineno">  132<\/span>&#160;<\/div>$/;"	a
-l00164	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00164"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html">  164<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
-l00165	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00165"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a630733c36155ba6fb75c4393668cf93b">  165<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGridQuantity.html#a630733c36155ba6fb75c4393668cf93b">val<\/a>;                <\/div>$/;"	a
-l00166	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00166"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a5bee19065e12c4fe7c2cef2cd7084295">  166<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGridQuantity.html#a5bee19065e12c4fe7c2cef2cd7084295">slice<\/a>;          <\/div>$/;"	a
-l00167	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00167"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#ac5927d4cbb520fda81aef60c11cc4117">  167<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGridQuantity.html#ac5927d4cbb520fda81aef60c11cc4117">nValues<\/a>;                <\/div>$/;"	a
-l00168	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00168"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a7b3c5309dc53594e1150d9feb21b124b">  168<\/a><\/span>&#160;    <a class="code" href="structGrid.html">Grid<\/a> *<a class="code" href="structGridQuantity.html#a7b3c5309dc53594e1150d9feb21b124b">grid<\/a>;                 <\/div>$/;"	a
-l00169	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00169"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#af0885446abc2e6591df08fe575b5f789">  169<\/a><\/span>&#160;    hid_t <a class="code" href="structGridQuantity.html#af0885446abc2e6591df08fe575b5f789">h5<\/a>;                   <\/div>$/;"	a
-l00170	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00170"><\/a><span class="lineno">  170<\/span>&#160;} <a class="code" href="structGridQuantity.html">GridQuantity<\/a>;<\/div>$/;"	a
-l00171	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00171"><\/a><span class="lineno">  171<\/span>&#160;<\/div>$/;"	a
-l00172	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00172"><\/a><span class="lineno">  172<\/span>&#160; <span class="keyword">typedef<\/span> <span class="keyword">struct <\/span>timespec TimeSpec;<\/div>$/;"	a
-l00173	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00173"><\/a><span class="lineno">  173<\/span>&#160;<\/div>$/;"	a
-l00178	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00178"><\/a><span class="lineno"><a class="line" href="structTimer.html">  178<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
-l00179	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00179"><\/a><span class="lineno"><a class="line" href="structTimer.html#abb2755a61db9b730060c35802a9e0ac1">  179<\/a><\/span>&#160;    TimeSpec <a class="code" href="structTimer.html#abb2755a61db9b730060c35802a9e0ac1">previous<\/a>;          <\/div>$/;"	a
-l00180	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00180"><\/a><span class="lineno"><a class="line" href="structTimer.html#a2ea0a231e254c28d708e7e4ce5dae328">  180<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structTimer.html#a2ea0a231e254c28d708e7e4ce5dae328">rank<\/a>;                   <\/div>$/;"	a
-l00181	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00181"><\/a><span class="lineno">  181<\/span>&#160;} <a class="code" href="structTimer.html">Timer<\/a>;<\/div>$/;"	a
-l00182	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00182"><\/a><span class="lineno">  182<\/span>&#160;<\/div>$/;"	a
-l00183	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00183"><\/a><span class="lineno">  183<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
-l00184	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00184"><\/a><span class="lineno">  184<\/span>&#160;<span class="comment"> * DEFINED IN POPULATION.C<\/span><\/div>$/;"	a
-l00185	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00185"><\/a><span class="lineno">  185<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
-l00186	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00186"><\/a><span class="lineno">  186<\/span>&#160;<\/div>$/;"	a
-l00198	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00198"><\/a><span class="lineno">  198<\/span>&#160;<a class="code" href="structPopulation.html">Population<\/a> *<a class="code" href="pinc_8h.html#a636bc78741cb93f83ab7fa188b1a44aa">allocPopulation<\/a>(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
-l00199	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00199"><\/a><span class="lineno">  199<\/span>&#160;<\/div>$/;"	a
-l00205	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00205"><\/a><span class="lineno">  205<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a3a1d94509b77ae01ec8b171ec6f1b06e">freePopulation<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
-l00206	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00206"><\/a><span class="lineno">  206<\/span>&#160;<\/div>$/;"	a
-l00207	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00207"><\/a><span class="lineno">  207<\/span>&#160;<\/div>$/;"	a
-l00229	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00229"><\/a><span class="lineno">  229<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a0b0ae445dfebc924e3c50784921a9897">posUniform<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keyword">const<\/span> gsl_rng *rng);<\/div>$/;"	a
-l00230	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00230"><\/a><span class="lineno">  230<\/span>&#160;<\/div>$/;"	a
-l00243	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00243"><\/a><span class="lineno">  243<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9cfc4f6a8b0cac56395fdbe3bc2a3cfd">posDebug<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
-l00244	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00244"><\/a><span class="lineno">  244<\/span>&#160;<\/div>$/;"	a
-l00259	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00259"><\/a><span class="lineno">  259<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a06fe6c0750506c56bfccff858888e16c">velMaxwell<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> gsl_rng *rng);<\/div>$/;"	a
-l00260	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00260"><\/a><span class="lineno">  260<\/span>&#160;<\/div>$/;"	a
-l00267	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00267"><\/a><span class="lineno">  267<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a83661f0ad273e217965dd823264c8f8c">createPopulationH5<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
-l00268	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00268"><\/a><span class="lineno">  268<\/span>&#160;<\/div>$/;"	a
-l00277	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00277"><\/a><span class="lineno">  277<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a0f7b789911e7231a2c26b9cc75e99877">writePopulationH5<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keywordtype">double<\/span> posN, <span class="keywordtype">double<\/span> velN);<\/div>$/;"	a
-l00278	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00278"><\/a><span class="lineno">  278<\/span>&#160;<\/div>$/;"	a
-l00279	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00279"><\/a><span class="lineno">  279<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
-l00280	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00280"><\/a><span class="lineno">  280<\/span>&#160;<span class="comment"> * DEFINED IN GRID.C<\/span><\/div>$/;"	a
-l00281	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00281"><\/a><span class="lineno">  281<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
-l00282	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00282"><\/a><span class="lineno">  282<\/span>&#160;<\/div>$/;"	a
-l00293	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00293"><\/a><span class="lineno">  293<\/span>&#160;<a class="code" href="structGrid.html">Grid<\/a> *<a class="code" href="pinc_8h.html#aea771dead7058186ec88e968d0330245">allocGrid<\/a>(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
-l00294	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00294"><\/a><span class="lineno">  294<\/span>&#160;<\/div>$/;"	a
-l00299	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00299"><\/a><span class="lineno">  299<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ad62350e857290bf3ce65221bd056c433">freeGrid<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid);<\/div>$/;"	a
-l00300	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00300"><\/a><span class="lineno">  300<\/span>&#160;<\/div>$/;"	a
-l00318	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00318"><\/a><span class="lineno">  318<\/span>&#160;<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *<a class="code" href="pinc_8h.html#a6913190b7ceb029eb3d59b7bfd7fe305">allocGridQuantity<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keywordtype">int<\/span> nValues);<\/div>$/;"	a
-l00319	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00319"><\/a><span class="lineno">  319<\/span>&#160;<\/div>$/;"	a
-l00337	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00337"><\/a><span class="lineno">  337<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#afdaa75a2a76333958f4677c97fa62f27">swapHalo<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity, <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">int<\/span> d);<\/div>$/;"	a
-l00338	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00338"><\/a><span class="lineno">  338<\/span>&#160;<\/div>$/;"	a
-l00349	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00349"><\/a><span class="lineno">  349<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a78991e825eb75fa0f320dfe67ab00c25">freeGridQuantity<\/a>(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
-l00350	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00350"><\/a><span class="lineno">  350<\/span>&#160;<\/div>$/;"	a
-l00351	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00351"><\/a><span class="lineno">  351<\/span>&#160;<span class="keywordtype">void<\/span> freeMpiInfo(<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00352	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00352"><\/a><span class="lineno">  352<\/span>&#160;<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *allocMpiInfo(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
-l00353	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00353"><\/a><span class="lineno">  353<\/span>&#160;<\/div>$/;"	a
-l00354	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00354"><\/a><span class="lineno">  354<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
-l00355	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00355"><\/a><span class="lineno">  355<\/span>&#160;<span class="comment"> *      DEFINED IN MULTIGRID.C<\/span><\/div>$/;"	a
-l00356	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00356"><\/a><span class="lineno">  356<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
-l00357	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00357"><\/a><span class="lineno">  357<\/span>&#160;<\/div>$/;"	a
-l00358	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00358"><\/a><span class="lineno">  358<\/span>&#160;<\/div>$/;"	a
-l00359	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00359"><\/a><span class="lineno">  359<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
-l00360	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00360"><\/a><span class="lineno">  360<\/span>&#160;<span class="comment"> * DEFINED IN IO.C<\/span><\/div>$/;"	a
-l00361	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00361"><\/a><span class="lineno">  361<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
-l00362	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00362"><\/a><span class="lineno">  362<\/span>&#160;<\/div>$/;"	a
-l00367	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00367"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">  367<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">enum<\/span>{<\/div>$/;"	a
-l00368	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00368"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7ab15379688176677d49474245a6178d97">  368<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7ab15379688176677d49474245a6178d97">STATUS<\/a> = 0x00,      <\/div>$/;"	a
-l00369	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00369"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a984de77c680eaff141ec910e25568a81">  369<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a984de77c680eaff141ec910e25568a81">WARNING<\/a> = 0x01,     <\/div>$/;"	a
-l00370	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00370"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a2fd6f336d08340583bd620a7f5694c90">  370<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a2fd6f336d08340583bd620a7f5694c90">ERROR<\/a> = 0x02,       <\/div>$/;"	a
-l00371	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00371"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7af1110c378b0b40a4b5bd04fdd92220c4">  371<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7af1110c378b0b40a4b5bd04fdd92220c4">ONCE<\/a> = 0x10         <\/div>$/;"	a
-l00372	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00372"><\/a><span class="lineno">  372<\/span>&#160;} <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">msgKind<\/a>;<\/div>$/;"	a
-l00373	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00373"><\/a><span class="lineno">  373<\/span>&#160;<\/div>$/;"	a
-l00386	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00386"><\/a><span class="lineno">  386<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a6655209d3b055ac0891fac473433c8f6">msg<\/a>(<a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">msgKind<\/a> kind, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict format,...);<\/div>$/;"	a
-l00387	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00387"><\/a><span class="lineno">  387<\/span>&#160;<\/div>$/;"	a
-l00404	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00404"><\/a><span class="lineno">  404<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a57d7735f0e037f6ef61f4297db659383">fMsg<\/a>(dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict fNameKey, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict format, ...);<\/div>$/;"	a
-l00405	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00405"><\/a><span class="lineno">  405<\/span>&#160;<\/div>$/;"	a
-l00415	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00415"><\/a><span class="lineno">  415<\/span>&#160;dictionary* <a class="code" href="pinc_8h.html#ab14c24eb3c043c4feb28bf4f58eddf7b">iniOpen<\/a>(<span class="keywordtype">int<\/span> argc, <span class="keywordtype">char<\/span> *argv[]);<\/div>$/;"	a
-l00416	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00416"><\/a><span class="lineno">  416<\/span>&#160;<\/div>$/;"	a
-l00426	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00426"><\/a><span class="lineno">  426<\/span>&#160;<span class="comment">\/\/void ini_complete_time(dictionary *ini);<\/span><\/div>$/;"	a
-l00427	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00427"><\/a><span class="lineno">  427<\/span>&#160;<\/div>$/;"	a
-l00437	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00437"><\/a><span class="lineno">  437<\/span>&#160;<span class="comment">\/\/void ini_complete_grid(dictionary *ini);<\/span><\/div>$/;"	a
-l00438	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00438"><\/a><span class="lineno">  438<\/span>&#160;<\/div>$/;"	a
-l00448	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00448"><\/a><span class="lineno">  448<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#a491502c5ecc687890215d11e1c74b877">iniGetNElements<\/a>(<span class="keyword">const<\/span> dictionary* ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* key);<\/div>$/;"	a
-l00449	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00449"><\/a><span class="lineno">  449<\/span>&#160;<\/div>$/;"	a
-l00465	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00465"><\/a><span class="lineno">  465<\/span>&#160;<span class="keywordtype">char<\/span>** <a class="code" href="pinc_8h.html#af55b21762f3f922cff4c2766f2a43a80">iniGetStrArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
-l00466	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00466"><\/a><span class="lineno">  466<\/span>&#160;<\/div>$/;"	a
-l00480	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00480"><\/a><span class="lineno">  480<\/span>&#160;<span class="keywordtype">int<\/span>* <a class="code" href="pinc_8h.html#aa8e98a4de8328e9cf05ea0d658d2f8e3">iniGetIntArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
-l00481	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00481"><\/a><span class="lineno">  481<\/span>&#160;<\/div>$/;"	a
-l00495	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00495"><\/a><span class="lineno">  495<\/span>&#160;<span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span>* <a class="code" href="pinc_8h.html#a515e71a9a7d396ba5572cf11e3dad6f6">iniGetLongIntArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
-l00496	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00496"><\/a><span class="lineno">  496<\/span>&#160;<\/div>$/;"	a
-l00510	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00510"><\/a><span class="lineno">  510<\/span>&#160;<span class="keywordtype">double<\/span>* <a class="code" href="pinc_8h.html#abfe89a386577b47b6510cf849a28dd7c">iniGetDoubleArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
-l00511	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00511"><\/a><span class="lineno">  511<\/span>&#160;<\/div>$/;"	a
-l00531	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00531"><\/a><span class="lineno">  531<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#a53c820a54e1775b9c4b7664a81b779ab">iniAssertEqualNElements<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keywordtype">int<\/span> nKeys, ...);<\/div>$/;"	a
-l00532	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00532"><\/a><span class="lineno">  532<\/span>&#160;<\/div>$/;"	a
-l00539	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00539"><\/a><span class="lineno">  539<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ae5268e43472918537ec2f718c7907e64">freeStrArr<\/a>(<span class="keywordtype">char<\/span>** strArr);<\/div>$/;"	a
-l00540	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00540"><\/a><span class="lineno">  540<\/span>&#160;<\/div>$/;"	a
-l00555	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00555"><\/a><span class="lineno">  555<\/span>&#160;hid_t <a class="code" href="pinc_8h.html#a3a6ca7cf9e8273cea10c65d57733c5bc">createH5File<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *fName, hid_t fcpList, hid_t fapList);<\/div>$/;"	a
-l00556	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00556"><\/a><span class="lineno">  556<\/span>&#160;<\/div>$/;"	a
-l00557	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00557"><\/a><span class="lineno">  557<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
-l00558	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00558"><\/a><span class="lineno">  558<\/span>&#160;<span class="comment"> * DEFINED IN AUX.C<\/span><\/div>$/;"	a
-l00559	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00559"><\/a><span class="lineno">  559<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
-l00560	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00560"><\/a><span class="lineno">  560<\/span>&#160;<\/div>$/;"	a
-l00569	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00569"><\/a><span class="lineno">  569<\/span>&#160;<a class="code" href="structTimer.html">Timer<\/a> *<a class="code" href="pinc_8h.html#ac88ca04fc41365decd989c75901be38d">allocTimer<\/a>(<span class="keywordtype">int<\/span> rank);<\/div>$/;"	a
-l00570	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00570"><\/a><span class="lineno">  570<\/span>&#160;<\/div>$/;"	a
-l00576	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00576"><\/a><span class="lineno">  576<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a1ff6df071ef9acc4ea57bfa27c086e34">freeTimer<\/a>(<a class="code" href="structTimer.html">Timer<\/a> *timer);<\/div>$/;"	a
-l00577	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00577"><\/a><span class="lineno">  577<\/span>&#160;<\/div>$/;"	a
-l00595	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00595"><\/a><span class="lineno">  595<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#af7c83aa1d87d4ad074d32a26d7734322">tMsg<\/a>(<a class="code" href="structTimer.html">Timer<\/a> *timer, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *restrict format, ...);<\/div>$/;"	a
-l00596	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00596"><\/a><span class="lineno">  596<\/span>&#160;<\/div>$/;"	a
-l00603	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00603"><\/a><span class="lineno">  603<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#aa720e9b4a23df6191e4c251684e0a4c0">intArrProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
-l00604	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00604"><\/a><span class="lineno">  604<\/span>&#160;<\/div>$/;"	a
-l00619	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00619"><\/a><span class="lineno">  619<\/span>&#160;<span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#aeccb00fea5c0d158b952e71a767d7eea">intArrCumProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
-l00620	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00620"><\/a><span class="lineno">  620<\/span>&#160;<\/div>$/;"	a
-l00635	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00635"><\/a><span class="lineno">  635<\/span>&#160;<span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#a52c26a9ff4e20b632f2d6ae7bb698d47">longIntArrCumProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
-l00636	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00636"><\/a><span class="lineno">  636<\/span>&#160;<\/div>$/;"	a
-l00644	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00644"><\/a><span class="lineno">  644<\/span>&#160;<span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#a24f69d67a7baf29a4ce05d348fe9c29d">intArrMul<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *b, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
-l00645	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00645"><\/a><span class="lineno">  645<\/span>&#160;<\/div>$/;"	a
-l00660	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00660"><\/a><span class="lineno">  660<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#a86054514bb08cbd662044562fe637e15">makeParentPath<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *path);<\/div>$/;"	a
-l00661	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00661"><\/a><span class="lineno">  661<\/span>&#160;<\/div>$/;"	a
-l00672	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00672"><\/a><span class="lineno">  672<\/span>&#160;<span class="keywordtype">char<\/span> *<a class="code" href="pinc_8h.html#a80a0f0a626a0c9a6c2bdcaf89b8e65d5">strAllocCat<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *a, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *b);<\/div>$/;"	a
-l00673	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00673"><\/a><span class="lineno">  673<\/span>&#160;<\/div>$/;"	a
-l00674	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00674"><\/a><span class="lineno">  674<\/span>&#160;<\/div>$/;"	a
-l00675	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00675"><\/a><span class="lineno">  675<\/span>&#160;<span class="preprocessor">#endif \/\/ PINC_H<\/span><\/div>$/;"	a
+l00102	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00102"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html">  102<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00103	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00103"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">  103<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">mpiRank<\/a>;                <\/div>$/;"	a
+l00104	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00104"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">  104<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">mpiSize<\/a>;                <\/div>$/;"	a
+l00105	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00105"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a1240db78bb0d89fb81e071eeeebbf9d6">  105<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a1240db78bb0d89fb81e071eeeebbf9d6">nDims<\/a>;                  <\/div>$/;"	a
+l00106	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00106"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">  106<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">subdomain<\/a>;             <\/div>$/;"	a
+l00107	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00107"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">  107<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">nSubdomains<\/a>;           <\/div>$/;"	a
+l00108	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00108"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">  108<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">nSubdomainsProd<\/a>;       <\/div>$/;"	a
+l00109	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00109"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ac641c6b285e155c1a9beee18ec2be6ef">  109<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#ac641c6b285e155c1a9beee18ec2be6ef">offset<\/a>;                <\/div>$/;"	a
+l00110	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00110"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a884fa4342db637275dcf043b8c44ca0c">  110<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structMpiInfo.html#a884fa4342db637275dcf043b8c44ca0c">posToSubdomain<\/a>;     <\/div>$/;"	a
+l00111	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00111"><\/a><span class="lineno">  111<\/span>&#160;} <a class="code" href="structMpiInfo.html">MpiInfo<\/a>;<\/div>$/;"	a
+l00112	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00112"><\/a><span class="lineno">  112<\/span>&#160;<\/div>$/;"	a
+l00144	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00144"><\/a><span class="lineno"><a class="line" href="structGrid.html">  144<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00145	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00145"><\/a><span class="lineno"><a class="line" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">  145<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGrid.html#a0f113554dd50ecac1b8feb47ef8766b3">nDims<\/a>;                  <\/div>$/;"	a
+l00146	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00146"><\/a><span class="lineno"><a class="line" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">  146<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#ada20a030dfcfbbfb89a9bf9d55f0cee8">nGPoints<\/a>;              <\/div>$/;"	a
+l00147	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00147"><\/a><span class="lineno"><a class="line" href="structGrid.html#a0243a847b7feb198b5393215f3ad5817">  147<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#a0243a847b7feb198b5393215f3ad5817">nTGPoints<\/a>;             <\/div>$/;"	a
+l00148	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00148"><\/a><span class="lineno"><a class="line" href="structGrid.html#a08c1481d294cdbbbbb0a49e2f5993c82">  148<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#a08c1481d294cdbbbbb0a49e2f5993c82">nGPointsProd<\/a>;     <\/div>$/;"	a
+l00149	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00149"><\/a><span class="lineno"><a class="line" href="structGrid.html#a28a6b702153eec2ba5d1cea647d574fc">  149<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structGrid.html#a28a6b702153eec2ba5d1cea647d574fc">nGhosts<\/a>;               <\/div>$/;"	a
+l00150	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00150"><\/a><span class="lineno"><a class="line" href="structGrid.html#a4756f8528b20ff7b984d43a739381120">  150<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGrid.html#a4756f8528b20ff7b984d43a739381120">dr<\/a>;                 <\/div>$/;"	a
+l00151	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00151"><\/a><span class="lineno">  151<\/span>&#160;} <a class="code" href="structGrid.html">Grid<\/a>;<\/div>$/;"	a
+l00152	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00152"><\/a><span class="lineno">  152<\/span>&#160;<\/div>$/;"	a
+l00191	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00191"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html">  191<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00192	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00192"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a630733c36155ba6fb75c4393668cf93b">  192<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGridQuantity.html#a630733c36155ba6fb75c4393668cf93b">val<\/a>;        <\/div>$/;"	a
+l00193	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00193"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a5bee19065e12c4fe7c2cef2cd7084295">  193<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGridQuantity.html#a5bee19065e12c4fe7c2cef2cd7084295">slice<\/a>;      <\/div>$/;"	a
+l00194	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00194"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#ac5927d4cbb520fda81aef60c11cc4117">  194<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGridQuantity.html#ac5927d4cbb520fda81aef60c11cc4117">nValues<\/a>;        <\/div>$/;"	a
+l00195	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00195"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a7b3c5309dc53594e1150d9feb21b124b">  195<\/a><\/span>&#160;    <a class="code" href="structGrid.html">Grid<\/a> *<a class="code" href="structGridQuantity.html#a7b3c5309dc53594e1150d9feb21b124b">grid<\/a>;         <\/div>$/;"	a
+l00196	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00196"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#af0885446abc2e6591df08fe575b5f789">  196<\/a><\/span>&#160;    hid_t <a class="code" href="structGridQuantity.html#af0885446abc2e6591df08fe575b5f789">h5<\/a>;           <\/div>$/;"	a
+l00197	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00197"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a573c606f884fee4912a401d0ae3b38a3">  197<\/a><\/span>&#160;    hid_t <a class="code" href="structGridQuantity.html#a573c606f884fee4912a401d0ae3b38a3">h5MemSpace<\/a>;   <\/div>$/;"	a
+l00198	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00198"><\/a><span class="lineno"><a class="line" href="structGridQuantity.html#a4b4abf8eda0762244eed333a65259b68">  198<\/a><\/span>&#160;    hid_t <a class="code" href="structGridQuantity.html#a4b4abf8eda0762244eed333a65259b68">h5FileSpace<\/a>;  <\/div>$/;"	a
+l00199	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00199"><\/a><span class="lineno">  199<\/span>&#160;} <a class="code" href="structGridQuantity.html">GridQuantity<\/a>;<\/div>$/;"	a
+l00200	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00200"><\/a><span class="lineno">  200<\/span>&#160;<\/div>$/;"	a
+l00201	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00201"><\/a><span class="lineno">  201<\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct <\/span>timespec TimeSpec;<\/div>$/;"	a
+l00202	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00202"><\/a><span class="lineno">  202<\/span>&#160;<\/div>$/;"	a
+l00207	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00207"><\/a><span class="lineno"><a class="line" href="structTimer.html">  207<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00208	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00208"><\/a><span class="lineno"><a class="line" href="structTimer.html#abb2755a61db9b730060c35802a9e0ac1">  208<\/a><\/span>&#160;    TimeSpec <a class="code" href="structTimer.html#abb2755a61db9b730060c35802a9e0ac1">previous<\/a>;          <\/div>$/;"	a
+l00209	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00209"><\/a><span class="lineno"><a class="line" href="structTimer.html#a2ea0a231e254c28d708e7e4ce5dae328">  209<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structTimer.html#a2ea0a231e254c28d708e7e4ce5dae328">rank<\/a>;                   <\/div>$/;"	a
+l00210	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00210"><\/a><span class="lineno">  210<\/span>&#160;} <a class="code" href="structTimer.html">Timer<\/a>;<\/div>$/;"	a
+l00211	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00211"><\/a><span class="lineno">  211<\/span>&#160;<\/div>$/;"	a
+l00212	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00212"><\/a><span class="lineno">  212<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
+l00213	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00213"><\/a><span class="lineno">  213<\/span>&#160;<span class="comment"> * DEFINED IN POPULATION.C<\/span><\/div>$/;"	a
+l00214	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00214"><\/a><span class="lineno">  214<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
+l00215	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00215"><\/a><span class="lineno">  215<\/span>&#160;<\/div>$/;"	a
+l00227	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00227"><\/a><span class="lineno">  227<\/span>&#160;<a class="code" href="structPopulation.html">Population<\/a> *<a class="code" href="pinc_8h.html#a636bc78741cb93f83ab7fa188b1a44aa">allocPopulation<\/a>(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
+l00228	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00228"><\/a><span class="lineno">  228<\/span>&#160;<\/div>$/;"	a
+l00234	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00234"><\/a><span class="lineno">  234<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a3a1d94509b77ae01ec8b171ec6f1b06e">freePopulation<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
+l00235	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00235"><\/a><span class="lineno">  235<\/span>&#160;<\/div>$/;"	a
+l00257	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00257"><\/a><span class="lineno">  257<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a0b0ae445dfebc924e3c50784921a9897">posUniform<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keyword">const<\/span> gsl_rng *rng);<\/div>$/;"	a
+l00258	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00258"><\/a><span class="lineno">  258<\/span>&#160;<\/div>$/;"	a
+l00271	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00271"><\/a><span class="lineno">  271<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9cfc4f6a8b0cac56395fdbe3bc2a3cfd">posDebug<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
+l00272	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00272"><\/a><span class="lineno">  272<\/span>&#160;<\/div>$/;"	a
+l00286	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00286"><\/a><span class="lineno">  286<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a06fe6c0750506c56bfccff858888e16c">velMaxwell<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> gsl_rng *rng);<\/div>$/;"	a
+l00287	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00287"><\/a><span class="lineno">  287<\/span>&#160;<\/div>$/;"	a
+l00327	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00327"><\/a><span class="lineno">  327<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ab66746ac16652d58c9f8ffe7568e1767">createPopulationH5<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *fName);<\/div>$/;"	a
+l00328	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00328"><\/a><span class="lineno">  328<\/span>&#160;<\/div>$/;"	a
+l00347	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00347"><\/a><span class="lineno">  347<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a7622f5af0ceb58b9f7610f00914fc368">writePopulationH5<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">double<\/span> posN, <span class="keywordtype">double<\/span> velN);<\/div>$/;"	a
+l00348	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00348"><\/a><span class="lineno">  348<\/span>&#160;<\/div>$/;"	a
+l00354	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00354"><\/a><span class="lineno">  354<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#aaaef7159498f2849f9681ce935086c4c">closePopulationH5<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop);<\/div>$/;"	a
+l00355	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00355"><\/a><span class="lineno">  355<\/span>&#160;<\/div>$/;"	a
+l00356	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00356"><\/a><span class="lineno">  356<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
+l00357	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00357"><\/a><span class="lineno">  357<\/span>&#160;<span class="comment"> * DEFINED IN GRID.C<\/span><\/div>$/;"	a
+l00358	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00358"><\/a><span class="lineno">  358<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
+l00359	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00359"><\/a><span class="lineno">  359<\/span>&#160;<\/div>$/;"	a
+l00370	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00370"><\/a><span class="lineno">  370<\/span>&#160;<a class="code" href="structGrid.html">Grid<\/a> *<a class="code" href="pinc_8h.html#aea771dead7058186ec88e968d0330245">allocGrid<\/a>(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
+l00371	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00371"><\/a><span class="lineno">  371<\/span>&#160;<\/div>$/;"	a
+l00377	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00377"><\/a><span class="lineno">  377<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ad62350e857290bf3ce65221bd056c433">freeGrid<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid);<\/div>$/;"	a
+l00378	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00378"><\/a><span class="lineno">  378<\/span>&#160;<\/div>$/;"	a
+l00393	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00393"><\/a><span class="lineno">  393<\/span>&#160;<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *<a class="code" href="pinc_8h.html#a6913190b7ceb029eb3d59b7bfd7fe305">allocGridQuantity<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keywordtype">int<\/span> nValues);<\/div>$/;"	a
+l00394	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00394"><\/a><span class="lineno">  394<\/span>&#160;<\/div>$/;"	a
+l00400	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00400"><\/a><span class="lineno">  400<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a78991e825eb75fa0f320dfe67ab00c25">freeGridQuantity<\/a>(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
+l00401	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00401"><\/a><span class="lineno">  401<\/span>&#160;<\/div>$/;"	a
+l00407	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00407"><\/a><span class="lineno">  407<\/span>&#160;<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *<a class="code" href="pinc_8h.html#af3600a462c5b6a9916839cd786bd696f">allocMpiInfo<\/a>(<span class="keyword">const<\/span> dictionary *ini);<\/div>$/;"	a
+l00408	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00408"><\/a><span class="lineno">  408<\/span>&#160;<\/div>$/;"	a
+l00414	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00414"><\/a><span class="lineno">  414<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a52e9ca64cb686e63dfe869659375848a">freeMpiInfo<\/a>(<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00415	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00415"><\/a><span class="lineno">  415<\/span>&#160;<\/div>$/;"	a
+l00432	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00432"><\/a><span class="lineno">  432<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#afdaa75a2a76333958f4677c97fa62f27">swapHalo<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity, <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">int<\/span> d);<\/div>$/;"	a
+l00433	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00433"><\/a><span class="lineno">  433<\/span>&#160;<\/div>$/;"	a
+l00434	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00434"><\/a><span class="lineno">  434<\/span>&#160;<\/div>$/;"	a
+l00435	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00435"><\/a><span class="lineno">  435<\/span>&#160;<\/div>$/;"	a
+l00436	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00436"><\/a><span class="lineno">  436<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
+l00437	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00437"><\/a><span class="lineno">  437<\/span>&#160;<span class="comment"> * DEFINED IN IO.C<\/span><\/div>$/;"	a
+l00438	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00438"><\/a><span class="lineno">  438<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
+l00439	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00439"><\/a><span class="lineno">  439<\/span>&#160;<\/div>$/;"	a
+l00444	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00444"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">  444<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">enum<\/span>{<\/div>$/;"	a
+l00445	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00445"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7ab15379688176677d49474245a6178d97">  445<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7ab15379688176677d49474245a6178d97">STATUS<\/a> = 0x00,      <\/div>$/;"	a
+l00446	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00446"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a984de77c680eaff141ec910e25568a81">  446<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a984de77c680eaff141ec910e25568a81">WARNING<\/a> = 0x01,     <\/div>$/;"	a
+l00447	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00447"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a2fd6f336d08340583bd620a7f5694c90">  447<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7a2fd6f336d08340583bd620a7f5694c90">ERROR<\/a> = 0x02,       <\/div>$/;"	a
+l00448	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00448"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7af1110c378b0b40a4b5bd04fdd92220c4">  448<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7af1110c378b0b40a4b5bd04fdd92220c4">ONCE<\/a> = 0x10         <\/div>$/;"	a
+l00449	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00449"><\/a><span class="lineno">  449<\/span>&#160;} <a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">msgKind<\/a>;<\/div>$/;"	a
+l00450	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00450"><\/a><span class="lineno">  450<\/span>&#160;<\/div>$/;"	a
+l00467	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00467"><\/a><span class="lineno">  467<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a6655209d3b055ac0891fac473433c8f6">msg<\/a>(<a class="code" href="pinc_8h.html#ac962c5ae4b3e0ed4feebde904cc4aad7">msgKind<\/a> kind, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict format,...);<\/div>$/;"	a
+l00468	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00468"><\/a><span class="lineno">  468<\/span>&#160;<\/div>$/;"	a
+l00485	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00485"><\/a><span class="lineno">  485<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a57d7735f0e037f6ef61f4297db659383">fMsg<\/a>(dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict fNameKey, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* restrict format, ...);<\/div>$/;"	a
+l00486	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00486"><\/a><span class="lineno">  486<\/span>&#160;<\/div>$/;"	a
+l00496	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00496"><\/a><span class="lineno">  496<\/span>&#160;dictionary* <a class="code" href="pinc_8h.html#ab14c24eb3c043c4feb28bf4f58eddf7b">iniOpen<\/a>(<span class="keywordtype">int<\/span> argc, <span class="keywordtype">char<\/span> *argv[]);<\/div>$/;"	a
+l00497	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00497"><\/a><span class="lineno">  497<\/span>&#160;<\/div>$/;"	a
+l00507	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00507"><\/a><span class="lineno">  507<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#a491502c5ecc687890215d11e1c74b877">iniGetNElements<\/a>(<span class="keyword">const<\/span> dictionary* ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span>* key);<\/div>$/;"	a
+l00508	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00508"><\/a><span class="lineno">  508<\/span>&#160;<\/div>$/;"	a
+l00523	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00523"><\/a><span class="lineno">  523<\/span>&#160;<span class="keywordtype">char<\/span>** <a class="code" href="pinc_8h.html#af55b21762f3f922cff4c2766f2a43a80">iniGetStrArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
+l00524	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00524"><\/a><span class="lineno">  524<\/span>&#160;<\/div>$/;"	a
+l00538	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00538"><\/a><span class="lineno">  538<\/span>&#160;<span class="keywordtype">int<\/span>* <a class="code" href="pinc_8h.html#aa8e98a4de8328e9cf05ea0d658d2f8e3">iniGetIntArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
+l00539	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00539"><\/a><span class="lineno">  539<\/span>&#160;<\/div>$/;"	a
+l00553	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00553"><\/a><span class="lineno">  553<\/span>&#160;<span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span>* <a class="code" href="pinc_8h.html#a515e71a9a7d396ba5572cf11e3dad6f6">iniGetLongIntArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
+l00554	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00554"><\/a><span class="lineno">  554<\/span>&#160;<\/div>$/;"	a
+l00568	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00568"><\/a><span class="lineno">  568<\/span>&#160;<span class="keywordtype">double<\/span>* <a class="code" href="pinc_8h.html#abfe89a386577b47b6510cf849a28dd7c">iniGetDoubleArr<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *key, <span class="keywordtype">int<\/span> *nElements);<\/div>$/;"	a
+l00569	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00569"><\/a><span class="lineno">  569<\/span>&#160;<\/div>$/;"	a
+l00589	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00589"><\/a><span class="lineno">  589<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#a53c820a54e1775b9c4b7664a81b779ab">iniAssertEqualNElements<\/a>(<span class="keyword">const<\/span> dictionary *ini, <span class="keywordtype">int<\/span> nKeys, ...);<\/div>$/;"	a
+l00590	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00590"><\/a><span class="lineno">  590<\/span>&#160;<\/div>$/;"	a
+l00597	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00597"><\/a><span class="lineno">  597<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ae5268e43472918537ec2f718c7907e64">freeStrArr<\/a>(<span class="keywordtype">char<\/span>** strArr);<\/div>$/;"	a
+l00598	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00598"><\/a><span class="lineno">  598<\/span>&#160;<\/div>$/;"	a
+l00638	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00638"><\/a><span class="lineno">  638<\/span>&#160;hid_t <a class="code" href="pinc_8h.html#a9e6d5d7e4c4e70aeeff5ffb66120a553">createH5File<\/a>(<span class="keyword">const<\/span> dictionary* ini, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *fName, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *fSubExt);<\/div>$/;"	a
+l00639	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00639"><\/a><span class="lineno">  639<\/span>&#160;<\/div>$/;"	a
+l00658	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00658"><\/a><span class="lineno">  658<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a08e85daea1eac51cb617acdbcb258dec">gridValDebug<\/a>(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00659	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00659"><\/a><span class="lineno">  659<\/span>&#160;<\/div>$/;"	a
+l00702	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00702"><\/a><span class="lineno">  702<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a497a8cc141959d5e048ec355e4d3466d">createGridQuantityH5<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keyword">const<\/span> <span class="keywordtype">double<\/span> *denorm, <span class="keyword">const<\/span> <span class="keywordtype">double<\/span> *dimen, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *fName);<\/div>$/;"	a
+l00703	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00703"><\/a><span class="lineno">  703<\/span>&#160;<\/div>$/;"	a
+l00717	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00717"><\/a><span class="lineno">  717<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ab50056db09b7cea51df3df7c365e6564">writeGridQuantityH5<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">double<\/span> n);<\/div>$/;"	a
+l00718	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00718"><\/a><span class="lineno">  718<\/span>&#160;<\/div>$/;"	a
+l00724	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00724"><\/a><span class="lineno">  724<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a2490030a8001cc11422a6075a353f36a">closeGridQuantityH5<\/a>(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
+l00725	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00725"><\/a><span class="lineno">  725<\/span>&#160;<\/div>$/;"	a
+l00726	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00726"><\/a><span class="lineno">  726<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
+l00727	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00727"><\/a><span class="lineno">  727<\/span>&#160;<span class="comment"> * DEFINED IN AUX.C<\/span><\/div>$/;"	a
+l00728	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00728"><\/a><span class="lineno">  728<\/span>&#160;<span class="comment"> *****************************************************************************\/<\/span><\/div>$/;"	a
+l00729	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00729"><\/a><span class="lineno">  729<\/span>&#160;<\/div>$/;"	a
+l00738	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00738"><\/a><span class="lineno">  738<\/span>&#160;<a class="code" href="structTimer.html">Timer<\/a> *<a class="code" href="pinc_8h.html#ac88ca04fc41365decd989c75901be38d">allocTimer<\/a>(<span class="keywordtype">int<\/span> rank);<\/div>$/;"	a
+l00739	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00739"><\/a><span class="lineno">  739<\/span>&#160;<\/div>$/;"	a
+l00745	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00745"><\/a><span class="lineno">  745<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a1ff6df071ef9acc4ea57bfa27c086e34">freeTimer<\/a>(<a class="code" href="structTimer.html">Timer<\/a> *timer);<\/div>$/;"	a
+l00746	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00746"><\/a><span class="lineno">  746<\/span>&#160;<\/div>$/;"	a
+l00764	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00764"><\/a><span class="lineno">  764<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#af7c83aa1d87d4ad074d32a26d7734322">tMsg<\/a>(<a class="code" href="structTimer.html">Timer<\/a> *timer, <span class="keyword">const<\/span> <span class="keywordtype">char<\/span> *restrict format, ...);<\/div>$/;"	a
+l00765	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00765"><\/a><span class="lineno">  765<\/span>&#160;<\/div>$/;"	a
+l00772	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00772"><\/a><span class="lineno">  772<\/span>&#160;<span class="keywordtype">int<\/span> <a class="code" href="pinc_8h.html#aa720e9b4a23df6191e4c251684e0a4c0">intArrProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
+l00773	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00773"><\/a><span class="lineno">  773<\/span>&#160;<\/div>$/;"	a
+l00788	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00788"><\/a><span class="lineno">  788<\/span>&#160;<span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#aeccb00fea5c0d158b952e71a767d7eea">intArrCumProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
+l00789	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00789"><\/a><span class="lineno">  789<\/span>&#160;<\/div>$/;"	a
+l00804	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00804"><\/a><span class="lineno">  804<\/span>&#160;<span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#a52c26a9ff4e20b632f2d6ae7bb698d47">longIntArrCumProd<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
+l00805	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00805"><\/a><span class="lineno">  805<\/span>&#160;<\/div>$/;"	a
+l00813	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00813"><\/a><span class="lineno">  813<\/span>&#160;<span class="keywordtype">int<\/span> *<a class="code" href="pinc_8h.html#a24f69d67a7baf29a4ce05d348fe9c29d">intArrMul<\/a>(<span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *a, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> *b, <span class="keywordtype">int<\/span> nElements);<\/div>$/;"	a
+l00814	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00814"><\/a><span class="lineno">  814<\/span>&#160;<\/div>$/;"	a
+l00825	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00825"><\/a><span class="lineno">  825<\/span>&#160;<span class="keywordtype">char<\/span> *<a class="code" href="pinc_8h.html#a92f2f3198af6d49104d20310686030e1">strAllocCat<\/a>(<span class="keywordtype">int<\/span> n,...);<\/div>$/;"	a
+l00826	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00826"><\/a><span class="lineno">  826<\/span>&#160;<\/div>$/;"	a
+l00827	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00827"><\/a><span class="lineno">  827<\/span>&#160;<\/div>$/;"	a
+l00828	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00828"><\/a><span class="lineno">  828<\/span>&#160;<span class="preprocessor">#endif \/\/ PINC_H<\/span><\/div>$/;"	a
 latex_count	doc/latex/Makefile	/^	latex_count=8 ; \\$/;"	m
 left	src/old/triang/triangulate.h	/^  int left, right;		\/* children *\/$/;"	m	struct:__anon11
 letter_G	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="letter_G"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;G&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
@@ -1664,7 +1693,7 @@ lvector	src/old/fmg/nrutil.c	/^unsigned long *lvector(long nl, long nh)$/;"	f
 lvector	src/old/fmg/nrutil.c	/^unsigned long *lvector(nl,nh)$/;"	f
 lzet	src/old/const.h	/^double llb[S], lzet[S], lv0[S]; \/\/lower bound, partition funct, initial velocity$/;"	v
 lzet	src/old/triang/const.h	/^double llb[S], lzet[S], lv0[S]; \/\/lower bound, partition funct, initial velocity$/;"	v
-m	src/pinc.h	/^ 	double *m;			\/\/\/< Specie mass [electron masses] (nSpecies elements)$/;"	m	struct:__anon1
+m	src/pinc.h	/^	double *m;			\/\/\/< Specie mass [electron masses] (nSpecies elements)$/;"	m	struct:__anon1
 main	lib/iniparser/src/dictionary.c	/^int main(int argc, char *argv[])$/;"	f
 main	lib/iniparser/test/iniexample.c	/^int main(int argc, char * argv[])$/;"	f
 main	lib/iniparser/test/parse.c	/^int main(int argc, char * argv[])$/;"	f
@@ -1697,6 +1726,7 @@ matrix	src/old/fmg/nrutil.c	/^float **matrix(long nrl, long nrh, long ncl, long 
 matrix	src/old/fmg/nrutil.c	/^float **matrix(nrl,nrh,ncl,nch)$/;"	f
 maxarg1	src/old/fmg/nrutil.h	/^static float maxarg1,maxarg2;$/;"	v
 maxarg2	src/old/fmg/nrutil.h	/^static float maxarg1,maxarg2;$/;"	v
+maxwellian	script/distribution.py	/^maxwellian = ((1\/(2*pi*(vth**2)))**(Nd\/2.0))*exp(-0.5*(v \/vth)**2)*dv$/;"	v
 maxx	src/old/const.h	/^double *ap,*bp,*x1p,*maxx, *minx,*maxy,*miny;$/;"	v
 maxx	src/old/triang/const.h	/^double *ap,*bp,*x1p,*maxx, *minx,*maxy,*miny;$/;"	v
 maxy	src/old/const.h	/^double *ap,*bp,*x1p,*maxx, *minx,*maxy,*miny;$/;"	v
@@ -1733,10 +1763,8 @@ move	src/old/accel.c	/^void move(int t)$/;"	f
 move	src/old/accel_copy_with_olderfunction2d.c	/^void move(int t)$/;"	f
 move	src/old/triang/accel.c	/^void move(int t)$/;"	f
 move	src/old/triang/accel_copy_with_olderfunction2d.c	/^void move(int t)$/;"	f
-mpiRank	src/pinc.h	/^	int mpiRank;				\/\/\/< MPI rank$/;"	m	struct:__anon3
-mpiRank	src/pinc.h	/^	int mpiRank;		\/\/\/< MPI Rank$/;"	m	struct:__anon1
-mpiSize	src/pinc.h	/^	int mpiSize;				\/\/\/< MPI size$/;"	m	struct:__anon3
-mpiSize	src/pinc.h	/^	int mpiSize;		\/\/\/< MPI Size$/;"	m	struct:__anon1
+mpiRank	src/pinc.h	/^	int mpiRank;				\/\/\/< MPI rank$/;"	m	struct:__anon2
+mpiSize	src/pinc.h	/^	int mpiSize;				\/\/\/< MPI size$/;"	m	struct:__anon2
 mpicheck	src/old/const.h	/^int rank, numtasks, mpicheck;$/;"	v
 mpicheck	src/old/triang/const.h	/^int rank, numtasks, mpicheck;$/;"	v
 msg	src/io.c	/^void msg(msgKind kind, const char* restrict format,...){$/;"	f
@@ -1747,16 +1775,18 @@ my_file_open	src/old/shortcuts.c	/^FILE * my_file_open(const char * filename, co
 my_file_open	src/old/triang/shortcuts.c	/^FILE * my_file_open(const char * filename, const char * aarg){$/;"	f
 n	lib/iniparser/src/dictionary.h	/^    int             n ;     \/** Number of entries in dictionary *\/$/;"	m	struct:_dictionary_
 nCycles	src/multigrid.h	/^    int nCycles;         			\/\/\/< Multigrid cycles we want to run$/;"	m	struct:__anon7
-nDims	src/pinc.h	/^	int nDims;					\/\/\/< Number of dimensions (usually 1-3)$/;"	m	struct:__anon2
-nDims	src/pinc.h	/^ 	int nDims;			\/\/\/< Number of dimensions (usually 3)$/;"	m	struct:__anon1
-nGPoints	src/pinc.h	/^	int *nGPoints;				\/\/\/< The number of grid points per dimension (nDims elements)$/;"	m	struct:__anon2
-nGPointsProd	src/pinc.h	/^	long int *nGPointsProd;		\/\/\/< Cumulative product of nGPoints (nDims+1 elements)$/;"	m	struct:__anon2
-nGhosts	src/pinc.h	/^	int *nGhosts;				\/\/\/< Number of ghost layers in grid$/;"	m	struct:__anon2
+nDims	src/pinc.h	/^	int nDims;					\/\/\/< Number of dimensions (usually 1-3)$/;"	m	struct:__anon3
+nDims	src/pinc.h	/^	int nDims;					\/\/\/< Number of dimensions$/;"	m	struct:__anon2
+nDims	src/pinc.h	/^	int nDims;			\/\/\/< Number of dimensions (usually 3)$/;"	m	struct:__anon1
+nGPoints	src/pinc.h	/^	int *nGPoints;				\/\/\/< The number of grid points per dimension (nDims elements)$/;"	m	struct:__anon3
+nGPointsProd	src/pinc.h	/^	long int *nGPointsProd;		\/\/\/< Cumulative product of nGPoints (nDims+1 elements)$/;"	m	struct:__anon3
+nGhosts	src/pinc.h	/^	int *nGhosts;				\/\/\/< Number of ghost layers in grid (2*nDims elements)$/;"	m	struct:__anon3
 nLevels	src/multigrid.h	/^    int nLevels;         			\/\/\/< #Grid levels$/;"	m	struct:__anon7
-nSpecies	src/pinc.h	/^ 	int nSpecies;		\/\/\/< Number of species$/;"	m	struct:__anon1
-nSubdomains	src/pinc.h	/^	int *nSubdomains;			\/\/\/< Number of MPI nodes (nDims elements)$/;"	m	struct:__anon3
-nSubdomainsProd	src/pinc.h	/^	int *nSubdomainsProd;		\/\/\/< Cumulative product of nSubdomains$/;"	m	struct:__anon3
-nValues	src/pinc.h	/^	int nValues;				\/\/\/< Number of values per grid point (usually 1 or 3)$/;"	m	struct:__anon4
+nSpecies	src/pinc.h	/^	int nSpecies;		\/\/\/< Number of species$/;"	m	struct:__anon1
+nSubdomains	src/pinc.h	/^	int *nSubdomains;			\/\/\/< Number of MPI nodes (nDims elements)$/;"	m	struct:__anon2
+nSubdomainsProd	src/pinc.h	/^	int *nSubdomainsProd;		\/\/\/< Cumulative product of nSubdomains (nDims+1 elements)$/;"	m	struct:__anon2
+nTGPoints	src/pinc.h	/^	int *nTGPoints;				\/\/\/< The number of true grid points (nDims elements)$/;"	m	struct:__anon3
+nValues	src/pinc.h	/^	int nValues;		\/\/\/< Number of values per grid point (usually 1 or 3)$/;"	m	struct:__anon4
 ncorners	src/old/const.h	/^int *ncorners;$/;"	v
 ncorners	src/old/triang/const.h	/^int *ncorners;$/;"	v
 nested-classes	doc/html/multigrid_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"><\/a>$/;"	a
@@ -1831,7 +1861,7 @@ numberofprints	src/old/const.h	/^int numberofprints;$/;"	v
 numberofprints	src/old/triang/const.h	/^int numberofprints;$/;"	v
 numtasks	src/old/const.h	/^int rank, numtasks, mpicheck;$/;"	v
 numtasks	src/old/triang/const.h	/^int rank, numtasks, mpicheck;$/;"	v
-offset	src/pinc.h	/^	int *offset;				\/\/\/< Offset from global reference frame (nDims elements)$/;"	m	struct:__anon3
+offset	src/pinc.h	/^	int *offset;				\/\/\/< Offset from global reference frame (nDims elements)$/;"	m	struct:__anon2
 offsets	src/old/const.h	/^MPI_Aint offsets[2], extent;$/;"	v
 offsets	src/old/triang/const.h	/^MPI_Aint offsets[2], extent;$/;"	v
 oldtypes	src/old/const.h	/^MPI_Datatype gridtype, oldtypes[2];$/;"	v
@@ -1917,9 +1947,9 @@ point_t	src/old/triang/triangulate.h	/^} point_t, vector_t;$/;"	t	typeref:struct
 points	proof of concept/get boundary/scrabble.c	/^int *points = &grid->nGPoints[nDims-1];$/;"	v
 points_on_sphere	src/old/spherical.c	/^void points_on_sphere(int dustnumber, int numberofpoints)$/;"	f
 points_on_sphere	src/old/triang/spherical.c	/^void points_on_sphere(int dustnumber, int numberofpoints)$/;"	f
-pos	src/pinc.h	/^ 	double *pos;		\/\/\/< Position$/;"	m	struct:__anon1
+pos	src/pinc.h	/^	double *pos;		\/\/\/< Position$/;"	m	struct:__anon1
 posDebug	src/population.c	/^void posDebug(const dictionary *ini, Population *pop){$/;"	f
-posToSubdomain	src/pinc.h	/^	double *posToSubdomain;		\/\/\/< Factor for converting position to subdomain (nDims elements)$/;"	m	struct:__anon3
+posToSubdomain	src/pinc.h	/^	double *posToSubdomain;		\/\/\/< Factor for converting position to subdomain (nDims elements)$/;"	m	struct:__anon2
 posUniform	src/population.c	/^void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){$/;"	f
 postSmooth	src/multigrid.h	/^    void (*postSmooth)(void);	\/\/\/< Function pointer to a Post Smooth function$/;"	m	struct:__anon7
 pot2D	src/old/const.h	/^FILE *pot2Dclr,*pot2D,*efx,*efy, *efz,*frho,*idens,*edens;$/;"	v
@@ -1941,6 +1971,7 @@ potconvMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, 
 poten	src/old/const.h	/^FILE *curr, *poten, *potclr, *pot2Dav; \/\/OLD$/;"	v
 poten	src/old/triang/const.h	/^FILE *curr, *poten, *potclr, *pot2Dav; \/\/OLD$/;"	v
 preSmooth	src/multigrid.h	/^    void (*preSmooth)(void);		\/\/\/< Function pointer to a Pre Smooth function$/;"	m	struct:__anon7
+prev	script/distribution.py	/^prev = start$/;"	v
 prev	src/old/triang/triangulate.h	/^  int prev;			\/* Previous segment *\/$/;"	m	struct:__anon9
 prev	src/old/triang/triangulate.h	/^  int prev;			\/* describing the monotone *\/$/;"	m	struct:__anon12
 previous	src/pinc.h	/^	TimeSpec previous;			\/\/\/< Time of previous call$/;"	m	struct:__anon5
@@ -2036,7 +2067,7 @@ pub-attribs	doc/html/structPopulation.html	/^<tr class="heading"><td colspan="2"
 pub-attribs	doc/html/structTimer.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 q	src/old/const.h	/^  double q;$/;"	m	struct:d_particle
 q	src/old/triang/const.h	/^  double q;$/;"	m	struct:d_particle
-q	src/pinc.h	/^ 	double *q;			\/\/\/< Specie charge [elementary charges] (nSpecies elements)$/;"	m	struct:__anon1
+q	src/pinc.h	/^	double *q;			\/\/\/< Specie charge [elementary charges] (nSpecies elements)$/;"	m	struct:__anon1
 q_idx	src/old/triang/construct.c	/^static int q_idx;$/;"	v	file:
 qdens	src/old/const.h	/^double *qdens;$/;"	v
 qdens	src/old/triang/const.h	/^double *qdens;$/;"	v
@@ -2121,7 +2152,7 @@ signof	src/old/dustg.c	/^inline int signof(int a) $/;"	f
 signof	src/old/triang/dustg.c	/^inline int signof(int a) $/;"	f
 sink	src/old/triang/triangulate.h	/^  int sink;			\/* pointer to corresponding in Q *\/$/;"	m	struct:__anon10
 size	lib/iniparser/src/dictionary.h	/^    int             size ;  \/** Storage size *\/$/;"	m	struct:_dictionary_
-slice	src/pinc.h	/^	double *slice;			\/\/\/< Slices of the grid sent to other subdomains$/;"	m	struct:__anon4
+slice	src/pinc.h	/^	double *slice;		\/\/\/< Slice buffer of the grid sent to other subdomains$/;"	m	struct:__anon4
 slvsml	src/old/fmg/fmg.c	/^void slvsml(double ***u, double ***rhs)$/;"	f
 slvsml2	src/old/fmg/fmg.c	/^void slvsml2(double ***u, double ***rhs, int nx, int ny, int nz)$/;"	f
 smaller_same_sign	src/old/dustg.c	/^inline double smaller_same_sign(double a, double b) $/;"	f
@@ -2134,6 +2165,7 @@ species	src/old/const.h	/^struct species$/;"	s
 species	src/old/const.h	/^typedef struct species species;$/;"	t	typeref:struct:species
 species	src/old/triang/const.h	/^struct species$/;"	s
 species	src/old/triang/const.h	/^typedef struct species species;$/;"	t	typeref:struct:species
+speed	script/distribution.py	/^speed = zeros(Np)$/;"	v
 sqrarg	src/old/fmg/nrutil.h	/^static float sqrarg;$/;"	v
 sqrt_pi	src/old/const.h	/^double sqrt_pi;$/;"	v
 sqrt_pi	src/old/triang/const.h	/^double sqrt_pi;$/;"	v
@@ -2141,6 +2173,7 @@ sqrt_two	src/old/const.h	/^double sqrt_two;$/;"	v
 sqrt_two	src/old/triang/const.h	/^double sqrt_two;$/;"	v
 sqrt_twopi	src/old/const.h	/^double sqrt_twopi;$/;"	v
 sqrt_twopi	src/old/triang/const.h	/^double sqrt_twopi;$/;"	v
+start	script/distribution.py	/^start = time()$/;"	v
 stat	src/old/const.h	/^MPI_Status stat;$/;"	v
 stat	src/old/triang/const.h	/^MPI_Status stat;$/;"	v
 state	src/old/triang/triangulate.h	/^  int state;$/;"	m	struct:__anon10
@@ -2153,10 +2186,10 @@ std	proof of concept/global variables/makefile	/^	gcc -o main main.c ..\/stool\/
 std	proof of concept/global variables/makefile	/^	gcc -o main main.c ..\/stool\/stool.c -std=c11 -lm$/;"	m
 std	proof of concept/tail call recursion/makefile	/^	gcc -S main.c -std=c11 $(COPT)$/;"	m
 storeLayer	proof of concept/get boundary/scrabble.c	/^function storeLayer(const int *prod,const int *nPoints,double *ghost, double *val){$/;"	f
-strAllocCat	src/aux.c	/^char *strAllocCat(const char *a, const char *b){$/;"	f
+strAllocCat	src/aux.c	/^char *strAllocCat(int n, ...){$/;"	f
 strlwc	lib/iniparser/src/iniparser.c	/^static char * strlwc(const char * s)$/;"	f	file:
 strstrip	lib/iniparser/src/iniparser.c	/^static char * strstrip(const char * s)$/;"	f	file:
-subdomain	src/pinc.h	/^	int *subdomain;				\/\/\/< MPI node (nDims elements)$/;"	m	struct:__anon3
+subdomain	src/pinc.h	/^	int *subdomain;				\/\/\/< MPI node (nDims elements)$/;"	m	struct:__anon2
 submatrix	src/old/fmg/nrutil.c	/^float **submatrix(a,oldrl,oldrh,oldcl,oldch,newrl,newcl)$/;"	f
 submatrix	src/old/fmg/nrutil.c	/^float **submatrix(float **a, long oldrl, long oldrh, long oldcl, long oldch,$/;"	f
 swapHalo	src/grid.c	/^void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d){$/;"	f
@@ -2187,6 +2220,7 @@ timeelapsed	src/old/const.h	/^double timeelapsed;$/;"	v
 timeelapsed	src/old/triang/const.h	/^double timeelapsed;$/;"	v
 timeending	src/old/const.h	/^time_t timestart, timeending;$/;"	v
 timeending	src/old/triang/const.h	/^time_t timestart, timeending;$/;"	v
+timer	script/distribution.py	/^def timer(text):$/;"	f
 timerprobes	src/old/const.h	/^int timerprobes;$/;"	v
 timerprobes	src/old/triang/const.h	/^int timerprobes;$/;"	v
 timestart	src/old/const.h	/^time_t timestart, timeending;$/;"	v
@@ -2195,6 +2229,8 @@ tmax	src/old/const.h	/^double dt, tmax;$/;"	v
 tmax	src/old/triang/const.h	/^double dt, tmax;$/;"	v
 tmp_dpart	src/old/const.h	/^d_particle *tmp_dpart;$/;"	v
 tmp_dpart	src/old/triang/const.h	/^d_particle *tmp_dpart;$/;"	v
+toGlobalFrame	src/population.c	/^void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){$/;"	f
+toLocalFrame	src/population.c	/^void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){$/;"	f
 toggleFolder	doc/html/dynsections.js	/^function toggleFolder(id)$/;"	f
 toggleInherit	doc/html/dynsections.js	/^function toggleInherit(id)$/;"	f
 toggleLevel	doc/html/dynsections.js	/^function toggleLevel(level)$/;"	f
@@ -2232,12 +2268,14 @@ unitvecseg	src/old/triang/const.h	/^vectorst ** unitvec, **orthvec,  ** unitvecs
 updateStripes	doc/html/dynsections.js	/^function updateStripes()$/;"	f
 usave	src/old/triang/triangulate.h	/^  int usave, uside;		\/* I forgot what this means *\/$/;"	m	struct:__anon10
 uside	src/old/triang/triangulate.h	/^  int usave, uside;		\/* I forgot what this means *\/$/;"	m	struct:__anon10
+v	script/distribution.py	/^v = linspace(0,6,100)$/;"	v
 v0	src/old/triang/triangulate.h	/^  point_t v0, v1;		\/* two endpoints *\/$/;"	m	struct:__anon9
 v1	src/old/triang/triangulate.h	/^  point_t v0, v1;		\/* two endpoints *\/$/;"	m	struct:__anon9
+v2	script/distribution.py	/^v2 = linspace(-6,6,100) $/;"	v
 vadd	proof of concept/stool/stool.c	/^void vadd(double *v, int N, double value){$/;"	f
 val	lib/iniparser/src/dictionary.h	/^    char        **  val ;   \/** List of string values *\/$/;"	m	struct:_dictionary_
 val	proof of concept/get boundary/scrabble.c	/^int *val = gridQuantity->val;$/;"	v
-val	src/pinc.h	/^	double *val;				\/\/\/< The values on the grid$/;"	m	struct:__anon4
+val	src/pinc.h	/^	double *val;		\/\/\/< The values on the grid$/;"	m	struct:__anon4
 vavg	proof of concept/stool/stool.c	/^double vavg(double *v, int N){$/;"	f
 vdev	proof of concept/stool/stool.c	/^double vdev(double *v, int N, double value){$/;"	f
 vdriftx	src/old/const.h	/^double vdriftx[S]; \/*drift of the specie in x dir*\/$/;"	v
@@ -2249,7 +2287,7 @@ vectorst	src/old/const.h	/^struct vectorst$/;"	s
 vectorst	src/old/const.h	/^typedef struct vectorst vectorst;$/;"	t	typeref:struct:vectorst
 vectorst	src/old/triang/const.h	/^struct vectorst$/;"	s
 vectorst	src/old/triang/const.h	/^typedef struct vectorst vectorst;$/;"	t	typeref:struct:vectorst
-vel	src/pinc.h	/^ 	double *vel;		\/\/\/< Velocity$/;"	m	struct:__anon1
+vel	src/pinc.h	/^	double *vel;		\/\/\/< Velocity$/;"	m	struct:__anon1
 velMaxwell	src/population.c	/^void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){$/;"	f
 vert	src/old/triang/monotone.c	/^static vertexchain_t vert[SEGSIZE]; \/* chain init. information. This *\/$/;"	v	file:
 vertexchain_t	src/old/triang/triangulate.h	/^} vertexchain_t;$/;"	t	typeref:struct:__anon13
@@ -2271,6 +2309,7 @@ vnum	src/old/triang/triangulate.h	/^  int vnum;$/;"	m	struct:__anon12
 vpos	src/old/triang/triangulate.h	/^  int vpos[4];			\/* position of v in the 4 chains *\/$/;"	m	struct:__anon13
 vprint	proof of concept/stool/stool.c	/^void vprint(double *v, int N){$/;"	f
 vsetall	proof of concept/stool/stool.c	/^void vsetall(double *v, int N, double value){$/;"	f
+vth	script/distribution.py	/^vth = 1$/;"	v
 vthx	src/old/const.h	/^double vthx[S]; \/*thermal velocity in x dir*\/$/;"	v
 vthx	src/old/triang/const.h	/^double vthx[S]; \/*thermal velocity in x dir*\/$/;"	v
 vthy	src/old/const.h	/^double vthy[S]; \/*thermal velocity in y dir*\/$/;"	v
@@ -2295,7 +2334,8 @@ weighting1	src/old/grid.c	/^void weighting1(void)$/;"	f
 weighting1	src/old/triang/grid.c	/^void weighting1(void)$/;"	f
 weightingdust1	src/old/dustg.c	/^void weightingdust1(int ko)$/;"	f
 weightingdust1	src/old/triang/dustg.c	/^void weightingdust1(int ko)$/;"	f
-writePopulationH5	src/population.c	/^void writePopulationH5(Population *pop, double posN, double velN){$/;"	f
+writeGridQuantityH5	src/grid.c	/^void writeGridQuantityH5(const GridQuantity *gridQuantity, const MpiInfo *mpiInfo, double n){$/;"	f
+writePopulationH5	src/population.c	/^void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){$/;"	f
 wronginitpartcheck	src/old/generate_bug.c	/^int wronginitpartcheck(double px, double py, double delta)$/;"	f
 wronginitpartcheck	src/old/triang/generate_bug.c	/^int wronginitpartcheck(double px, double py, double delta)$/;"	f
 x	src/old/const.h	/^  double x;$/;"	m	struct:d_particle

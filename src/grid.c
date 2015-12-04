@@ -12,15 +12,13 @@
 
 #include "pinc.h"
 #include <mpi.h>
-/*******TEMPORARY*************/
-#include "test.h"
-/*******TEMPORARY*************/
-
+#include <math.h>
+#include <hdf5.h>
 
 
 /******************************************************************************
-* DECLARATIONS,
-*****************************************************************************/
+ * DECLARAING LOCAL FUNCTIONS
+ *****************************************************************************/
 /**
  * @brief Returns the ND-index of this MPI node in the global reference frame
  * @param	ini		input settings
@@ -98,7 +96,6 @@ void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset
  */
 void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset);
 
-
 /**
  * @brief Gets, sends, recieves and sets a slice, using MPI
  * @param nSlicePoints		Length of the slice array
@@ -124,9 +121,9 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int reciever,
 					const int sender, const int mpiRank, GridQuantity *gridQuantity);
 
-/**********************************************************
- *	Local functions
- *********************************************************/
+/******************************************************************************
+ * DEFINING LOCAL FUNCTIONS
+ *****************************************************************************/
 
 double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
 											const int *points, const long int finalMul){
@@ -196,11 +193,6 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 	setSlice(slice, gridQuantity, d, offsetPlace);
 }
 
-
-/******************************************************************************
-* DEFINITIONS
-*****************************************************************************/
-
 static int *getSubdomain(const dictionary *ini){
 
 	// Get MPI info
@@ -210,7 +202,8 @@ static int *getSubdomain(const dictionary *ini){
 
 	// Get ini info
 	int nDims;
-	int *nSubdomains = (int*)iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+
 
 	// Sanity check
 	int totalNSubdomains = intArrProd(nSubdomains,nDims);
@@ -218,7 +211,7 @@ static int *getSubdomain(const dictionary *ini){
 		msg(ERROR|ONCE,"The product of grid:nSubdomains does not match the number of MPI processes");
 
 	// Determine subdomain of this MPI node
-	int *subdomain = malloc(nDims*sizeof(int));
+	int *subdomain = malloc(nDims*sizeof(*subdomain));
 	for(int d=0;d<nDims;d++){
 		subdomain[d] = mpiRank % nSubdomains[d];
 		mpiRank /= nSubdomains[d];
@@ -229,6 +222,9 @@ static int *getSubdomain(const dictionary *ini){
 
 }
 
+/******************************************************************************
+ * DEFINING GLOBAL FUNCTIONS
+ *****************************************************************************/
 
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d){
 
@@ -285,7 +281,6 @@ void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int
 	return;
 }
 
-
 Grid *allocGrid(const dictionary *ini){
 
 	//Sanity check
@@ -319,14 +314,12 @@ Grid *allocGrid(const dictionary *ini){
 	//Cumulative products
 	long int *nGPointsProd = longIntArrCumProd(nGPoints,nDims);
 
-	//Free temporary variables
-	free(nTGPoints);
-
 	/* Store in Grid */
 	Grid *grid = malloc(sizeof(Grid));
 
 	grid->nDims = nDims;
 	grid->nGPoints = nGPoints;
+	grid->nTGPoints = nTGPoints;
 	grid->nGPointsProd = nGPointsProd;
 	grid->nGhosts = nGhosts;
 	grid->dr = dr;
@@ -351,21 +344,20 @@ MpiInfo *allocMpiInfo(const dictionary *ini){
 
 	//Position of the subdomain in the total domain
 	int *subdomain = getSubdomain(ini);
-	int *offset = malloc(nDims*sizeof(int));
-	double *posToSubdomain = malloc(nDims*sizeof(double));
+	int *offset = malloc(nDims*sizeof(*offset));
+	double *posToSubdomain = malloc(nDims*sizeof(*posToSubdomain));
 
 	for(int d = 0; d < nDims; d++){
 		offset[d] = subdomain[d]*nTGPoints[d];
 		posToSubdomain[d] = (double)1/nTGPoints[d];
 	}
 
-    /* Store in Grid */
-    MpiInfo *mpiInfo = malloc(sizeof(MpiInfo));
-
+    MpiInfo *mpiInfo = malloc(sizeof(*mpiInfo));
 	mpiInfo->subdomain = subdomain;
 	mpiInfo->nSubdomains = nSubdomains;
 	mpiInfo->nSubdomainsProd = nSubdomainsProd;
 	mpiInfo->offset = offset;
+	mpiInfo->nDims = nDims;
 	mpiInfo->posToSubdomain = posToSubdomain;
 	mpiInfo->mpiSize = mpiSize;
 	mpiInfo->mpiRank = mpiRank;
@@ -426,6 +418,7 @@ void freeMpiInfo(MpiInfo *mpiInfo){
 void freeGrid(Grid *grid){
 
 	free(grid->nGPoints);
+	free(grid->nTGPoints);
 	free(grid->nGPointsProd);
 	free(grid->nGhosts);
 	free(grid->dr);
@@ -438,5 +431,163 @@ void freeGridQuantity(GridQuantity *gridQuantity){
 	free(gridQuantity->val);
 	free(gridQuantity->slice);
 	free(gridQuantity);
+
+}
+
+void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo){
+
+	int mpiRank = mpiInfo->mpiRank;
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	double *v = gridQuantity->val;
+	int nValues = gridQuantity->nValues;
+
+	for(long int p=0;p<nGPointsProd[nDims];p++){
+
+		v[p*nValues] = 0;
+		long int temp = p;
+
+		for(int d=0;d<nDims;d++){
+			v[p*nValues] += (temp%nGPoints[d])*pow(10,nDims-d-1);
+			temp/=nGPoints[d];
+		}
+
+		v[p*nValues] += mpiRank*1000;
+
+		for(int pp=1;pp<nValues;pp++){
+			v[p*nValues+pp] = v[p*nValues] + (double)pp/10;
+		}
+
+	}
+
+}
+
+void writeGridQuantityH5(const GridQuantity *gridQuantity, const MpiInfo *mpiInfo, double n){
+
+	hid_t fileSpace = gridQuantity->h5FileSpace;
+	hid_t memSpace = gridQuantity->h5MemSpace;
+	hid_t file = gridQuantity->h5;
+	double *val = gridQuantity->val;
+
+	/*
+	 * STORE DATA COLLECTIVELY
+	 */
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+
+	char name[64];
+	sprintf(name,"/n=%.1f",n);
+
+	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+	H5Dclose(dataset);
+
+	H5Pclose(pList);
+}
+
+void closeGridQuantityH5(GridQuantity *gridQuantity){
+	H5Sclose(gridQuantity->h5MemSpace);
+	H5Sclose(gridQuantity->h5FileSpace);
+	H5Fclose(gridQuantity->h5);
+}
+
+void createGridQuantityH5(const dictionary *ini, GridQuantity *gridQuantity, const MpiInfo *mpiInfo,
+						  const double *denorm, const double *dimen, const char *fName){
+
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	int *nGPoints = grid->nGPoints;
+	int *nTGPoints = grid->nTGPoints;
+	int *nGhosts = grid->nGhosts;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int *subdomain = mpiInfo->subdomain;
+	int nValues = gridQuantity->nValues;
+
+	/*
+	 * CREATE FILE
+	 */
+
+	hid_t file = createH5File(ini,fName,"grid");
+
+	/*
+	 * CREATE ATTRIBUTES
+	 */
+
+	double *debye = malloc(nDims*sizeof(*debye));
+	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	for(int d=1;d<nDims;d++) debye[d]=debye[0];
+
+	hsize_t attrSize;
+    hid_t attrSpace;
+    hid_t attribute;
+
+	attrSize = (hsize_t)nDims;
+	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->dr);
+    H5Aclose(attribute);
+
+	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
+    H5Aclose(attribute);
+
+    H5Sclose(attrSpace);
+	free(debye);
+
+	attrSize = (hsize_t)nValues;
+	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	attribute = H5Acreate(file, "Quantity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, denorm);
+	H5Aclose(attribute);
+
+	attribute = H5Acreate(file, "Quantity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dimen);
+	H5Aclose(attribute);
+
+	H5Sclose(attrSpace);
+
+	/*
+	 * HDF5 HYPERSLAB DEFINITION
+	 */
+
+	int mul = (nValues>1); // Multiple values?
+
+	hsize_t *fileDims = malloc((nDims+mul)*sizeof(*fileDims));
+	hsize_t *memDims = malloc((nDims+mul)*sizeof(*memDims));
+	hsize_t *memOffset = malloc((nDims+mul)*sizeof(*memOffset));
+	hsize_t *fileOffset = malloc((nDims+mul)*sizeof(*fileOffset));
+	if(mul){
+		fileDims[nDims] = (hsize_t)nValues;
+		memDims[nDims] = (hsize_t)nValues;
+		memOffset[nDims] = 0;
+		fileOffset[nDims] = 0;
+	}
+	for(int d=0;d<nDims;d++){
+		// HDF5 indices needs to be reversed compared to ours due to ordering.
+		memDims[nDims-d-1] = (hsize_t)nGPoints[d];
+		memOffset[nDims-d-1] = (hsize_t)nGhosts[d];
+		fileDims[nDims-d-1] = (hsize_t)nTGPoints[d]*nSubdomains[d];
+		fileOffset[nDims-d-1] = (hsize_t)nTGPoints[d]*subdomain[d];
+	}
+
+	hid_t memSpace = H5Screate_simple((nDims+mul),memDims,NULL);
+	for(int d=0;d<nDims;d++) memDims[nDims-d-1] = nTGPoints[d];
+	H5Sselect_hyperslab(memSpace,H5S_SELECT_SET,memOffset,NULL,memDims,NULL);
+
+	hid_t fileSpace = H5Screate_simple((nDims+mul),fileDims,NULL);
+	H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,fileOffset,NULL,memDims,NULL);
+
+	free(fileDims);
+	free(memDims);
+	free(memOffset);
+	free(fileOffset);
+
+	gridQuantity->h5 = file;
+	gridQuantity->h5MemSpace = memSpace;
+	gridQuantity->h5FileSpace = fileSpace;
 
 }

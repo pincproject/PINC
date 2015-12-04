@@ -109,6 +109,7 @@ void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo)
 
 	//Load Grid info
 	Grid *grid = gridQuantity->grid;
+//	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
 
 	//Load GridQuantity

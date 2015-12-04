@@ -72,7 +72,7 @@ cleandoc:
 
 cleantestdata:
 	@echo "Cleaning test data"
-	@rm -f test.*.h5 parsedump.txt
+	@rm -f test_*.h5 parsedump.txt
 
 clean: cleandoc cleantestdata
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"

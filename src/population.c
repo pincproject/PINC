@@ -1,5 +1,5 @@
 /**
- * @file		particles.c
+ * @file		population.c
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Particle handling.
@@ -16,6 +16,38 @@
 #include <gsl/gsl_randist.h>
 #include <hdf5.h>
 #include "iniparser.h"
+
+/******************************************************************************
+ * DECLARING LOCAL FUNCTIONS
+ *****************************************************************************/
+
+/**
+ * @brief Transforms particles to local reference frame
+ * @param	pop			Population of particles
+ * @param	mpiInfo		MPI information about the reference frames
+ * @return	void
+ * @see toGlobalFrame()
+ */
+void toLocalFrame(Population *pop, const MpiInfo *mpiInfo);
+
+/**
+ * @brief Transforms particles to global reference frame
+ * @param	pop			Population of particles
+ * @param	mpiInfo		MPI information about the reference frames
+ * @return	void
+ * @see toLocalFrame()
+ *
+ * For parallelization by means of configuration space decomposition, the
+ * the particles' positions are usually specified with respect to a local
+ * reference frame to that subdomain in order to ease computation. Some
+ * operations may require the position in global reference frame (e.g. when
+ * storing to file) for which purpose it can be transformed using this function.
+ */
+void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
+
+/******************************************************************************
+ * DEFINING GLOBAL FUNCTIONS
+ *****************************************************************************/
 
 Population *allocPopulation(const dictionary *ini){
 
@@ -115,7 +147,6 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
 			// Count the number of dimensions where the particle resides in the range of this node
 			int correctRange = 0;
 			for(int d=0;d<nDims;d++) correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
-//			msg(STATUS,"pos of particle %i: %f,%f,%f",i,pos[0],pos[1],pos[2]);
 
 			// Iterate only if particle resides in this sub-domain.
 			if(correctRange==nDims){
@@ -135,19 +166,7 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
 
 	}
 
-	// Transform to local reference frame
-	int *offset = mpiInfo->offset;
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-
-		for(long int i=iStart;i<=iStop;i++){
-
-			double *pos = &pop->pos[i*nDims];
-			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
-		}
-	}
+	toLocalFrame(pop,mpiInfo);
 
 	free(L);
 	free(nParticles);
@@ -215,25 +234,17 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	free(velDrift);
 }
 
-void createPopulationH5(const dictionary *ini, Population *pop){
+void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName){
 
-	// Get MPI rank and size
-	int mpiSize;
-	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	/*
+	 * CREATE FILE
+	 */
 
-	// Determine filename
-	char *fName = iniparser_getstring((dictionary *)ini,"files:output","");	// don't free
-	char *fTotName = strAllocCat(fName,".pop.h5");
+	hid_t file = createH5File(ini,fName,"pop");
 
-	// Create file with MPI-I/O access
-	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
-	hid_t file = createH5File(fTotName,H5P_DEFAULT,pList);
-	H5Pclose(pList);
-
-	free(fTotName);
-
-	// Create groups
+	/*
+	 * CREATE GROUPS
+	 */
 	hid_t group;
 	group = H5Gcreate(file,"/pos",H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 	H5Gclose(group);
@@ -254,73 +265,175 @@ void createPopulationH5(const dictionary *ini, Population *pop){
 	}
 
 	pop->h5 = file;
+
+	/*
+	 * CREATE ATTRIBUTES
+	 */
+
+	int nDims;
+	double *dr = iniGetDoubleArr(ini,"grid:dr",&nDims);
+	double *attrData = malloc(nDims*sizeof(*attrData));
+	hsize_t attrSize;
+    hid_t attrSpace;
+    hid_t attribute;
+
+	attrSize = (hsize_t)nDims;
+	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	attribute = H5Acreate(file, "Position denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dr);
+    H5Aclose(attribute);
+
+	double debye = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	for(int d=0;d<nDims;d++) attrData[d]=debye;
+	attribute = H5Acreate(file, "Position dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
+    H5Aclose(attribute);
+
+
+	double dt = iniparser_getdouble((dictionary *)ini,"time:dt",0);
+	for(int d=0;d<nDims;d++) attrData[d]=dr[d]/dt;
+	attribute = H5Acreate(file, "Velocity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
+	H5Aclose(attribute);
+
+	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
+	double *m = iniGetDoubleArr(ini,"population:m",&nDims);
+	double vThermal = sqrt(BOLTZMANN*T[0]/(m[0]*ELECTRON_MASS));
+	for(int d=0;d<nDims;d++) attrData[d] = vThermal;
+	attribute = H5Acreate(file, "Velocity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
+	H5Aclose(attribute);
+
+	free(T);
+	free(m);
+	free(dr);
+	free(attrData);
+
+	H5Sclose(attrSpace);
+
 }
 
-void writePopulationH5(Population *pop, double posN, double velN){
+void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){
 
-	int mpiRank, mpiSize;
-	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
-	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
-
+	int mpiRank = mpiInfo->mpiRank;
+	int mpiSize = mpiInfo->mpiSize;
 	int nSpecies = pop->nSpecies;
 
+	toGlobalFrame(pop,mpiInfo);
+
+	/*
+ 	 * HDF5 HYPERSLAB DEFINITION
+	 */
 	const int arrSize = 2;
-	hsize_t fileDims[arrSize];		// Dimensions of array in file
-	hsize_t memDims[arrSize];		// Dimensions of array in memory
-	hsize_t offset[arrSize];		// Where in file to store memory
+	hsize_t fileDims[arrSize];		// Size of data in file
+	hsize_t memDims[arrSize];		// Size of data in memory of this MPI node
+	hsize_t offset[arrSize];		// At which offset in file to store data of this MPI node
 	fileDims[1] = pop->nDims;
 	memDims[1] = pop->nDims;
 	offset[1] = 0;
 
-	long int *nParticlesAllSubdomains = malloc((mpiSize+1)*sizeof(long int));
-	nParticlesAllSubdomains[0] = 0;
+	long int *offsetAllSubdomains = malloc((mpiSize+1)*sizeof(long int));
+	offsetAllSubdomains[0] = 0;
 
 	for(int s=0;s<nSpecies;s++){
 
-		/*
-		 * DETERMINE NUMBER OF PARTICLES TO STORE AND AT WHICH OFFSET
-		 */
-		long int nParticlesThisSubdomain = pop->iStop[s] - pop->iStart[s] + 1;
-		MPI_Allgather(&nParticlesThisSubdomain,1,MPI_LONG,&nParticlesAllSubdomains[1],1,MPI_LONG,MPI_COMM_WORLD);
+		long int nParticles = pop->iStop[s] - pop->iStart[s] + 1;
+		MPI_Allgather(&nParticles,1,MPI_LONG,&offsetAllSubdomains[1],1,MPI_LONG,MPI_COMM_WORLD);
 
-		// Cumulative sum
+		// Take cumulative sum to actually get offset
+		// Last element equals total number of particles on all nodes
 		for(int r=1;r<=mpiSize;r++){
-			nParticlesAllSubdomains[r] += nParticlesAllSubdomains[r-1];
+			offsetAllSubdomains[r] += offsetAllSubdomains[r-1];
 		}
 
-		fileDims[0] = nParticlesAllSubdomains[mpiSize];
-		memDims[0] = nParticlesThisSubdomain;
-		offset[0] = nParticlesAllSubdomains[mpiRank];
+		// Only proceed if there actually are any particles to save, at least
+		// on one MPI node. HDF5 may crash otherwise.
+		if(offsetAllSubdomains[mpiSize]){
 
-		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
-		hid_t fileSpace = H5Screate_simple(arrSize,fileDims,NULL);
+			fileDims[0] = offsetAllSubdomains[mpiSize];
+			memDims[0] = nParticles;
+			offset[0] = offsetAllSubdomains[mpiRank];
 
-		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,memDims,NULL);
+			hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
+			hid_t fileSpace = H5Screate_simple(arrSize,fileDims,NULL);
 
-		/*
-		 * STORE DATA COLLECTIVELY
-		 */
-		hid_t pList = H5Pcreate(H5P_DATASET_XFER);
-	    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+			H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,memDims,NULL);
 
+			/*
+			 * STORE DATA COLLECTIVELY
+			 */
+			hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+		    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
-		char name[64];
-		hid_t dataset;
+			char name[64];
+			hid_t dataset;
 
-		sprintf(name,"/pos/specie %i/n=%.1f",s,posN);
-		dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->pos[pop->iStart[s]*pop->nDims]);
-		H5Dclose(dataset);
+			sprintf(name,"/pos/specie %i/n=%.1f",s,posN);
+			dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+			H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->pos[pop->iStart[s]*pop->nDims]);
+			H5Dclose(dataset);
 
-		sprintf(name,"/vel/specie %i/n=%.1f",s,velN);
-		dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->vel[pop->iStart[s]*pop->nDims]);
-		H5Dclose(dataset);
+			sprintf(name,"/vel/specie %i/n=%.1f",s,velN);
+			dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+			H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->vel[pop->iStart[s]*pop->nDims]);
+			H5Dclose(dataset);
 
-		H5Sclose(fileSpace);
-		H5Sclose(memSpace);
-		H5Pclose(pList);
+			H5Pclose(pList);
+			H5Sclose(fileSpace);
+			H5Sclose(memSpace);
 
+		} else {
+			msg(WARNING|ONCE,"No particles to store in .h5-file");
+		}
 	}
-	free(nParticlesAllSubdomains);
+ 	free(offsetAllSubdomains);
+
+	toLocalFrame(pop,mpiInfo);
+}
+
+void closePopulationH5(Population *pop){
+	H5Fclose(pop->h5);
+}
+
+/******************************************************************************
+ * DEFINING LOCAL FUNCTIONS
+ *****************************************************************************/
+
+void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){
+
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<=iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
+		}
+	}
+}
+
+void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
+
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<=iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] += offset[d];
+		}
+	}
 }
