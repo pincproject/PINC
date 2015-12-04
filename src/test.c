@@ -16,9 +16,16 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "multigrid.h"
 #include "test.h"
 
+/******************************************************************************
+ *	USEFUL CONSTANTS FOR TESTFUNCTIONS
+ *****************************************************************************/
+#define PI 3.14159265
+
+/*****************************************************************************
+ *					DEFINITIONS
+ ****************************************************************************/
 
 void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
 /*	Grid *grid = gridQuantity->grid;
@@ -58,6 +65,34 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 
 void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo){
 	msg(STATUS|ONCE, "Hello from GaussSeidel test");
+	//Load Grid info
+	Grid *grid = gridQuantity->grid;
+	int *nGPoints = grid->nGPoints;
+
+	//Load GridQuantity
+	double *val = gridQuantity->val;
+
+	//Temp quick functions
+	double sin(double);
+
+	//Variables
+	double angle = 0;
+
+
+	int ind = 0;
+	for(int j = 0; j < nGPoints[0]; j++){
+		for (int k = 0; k<nGPoints[1]; k++) {
+			if(k>(0.5*nGPoints[1])) angle = 1.;
+			val[ind] = angle;
+			ind++;
+		}
+	}
+
+
+	for(int g = 0; g < 49; g++) msg(STATUS|ONCE, "%f", val[g]);
+
+
+	dumpGrid(ini,gridQuantity);
 
 
 
@@ -74,7 +109,6 @@ void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo)
 
 	//Load Grid info
 	Grid *grid = gridQuantity->grid;
-	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
 
 	//Load GridQuantity

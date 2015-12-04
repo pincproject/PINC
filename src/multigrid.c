@@ -17,6 +17,7 @@
 #include <math.h>
 #include <mpi.h>
 #include "pinc.h"
+#include "multigrid.h"
 
 /******************************************************************************
  * 				Local functions

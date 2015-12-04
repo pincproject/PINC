@@ -53,8 +53,8 @@ int main(int argc, char *argv[]){
 	 */
 
 	// testGetSlice(ini, gridQuantity);
-	// testSwapHalo(ini, gridQuantity, mpiInfo);
-	testGaussSeidel(ini, gridQuantity, mpiInfo);
+	testSwapHalo(ini, gridQuantity, mpiInfo);
+	// testGaussSeidel(ini, gridQuantity, mpiInfo);
 
 
 	freeMpiInfo(mpiInfo);

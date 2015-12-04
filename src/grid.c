@@ -380,27 +380,25 @@ GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues){
 	//Load data
 	int nDims = grid->nDims;
 	int *nGPoints = grid->nGPoints;
-	int *nGhosts = grid->nGhosts;
-	int nTotPoints = 1;			//#Grid points in all dimensions
-	int nGhostPoints = 0;		//#Total ghost points
+	long int *nGPointsProd = grid->nGPointsProd;
 
-	//Temp variables
-	int largestDim = 0;
+	//Number of elements on slice
+	long int *nSlice = malloc(nDims*sizeof(nSlice));
+	for(int d=0;d<nDims;d++){
+		nSlice[d] = 1;
+		for(int dd=0;dd<nDims;dd++){
+			if(dd!=d) nSlice[d] *= nGPoints[dd];
+		}
+	}
+	long int nSliceMax = 0;
+	for(int d=0;d<nDims;d++){
+		if(nSlice[d]>nSliceMax) nSliceMax = nSlice[d];
+	}
 
-	//Total grid points N^d
-	for(int d = 0; d < nDims; d++){
-		nTotPoints *= nGPoints[d];
-	}
-	for(int g = 0; g < nDims; g++){
-		nGhostPoints += (nGhosts[g]+nGhosts[g+nDims])*nGPoints[g];
-	}
-	for(int d = 0; d < nDims; d++){
-		if(nGPoints[d] > largestDim) largestDim = nGPoints[d];
-	}
 
 	//Memory for values and slices
-	double *val = malloc(nTotPoints*nValues*sizeof(*val));
-	double *slice = malloc(largestDim*nValues*sizeof(*slice));
+	double *val = malloc(nGPointsProd[nDims]*nValues*sizeof(*val));
+	double *slice = malloc(nSliceMax*nValues*sizeof(*slice));
 
 	/* Store in gridQuantity */
 	GridQuantity *gridQuantity = malloc(sizeof(*gridQuantity));
