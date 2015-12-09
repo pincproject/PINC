@@ -63,41 +63,85 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	return;
 }
 
-void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo){
+void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
 	msg(STATUS|ONCE, "Hello from GaussSeidel test");
 	//Load Grid info
-	Grid *grid = gridQuantity->grid;
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	GridQuantity *phi = multiPhi->gridQuantities[0];
+	Grid *grid = rho->grid;
 	int *nGPoints = grid->nGPoints;
 
 	//Load GridQuantity
-	double *val = gridQuantity->val;
+	double *rhoVal = rho->val;
+	double *phiVal = phi->val;
 
 	//Temp quick functions
-	double sin(double);
+	// double sin(double);
 
 	//Variables
-	double angle = 0;
+	// double angle;
+
+	int ind = 0;
+	for(int j = 0; j < nGPoints[0]; j++){
+		// angle = 0;
+		for (int k = 0; k<nGPoints[1]; k++) {
+			// if(k>(0.5*nGPoints[1])) angle = 1.;
+			rhoVal[ind] = (double) (j + 2*k);
+			ind++;
+		}
+	}
+
+	dumpGridIndexes(ini, rho);
+	dumpGrid(ini,rho);
+
+	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
+
+	dumpGrid(ini, phi);
+
+	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
+
+	dumpGrid(ini, phi);
+
+
+	return;
+}
+
+void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
+
+	msg(STATUS|ONCE, "Hello from Restriction test, not done!");
+	//Load Grid info
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	// GridQuantity *phi = multiPhi->gridQuantities[0];
+	Grid *grid = rho->grid;
+	int *nGPoints = grid->nGPoints;
+
+	//Load GridQuantity
+	double *rhoVal = rho->val;
 
 
 	int ind = 0;
 	for(int j = 0; j < nGPoints[0]; j++){
 		for (int k = 0; k<nGPoints[1]; k++) {
-			if(k>(0.5*nGPoints[1])) angle = 1.;
-			val[ind] = angle;
+			rhoVal[ind] = (double) (j + 2*k);
 			ind++;
 		}
 	}
+	//
+	dumpGridIndexes(ini, multiRho->gridQuantities[0]);
+	dumpGridIndexes(ini, multiRho->gridQuantities[1]);
 
+	// dumpGrid(ini, multiRho->gridQuantities[0]);
 
-	for(int g = 0; g < 49; g++) msg(STATUS|ONCE, "%f", val[g]);
+	dumpGrid(ini, multiRho->gridQuantities[1]);
+	multiRho->restrictor(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
 
-
-	dumpGrid(ini,gridQuantity);
-
-
+	// multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
 
 	return;
 }
+
 
 void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
 
@@ -198,6 +242,42 @@ void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){
 	dumpGrid(ini, gridQuantity);
 }
 
+void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity){
+	Grid *grid = gridQuantity->grid;
+	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
+
+	if(nDims == 3){
+		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+					nGPoints[0], nGPoints[1], nGPoints[2]);
+		//Cycles trough and prints the grid (not optimized)
+		int p;
+		for(int l = 0; l < nGPoints[2]; l++){
+			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
+			for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
+				for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+					p = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
+					fMsg(ini,"parsedump", "%5d", p);
+				}
+				fMsg(ini,"parsedump", "\n\n");
+			}
+		}
+	} else if(nDims==2) {
+		fMsg(ini,"parsedump", "\t\t 2D grid: (%dx%d): \n \n",
+					nGPoints[0], nGPoints[1]);
+		int p;
+		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
+			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+				p = j*nGPointsProd[0] + k*nGPointsProd[1];
+				fMsg(ini,"parsedump", "%5d", p);
+			}
+			fMsg(ini,"parsedump", "\n\n");
+		}
+
+	}
+}
+
 void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	Grid *grid = gridQuantity->grid;
@@ -206,7 +286,6 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 	int nDims = grid->nDims;
 
 	msg(STATUS|ONCE, "Dumps grid to parsefile");
-
 	if(nDims == 3){
 		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
 		 			nGPoints[0], nGPoints[1], nGPoints[2]);

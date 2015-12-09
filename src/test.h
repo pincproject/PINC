@@ -52,7 +52,12 @@ void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo)
 /**
  * Short testing routine of Gauss-Seidel RB algorithm
  */
-void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo);
+void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,MpiInfo *mpiInfo);
+
+void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+ 					MpiInfo *mpiInfo);
+
+void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
 
 
 /**

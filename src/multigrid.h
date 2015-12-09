@@ -30,10 +30,12 @@
     int nLevels;         			///< #Grid levels
     int nCycles;         			///< Multigrid cycles we want to run
 
-    void (*coarseSolv)(void);	///< Function pointer to a Coarse Grid Solver function
-    void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
-    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
- } Multigrid;
+    void (*coarseSolv)(GridQuantity *phi, const GridQuantity *rho);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(GridQuantity *phi, const GridQuantity *rho);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(GridQuantity *phi, const GridQuantity *rho);	///< Function pointer to a Pre Smooth function
+	void (*restrictor)(GridQuantity *fine, GridQuantity *coarse);	///< Function pointer to restrictor
+	void (*prolongator)(GridQuantity *fine, GridQuantity *coarse);	///< Function pointer to prolongator
+} Multigrid;
 
 Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
 
@@ -46,10 +48,14 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
   * Variables freed: gridQuantity [1->end]
   *
   */
- void freeMultigrid(Multigrid *multigrid);
+void freeMultigrid(Multigrid *multigrid);
 
 
- void gaussSeidel(void);
- void jacobian(void);
+void gaussSeidel(GridQuantity *phi, const GridQuantity *rho);
+void jacobian(GridQuantity *phi, const GridQuantity *rho);
+
+//Restriction and prolongators
+void halfWeightRestrict(GridQuantity *fine, GridQuantity *coarse);
+void bilinearProlong(GridQuantity *fine, GridQuantity *coarse);
 
  #endif // MULTIGRID_H
