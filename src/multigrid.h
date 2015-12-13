@@ -50,6 +50,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
   */
 void freeMultigrid(Multigrid *multigrid);
 
+void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi);
 
 void gaussSeidel(GridQuantity *phi, const GridQuantity *rho);
 void jacobian(GridQuantity *phi, const GridQuantity *rho);

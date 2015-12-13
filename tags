@@ -643,7 +643,7 @@ average_current	src/old/dustg.c	/^void average_current(void)$/;"	f
 average_current	src/old/triang/dustg.c	/^void average_current(void)$/;"	f
 beam	src/old/const.h	45;"	d
 beam	src/old/triang/const.h	45;"	d
-bilinearProlong	src/multigrid.c	/^void bilinearProlong(GridQuantity *fine, GridQuantity *coarse){$/;"	f
+bilinearProlong	src/multigrid.c	/^void bilinearProlong(GridQuantity *f, GridQuantity *c){$/;"	f
 blockcounts	src/old/const.h	/^int blockcounts[12];$/;"	v
 blockcounts	src/old/triang/const.h	/^int blockcounts[12];$/;"	v
 bp	src/old/const.h	/^double *ap,*bp,*x1p,*maxx, *minx,*maxy,*miny;$/;"	v
@@ -1263,7 +1263,7 @@ h5	src/pinc.h	/^	hid_t h5;			\/\/\/< HDF5 file handler$/;"	m	struct:__anon1
 h5	src/pinc.h	/^	hid_t h5;			\/\/\/< HDF5 file handler$/;"	m	struct:__anon4
 h5FileSpace	src/pinc.h	/^	hid_t h5FileSpace;	\/\/\/< HDF5 file space description$/;"	m	struct:__anon4
 h5MemSpace	src/pinc.h	/^	hid_t h5MemSpace;	\/\/\/< HDF5 memory space description$/;"	m	struct:__anon4
-halfWeightRestrict	src/multigrid.c	/^void halfWeightRestrict(GridQuantity *fine, GridQuantity *coarse){$/;"	f
+halfWeightRestrict	src/multigrid.c	/^void halfWeightRestrict(GridQuantity *f, GridQuantity *c){$/;"	f
 hash	lib/iniparser/src/dictionary.h	/^    unsigned     *  hash ;  \/** List of hash values for keys *\/$/;"	m	struct:_dictionary_
 hi	src/old/triang/triangulate.h	/^  point_t hi, lo;		\/* max\/min y-values *\/$/;"	m	struct:__anon10
 history	src/old/const.h	/^FILE * history;$/;"	v
@@ -1487,28 +1487,32 @@ l00050	doc/html/test_8h_source.html	/^<div class="line"><a name="l00050"><\/a><s
 l00051	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00051"><\/a><span class="lineno">   51<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a731d4fee658e2ea4fb2d7dcd6e1b9d9d">freeMultigrid<\/a>(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multigrid);<\/div>$/;"	a
 l00051	doc/html/test_8h_source.html	/^<div class="line"><a name="l00051"><\/a><span class="lineno">   51<\/span>&#160;<\/div>$/;"	a
 l00052	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00052"><\/a><span class="lineno">   52<\/span>&#160;<\/div>$/;"	a
-l00053	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00053"><\/a><span class="lineno">   53<\/span>&#160;<\/div>$/;"	a
-l00054	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *rho);<\/div>$/;"	a
-l00055	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<span class="keywordtype">void<\/span> jacobian(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *rho);<\/div>$/;"	a
+l00053	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00053"><\/a><span class="lineno">   53<\/span>&#160;<span class="keywordtype">void<\/span> linearMGSolv(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi);<\/div>$/;"	a
+l00054	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<\/div>$/;"	a
+l00055	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *rho);<\/div>$/;"	a
 l00055	doc/html/test_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#abee6f4d0cf55b55d719144d8de249404">testGaussSeidel<\/a>(dictionary *ini, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi,<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00056	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<\/div>$/;"	a
+l00056	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<span class="keywordtype">void<\/span> jacobian(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *rho);<\/div>$/;"	a
 l00056	doc/html/test_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<\/div>$/;"	a
-l00057	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<span class="comment">\/\/Restriction and prolongators<\/span><\/div>$/;"	a
+l00057	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<\/div>$/;"	a
 l00057	doc/html/test_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<span class="keywordtype">void<\/span> testRestriction(dictionary *ini, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi,<\/div>$/;"	a
-l00058	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno">   58<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *fine, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *coarse);<\/div>$/;"	a
+l00058	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno">   58<\/span>&#160;<span class="comment">\/\/Restriction and prolongators<\/span><\/div>$/;"	a
 l00058	doc/html/test_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno">   58<\/span>&#160;                    <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00059	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *fine, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *coarse);<\/div>$/;"	a
+l00059	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *fine, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *coarse);<\/div>$/;"	a
 l00059	doc/html/test_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<\/div>$/;"	a
-l00060	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<\/div>$/;"	a
-l00060	doc/html/test_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<span class="keywordtype">void<\/span> dumpGridIndexes(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
-l00061	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
+l00060	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong(<a class="code" href="structGridQuantity.html">GridQuantity<\/a> *fine, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *coarse);<\/div>$/;"	a
+l00060	doc/html/test_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<span class="keywordtype">void<\/span> testMultigrid(dictionary *ini, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi,<\/div>$/;"	a
+l00061	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;<\/div>$/;"	a
 l00061	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno"><a class="line" href="structPopulation.html">   61<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
-l00061	doc/html/test_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;<\/div>$/;"	a
+l00061	doc/html/test_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;                    <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00062	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno">   62<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
 l00062	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno"><a class="line" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">   62<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">pos<\/a>;        <\/div>$/;"	a
 l00062	doc/html/test_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno">   62<\/span>&#160;<\/div>$/;"	a
 l00063	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno"><a class="line" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">   63<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">vel<\/a>;        <\/div>$/;"	a
+l00063	doc/html/test_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno">   63<\/span>&#160;<span class="keywordtype">void<\/span> dumpGridIndexes(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
 l00064	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">   64<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a3775c44b29e855028bdfa6a8c6bf1762">energy<\/a>;     <\/div>$/;"	a
+l00064	doc/html/test_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno">   64<\/span>&#160;<\/div>$/;"	a
 l00065	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">   65<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a8474d8ebc9161b0c18ca17fc49f96c46">iStart<\/a>;   <\/div>$/;"	a
+l00065	doc/html/test_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno">   65<\/span>&#160;<\/div>$/;"	a
 l00066	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00066"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">   66<\/a><\/span>&#160;    <span class="keywordtype">long<\/span> <span class="keywordtype">int<\/span> *<a class="code" href="structPopulation.html#a9b5e4d60e84407c462d967f516c541c9">iStop<\/a>;    <\/div>$/;"	a
 l00067	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00067"><\/a><span class="lineno"><a class="line" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">   67<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#acc5395da85902afe8c67cbaec6df2946">q<\/a>;          <\/div>$/;"	a
 l00068	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00068"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">   68<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#a1c2a8e1845f47d1127ce6d2712764a49">m<\/a>;          <\/div>$/;"	a
@@ -1517,7 +1521,7 @@ l00070	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00070"><\/a><s
 l00071	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00071"><\/a><span class="lineno"><a class="line" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">   71<\/a><\/span>&#160;    hid_t <a class="code" href="structPopulation.html#a29dd75a601a40ab3842c3b871ef88bf9">h5<\/a>;           <\/div>$/;"	a
 l00072	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00072"><\/a><span class="lineno">   72<\/span>&#160;} <a class="code" href="structPopulation.html">Population<\/a>;<\/div>$/;"	a
 l00073	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00073"><\/a><span class="lineno">   73<\/span>&#160;<\/div>$/;"	a
-l00079	doc/html/test_8h_source.html	/^<div class="line"><a name="l00079"><\/a><span class="lineno">   79<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a92b8d534f9a206863e8b406694e7c716">dumpGrid<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
+l00082	doc/html/test_8h_source.html	/^<div class="line"><a name="l00082"><\/a><span class="lineno">   82<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a92b8d534f9a206863e8b406694e7c716">dumpGrid<\/a>(dictionary *ini, <a class="code" href="structGridQuantity.html">GridQuantity<\/a> *gridQuantity);<\/div>$/;"	a
 l00102	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00102"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html">  102<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
 l00103	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00103"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">  103<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#ab1570d8d5d3963d3452996713492f32a">mpiRank<\/a>;                <\/div>$/;"	a
 l00104	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00104"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">  104<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">mpiSize<\/a>;                <\/div>$/;"	a
@@ -1665,6 +1669,7 @@ letter_M	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="le
 letter_P	doc/html/classes.html	/^<\/td><td rowspan="2" valign="bottom"><a name="letter_P"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;P&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 letter_T	doc/html/classes.html	/^<\/td><td valign="top"><a class="el" href="structGridQuantity.html">GridQuantity<\/a>&#160;&#160;&#160;<\/td><td valign="top"><a class="el" href="structMultigrid.html">Multigrid<\/a>&#160;&#160;&#160;<\/td><td rowspan="2" valign="bottom"><a name="letter_T"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;T&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 line_status	lib/iniparser/src/iniparser.c	/^} line_status ;$/;"	t	typeref:enum:_line_status_	file:
+linearMGSolv	src/multigrid.c	/^void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){$/;"	f
 listGetNElements	src/io.c	/^static int listGetNElements(const char* list){$/;"	f	file:
 listToStrArr	src/io.c	/^static char** listToStrArr(const char* restrict list){$/;"	f	file:
 llb	src/old/const.h	/^double llb[S], lzet[S], lv0[S]; \/\/lower bound, partition funct, initial velocity$/;"	v
@@ -2228,6 +2233,7 @@ testBoundarySendRecieve	src/test.c	/^void testBoundarySendRecieve(dictionary *in
 testGaussSeidel	src/test.c	/^void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,$/;"	f
 testGetSlice	src/test.c	/^void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){$/;"	f
 testGridAndMGStructs	src/test.c	/^void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){$/;"	f
+testMultigrid	src/test.c	/^void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,$/;"	f
 testRestriction	src/test.c	/^void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,$/;"	f
 testSwapHalo	src/test.c	/^void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){$/;"	f
 testowy	src/old/const.h	/^FILE *testowy;$/;"	v

@@ -43,13 +43,13 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
     if(!strcmp(coarseSolverName,"gaussSeidel")){
     	multigrid->coarseSolv = &gaussSeidel;
     } else {
-    	msg(ERROR, "No Coarse Grid Solver algorithm specified");
+    	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
 
     //Free!
 
 //    printf("If this is the last I say, I'm bad and segfaults at freeing stuff \n");
-    // free(coarseSolverName);
+    // free(cSolverName);
     // free(postSmoothName);
     // free(preSmoothName);
 
@@ -81,7 +81,7 @@ GridQuantity **allocSubGrids(const dictionary *ini, GridQuantity *gridQuantity,
 	int nDims;
 	int nBoundaries;
 
-	//Set first grid to point to fine grid
+	//Set first grid to point to f grid
 	gridQuantities[0] = gridQuantity;
 
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
@@ -233,40 +233,123 @@ void gaussSeidel(GridQuantity *phi, const GridQuantity *rho){
 	return;
 }
 
-void halfWeightRestrict(GridQuantity *fine, GridQuantity *coarse){
+void halfWeightRestrict(GridQuantity *f, GridQuantity *c){
 	msg(STATUS, "Hello from restrictor");
 
-	//Load fine grid
-	double *fineVal = fine->val;
-	Grid *fineGrid = fine->grid;
-	long int *fineProd = fineGrid->nGPointsProd;
+	//Load f grid
+	double *fVal = f->val;
+	Grid *fGrid = f->grid;
+	long int *fProd = fGrid->nGPointsProd;
 
-	//Load coarse grid
-	double *coarseVal = coarse->val;
-	Grid *coarseGrid = coarse->grid;
-	int *coarseNTGPoints = coarseGrid->nTGPoints;
-	long int *coarseProd = coarseGrid->nGPointsProd;
+	//Load c grid
+	double *cVal = c->val;
+	Grid *cGrid = c->grid;
+	int *cNTGPoints = cGrid->nTGPoints;
+	long int *cProd = cGrid->nGPointsProd;
 
-	//Temp variables
-	long int fineInd;
-	long int coarseInd;
+	//Coarse and fine indexes
+	long int cInd;
+	long int fInd;
 
-	//Cycle through the coarse grid
-	for(int k = 1; k < coarseNTGPoints[1] + 1; k++){
-		coarseInd = coarseProd[0] + k*coarseProd[1];
-		fineInd = fineProd[0] + k*fineProd[1];
-		for(int j = 1; j < coarseNTGPoints[0] + 1; j++){
-			msg(STATUS, "coarseInd: %d \t fineInd: %d", coarseInd, fineInd);
-			coarseInd++;
-			fineInd += 2;
+	int kF = 1;
+	int jF = 1;
+
+	//Cycle through the c grid
+	//Spagetti code (To be improved)
+	for(int kC=1; kC < cNTGPoints[1]+1; kC++){
+		for(int jC=1; jC < cNTGPoints[0]+1;jC++){
+			cInd = jC*cProd[0] + kC*cProd[1];
+			fInd = jF*fProd[0] + kF*fProd[1];
+			cVal[cInd] = 0.125*(4*fVal[fInd] + fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]
+ 						+ fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
+			jF += 2;
 		}
+		kF += 2;
+		jF = 1;
 	}
+
 
 
 	return;
 }
 
-void bilinearProlong(GridQuantity *fine, GridQuantity *coarse){
-	msg(STATUS, "Hello from prolongator");
+void bilinearProlong(GridQuantity *f, GridQuantity *c){
+
+	//Load f grid
+	double *fVal = f->val;
+	Grid *fGrid = f->grid;
+	long int *fProd = fGrid->nGPointsProd;
+	int *fNTGPoints = fGrid->nTGPoints;
+
+
+	//Load c grid
+	double *cVal = c->val;
+	Grid *cGrid = c->grid;
+	long int *cProd = cGrid->nGPointsProd;
+	int *cNTGPoints = cGrid->nTGPoints;
+
+	//Coarse and fine indexes
+	long int cInd;
+	long int fInd;
+
+	int kF = 1;
+	int jF = 1;
+
+	//Cycle through the c grid, and copy in onto corresponding fGrid points
+	//Spagetti code (To be improved)
+	for(int kC=1; kC < cNTGPoints[1]+1; kC++){
+		for(int jC=1; jC < cNTGPoints[0]+1;jC++){
+			cInd = jC*cProd[0] + kC*cProd[1];
+			fInd = jF*fProd[0] + kF*fProd[1];
+			fVal[fInd] = cVal[cInd];
+			jF += 2;
+		}
+		kF += 2;
+		jF = 1;
+	}
+
+	//Odd numbered columns, interpolating vertically
+	for(int kF=1; kF<fNTGPoints[1]+1;kF+=2){
+		for(int jF=2; jF<fNTGPoints[0]+1;jF+=2){
+				fInd = jF*fProd[0]+kF*fProd[1];
+				fVal[fInd] = 0.5*(fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]);
+		}
+	}
+
+	//Even numbered columns, interpolating horizontally
+	for(int kF=2; kF<fNTGPoints[1]+1;kF+=2){
+		for(int jF=1; jF<fNTGPoints[0]+1;jF+=2){
+				fInd = jF*fProd[0]+kF*fProd[1];
+				fVal[fInd] = 0.5*(fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
+		}
+	}
+
+
+
+	return;
+}
+
+void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
+
+	int nCycles = multiRho->nCycles;
+	int nLevels = multiRho->nLevels;
+
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	GridQuantity *phi = multiPhi->gridQuantities[0];
+
+	// msg(STATUS, "%d", nLevels);
+
+	for(int c = 0; c < nCycles; c++)
+		for(int l = 0; l < nLevels; l++){
+			if(l==nLevels-1) multiRho->coarseSolv(rho, phi);	//Coarse grid
+			else { //MG Rountine
+				multiRho->preSmooth(rho,phi);
+				//Defect calculation here
+				//Restrict defect
+				//Set inital guess
+				//Call itself
+			}
+		}
+
 	return;
 }

@@ -124,24 +124,51 @@ void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 	int ind = 0;
 	for(int j = 0; j < nGPoints[0]; j++){
 		for (int k = 0; k<nGPoints[1]; k++) {
-			rhoVal[ind] = (double) (j + 2*k);
+			if(k < 3)rhoVal[ind] = (double) 1;
 			ind++;
 		}
 	}
-	//
-	dumpGridIndexes(ini, multiRho->gridQuantities[0]);
-	dumpGridIndexes(ini, multiRho->gridQuantities[1]);
 
-	// dumpGrid(ini, multiRho->gridQuantities[0]);
+	//Load fine and coarse Grid
+	GridQuantity *fRho = multiRho->gridQuantities[0];
+	GridQuantity *cRho = multiRho->gridQuantities[1];
 
-	dumpGrid(ini, multiRho->gridQuantities[1]);
+	// dumpGridIndexes(ini, fRho);
+	// dumpGridIndexes(ini, cRho);
+	dumpGrid(ini, fRho);
+
 	multiRho->restrictor(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
+	multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
+
+	dumpGrid(ini, fRho);
+
 
 	// multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
 
 	return;
 }
 
+void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
+
+	//Load
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	Grid *grid = rho->grid;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
+
+	//Load GridQuantity
+	double *rhoVal = rho->val;
+
+	for(int ind = 0; ind < nGPointsProd[nDims]; ind++) rhoVal[ind] = 1.;
+
+	dumpGrid(ini, rho);
+
+	linearMGSolv(multiRho,multiPhi);
+
+
+	return;
+}
 
 void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
 

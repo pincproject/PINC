@@ -57,6 +57,9 @@ void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,M
 void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
  					MpiInfo *mpiInfo);
 
+void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo);
+
 void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
 
 
