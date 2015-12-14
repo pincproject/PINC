@@ -21,8 +21,8 @@ LDIR	= lib
 DDIR	= doc
 
 
-HEAD_	= pinc.h multigrid.h test.h
-SRC_	= main.c io.c aux.c population.c grid.c multigrid.c test.c
+HEAD_	= pinc.h multigrid.h pusher.h test.h
+SRC_	= main.c io.c aux.c population.c grid.c multigrid.c pusher.c test.c
 
 
 OBJ_	= $(SRC_:.c=.o)

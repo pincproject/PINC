@@ -80,7 +80,7 @@ Population *allocPopulation(const dictionary *ini){
 
 	iStart[0] = 0;
 	for(int s=1;s<nSpecies+1;s++) iStart[s]=iStart[s-1]+nAlloc[s-1];
-	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]-1; // No particles yet, set stop before iStart.
+	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]; // No particles yet
 
 	free(nAlloc);
 	free(nAllocTotal);
@@ -134,7 +134,7 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
 
 		// Start on first particle of this specie
 		long int iStart = pop->iStart[s];
-		long int iStop = iStart-1;
+		long int iStop = iStart;
 		double *pos = &pop->pos[iStart*nDims];
 
 		// Iterate through all particles to be generated
@@ -156,9 +156,9 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
 
 		}
 
-		if(iStop>=pop->iStart[s+1]){
+		if(iStop>pop->iStart[s+1]){
 			int allocated = pop->iStart[s+1]-iStart;
-			int generated = iStop-iStart+1;
+			int generated = iStop-iStart;
 			msg(ERROR,"allocated only %i particles of specie %i per node but %i generated",allocated,s,generated);
 		}
 
@@ -191,7 +191,7 @@ void posDebug(const dictionary *ini, Population *pop){
 
 	for(int s=0;s<nSpecies;s++){
 		long int iStart = pop->iStart[s];
-		pop->iStop[s] = iStart + nParticles[s] - 1;
+		pop->iStop[s] = iStart + nParticles[s];
 		double *pos = &pop->pos[iStart*nDims];
 
 		for(long int i=0;i<nParticles[s];i++){
@@ -222,7 +222,7 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 		double velTh = sqrt(temp[s]/temp[0]);
 
-		for(long int i=iStart;i<=iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
@@ -338,7 +338,7 @@ void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, dou
 
 	for(int s=0;s<nSpecies;s++){
 
-		long int nParticles = pop->iStop[s] - pop->iStart[s] + 1;
+		long int nParticles = pop->iStop[s] - pop->iStart[s];
 		MPI_Allgather(&nParticles,1,MPI_LONG,&offsetAllSubdomains[1],1,MPI_LONG,MPI_COMM_WORLD);
 
 		// Take cumulative sum to actually get offset
@@ -411,7 +411,7 @@ void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		for(long int i=iStart;i<=iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
 			double *pos = &pop->pos[i*nDims];
 			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
@@ -430,7 +430,7 @@ void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		for(long int i=iStart;i<=iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
 			double *pos = &pop->pos[i*nDims];
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
