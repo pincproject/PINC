@@ -458,6 +458,8 @@ void freeGrid(Grid *grid);
  *
  * Remember to free using freeGridQuantity().
  *
+ *
+ * NB! Assumes 1 ghost point on all edges for now.
  * @see Grid
  * @see gridQuantity
  */
@@ -502,46 +504,6 @@ void freeMpiInfo(MpiInfo *mpiInfo);
  */
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
 
-/******************************************************************************
- *		DEFINED IN MULTIGRID.H
- *****************************************************************************/
-
-/**
-  * @brief Contains the grids needed in a multigrid solver, as well as other specifications
-  * @param ini 			Input file, contains specification for the run
-  * @param gridQuantity  Grid with quantities and grid specifications as a memmber
-  *
-  * The finest grid, grid 0, links to the grid used in the rest of the program, the other grids
-  * in the grid array is coarser grids used in the
-  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for now the only
-  * options are Gauss-Seidel Red-Black (gaussSeidel). More TBD.
-  */
-typedef struct {
-    GridQuantity **gridQuantities;   ///< Array of Grid structs of decreasing coarseness
-    int nLevels;         			///< #Grid levels
-    int nCycles;         			///< Multigrid cycles we want to run
-
-    void (*coarseSolv)(void);	///< Function pointer to a Coarse Grid Solver function
-    void (*postSmooth)(void);	///< Function pointer to a Post Smooth function
-    void (*preSmooth)(void);		///< Function pointer to a Pre Smooth function
-} Multigrid;
-
-Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
-
- /**
-  * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
-  * @param Multigrid *multigrid
-  *
-  * Since the finest grid is allocated seperately and used on it's own without
-  * the multigrid struct, it is not freed in this destructor.
-  * Variables freed: gridQuantity [1->end]
-  *
-  */
- void freeMultigrid(Multigrid *multigrid);
-
-
- void gaussSeidel(void);
- void jacobian(void);
 
 
 /******************************************************************************

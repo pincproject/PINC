@@ -17,6 +17,7 @@
 #include <math.h>
 #include <mpi.h>
 #include "pinc.h"
+#include "multigrid.h"
 
 /******************************************************************************
  * 				Local functions
@@ -42,18 +43,36 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
     if(!strcmp(coarseSolverName,"gaussSeidel")){
     	multigrid->coarseSolv = &gaussSeidel;
     } else {
-    	msg(ERROR, "No Coarse Grid Solver algorithm specified");
+    	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
 
     //Free!
 
 //    printf("If this is the last I say, I'm bad and segfaults at freeing stuff \n");
-    // free(coarseSolverName);
+    // free(cSolverName);
     // free(postSmoothName);
     // free(preSmoothName);
 
 	return;
 }
+
+void setRestrictProlong(const dictionary *ini,Multigrid *multigrid){
+	char *restrictor = iniparser_getstring((dictionary*)ini, "multigrid:restrictor", "\0");
+	char *prolongator = iniparser_getstring((dictionary*)ini, "multigrid:prolongator", "\0");
+
+	if(!strcmp(restrictor, "halfWeight")){
+		multigrid->restrictor = &halfWeightRestrict;
+	} else {
+		msg(ERROR, "No restrict stencil specified");
+	}
+	if(!strcmp(prolongator, "bilinear")){
+		multigrid->prolongator = &bilinearProlong;
+	} else {
+		msg(ERROR, "No prolongation stencil specified");
+	}
+
+}
+
 
 GridQuantity **allocSubGrids(const dictionary *ini, GridQuantity *gridQuantity,
 							const int nLevels){
@@ -62,12 +81,13 @@ GridQuantity **allocSubGrids(const dictionary *ini, GridQuantity *gridQuantity,
 	int nDims;
 	int nBoundaries;
 
-	//Set first grid to point to fine grid
+	//Set first grid to point to f grid
 	gridQuantities[0] = gridQuantity;
 
 	int *nTGPoints = iniGetIntArr(ini, "grid:nTGPoints", &nDims);
 	int *nGhosts = iniGetIntArr(ini, "grid:nGhosts", &nBoundaries);
 	int nValues = gridQuantity->nValues;
+
 	for(int q = 1; q < nLevels; q++){
 
 		//The subgrid needs half the grid points
@@ -83,13 +103,7 @@ GridQuantity **allocSubGrids(const dictionary *ini, GridQuantity *gridQuantity,
 		}
 
 		//Cumulative products
-		long int *nGPointsProd = malloc (nDims*sizeof(int));
-
-		int tempPoints = 1;
-		for(int d = 0; d < nDims; d++){
-			nGPointsProd[d] = tempPoints*nGPoints[d];
-			tempPoints = nGPointsProd[d];
-		}
+		long int *nGPointsProd = longIntArrCumProd(nGPoints,nDims);
 
 		//Assign to grid
 		Grid *grid = malloc(sizeof(Grid));
@@ -98,7 +112,8 @@ GridQuantity **allocSubGrids(const dictionary *ini, GridQuantity *gridQuantity,
 		grid->nGPoints = nGPoints;
 		grid->nGPointsProd = nGPointsProd;
 		grid->nGhosts = nGhosts;
-		//The rest picks the information the fine grid
+		grid->nTGPoints = nTGPoints;
+		//Creates GridQuantity
 		GridQuantity *gridQuantity = allocGridQuantity(ini, grid, nValues);
 
 		gridQuantities[q] = gridQuantity;
@@ -120,22 +135,23 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 	int nLevels = iniparser_getint((dictionary *) ini, "multigrid:mgLevels", 0);
 	int nCycles = iniparser_getint((dictionary *) ini, "multigrid:mgCycles", 0);
 
+	//Load data
+	int nDims = gridQuantity->grid->nDims;
+	int *nTGPoints = gridQuantity->grid->nTGPoints;
+
 	//Sanity checks
-	if(!nLevels){
-		msg(ERROR, "Multi Grid levels is 0, direct solver not implemented yet \n");
+	if(!nLevels) msg(ERROR, "Multi Grid levels is 0, direct solver not implemented yet \n");
+
+
+	if(!nCycles) msg(ERROR, "MG cycles is 0 \n");
+
+
+	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
+	for(int d = 0; d < nDims; d++){
+		if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
+			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
+		}
 	}
-
-	if(!nCycles){
-		msg(ERROR, "MG cycles is 0 \n");
-	}
-
-
-	// // Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
-	// for(int d = 0; d < nDims; d++){
-	// 	if(nTGPoints[d] % (int) pow(2, nLevels)){ //Sloppy and wrong
-	// 		msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
-	// 	}
-	// }
 
 	GridQuantity **gridQuantities = allocSubGrids(ini, gridQuantity, nLevels);
 
@@ -148,6 +164,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
     //Setting the algorithms to be used, pointer functions
 	setSolvers(ini, multigrid);
+	setRestrictProlong(ini, multigrid);
 
   	return multigrid;
 
@@ -169,13 +186,170 @@ void freeMultigrid(Multigrid *multigrid){
 }
 
 
-void jacobian(void){
+void jacobian(GridQuantity *phi,const GridQuantity *rho){
 	printf("Hello from Jacobian \n");
 	return;
 }
 
-void gaussSeidel(void){
+void gaussSeidel(GridQuantity *phi, const GridQuantity *rho){
 
-	printf("Hello from Gauss Seidel\n");
+	//Common variables
+	Grid *grid = phi->grid;
+	int *nTGPoints = grid->nTGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	long int ind = nGPointsProd[1] + 1;
+	int j;
+	//Red Pass
+	// msg(STATUS, "Red indexes = ");
+	for(int k = 1; k < nTGPoints[1] + 1; k ++){
+		if(k%2) j = 1; else j = 2;
+		for(; j < nTGPoints[0] + 1; j += 2){
+			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+			phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
+ 						phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
+						rhoVal[ind])*0.25;
+			// msg(STATUS, "%d", ind);
+		}
+	}
+
+	//Black Pass
+	// msg(STATUS, "Black indexes = ");
+	for(int k = 1; k < nTGPoints[1] + 1; k ++){
+		if(k%2) j = 2; else j = 1;
+		for(; j < nTGPoints[0] + 1; j += 2){
+			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+			phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
+ 						phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
+						rhoVal[ind])*0.25;
+			// msg(STATUS, "%d", ind);
+		}
+	}
+
+	return;
+}
+
+void halfWeightRestrict(GridQuantity *f, GridQuantity *c){
+	msg(STATUS, "Hello from restrictor");
+
+	//Load f grid
+	double *fVal = f->val;
+	Grid *fGrid = f->grid;
+	long int *fProd = fGrid->nGPointsProd;
+
+	//Load c grid
+	double *cVal = c->val;
+	Grid *cGrid = c->grid;
+	int *cNTGPoints = cGrid->nTGPoints;
+	long int *cProd = cGrid->nGPointsProd;
+
+	//Coarse and fine indexes
+	long int cInd;
+	long int fInd;
+
+	int kF = 1;
+	int jF = 1;
+
+	//Cycle through the c grid
+	//Spagetti code (To be improved)
+	for(int kC=1; kC < cNTGPoints[1]+1; kC++){
+		for(int jC=1; jC < cNTGPoints[0]+1;jC++){
+			cInd = jC*cProd[0] + kC*cProd[1];
+			fInd = jF*fProd[0] + kF*fProd[1];
+			cVal[cInd] = 0.125*(4*fVal[fInd] + fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]
+ 						+ fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
+			jF += 2;
+		}
+		kF += 2;
+		jF = 1;
+	}
+
+
+
+	return;
+}
+
+void bilinearProlong(GridQuantity *f, GridQuantity *c){
+
+	//Load f grid
+	double *fVal = f->val;
+	Grid *fGrid = f->grid;
+	long int *fProd = fGrid->nGPointsProd;
+	int *fNTGPoints = fGrid->nTGPoints;
+
+
+	//Load c grid
+	double *cVal = c->val;
+	Grid *cGrid = c->grid;
+	long int *cProd = cGrid->nGPointsProd;
+	int *cNTGPoints = cGrid->nTGPoints;
+
+	//Coarse and fine indexes
+	long int cInd;
+	long int fInd;
+
+	int kF = 1;
+	int jF = 1;
+
+	//Cycle through the c grid, and copy in onto corresponding fGrid points
+	//Spagetti code (To be improved)
+	for(int kC=1; kC < cNTGPoints[1]+1; kC++){
+		for(int jC=1; jC < cNTGPoints[0]+1;jC++){
+			cInd = jC*cProd[0] + kC*cProd[1];
+			fInd = jF*fProd[0] + kF*fProd[1];
+			fVal[fInd] = cVal[cInd];
+			jF += 2;
+		}
+		kF += 2;
+		jF = 1;
+	}
+
+	//Odd numbered columns, interpolating vertically
+	for(int kF=1; kF<fNTGPoints[1]+1;kF+=2){
+		for(int jF=2; jF<fNTGPoints[0]+1;jF+=2){
+				fInd = jF*fProd[0]+kF*fProd[1];
+				fVal[fInd] = 0.5*(fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]);
+		}
+	}
+
+	//Even numbered columns, interpolating horizontally
+	for(int kF=2; kF<fNTGPoints[1]+1;kF+=2){
+		for(int jF=1; jF<fNTGPoints[0]+1;jF+=2){
+				fInd = jF*fProd[0]+kF*fProd[1];
+				fVal[fInd] = 0.5*(fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
+		}
+	}
+
+
+
+	return;
+}
+
+void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
+
+	int nCycles = multiRho->nCycles;
+	int nLevels = multiRho->nLevels;
+
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	GridQuantity *phi = multiPhi->gridQuantities[0];
+
+	// msg(STATUS, "%d", nLevels);
+
+	for(int c = 0; c < nCycles; c++)
+		for(int l = 0; l < nLevels; l++){
+			if(l==nLevels-1) multiRho->coarseSolv(rho, phi);	//Coarse grid
+			else { //MG Rountine
+				multiRho->preSmooth(rho,phi);
+				//Defect calculation here
+				//Restrict defect
+				//Set inital guess
+				//Call itself
+			}
+		}
+
 	return;
 }

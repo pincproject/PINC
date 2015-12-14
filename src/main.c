@@ -30,9 +30,11 @@ int main(int argc, char *argv[]){
 	MPI_Init(&argc,&argv);
 	msg(STATUS|ONCE,"PINC started.");
 	MPI_Barrier(MPI_COMM_WORLD);
+
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+
 	dictionary *ini = iniOpen(argc,argv);
 	Population *pop = allocPopulation(ini);
 	Grid *grid = allocGrid(ini);
@@ -40,10 +42,10 @@ int main(int argc, char *argv[]){
 	MpiInfo *mpiInfo = allocMpiInfo(ini);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
-
 	/*
 	 *	TEST AREA
 	 */
+
 
 	posUniform(ini,pop,mpiInfo,rng);
 
