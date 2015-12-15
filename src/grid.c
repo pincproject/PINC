@@ -261,7 +261,7 @@ void secondDerivate(const GridQuantity *rho, GridQuantity *phi){
 		}
 	} else if( nDims == 3){
 		for(int j = nGhosts[0]; j < nGhosts[0] + nTGPoints[0]; j++){
-			for(int k = nGhosts[1]; k < nGhosts[1] + nTGPoints[1]; k++){
+			for(int k = nGhosts[1]; k <  nGhosts[1] + nTGPoints[1]; k++){
 				for(int l = nGhosts[2]; l < nGhosts[2] + nTGPoints[2]; l++){
 					ind = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
 					phiVal[ind] = -2.*nDims*rhoVal[ind];
