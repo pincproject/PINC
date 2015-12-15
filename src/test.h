@@ -60,6 +60,8 @@ void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 					MpiInfo *mpiInfo);
 
+void testDerivatives(dictionary *ini, GridQuantity *rho, GridQuantity *phi);
+
 void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
 
 

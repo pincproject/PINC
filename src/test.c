@@ -148,6 +148,35 @@ void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 	return;
 }
 
+void testDerivatives(dictionary *ini, GridQuantity *rho, GridQuantity *phi){
+
+	//Load
+	Grid *grid = rho->grid;
+	int *nGPoints = grid->nGPoints;
+	int nDims = grid->nDims;
+	double *rhoVal = rho->val;
+
+	int ind = 0;
+	for(int j = 0; j < nGPoints[0]; j++){
+		// angle = 0;
+		for (int k = 0; k<nGPoints[1]; k++) {
+			// if(k>(0.5*nGPoints[1])) angle = 1.;
+			rhoVal[ind] = (double) (j*j + 2*k);
+			ind++;
+		}
+	}
+	dumpGridIndexes(ini, rho);
+
+	dumpGrid(ini, rho);
+
+	secondDerivate(rho,phi);
+
+	dumpGrid(ini, phi);
+
+
+	return;
+}
+
 void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 					MpiInfo *mpiInfo){
 
@@ -164,7 +193,7 @@ void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 
 	dumpGrid(ini, rho);
 
-	linearMGSolv(multiRho,multiPhi);
+	// linearMGSolv(multiRho,multiPhi);
 
 
 	return;
@@ -335,7 +364,7 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
 			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
 				p = j*nGPointsProd[0] + k*nGPointsProd[1];
-				fMsg(ini,"parsedump", "%5d", (int) gridQuantity->val[p]);
+				fMsg(ini,"parsedump", "%6d", (int) gridQuantity->val[p]);
 			}
 			fMsg(ini,"parsedump", "\n\n");
 		}

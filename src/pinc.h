@@ -432,6 +432,23 @@ void freeMpiInfo(MpiInfo *mpiInfo);
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
 
 
+/**
+ * @brief Performs a central space finite difference on a grid
+ * @param 	scalar 	Value to do the finite differencing on
+ * @return	field	Field returned after derivating
+ */
+
+void firstDerivative(const GridQuantity *scalar, GridQuantity *field);
+
+/**
+ * @brief Performs a 2nd order central space finite difference on a grid
+ * @param 	rho 	Value to do the finite differencing on
+ * @return	phi		Field returned after derivating
+ *
+ *
+ */
+void secondDerivate(const GridQuantity *rho, GridQuantity *phi);
+
 
 /******************************************************************************
  * DEFINED IN IO.C

@@ -329,6 +329,8 @@ void bilinearProlong(GridQuantity *f, GridQuantity *c){
 	return;
 }
 
+
+
 void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
 
 	int nCycles = multiRho->nCycles;

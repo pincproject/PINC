@@ -226,6 +226,58 @@ static int *getSubdomain(const dictionary *ini){
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
+void firstDerivative(const GridQuantity *scalar, GridQuantity *field){
+
+	//TBD (Waiting untill new GridQuantity structs)
+
+	return;
+}
+
+void secondDerivate(const GridQuantity *rho, GridQuantity *phi){
+	//TBD
+	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
+
+	//Load
+	Grid *grid = rho->grid;
+	int nDims = grid->nDims;
+	int *nTGPoints = grid->nTGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int *nGhosts = grid->nGhosts;
+
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	int ind;
+
+	if(nDims == 2){
+		for(int j = nGhosts[0]; j < nGhosts[0] + nTGPoints[0]; j++){
+			for(int k = nGhosts[1]; k < nGhosts[1] + nTGPoints[1]; k++){
+				ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+				phiVal[ind] = -2.*nDims*rhoVal[ind];
+				for(int d = 0; d < nDims ; d++)
+					phiVal[ind] += rhoVal[ind + nGPointsProd[d]] +
+								rhoVal[ind - nGPointsProd[d]];
+			}
+		}
+	} else if( nDims == 3){
+		for(int j = nGhosts[0]; j < nGhosts[0] + nTGPoints[0]; j++){
+			for(int k = nGhosts[1]; k < nGhosts[1] + nTGPoints[1]; k++){
+				for(int l = nGhosts[2]; l < nGhosts[2] + nTGPoints[2]; l++){
+					ind = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
+					phiVal[ind] = -2.*nDims*rhoVal[ind];
+					for(int d = 0; d < nDims ; d++)
+						phiVal[ind] += rhoVal[ind + nGPointsProd[d]] +
+									rhoVal[ind - nGPointsProd[d]];
+				}
+			}
+		}
+	} else msg(ERROR, "Derivatives only work for 2D and 3D");
+
+	return;
+}
+
+
+
 void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
