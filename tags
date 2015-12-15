@@ -55,7 +55,9 @@ COPT	makefile	/^COPT	= -O3 # Optimization$/;"	m
 COPT	proof of concept/get boundary/challenge/makefile	/^COPT = -O3$/;"	m
 COPT	proof of concept/get boundary/makefile	/^COPT = -O3$/;"	m
 COPT	proof of concept/get slice/makefile	/^COPT = -O3$/;"	m
+COPT	proof of concept/interpolate/makefile	/^COPT = -O3$/;"	m
 COPT	proof of concept/tail call recursion/makefile	/^COPT	= -O3$/;"	m
+COPT	proof of concept/vectorfield/makefile	/^COPT = -O3$/;"	m
 CPP_CLI_SUPPORT	doc/doxygen/doxyfile.mk	/^CPP_CLI_SUPPORT        = NO$/;"	m
 CREATE_SUBDIRS	doc/doxygen/doxyfile.mk	/^CREATE_SUBDIRS         = NO$/;"	m
 CROSS	src/old/triang/triangulate.h	126;"	d
@@ -71,6 +73,7 @@ Coding Practices	doc/introduction/main.tex	/^\\end{verbatim}$/;"	s
 Comments and Documentation	doc/introduction/main.tex	/^\\end{itemize}$/;"	u
 Compiling and Running PINC	doc/introduction/main.tex	/^%First, you should checkout from Git the revision of DiP3D you'd like to use. Next, a new simulation data folder must be made. Here, we use the template as a starting point (a previously run simulation would also work):$/;"	s
 DDIR	makefile	/^DDIR	= doc$/;"	m
+DEBRUIJN	proof of concept/interpolate/main.c	95;"	d	file:
 DIAFILE_DIRS	doc/doxygen/doxyfile.mk	/^DIAFILE_DIRS           =$/;"	m
 DIA_PATH	doc/doxygen/doxyfile.mk	/^DIA_PATH               =$/;"	m
 DICTMINSZ	lib/iniparser/src/dictionary.c	27;"	d	file:
@@ -229,7 +232,7 @@ HALO_H	proof of concept/get boundary/challenge/halo.h	2;"	d
 HAVE_DOT	doc/doxygen/doxyfile.mk	/^HAVE_DOT               = NO$/;"	m
 HDIR	makefile	/^HDIR	= src$/;"	m
 HEAD	makefile	/^HEAD	= $(patsubst %,$(HDIR)\/%,$(HEAD_))$/;"	m
-HEAD_	makefile	/^HEAD_	= pinc.h multigrid.h test.h$/;"	m
+HEAD_	makefile	/^HEAD_	= pinc.h multigrid.h pusher.h test.h$/;"	m
 HHC_LOCATION	doc/doxygen/doxyfile.mk	/^HHC_LOCATION           =$/;"	m
 HIDE_FRIEND_COMPOUNDS	doc/doxygen/doxyfile.mk	/^HIDE_FRIEND_COMPOUNDS  = NO$/;"	m
 HIDE_IN_BODY_DOCS	doc/doxygen/doxyfile.mk	/^HIDE_IN_BODY_DOCS      = NO$/;"	m
@@ -492,7 +495,7 @@ SP_SIMPLE_LRUP	src/old/triang/triangulate.h	107;"	d
 SQR	src/old/fmg/nrutil.h	5;"	d
 SRC	makefile	/^SRC		= $(patsubst %,$(SDIR)\/%,$(SRC_))$/;"	m
 SRCS	lib/iniparser/Makefile	/^SRCS = src\/iniparser.c \\$/;"	m
-SRC_	makefile	/^SRC_	= main.c io.c aux.c population.c grid.c multigrid.c test.c$/;"	m
+SRC_	makefile	/^SRC_	= main.c io.c aux.c population.c grid.c multigrid.c pusher.c test.c$/;"	m
 STATUS	src/pinc.h	/^	STATUS = 0x00,		\/\/\/< Normal status output about the progress of execution.$/;"	e	enum:__anon6
 STOOL_H_	proof of concept/stool/stool.h	9;"	d
 STRICT_PROTO_MATCHING	doc/doxygen/doxyfile.mk	/^STRICT_PROTO_MATCHING  = NO$/;"	m
@@ -591,15 +594,19 @@ XML_OUTPUT	doc/doxygen/doxyfile.mk	/^XML_OUTPUT             = xml$/;"	m
 XML_PROGRAMLISTING	doc/doxygen/doxyfile.mk	/^XML_PROGRAMLISTING     = YES$/;"	m
 XML_SCHEMA	doc/doxygen/doxyfile.mk	/^XML_SCHEMA             =$/;"	m
 _DICTIONARY_H_	lib/iniparser/src/dictionary.h	15;"	d
+_GNU_SOURCE	proof of concept/interpolate/main.c	2;"	d	file:
+_GNU_SOURCE	proof of concept/vectorfield/main.c	2;"	d	file:
 _INIPARSER_H_	lib/iniparser/src/iniparser.h	11;"	d
 _NR_UTILS_H_	src/old/fmg/nrutil.h	2;"	d
 _XOPEN_SOURCE	proof of concept/get boundary/challenge/main.c	1;"	d	file:
 _XOPEN_SOURCE	proof of concept/get boundary/main.c	1;"	d	file:
 _XOPEN_SOURCE	proof of concept/get slice/main.c	1;"	d	file:
 _XOPEN_SOURCE	proof of concept/get slice/main.old.c	1;"	d	file:
+_XOPEN_SOURCE	proof of concept/interpolate/main.c	1;"	d	file:
 _XOPEN_SOURCE	proof of concept/stool/stool.c	1;"	d	file:
 _XOPEN_SOURCE	proof of concept/stool/stool.h	11;"	d
 _XOPEN_SOURCE	proof of concept/tail call recursion/main.c	1;"	d	file:
+_XOPEN_SOURCE	proof of concept/vectorfield/main.c	1;"	d	file:
 _XOPEN_SOURCE	src/aux.c	11;"	d	file:
 __interface_h	src/old/triang/interface.h	2;"	d
 _dictionary_	lib/iniparser/src/dictionary.h	/^typedef struct _dictionary_ {$/;"	s
@@ -611,10 +618,19 @@ _line_status_	lib/iniparser/src/iniparser.c	/^typedef enum _line_status_ {$/;"	g
 _max	src/old/triang/construct.c	/^static int _max(yval, v0, v1)$/;"	f	file:
 _min	src/old/triang/construct.c	/^static int _min(yval, v0, v1)$/;"	f	file:
 _triangulate_h	src/old/triang/triangulate.h	2;"	d
+accA1	proof of concept/vectorfield/main.c	/^void accA1(const double *E, const double *pos, double *vel, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+accA1b	proof of concept/vectorfield/main.c	/^void accA1b(const double *E, const double *pos, double *vel, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+accA1c	proof of concept/vectorfield/main.c	/^void accA1c(const double *E, const double *pos, double *vel, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+accA2	proof of concept/vectorfield/main.c	/^void accA2(const double *E, const double *pos, double *vel, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+accB	proof of concept/vectorfield/main.c	/^void accB(const double *E, const double *pos, double *vel, const long int *nGPointsProd, int nDims, long int nParticles, double *result){$/;"	f
+accBb	proof of concept/vectorfield/main.c	/^void accBb(const double *E, const double *pos, double *vel, const long int *sizeProd, int nDims, long int nParticles, double *result){$/;"	f
+accBc	proof of concept/vectorfield/main.c	/^void accBc(const double *E, const double *pos, double *vel, const long int *sizeProd, int nDims, long int nParticles){$/;"	f
 accel	src/old/accel.c	/^void accel(float factor)$/;"	f
 accel	src/old/accel_copy_with_olderfunction2d.c	/^void accel(float factor)$/;"	f
 accel	src/old/triang/accel.c	/^void accel(float factor)$/;"	f
 accel	src/old/triang/accel_copy_with_olderfunction2d.c	/^void accel(float factor)$/;"	f
+addSlice	src/grid.c	/^void addSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset){$/;"	f
+addSliceInner	src/grid.c	/^static const double *addSliceInner(const double *nextGhost, double **valp, const long int *mul,$/;"	f	file:
 addThree	proof of concept/function pointers/main.c	/^void addThree(double *arr, long int arrsize){$/;"	f
 addTwo	proof of concept/function pointers/main.c	/^void addTwo(double *arr, long int arrsize){$/;"	f
 add_segment	src/old/triang/construct.c	/^static int add_segment(segnum)$/;"	f	file:
@@ -790,6 +806,7 @@ ddelta	src/old/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
+debruijn	proof of concept/interpolate/main.c	/^static const int debruijn[32] =$/;"	v	file:
 debye	src/old/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debye	src/old/triang/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debyetotal	src/old/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
@@ -1199,6 +1216,7 @@ func-members	doc/html/pinc_8h.html	/^<tr class="heading"><td colspan="2"><h2 cla
 func-members	doc/html/population_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/test_8c.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
 func-members	doc/html/test_8h.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"><\/a>$/;"	a
+gMulDouble	src/grid.c	/^void gMulDouble(GridQuantity *gridQuantity, const double num){$/;"	f
 gaussSeidel	src/multigrid.c	/^void gaussSeidel(GridQuantity *phi, const GridQuantity *rho){$/;"	f
 gaussian	script/distribution.py	/^gaussian   = ((1\/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2\/vth)**2)$/;"	v
 gen_bgnd	src/old/generate.c	/^void gen_bgnd(void)$/;"	f
@@ -1210,6 +1228,9 @@ gen_boundaries	src/old/triang/grid.c	/^void gen_boundaries(void)$/;"	f
 gen_dust3D	src/old/grid.c	/^void gen_dust3D(int arc, char *arv[])$/;"	f
 gen_dust3D	src/old/triang/grid.c	/^void gen_dust3D(int arc, char *arv[])$/;"	f
 generate_random_ordering	src/old/triang/misc.c	/^int generate_random_ordering(n)$/;"	f
+getBitNo	proof of concept/interpolate/main.c	/^inline int getBitNo(int mask){$/;"	f
+getBitNoDebruijn	proof of concept/interpolate/main.c	/^static inline int getBitNoDebruijn(int mask){$/;"	f	file:
+getCIndex	proof of concept/interpolate/main.c	/^inline void getCIndex(long int *p, const int mask, int nDims, const long int *nGPointsProd){$/;"	f
 getFromInd	proof of concept/get slice/main.c	/^void getFromInd(double *slice, double *val, long int *indices, int nElements){$/;"	f
 getFromInd	proof of concept/get slice/main.s	/^getFromInd:$/;"	l
 getGhostIndices	proof of concept/get boundary/main.c	/^long int *getGhostIndices(long int *indices, const int *nGPoints, const long int *nGPointsProd, int nDims){$/;"	f
@@ -1229,6 +1250,8 @@ getHaloOld	proof of concept/get boundary/main.c	/^void getHaloOld(double *halo, 
 getHaloOld	proof of concept/get slice/main.old.c	/^void getHaloOld(double *halo, const double *val, const long  int *nGPointsProd, const int *nGPoints,int nDims){$/;"	f
 getHaloSlice	proof of concept/get boundary/main.c	/^inline void getHaloSlice(double *halo, const double *val, const long int *nGPointsProd, const int *nGPoints, int nDims, int d, int offset){$/;"	f
 getHaloSlice	proof of concept/get slice/main.old.c	/^inline void getHaloSlice(double *halo, const double *val, const long int *nGPointsProd, const int *nGPoints, int nDims, int d, int offset){$/;"	f
+getIncGrayMask	proof of concept/interpolate/main.c	/^inline int getIncGrayMask(int *x){$/;"	f
+getIncGrayMask2	proof of concept/interpolate/main.c	/^inline int getIncGrayMask2(int *x, int i){$/;"	f
 getIndHalo	proof of concept/get boundary/main.c	/^int getIndHalo(double *halo, double *val, long int *indices, int nExt){$/;"	f
 getIndHalo	proof of concept/get slice/main.old.c	/^int getIndHalo(double *halo, double *val, long int *indices, int nExt){$/;"	f
 getSendRecvSetSlice	src/grid.c	/^void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,$/;"	f
@@ -1245,9 +1268,11 @@ getSliceIndices	proof of concept/get slice/main.c	/^void *getSliceIndices(long i
 getSliceIndices	proof of concept/get slice/main.s	/^getSliceIndices:$/;"	l
 getSliceInner	proof of concept/get slice/main.c	/^double *getSliceInner(double *nextGhost, const double **valp, const long int *mul, const int *points, const long int finalMul){$/;"	f
 getSliceInner	proof of concept/get slice/main.s	/^getSliceInner:$/;"	l
-getSliceInner	src/grid.c	/^double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,$/;"	f
+getSliceInner	src/grid.c	/^static double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,$/;"	f	file:
 getSliceInner2	proof of concept/get slice/main.s	/^getSliceInner2:$/;"	l
 getSubdomain	src/grid.c	/^static int *getSubdomain(const dictionary *ini){$/;"	f	file:
+getWeight	proof of concept/interpolate/main.c	/^inline double getWeight(int signMask, const double *decimal, const double *complement, int nDims){$/;"	f
+getWeightAndIndex	proof of concept/interpolate/main.c	/^inline double getWeightAndIndex(long int *p, const int mask, const double *decimal, const double *complement, int nDims, const long int *nGPointsProd){$/;"	f
 getXPos	doc/html/search/search.js	/^function getXPos(item)$/;"	f
 getYPos	doc/html/search/search.js	/^function getYPos(item)$/;"	f
 get_angle	src/old/triang/monotone.c	/^static double get_angle(vp0, vpnext, vp1)$/;"	f	file:
@@ -1281,7 +1306,7 @@ home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  test.c File Refere
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src  test.h File Reference	doc/latex/test_8h.tex	/^\\hypertarget{test_8h}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src\/test.h File Reference}$/;"	s
 home  gullik    Documents    Pi   C  mn-   fysrp-   pic  src Directory Reference	doc/latex/dir_68267d1309a1af8e8297ef4c3efbcdba.tex	/^\\hypertarget{dir_68267d1309a1af8e8297ef4c3efbcdba}{}\\section{\/home\/gullik\/\\+Documents\/\\+Pi\\+C\/mn-\\\/fysrp-\\\/pic\/src Directory Reference}$/;"	s
 iStart	src/pinc.h	/^	long int *iStart;	\/\/\/< First index of specie s (nSpecies+1 elements)$/;"	m	struct:__anon1
-iStop	src/pinc.h	/^	long int *iStop;	\/\/\/< Last index of specie s (nSpecies elements)$/;"	m	struct:__anon1
+iStop	src/pinc.h	/^	long int *iStop;	\/\/\/< First index not of specie s (nSpecies elements)$/;"	m	struct:__anon1
 iavvel	src/old/const.h	/^FILE *eavvel, *iavvel;$/;"	v
 iavvel	src/old/triang/const.h	/^FILE *eavvel, *iavvel;$/;"	v
 idens	src/old/const.h	/^FILE *pot2Dclr,*pot2D,*efx,*efy, *efz,*frho,*idens,*edens;$/;"	v
@@ -1314,6 +1339,7 @@ incArrStruct	proof of concept/global variables/main.c	/^void incArrStruct(struct
 incArrStructUnordered	proof of concept/global variables/main.c	/^void incArrStructUnordered(struct ArrStruct *myStruct, long int arrsize){$/;"	f
 incGArrStruct	proof of concept/global variables/main.c	/^void incGArrStruct(){$/;"	f
 incGArrStructUnordered	proof of concept/global variables/main.c	/^void incGArrStructUnordered(){$/;"	f
+incGray	proof of concept/interpolate/main.c	/^inline int incGray(int x){$/;"	f
 inclpath	src/old/triang/makefile	/^inclpath = .\/triang$/;"	m
 iniAssertEqualNElements	src/io.c	/^int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){$/;"	f
 iniGetDoubleArr	src/io.c	/^double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){$/;"	f
@@ -1356,12 +1382,41 @@ initpartcheck	src/old/triang/generate.c	/^int initpartcheck(double px, double py
 initpartcheck	src/old/triang/generate_bug.c	/^int initpartcheck(double px, double py, double delta)$/;"	f
 initpartcheck_restart	src/old/generate.c	/^int initpartcheck_restart(int dno, double px, double py, double pz, double delta)$/;"	f
 initpartcheck_restart	src/old/triang/generate.c	/^int initpartcheck_restart(int dno, double px, double py, double pz, double delta)$/;"	f
+inline	proof of concept/vectorfield/main.c	11;"	d	file:
+inner	proof of concept/interpolate/main.c	/^void inner(double *result, const double *val, const long int *mul, long int p, double factor, double *decimal, double *complement){$/;"	f
+inner2	proof of concept/interpolate/main.c	/^double inner2(const double *val, const long int *mul, long int p, double *decimal, double *complement){$/;"	f
+innerC	proof of concept/interpolate/main.c	/^void innerC(double *result, const double *val, const long int *mul, long int p){$/;"	f
+innerC2	proof of concept/interpolate/main.c	/^double innerC2(const double *val, const long int *mul, long int p){$/;"	f
 inserted	src/old/triang/construct.c	/^static int inserted(segnum, whichpt)$/;"	f	file:
 inside_polygon	src/old/triang/monotone.c	/^static int inside_polygon(t)$/;"	f	file:
 intArrCumProd	src/aux.c	/^int *intArrCumProd(const int *a, int nElements){$/;"	f
 intArrMul	src/aux.c	/^int *intArrMul(const int *a, const int *b, int nElements){$/;"	f
 intArrProd	src/aux.c	/^int intArrProd(const int *a, int nElements){$/;"	f
 interp	src/old/fmg/fmg.c	/^void interp(double ***uf, double ***uc, int nfx, int nfy, int nfz)$/;"	f
+interp3D	proof of concept/interpolate/main.c	/^inline double interp3D(const double *val, const double *pos, const long int *nGPointsProd){$/;"	f
+interpA	proof of concept/vectorfield/main.c	/^inline double interpA(const double *val, const double *pos, const long int *nGPointsProd){$/;"	f
+interpAll3D	proof of concept/interpolate/main.c	/^double interpAll3D(const double *val, const double *pos, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+interpAllBinary	proof of concept/interpolate/main.c	/^double interpAllBinary(const double *val, const double *pos, const long int *nGPointsProd, int nDims, double *decimal, double *complement, int nCorners, long int nParticles){$/;"	f
+interpAllGray	proof of concept/interpolate/main.c	/^double interpAllGray(const double *val, const double *pos, const long int *nGPointsProd, int nDims, double *decimal, double *complement, int nCorners, long int nParticles){$/;"	f
+interpAllRecursive	proof of concept/interpolate/main.c	/^double interpAllRecursive(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement, long int nParticles){$/;"	f
+interpAllRecursive2	proof of concept/interpolate/main.c	/^double interpAllRecursive2(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement, long int nParticles){$/;"	f
+interpB	proof of concept/vectorfield/main.c	/^inline void interpB(double *result, const double *val, const double *pos, const long int *nGPointsProd){$/;"	f
+interpBb	proof of concept/vectorfield/main.c	/^inline void interpBb(double *result, const double *val, const double *pos, const long int *sizeProd){$/;"	f
+interpBc	proof of concept/vectorfield/main.c	/^inline void interpBc(double *result, const double *val, const double *pos, const long int *sizeProd){$/;"	f
+interpBinary	proof of concept/interpolate/main.c	/^inline double interpBinary(const double *val, const double *pos, const long int *nGPointsProd, int nDims, double *decimal, double *complement, int nCorners){$/;"	f
+interpC3D	proof of concept/interpolate/main.c	/^ inline double interpC3D(const double *val, const double *pos, const long int *nGPointsProd){$/;"	f
+interpCAll3D	proof of concept/interpolate/main.c	/^double interpCAll3D(const double *val, const double *pos, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+interpCAllBinary	proof of concept/interpolate/main.c	/^double interpCAllBinary(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int nCorners, long int nParticles){$/;"	f
+interpCAllGray	proof of concept/interpolate/main.c	/^double interpCAllGray(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int nCorners, long int nParticles){$/;"	f
+interpCAllRecursive	proof of concept/interpolate/main.c	/^double interpCAllRecursive(const double *val, const double *pos, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+interpCAllRecursive2	proof of concept/interpolate/main.c	/^double interpCAllRecursive2(const double *val, const double *pos, const long int *nGPointsProd, int nDims, long int nParticles){$/;"	f
+interpCBinary	proof of concept/interpolate/main.c	/^inline double interpCBinary(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int nCorners){$/;"	f
+interpCGray	proof of concept/interpolate/main.c	/^static inline double interpCGray(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int nCorners){$/;"	f	file:
+interpCRecursive	proof of concept/interpolate/main.c	/^inline double interpCRecursive(const double *val, const double *pos, const long int *nGPointsProd, int nDims){$/;"	f
+interpCRecursive2	proof of concept/interpolate/main.c	/^inline double interpCRecursive2(const double *val, const double *pos, const long int *nGPointsProd, int nDims){$/;"	f
+interpGray	proof of concept/interpolate/main.c	/^static inline double interpGray(const double *val, const double *pos, const long int *nGPointsProd, int nDims, double *decimal, double *complement, int nCorners){$/;"	f	file:
+interpRecursive	proof of concept/interpolate/main.c	/^inline double interpRecursive(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){$/;"	f
+interpRecursive2	proof of concept/interpolate/main.c	/^inline double interpRecursive2(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){$/;"	f
 ion	src/old/const.h	44;"	d
 ion	src/old/triang/const.h	44;"	d
 ipe	src/old/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
@@ -1730,8 +1785,10 @@ main	proof of concept/get slice/main.c	/^int main(int argc, char **argv){$/;"	f
 main	proof of concept/get slice/main.old.c	/^int main(int argc, char **argv){$/;"	f
 main	proof of concept/get slice/main.s	/^main:$/;"	l
 main	proof of concept/global variables/main.c	/^int main(){$/;"	f
+main	proof of concept/interpolate/main.c	/^int main(int argc, char **argv){$/;"	f
 main	proof of concept/tail call recursion/main.c	/^int main(int argc, char **argv){$/;"	f
 main	proof of concept/tail call recursion/main.s	/^main:$/;"	l
+main	proof of concept/vectorfield/main.c	/^int main(int argc, char **argv){$/;"	f
 main	src/main.c	/^int main(int argc, char *argv[]){$/;"	f
 main	src/old/main_backup.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/old/triang/main.c	/^int main(int argc, char *argv[])$/;"	f
@@ -2009,6 +2066,7 @@ primerootbucket	src/old/const.h	/^double primerootbucket[BUCKETSIZE];$/;"	v
 primerootbucket	src/old/triang/const.h	/^double primerootbucket[BUCKETSIZE];$/;"	v
 primerootno	src/old/const.h	/^double primerootno;$/;"	v
 primerootno	src/old/triang/const.h	/^double primerootno;$/;"	v
+printBinary	proof of concept/interpolate/main.c	/^void printBinary(int num, int nBits){$/;"	f
 printKE	src/old/diagn.c	/^void printKE(FILE *fpointer, FILE *fpointer2, int specie, int t, double weight)$/;"	f
 printKE	src/old/triang/diagn.c	/^void printKE(FILE *fpointer, FILE *fpointer2, int specie, int t, double weight)$/;"	f
 printKEall	src/old/diagn.c	/^void printKEall(int t)$/;"	f
@@ -2018,6 +2076,7 @@ printPE	src/old/triang/diagn.c	/^void printPE(FILE *fpointer,FILE *fpointer2, in
 printPEtotal	src/old/diagn.c	/^void printPEtotal(FILE *fpointer, FILE *fpointer2, int t, double weight)$/;"	f
 printPEtotal	src/old/triang/diagn.c	/^void printPEtotal(FILE *fpointer, FILE *fpointer2, int t, double weight)$/;"	f
 printSP	proof of concept/get slice/main.c	/^ void printSP(){$/;"	f
+printSP	proof of concept/interpolate/main.c	/^void printSP(){$/;"	f
 printSP	proof of concept/tail call recursion/main.c	/^void printSP(){$/;"	f
 printSP	proof of concept/tail call recursion/main.s	/^printSP:$/;"	l
 printSP2	proof of concept/tail call recursion/main.c	/^void printSP2() {$/;"	f
@@ -2086,6 +2145,8 @@ pt2	src/old/const.h	/^  int pt2;$/;"	m	struct:dtriangle
 pt2	src/old/triang/const.h	/^  int pt2;$/;"	m	struct:dtriangle
 pt3	src/old/const.h	/^  int pt3;  $/;"	m	struct:dtriangle
 pt3	src/old/triang/const.h	/^  int pt3;  $/;"	m	struct:dtriangle
+puInterp3D1	src/pusher.c	/^static inline double puInterp3D1(const double *val, const double *pos, const long int *nGPointsProd){$/;"	f	file:
+puMoveNoBnd	src/pusher.c	/^void puMoveNoBnd(Population *pop){$/;"	f
 pub-attribs	doc/html/structGrid.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 pub-attribs	doc/html/structGridQuantity.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
 pub-attribs	doc/html/structMpiInfo.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"><\/a>$/;"	a
@@ -2174,7 +2235,7 @@ setGArrStruct	proof of concept/global variables/main.c	/^void setGArrStruct(int 
 setKeyActions	doc/html/search/search.js	/^function setKeyActions(elem,action)$/;"	f
 setRestrictProlong	src/multigrid.c	/^void setRestrictProlong(const dictionary *ini,Multigrid *multigrid){$/;"	f
 setSlice	src/grid.c	/^void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset){$/;"	f
-setSliceInner	src/grid.c	/^const double *setSliceInner(const double *nextGhost, double **valp, const long int *mul,$/;"	f
+setSliceInner	src/grid.c	/^static const double *setSliceInner(const double *nextGhost, double **valp, const long int *mul,$/;"	f	file:
 setSolvers	src/multigrid.c	/^void setSolvers(const dictionary *ini, Multigrid *multigrid){$/;"	f
 shift_while_restarting	src/old/restart.c	/^void shift_while_restarting(int dno, double x, double y, double z)$/;"	f
 shift_while_restarting	src/old/triang/restart.c	/^void shift_while_restarting(int dno, double x, double y, double z)$/;"	f
@@ -2214,7 +2275,9 @@ std	proof of concept/get boundary/makefile	/^	gcc -o main main.c -std=c11 -lm $(
 std	proof of concept/get slice/makefile	/^	gcc -o main main.c -std=c11 -lm $(COPT)$/;"	m
 std	proof of concept/global variables/makefile	/^	gcc -o main main.c ..\/stool\/stool.c -std=c11 -lm -O3$/;"	m
 std	proof of concept/global variables/makefile	/^	gcc -o main main.c ..\/stool\/stool.c -std=c11 -lm$/;"	m
+std	proof of concept/interpolate/makefile	/^	gcc -o main main.c -std=c11 -lm -lgsl -lblas $(COPT)$/;"	m
 std	proof of concept/tail call recursion/makefile	/^	gcc -S main.c -std=c11 $(COPT)$/;"	m
+std	proof of concept/vectorfield/makefile	/^	gcc -o main main.c -std=c11 -lm -lgsl -lblas $(COPT)$/;"	m
 storeLayer	proof of concept/get boundary/scrabble.c	/^function storeLayer(const int *prod,const int *nPoints,double *ghost, double *val){$/;"	f
 strAllocCat	src/aux.c	/^char *strAllocCat(int n, ...){$/;"	f
 strlwc	lib/iniparser/src/iniparser.c	/^static char * strlwc(const char * s)$/;"	f	file:
@@ -2263,6 +2326,7 @@ tmax	src/old/triang/const.h	/^double dt, tmax;$/;"	v
 tmp_dpart	src/old/const.h	/^d_particle *tmp_dpart;$/;"	v
 tmp_dpart	src/old/triang/const.h	/^d_particle *tmp_dpart;$/;"	v
 toGlobalFrame	src/population.c	/^void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){$/;"	f
+toGray	proof of concept/interpolate/main.c	/^inline int toGray(int x){$/;"	f
 toLocalFrame	src/population.c	/^void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){$/;"	f
 toggleFolder	doc/html/dynsections.js	/^function toggleFolder(id)$/;"	f
 toggleInherit	doc/html/dynsections.js	/^function toggleInherit(id)$/;"	f
@@ -2280,9 +2344,11 @@ tprobe	proof of concept/get boundary/main.c	/^ void tprobe(const char * label){$
 tprobe	proof of concept/get slice/main.c	/^ void tprobe(const char * label){$/;"	f
 tprobe	proof of concept/get slice/main.old.c	/^ void tprobe(const char * label){$/;"	f
 tprobe	proof of concept/get slice/main.s	/^tprobe:$/;"	l
+tprobe	proof of concept/interpolate/main.c	/^struct timespec tprobe(const char * label){$/;"	f
 tprobe	proof of concept/stool/stool.c	/^void tprobe(const char * label){$/;"	f
 tprobe	proof of concept/tail call recursion/main.c	/^ void tprobe(const char * label){$/;"	f
 tprobe	proof of concept/tail call recursion/main.s	/^tprobe:$/;"	l
+tprobe	proof of concept/vectorfield/main.c	/^struct timespec tprobe(const char * label){$/;"	f
 tr	src/old/triang/construct.c	/^trap_t tr[TRSIZE];		\/* Trapezoid structure *\/$/;"	v
 tr_idx	src/old/triang/construct.c	/^static int tr_idx;$/;"	v	file:
 trap_t	src/old/triang/triangulate.h	/^} trap_t;$/;"	t	typeref:struct:__anon10

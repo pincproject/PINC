@@ -43,6 +43,7 @@ int main(int argc, char *argv[]){
 	Multigrid *multiPhi = allocMultigrid(ini, phi);
 	MpiInfo *mpiInfo = allocMpiInfo(ini);
 
+
 	/*
 	 *	TEST AREA
 	 */
@@ -55,13 +56,14 @@ int main(int argc, char *argv[]){
 	// testMultigrid(ini, multiRho, multiPhi,mpiInfo);
 	testDerivatives(ini, rho, phi);
 
+
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
 	freeGrid(grid);
 	freeGridQuantity(rho);
 	freeGridQuantity(phi);
-
+	freeMpiInfo(mpiInfo);
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */

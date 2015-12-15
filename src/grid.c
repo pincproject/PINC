@@ -96,6 +96,8 @@ void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset
  */
 void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset);
 
+void addSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset);
+
 /**
  * @brief Gets, sends, recieves and sets a slice, using MPI
  * @param nSlicePoints		Length of the slice array
@@ -125,7 +127,7 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
 
-double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
+static double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
 											const int *points, const long int finalMul){
 
 	if(*mul==finalMul){
@@ -152,7 +154,7 @@ void getSlice(double *slice, const GridQuantity *gridQuantity, int d, int offset
 	getSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
 }
 
-const double *setSliceInner(const double *nextGhost, double **valp, const long int *mul,
+static const double *setSliceInner(const double *nextGhost, double **valp, const long int *mul,
 	const int *points, const long int finalMul){
 
 		if(*mul==finalMul){
@@ -177,6 +179,33 @@ void setSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset
 
 	val += offset*nGPointsProd[d];
 	setSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
+}
+
+static const double *addSliceInner(const double *nextGhost, double **valp, const long int *mul,
+	const int *points, const long int finalMul){
+
+		if(*mul==finalMul){
+			for(int j=0;j<*mul;j++) *((*valp)++) += *(nextGhost++);
+			*valp += (*mul)*(*points-1);
+		} else {
+			for(int j=0; j<*points;j++)
+				nextGhost = setSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+		}
+		return nextGhost;
+
+}
+
+void addSlice(const double *slice, GridQuantity *gridQuantity, int d, int offset){
+
+	Grid *grid = gridQuantity->grid;
+	int nDims = grid->nDims;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int *nGPoints = grid->nGPoints;
+
+	double *val = gridQuantity->val;
+
+	val += offset*nGPointsProd[d];
+	addSliceInner(slice, &val, &nGPointsProd[nDims-1], &nGPoints[nDims-1],nGPointsProd[d]);
 }
 
 void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
@@ -642,4 +671,16 @@ void createGridQuantityH5(const dictionary *ini, GridQuantity *gridQuantity, con
 	gridQuantity->h5MemSpace = memSpace;
 	gridQuantity->h5FileSpace = fileSpace;
 
+}
+
+void gMulDouble(GridQuantity *gridQuantity, const double num){
+
+	Grid *grid = gridQuantity->grid;
+	int nValues = gridQuantity->nValues;
+	double *val = gridQuantity->val;
+	int nDims = grid->nDims;
+	long int *nGPointsProd = grid->nGPointsProd;
+	long int numEl = nGPointsProd[nDims]*nValues;
+
+	for(long int p=0;p<numEl;p++) val[p] *= num;
 }

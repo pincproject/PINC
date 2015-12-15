@@ -45,7 +45,8 @@
  * @endcode
  *
  * The subset of particles belonging to specie s start at particle i=iStart[s]
- * and stop at i=iStop[s]. Due to particle increase/decrease there is allocated
+ * and stop at i=iStop[s]-1 (the -1 simplifies many calculations and is more
+ * consistent with C). Due to particle increase/decrease there is allocated
  * space for more particles than are present. Thus the _allocated_ space for
  * specie s start at i=iStart[s] and stop at i=iStart[s+1]-1. For convenience,
  * iStart has nSpecies+1 elements such that this is true also for the last
@@ -63,7 +64,7 @@ typedef struct{
 	double *vel;		///< Velocity
 	double *energy;		///< Kinetic energy
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
-	long int *iStop;	///< Last index of specie s (nSpecies elements)
+	long int *iStop;	///< First index not of specie s (nSpecies elements)
 	double *q;			///< Specie charge [elementary charges] (nSpecies elements)
 	double *m;			///< Specie mass [electron masses] (nSpecies elements)
 	int nSpecies;		///< Number of species
@@ -197,6 +198,78 @@ typedef struct{
 	hid_t h5MemSpace;	///< HDF5 memory space description
 	hid_t h5FileSpace;	///< HDF5 file space description
 } GridQuantity;
+
+/*
+ * SUGGESTED REPLACEMENT FOR GRID AND GRIDQUANTITY
+ */
+/*
+
+typedef struct{
+	double *val;				///< The values on the grid
+	int rank;					///< Previously nDims. Length of "size".
+	int *size;					///< Previously nGPoints. Now more generic use as it may include an element being 3 for vector valued quantities.
+	long int *sizeProd;			///< Previously nGPointsProd. (rank+1 elements)
+	int *trueSize;				///< Previously nTGPoints. (rank elements)
+	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
+	double *step;				///< Previously dr (rank elements)
+
+	double *slice;				///< Slice buffer of the grid sent to other subdomains
+	hid_t h5;					///< HDF5 file handler
+	hid_t h5MemSpace;			///< HDF5 memory space description
+	hid_t h5FileSpace;			///< HDF5 file space description
+} Grid;
+
+// Vector-valued quantities are handled by adding another dimension,
+// say, 3x128x128x128 (rank=4). Then the first dimension will be the number
+// of components. nGPointsProd[0] then corresponds to an increase in component
+// (e.g. from x to y), nGPointsProd[1] to an increase in x-position, and so on.
+// dr and nGhosts must be set to zero for first dimension.
+
+// The actual number of dimensions is determined by nDims in the population
+// struct. For scalar quantities (rho, phi) this will be equal to rank.
+// I suspect the vector-valued grid quantities are never used except when also
+// interfacing the Population struct, in which case you should still use nDims
+// when referring to the number of dimensions.
+
+// Advantages:
+// - More consistent structure. nValues is just another element in size.
+//   This makes it possible to use already exisiting functions such as
+//   getSlice() to get a slice which includes all components of a vector field.
+//   Today, getSlice() won't work on vector fields, and a new version will
+//   either be significantly slower or a rather ugly hack must be done on
+//   nGPointsProd to make getSlice() increment the indices correctly. It is
+//   generally easier to use generic purpose functions when nValues is treated
+//   identically as a new dimension. -> speed-up, lower complexity, increased
+//   flexibility.
+// - More like a tensor. Probably easier to use for other purposes in future.
+//   -> increased flexibility.
+// - Fewer levels of struct, less dereferencing -> speed-up
+//   (especially for multigrid algorithm)
+// - No longer necessary to define multiple Grid struct for different sizes of
+//   grids as this is embedded in the new struct. -> Lower complexity.
+// - sizeProd can actually be used to increment along a direction without extra
+//   multiplication as it was intended. Today, for vector fields, one must
+//   multiply nGPointsProd with nDims which kind of ruins the whole point of
+//   nGPointsProd. -> speed-up
+// - The struct itself supports saving components lumped together (e.g.
+//   size 3x128x128x128) or one at a time (size 128x128x128x3). The surrounding
+//   functions determine which way is used. -> increased flexibility
+//
+// Disadvantage:
+// - Lots of changes to existing code (but better to do it now?)
+// - A few more elements used to store grid quantities. However, this is
+//   actually quite insignificant compared to the advantages. -> insignificantly
+//   more memory usage.
+// - One must know when to add sizeProd[0] to increment x (scalars) and when to
+//   add sizeProd[1] to do the same thing. At least if components are lumped
+//   together (size 3x128x128x128), which is likely fastest in most cases.
+//   A possibility would be to add a boolean variable which tells if it is a
+//   vector or not. Another possibility would be to store both rank and nDims.
+//   However, my guess is that generic functions such as getSlice() and write to
+//   h5 don't need to know, and specific functions only work on either type
+//   anyway (scalar or vector).
+
+*/
 
 typedef struct timespec TimeSpec;
 
