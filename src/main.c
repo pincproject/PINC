@@ -51,10 +51,10 @@ int main(int argc, char *argv[]){
 
  // 	testGetSlice(ini, gridQuantity);
  // 	testSwapHalo(ini, gridQuantity, mpiInfo);
- // 	testGaussSeidel(ini, multiRho, multiPhi, mpiInfo);
-	// testRestriction(ini, multiRho, multiPhi, mpiInfo);
-	// testMultigrid(ini, multiRho, multiPhi,mpiInfo);
-	testDerivatives(ini, rho, phi);
+ 	testGaussSeidel(ini, multiRho, multiPhi, mpiInfo);
+ // 	testRestriction(ini, multiRho, multiPhi, mpiInfo);
+ 	// 	testMultigrid(ini, multiRho, multiPhi,mpiInfo);
+ //		testDerivatives(ini, rho, phi);
 
 
 	/*

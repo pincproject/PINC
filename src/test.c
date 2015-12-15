@@ -71,37 +71,33 @@ void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 	GridQuantity *phi = multiPhi->gridQuantities[0];
 	Grid *grid = rho->grid;
 	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
 
 	//Load GridQuantity
 	double *rhoVal = rho->val;
-	double *phiVal = phi->val;
 
 	//Temp quick functions
-	// double sin(double);
+	double sin(double);
 
 	//Variables
-	// double angle;
+	double angle;
 
 	int ind = 0;
 	for(int j = 0; j < nGPoints[0]; j++){
 		// angle = 0;
 		for (int k = 0; k<nGPoints[1]; k++) {
-			// if(k>(0.5*nGPoints[1])) angle = 1.;
-			rhoVal[ind] = (double) (j + 2*k);
-			ind++;
+			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+			// rhoVal[ind] = (double) (j + 2*k);
+			rhoVal[ind] = (j*2*PI)/nGPoints[0];
 		}
 	}
 
-	dumpGridIndexes(ini, rho);
+	// dumpGridIndexes(ini, rho);
 	dumpGrid(ini,rho);
 
-	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
+	for(int q = 0; q < 2000; q++) multiRho->coarseSolv(phi, rho);
 
-	dumpGrid(ini, phi);
-
-	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
-
-	dumpGrid(ini, phi);
+	// dumpGrid(ini,phi);
 
 
 	return;
