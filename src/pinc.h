@@ -31,9 +31,10 @@
 /**
  * @brief Contains a population of particles.
  *
- * The position and velocity is stored in a flat manner, such that (x,y,z) of
- * particle 0 comes first, then (x,y,z) of particle 1, and so on (assuming 3D).
- * As an example, printing the (x,y,z) position of the first 3 particles:
+ * The position and velocity of particles is stored in a flat manner, such that
+ * (x,y,z) of particle 0 comes first, then (x,y,z) of particle 1, and so on
+ * (assuming 3D). As an example, printing the (x,y,z) position of the first 3
+ * particles:
  *
  * @code
  *	Population pop;
@@ -46,12 +47,17 @@
  *
  * The subset of particles belonging to specie s start at particle i=iStart[s]
  * and stop at i=iStop[s]-1 (the -1 simplifies many calculations and is more
- * consistent with C). Due to particle increase/decrease there is allocated
- * space for more particles than are present. Thus the _allocated_ space for
- * specie s start at i=iStart[s] and stop at i=iStart[s+1]-1. For convenience,
- * iStart has nSpecies+1 elements such that this is true also for the last
- * specie. The last element is then simply the number of particles allocated
- * in total.
+ * consistent with the C way of counting). Due to particle increase/decrease
+ * there is allocated space for more particles than are present. Thus the
+ * _allocated_ space for specie s start at i=iStart[s] and stop at
+ * i=iStart[s+1]-1. For convenience, iStart has nSpecies+1 elements such that
+ * this is true also for the last specie. The last element is then simply the
+ * number of particles allocated in total.
+ *
+ * The position of the particles is normalized with respect to 'stepSize' in
+ * Grid, such that a particle with local position (1,2,3) is located _on_ node
+ * (1,2,3) in the grid. Particles are usually specified in local frame but may
+ * temporarily be expressed in global frame. See MpiInfo.
  *
  * energy[i] simply holds the kinetic energy of particle i, or if energy is not
  * computed, energy points to NULL.
@@ -65,8 +71,8 @@ typedef struct{
 	double *energy;		///< Kinetic energy
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
-	double *q;			///< Specie charge [elementary charges] (nSpecies elements)
-	double *m;			///< Specie mass [electron masses] (nSpecies elements)
+	double *renormRho;	///< Re-normalization factors for rho (nSpecies elements)
+	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
@@ -76,22 +82,18 @@ typedef struct{
  * @brief Contains information regarding how the PIC code is parallelized.
  *
  * The total simulation domain can be split across several subdomains, one for
- * each MPI node, where position J,K,L (in case of 3D) of each subdomain is
- * stored in subdomain. nSubdomains represents the number of subdomains along
+ * each MPI node, where position (J,K,L) (in case of 3D) of each subdomain is
+ * stored in 'subomain'. 'nSubdomains' represents the number of subdomains along
  * each dimension, and nSubdomainsProd is the cumulative product of nSubdomains
- * similarly as nGPointsProd in Grid.
- * @see Grid
+ * similarly as sizeProd in Grid.
  *
- * Position of particles and objects is normalized with respect to stepsize
- * and can be specified in a global reference frame, or local to one subdomain.
  * The local reference frame is defined such that a particle with integer
- * position (j,k,l) would be located _on_ grid point (j,k,l). This
- * makes it fast to determine the index of the nodes surrounding a particle.
+ * position (j,k,l) would be located _on_ grid point (j,k,l). This makes it fast
+ * to determine the index of the nodes surrounding a particle. See Population.
  *
  * offset is the offset of this MPI node's subdomain with respect to the global
  * reference frame. Adding/subtracting this to a position converts to/from the
- * global reference frame.
- * @see toLocalFrame(), toGlobalFrame()
+ * global reference frame. See toLocalFrame(), toGlobalFrame().
  *
  * posToSubdomain is a factor which can be used to determine which subdomain a
  * globally specified position belongs to, e.g. for 1D:
@@ -112,164 +114,132 @@ typedef struct{
 } MpiInfo;
 
 /**
- * @brief Contains specification of the grid.
+ * @brief A grid-valued quantity, for instance charge density or E-field.
  *
- * nDims and nGPoints specifies the number of dimensions and the number of grid
- * points along each of them. In the case of decomposing the domain into sub-
- * domains using MPI, each MPI node will have its local grid. The number of
- * grid points include true grid points plus ghost grid points that are copied
- * from the neighbouring MPI node. The number of ghost points copied from the
- * neighbours is given in nGhosts. Consider the following 1D example grid:
+ * This datatype can represent both scalar fields and vector fields on an N-
+ * dimensional grid. Basically, it can be thought of as an arbitrarily
+ * dimensioned array object which is stored flat/linearly in memory but which
+ * contains supporting variables in order to work with it efficiently.
  *
- * 	g	x	x	x	x	g	g
+ * The values in the array is stored in natural/lexicographical ordering in
+ * 'val', such that for a 3D array, the elements has the following order:
  *
- * It consists of nGPoints[0]=7 grid points but the leftmost and the two right-
- * most are simply copied from the neighbours. Hence, nGhosts={1,2}. For
- * several dimensions nGPoints first lists all ghosts on the lower edge along
- * all dimensions then all ghosts on the upper edge.
+ *	(0,0,0), (1,0,0), (2,0,0), ..., (0,1,0), (1,1,0), (2,1,0), ...
  *
- * Finally, nGPointsProd contains the cumulative products of nGPoints:
- *
- * @code
- *	nGPointsProd[0]=1;
- *	nGPointsProd[1]=1*nGPoints[0];
- *	nGPointsProd[2]=1*nGPoints[0]*nGPoints[1];
- *  ...
- * @endcode
- *
- * nGPointsProd[nDims] will be the total number of grid points.
- *
- * @see allocGrid
- * @see GridQuantity
- */
-typedef struct{
-	int nDims;					///< Number of dimensions (usually 1-3)
-	int *nGPoints;				///< The number of grid points per dimension (nDims elements)
-	int *nTGPoints;				///< The number of true grid points (nDims elements)
-	long int *nGPointsProd;		///< Cumulative product of nGPoints (nDims+1 elements)
-	int *nGhosts;				///< Number of ghost layers in grid (2*nDims elements)
-	double *dr;					///< Step-size (nDims elements)
-} Grid;
-
-/**
- * @brief A quantity defined on a grid, for instance charge density.
- *
- * Can represent both scalar and vector quantities. For scalar quantities
- * nValues=1, whereas vector fields typically have nValues=nDims=3. The nodes
- * are lexicographically ordered, i.e. node (0,0,0), (1,0,0), (2,0,0), ...,
- * (0,1,0), .... Thus for a 3-dimensional scalar quantity rho, the field value
- * at node (j,k,l) is accessed in the following manner:
+ * 'rank' is the number of dimensions of the array, while 'size' is the size
+ * along each dimension. A 128x128x128 array therefore has rank=3 and
+ * size={128,128,128}. The following is an example of how to access element
+ * (a,b,c) in the array:
  *
  * @code
  *	Grid *rho;
  *	...
- *	int *nGPointsProd = rho->grid->nGPointsProd;
- *	int p = j + k*nGPointsProd[1] + l*nGPointsProd[2];
- *	printf("rho(%i,%i,%i)=%f\n",j,k,l,rho->val[p]);
+ *	int *size = rho->size;
+ *	long int p = a + b*size[0] + c*size[0]*size[1];
+ *	double element = rho->val[p];
  * @endcode
  *
- * Note that nGPointsProd[d] represents an increment of 1 in direction d.
- *
- * For vector fields all values are stored one node at a time. For instance, to
- * print the vector value of E at node (j,k,l):
+ * For convenience and to speed up computations, 'sizeProd' is the cumulative
+ * product of 'size' starting at 1. For our example,
+ * sizeProd={1,128,128*128,128*128*128}. Using this, the linear index p in the
+ * above code can equivalently be computed as:
  *
  * @code
- *	Grid E;
- *	...
- *  int *nGPointsProd = E->grid->nGPointsProd;
- *  int p = j + k*nGPointsProd[1] + l*nGPointsProd[2];
- *	double *pVal = &E.val[p*E.nValues];
- *	printf("The field at node (%i,%i,%i) is (%f,%f,%f).\n",j,k,l,pVal[0],pVal[1],pVal[2]);
+ *	long int p = a*sizeProd[0] + b*sizeProd[1] + c*sizeProd[2];
  * @endcode
  *
- * slice is a buffer which can be used to temporarily store an (N-1)-dimensional
- * slice of the grid quantity.
+ * Also note that adding sizeProd[d] to a linear index p corresponds to to
+ * incrementing one step along dimension d in the array. This can be utilized
+ * for speeding up certain calculations. sizeProd[rank] is the total number of
+ * elements in the array.
  *
- * The variables starting with h5 is used to store information regarding writing
- * to h5 output file if such a file is created.
- * @see createGridQuantityH5()
+ * While this struct is generic and may store any kind of array, the standard
+ * way of storing quantities on a grid in PINC is that the first dimension in
+ * the array represents the field component (e.g. x, y or z-component of a 3D
+ * electric field) while the consecutive dimensions represents the physical
+ * dimensions in the grid. For instance a vector field on a 3D grid of
+ * 128x128x128 grid points would be represented by a 3x128x128x128 array of
+ * rank 4. This means that all field components are lumped together, stored one
+ * grid point at a time. A scalar field on the same grid would be represented by
+ * a 1x128x128x128 array also of rank 4. The rank is therefore one more than the
+ * number of dimensions of the grid. sizeProd[2], for instance, then represents
+ * an increment in y-direction in the grid. The following more involved example
+ * prints the 3D vector value E on grid points (2,k,3) for all k avoiding
+ * complete re-computation of the linear index p each time:
+ *
+ * @code
+ *	Grid *E;
+ *
+ *	...
+ *
+ *	int *size = E->size;
+ *	long int *sizeProd = E->sizeProd;
+ *
+ *	int j = 2;
+ *	int l = 3;
+ *	long int p = j*sizeProd[1] + l*sizeProd[3];
+ *
+ *	for(int k=0;k<size[2];k++){
+ *
+ *		double *value = E->val[p];
+ *		printf("E(%i,%i,%i)=(%f,%f,%f)\n",j,k,l,value[0],value[1],value[2]);
+ *		p += sizeProd[2];
+ *	}
+ * @endcode
+ *
+ * In the case of paralellization through domain decomposition this datatype
+ * represents the local sub-domain and an MpiInfo object keeps track of how the
+ * sub-domaines are related to one another. In the case of domain decomposition,
+ * however, each MPI node will need data on grid points outside of its own
+ * sub-domain. Thus the outermost layers of grid points will often be ghost
+ * points of neighbouring sub-domains. Also, one might need ghost points for
+ * some boundary condition implementations regardless of domain decomposition.
+ * In any case, 'nGhostLayers' represents the number of ghost layers at each
+ * boundary. For 3D (ND), the first 3 (N) elements of 'nGhostLayers' indicates
+ * the number of ghost points along the lower boundaries of dimensions x, y, and
+ * z, respectively. The last 3 (N) elements indicates the number of ghost points
+ * along the upper boundaries. 'trueSize' indicates how many grid points truly
+ * belongs to this sub-domain.
+ *
+ * Consider for instance a vector field on a sub-domain of 128x128x128 grid
+ * padded with 1 layer of ghost nodes along the whole sub-domain. This will lead
+ * to the struct having the following member values:
+ *	- rank = 4
+ *	- size = {3,130,130,130}
+ *	- trueSize = {3,128,128,128}
+ *	- sizeProd = {1,3,390,50700,6591000}
+ *	- nGhostLayers = {0,1,1,1,0,1,1,1}
+ *
+ * Naturally, domain decomposition doesn't affect the first (non-physical)
+ * dimension in the array.
+ *
+ * 'stepSize' is the step-size of each dimension in terms of Debye lengths (or
+ * possibly some other quantity in the future). This doesn't make sense for the
+ * first non-physical dimension and is therefore arbitrarily set to 1. Thence
+ * the product of all elements in 'stepSize' is the volume of a cell.
+ *
+ * 'h5' is a HDF5 file identifier used to store the grid quantity to an .h5-file
+ * and are used by gWriteH5(). The other two h5-variables are also used by
+ * gWriteH5() since they only needs to be computed once.
+ *
+ * 'slice' is a buffer which is large enough to store any slice cut through the
+ * array using getSlice().
  */
-typedef struct{
-	double *val;		///< The values on the grid
-	double *slice;		///< Slice buffer of the grid sent to other subdomains
-	int nValues;		///< Number of values per grid point (usually 1 or 3)
-	Grid *grid;			///< Specifications of the grid
-	hid_t h5;			///< HDF5 file handler
-	hid_t h5MemSpace;	///< HDF5 memory space description
-	hid_t h5FileSpace;	///< HDF5 file space description
-} GridQuantity;
-
-/*
- * SUGGESTED REPLACEMENT FOR GRID AND GRIDQUANTITY
- */
-/*
 
 typedef struct{
-	double *val;				///< The values on the grid
-	int rank;					///< Previously nDims. Length of "size".
-	int *size;					///< Previously nGPoints. Now more generic use as it may include an element being 3 for vector valued quantities.
-	long int *sizeProd;			///< Previously nGPointsProd. (rank+1 elements)
-	int *trueSize;				///< Previously nTGPoints. (rank elements)
+	double *val;				///< Array of values on the grid
+	int rank;					///< Number of dimensions of array (not grid)
+	int *size;					///< Size of array (including ghosts) (rank elements)
+	int *trueSize;				///< Size of array (excluding ghosts) (rank elements)
+	long int *sizeProd;			///< Cumulative product of size (rank+1 elements)
 	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
-	double *step;				///< Previously dr (rank elements)
+	double *stepSize;			///< Step-sizes in Debye lengths (rank elements)
 
 	double *slice;				///< Slice buffer of the grid sent to other subdomains
 	hid_t h5;					///< HDF5 file handler
 	hid_t h5MemSpace;			///< HDF5 memory space description
 	hid_t h5FileSpace;			///< HDF5 file space description
 } Grid;
-
-// Vector-valued quantities are handled by adding another dimension,
-// say, 3x128x128x128 (rank=4). Then the first dimension will be the number
-// of components. nGPointsProd[0] then corresponds to an increase in component
-// (e.g. from x to y), nGPointsProd[1] to an increase in x-position, and so on.
-// dr and nGhosts must be set to zero for first dimension.
-
-// The actual number of dimensions is determined by nDims in the population
-// struct. For scalar quantities (rho, phi) this will be equal to rank.
-// I suspect the vector-valued grid quantities are never used except when also
-// interfacing the Population struct, in which case you should still use nDims
-// when referring to the number of dimensions.
-
-// Advantages:
-// - More consistent structure. nValues is just another element in size.
-//   This makes it possible to use already exisiting functions such as
-//   getSlice() to get a slice which includes all components of a vector field.
-//   Today, getSlice() won't work on vector fields, and a new version will
-//   either be significantly slower or a rather ugly hack must be done on
-//   nGPointsProd to make getSlice() increment the indices correctly. It is
-//   generally easier to use generic purpose functions when nValues is treated
-//   identically as a new dimension. -> speed-up, lower complexity, increased
-//   flexibility.
-// - More like a tensor. Probably easier to use for other purposes in future.
-//   -> increased flexibility.
-// - Fewer levels of struct, less dereferencing -> speed-up
-//   (especially for multigrid algorithm)
-// - No longer necessary to define multiple Grid struct for different sizes of
-//   grids as this is embedded in the new struct. -> Lower complexity.
-// - sizeProd can actually be used to increment along a direction without extra
-//   multiplication as it was intended. Today, for vector fields, one must
-//   multiply nGPointsProd with nDims which kind of ruins the whole point of
-//   nGPointsProd. -> speed-up
-// - The struct itself supports saving components lumped together (e.g.
-//   size 3x128x128x128) or one at a time (size 128x128x128x3). The surrounding
-//   functions determine which way is used. -> increased flexibility
-//
-// Disadvantage:
-// - Lots of changes to existing code (but better to do it now?)
-// - A few more elements used to store grid quantities. However, this is
-//   actually quite insignificant compared to the advantages. -> insignificantly
-//   more memory usage.
-// - One must know when to add sizeProd[0] to increment x (scalars) and when to
-//   add sizeProd[1] to do the same thing. At least if components are lumped
-//   together (size 3x128x128x128), which is likely fastest in most cases.
-//   A possibility would be to add a boolean variable which tells if it is a
-//   vector or not. Another possibility would be to store both rank and nDims.
-//   However, my guess is that generic functions such as getSlice() and write to
-//   h5 don't need to know, and specific functions only work on either type
-//   anyway (scalar or vector).
-
-*/
 
 typedef struct timespec TimeSpec;
 
@@ -297,14 +267,30 @@ typedef struct{
  *
  * Remember to call freePopulation() to free memory.
  */
-Population *allocPopulation(const dictionary *ini);
+Population *pAlloc(const dictionary *ini);
 
 /**
- * @brief	Frees memory for Population
- * @param	pop		Pointer to population to be freed
+ * @brief					Frees memory for Population
+ * @param[in,out]	pop		Pointer to population to be freed
  * @see allocPopulation()
  */
-void freePopulation(Population *pop);
+void pFree(Population *pop);
+
+/**
+ * @brief	Sets specie-specific normalization parameters in Population
+ * @param	ini				Dictionary to input file
+ * @param	pop[in,out]		Population
+ * @param	timeStepMul		What multiple time step is to be used
+ * @param	factor			Which multiplicative factor is used for rho
+ *
+ * timeStepMul=1 for whole time steps and 0.5 for half and so on.
+ * This function makes use of computeRenormE() and computeRenormPhi(). See those
+ * for more in-depth explanation.
+ *
+ * timeStepMul and factor both defaults to 1 during allocation of Population.
+ * Calling this function is only necessary for other values.
+ */
+void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor);
 
 /**
  * @brief	Assign particles uniformly distributed positions
@@ -325,9 +311,9 @@ void freePopulation(Population *pop);
  * particles generated being different than specified in ini.
  *
  * Beware that this function do not assign any velocity to the particles.
- * @see velMaxwell()
+ * @see pVelMaxwell()
  */
-void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
+void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rngSync);
 
 /**
  * @brief	Assign particles artificial positions suitable for debugging
@@ -341,7 +327,14 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
  *	pos[i*nDims+d] = 1000*mpiRank + i + (double)d/10 + (double)s/100;
  * @endcode
  */
-void posDebug(const dictionary *ini, Population *pop);
+void pPosDebug(const dictionary *ini, Population *pop);
+
+/**
+ * @brief Set the same velocity to all particles
+ * @param[in,out]	pop		Population
+ * @param			vel		Velocity to set (expected to be pop->nDims long)
+ */
+void pVelSet(Population *pop, const double *vel);
 
 /**
  * @brief	Assign particles Maxwellian distributed velocities
@@ -356,24 +349,24 @@ void posDebug(const dictionary *ini, Population *pop);
  * seed as that will lead to particles in different sub-domains having identical
  * velocities.
  */
-void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
+void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
 
 /**
  * @brief	Creates .pop.h5-file to store population in
- * @param	ini		Dictionary to input file
- * @param	pop		Population
- * @param	mpiInfo	MpiInfo
- * @param	fName	Filename
+ * @param	ini				Dictionary to input file
+ * @param	pop[in,out]		Population
+ * @param	mpiInfo			MpiInfo
+ * @param	fName			Filename
  * @return	void
- * @see writePopulationH5(), closePopulationH5()
+ * @see pWriteH5(), pCloseH5()
  *
  * An output file is created whose filename is as explained in createH5File().
- * Remember to call closePopulationH5().
+ * Remember to call pCloseH5().
  *
  * The file will have one group "/pos" for position data and one group "/vel"
  * for velocity data. Each of these will have groups "specie <s>" for each
- * specie. For each time-stepd, the population data will be stored in a dataset
- * named "n=<timestep>" where <timestip> is signified with one decimal allowing
+ * specie. For each time-step, the population data will be stored in a dataset
+ * named "n=<timestep>" where <timestep> is signified with one decimal allowing
  * interleaved quantities.
  *
  * In PINC it is made an distinction between _non-dimensionalizing_ and
@@ -397,7 +390,7 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  * dimensionalizing factor converts the axes to meters. Likewise for the
  * velocity factors.
  */
-void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName);
+void pCreateH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName);
 
 /**
  * @brief	Stores particles in Population in .pop.h5-file
@@ -406,7 +399,7 @@ void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *m
  * @param	posN	Timestep of position data to be stored
  * @param	velN	Timestep of velocity data to be stored
  * @return			void
- * @see createPopulationH5()
+ * @see pCreateH5()
  *
  * The position and velocity of all particles are stored, referred to global
  * reference frame. The function takes care of merging the particles from all
@@ -415,76 +408,56 @@ void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *m
  * NB: pop is not constified because all particles are transformed to global
  * reference frame before writing to .h5-file. However, they are transferred
  * back to local reference frame after writing so pop should remain unchanged to
- * within numerical precision.
+ * within machine precision.
  */
-void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN);
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN);
 
 /**
  * @brief	Closes .pop.h5-file
  * @param	pop		Population
  * @return	void
  */
-void closePopulationH5(Population *pop);
+void pCloseH5(Population *pop);
 
 /******************************************************************************
  * DEFINED IN GRID.C
  *****************************************************************************/
 
 /**
- * @brief Allocates the memory for the a grid struct as specified in the input file
- * @param	ini		input file
- * @return	Pointer to Grid
+ * @brief Allocates a Grid object as specified in the input file
+ * @param	ini			Input file
+ * @param	nValues		Number of values per grid point
+ * @return				Pointer to Grid
  *
- * Remember to free using freeGrid().
+ * Use nValues=1 for scalar field, nValues=3 for 3D vector field and so on.
  *
- * @see Grid
+ * Remember to free using gFree().
+ *
+ * NB! Assumes 1 ghost point on all edges for now.
  */
 
-Grid *allocGrid(const dictionary *ini);
+Grid *gAlloc(const dictionary *ini, int nValues);
 
 /**
  * @brief Frees allocated grid
  * @param	grid	Grid
  * @return	void
  */
-void freeGrid(Grid *grid);
-
-/**
- * @brief Allocates the memory for a GridQuantity as specified in the input file
- * @param	ini 	dictionary of the input file
- * @param	grid 	Grid
- * @param	nValues	Number of values per grid point.
- * @return	Pointer to GridQuantity
- *
- * Remember to free using freeGridQuantity().
- *
- *
- * NB! Assumes 1 ghost point on all edges for now.
- * @see Grid
- * @see gridQuantity
- */
-GridQuantity *allocGridQuantity(const dictionary *ini, Grid *grid, int nValues);
-
-/**
- * @brief Frees the memory of a GridQuantity struct
- * @param	gridQuantity	GridQuantity
- * @return	void
- */
-void freeGridQuantity(GridQuantity *gridQuantity);
+void gFree(Grid *grid);
 
 /**
  * @brief Allocates the memory for an MpiInfo struct according to input file
  * @param	ini		Input file dictionary
  * @return	Pointer to MpiInfo
  */
-MpiInfo *allocMpiInfo(const dictionary *ini);
+MpiInfo *gAllocMpi(const dictionary *ini);
 
 /**
  * @brief Frees the memory of an MpiInfo struct
  * @param	mpiInfo		MpiInfo
  * @return	void
  */
-void freeMpiInfo(MpiInfo *mpiInfo);
+void gFreeMpi(MpiInfo *mpiInfo);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
@@ -502,9 +475,42 @@ void freeMpiInfo(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
  */
-void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
+//void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
 
+/**
+ * @brief Set all values in grid to zero
+ * @param	grid	Grid
+ * @return			void
+ */
+void gZero(Grid *grid);
 
+/**
+ * @brief Set grid quantity to vector (or scalar) for all grid points
+ * @param	grid	Grid
+ * @param	value	Array (vector) of values to set
+ *
+ * Each grid point is set to have the vector value specified by 'value'. Hence
+ * value is expected to have length grid->size[0]
+ */
+void gSet(Grid *grid, const double *value);
+
+/**
+ * @brief Multiply all values in grid by a double
+ * @param	grid	Grid
+ * @param	num		Double to multiply by
+ * @return			void
+ */
+void gMulDouble(Grid *grid, double num);
+
+/**
+ * @brief Normalize E-field
+ * @param	ini		Input file dictionary
+ * @param	E		E-field
+ *
+ * Normalizes an non-normalized (but non-dimensional) E-field store in a Grid
+ * object according to step-size, time step and mass and charge of specie 0.
+ */
+void gNormalizeE(const dictionary *ini, Grid *E);
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -713,11 +719,11 @@ hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt
 /**
  * @brief	Assign particles artificial positions suitable for debugging
  * @param			ini				Input file dictionary
- * @param[in,out]	gridQuantity	GridQuantity
+ * @param[in,out]	grid			Grid
  *
  * A quantity will be artificially assigned values depending on the position of
  * the grid points. For scalar valued quantities, node j will have value j,
- * node (j,k) will have value j*10+k and so on for higher dimensions. For
+ * node (j,k) will have value j+k*10 and so on for higher dimensions. For
  * instance at node (j,k,l)=(4,5,6) the value will be 456.
  *
  * For vector valued quantities the integer part of all values at a given point
@@ -726,23 +732,23 @@ hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt
  *
  * In addition, 1000*mpiRank is added to all values. For instance the third
  * value (z-component) at grid point (j,k,l)=(4,5,6) of the subdomain with MPI
- * rank 3 will be 3456.3.
+ * rank 3 will be 3654.3.
  */
-void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo);
+void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
 
 /**
  * @brief	Creates .grid.h5-file to store population in
  * @param	ini				Dictionary to input file
- * @param	gridQuantity	GridQuantity
+ * @param	grid			Grid
  * @param	mpiInfo			MpiInfo
  * @param	denorm			Quantity denormalization factors
  * @param	dimen			Quantity dimensionalizing factors
  * @param	fName			Filename
  * @return	void
- * @see writeGridQuantityH5(), closeGridQuantityH5()
+ * @see gWriteH5(), gCloseH5()
  *
  * An output file is created whose filename is as explained in createH5File().
- * Remember to call closeGridQuantityH5().
+ * Remember to call gCloseH5().
  *
  * The file will have one dataset in the root group for each time-step a grid
  * quantity is stored, named "n=<timestep>" where <timestep> is signified with
@@ -772,29 +778,29 @@ void gridValDebug(GridQuantity *gridQuantity, const MpiInfo *mpiInfo);
  * in the inputs denorm and dimen in this function. They are expected to be of
  * length nDims.
  */
-void createGridQuantityH5(const dictionary *ini, GridQuantity *gridQuantity, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
+void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
 
 /**
  * @brief	Stores quantity in gridQuantity in .grid.h5-file
- * @param	gridQuantity	GridQuantity
+ * @param	grid			Grid
  * @param	mpiInfo			MpiInfo
  * @param	n				Timestep of quantity to be stored
  * @return	void
- * @see createGridQuantityH5()
+ * @see gCreateH5()
  *
  * The position and velocity of all particles are stored, referred to global
  * reference frame. The function takes care of merging the particles from all
  * MPI nodes to one file.
  *
  */
-void writeGridQuantityH5(const GridQuantity *gridQuantity, const MpiInfo *mpiInfo, double n);
+void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
  * @brief	Closes .grid.h5-file
- * @param	gridQuantity	GridQuantity
+ * @param	grid		Grid
  * @return	void
  */
-void closeGridQuantityH5(GridQuantity *gridQuantity);
+void gCloseH5(Grid *grid);
 
 /******************************************************************************
  * DEFINED IN AUX.C
@@ -843,6 +849,14 @@ void tMsg(Timer *timer, const char *restrict format, ...);
  * @return	Product
  */
 int intArrProd(const int *a, int nElements);
+
+/**
+ * @brief Returns the product of all elements in a double array
+ * @param	a			Pointer to array
+ * @param	nElements	Number of elements in array
+ * @return	Product
+ */
+double doubleArrProd(const double *a, int nElements);
 
 /**
  * @brief Returns the cumulative product of the elements in an integer array
@@ -897,5 +911,63 @@ int *intArrMul(const int *a, const int *b, int nElements);
  */
 char *strAllocCat(int n,...);
 
+/******************************************************************************
+ * DEFINED IN PUSHER.C
+ *****************************************************************************/
+
+/**
+ * @brief Moves particles one time-step forward
+ * @param[in,out]	pop		Population
+ * @return					void
+ *
+ * No boundary conditions are enforced and particles may therefore travel out of
+ * bounds. Other functions must be called subsequently to enforce boundary
+ * conditions or transfer them to other sub-domains as appropriate. Otherwise
+ * PINC may fail ungracefully.
+ */
+void puMove(Population *pop);
+
+/**
+ * @brief Enforce periodic particle boundary conditions
+ * @param[in,out]	pop		Population
+ * @param			grid	Grid
+ *
+ * Run after puMove() to enforce conditions. Only the grid size is used from the
+ * grid input so it may be any quantity with the correct dimensions. Typically
+ * the E-field.
+ */
+void puBndPeriodic(Population *pop, const Grid *grid);
+
+/**
+ * @brief Distributes charge density on grid using 1st order interpolation. Fixed to 3D.
+ * @param			pop		Population
+ * @param[in,out]	rho		Charge density
+ * @return					void
+ *
+ * Assuming particles are correctly placed prior to calling this function.
+ * puMove() and some boundary enforcing function should therefore be called
+ * first.
+ */
+void puDistr3D1(const Population *pop, Grid *rho);
+
+/**
+ * @brief Accelerates particles using 1st order interpolation. Fixed to 3D.
+ * @param[in,out]	pop		Population
+ * @param			E		E-field to determine acceleration from
+ * @return					void
+ *
+ * Accelerates particles by interpolating the E-field and updating the velocity
+ * of the particles by one time-step. A half time-step may be achieved by
+ * multiplying the E-field by 0.5 prior to acceleration using gMulDouble().
+ * This is useful to initialize a leapfrog algorithm. Remember to multiply
+ * E-field by 2 again afterwards.
+ *
+ * E is not constified since it will be re-normalized (scaled) for each specie
+ * in order to speed up calculations. However, when this function is done it is
+ * scaled back to original again.
+ *
+ * NB: Only works on 3D
+ */
+void puAcc3D1(Population *pop, Grid *E);
 
 #endif // PINC_H

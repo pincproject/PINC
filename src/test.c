@@ -27,8 +27,9 @@
  *					DEFINITIONS
  ****************************************************************************/
 
+/*
 void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
-/*	Grid *grid = gridQuantity->grid;
+	Grid *grid = gridQuantity->grid;
 
 	for(int i = 0; i < 5; i++){
 		gridQuantity->val[i] = 1.;
@@ -59,7 +60,7 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	}
 	dumpGrid(ini,gridQuantity);
 	multigridParseDump(ini, multigrid);
-*/
+
 	return;
 }
 
@@ -74,7 +75,7 @@ void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 
 	//Load GridQuantity
 	double *rhoVal = rho->val;
-	double *phiVal = phi->val;
+	// double *phiVal = phi->val;
 
 	//Temp quick functions
 	// double sin(double);
@@ -131,7 +132,7 @@ void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 
 	//Load fine and coarse Grid
 	GridQuantity *fRho = multiRho->gridQuantities[0];
-	GridQuantity *cRho = multiRho->gridQuantities[1];
+	// GridQuantity *cRho = multiRho->gridQuantities[1];
 
 	// dumpGridIndexes(ini, fRho);
 	// dumpGridIndexes(ini, cRho);
@@ -344,3 +345,4 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	return;
 }
+*/
