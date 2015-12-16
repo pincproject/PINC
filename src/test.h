@@ -17,7 +17,7 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "multigrid.h"
+// #include "multigrid.h"
 
 /**
  * @brief Tests that grids are accessible and editable from
@@ -33,26 +33,34 @@
  *
  */
 
-void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
+// void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
 
 /**
  * @brief Temp manual test of boundary send/recieve function
  */
 
-void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
+// void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
 
 /*
  * temporary for testing slice function
  */
 
-void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
-
-void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
+// void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
+//
+// void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
 
 /**
  * Short testing routine of Gauss-Seidel RB algorithm
  */
-void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo);
+// void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,MpiInfo *mpiInfo);
+//
+// void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+//  					MpiInfo *mpiInfo);
+//
+// void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+// 					MpiInfo *mpiInfo);
+//
+// void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
 
 
 /**
@@ -71,4 +79,4 @@ void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInf
 	111111	222222
  * @endcode
  */
-void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
+// void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);

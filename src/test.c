@@ -16,12 +16,20 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "multigrid.h"
 #include "test.h"
 
+/******************************************************************************
+ *	USEFUL CONSTANTS FOR TESTFUNCTIONS
+ *****************************************************************************/
+#define PI 3.14159265
 
+/*****************************************************************************
+ *					DEFINITIONS
+ ****************************************************************************/
+
+/*
 void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid){
-/*	Grid *grid = gridQuantity->grid;
+	Grid *grid = gridQuantity->grid;
 
 	for(int i = 0; i < 5; i++){
 		gridQuantity->val[i] = 1.;
@@ -52,13 +60,112 @@ void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid
 	}
 	dumpGrid(ini,gridQuantity);
 	multigridParseDump(ini, multigrid);
-*/
+
 	return;
 }
 
-void testGaussSeidel(dictionary *ini, GridQuantity *gridQuantity,MpiInfo *mpiInfo){
+void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
 	msg(STATUS|ONCE, "Hello from GaussSeidel test");
+	//Load Grid info
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	GridQuantity *phi = multiPhi->gridQuantities[0];
+	Grid *grid = rho->grid;
+	int *nGPoints = grid->nGPoints;
 
+	//Load GridQuantity
+	double *rhoVal = rho->val;
+	// double *phiVal = phi->val;
+
+	//Temp quick functions
+	// double sin(double);
+
+	//Variables
+	// double angle;
+
+	int ind = 0;
+	for(int j = 0; j < nGPoints[0]; j++){
+		// angle = 0;
+		for (int k = 0; k<nGPoints[1]; k++) {
+			// if(k>(0.5*nGPoints[1])) angle = 1.;
+			rhoVal[ind] = (double) (j + 2*k);
+			ind++;
+		}
+	}
+
+	dumpGridIndexes(ini, rho);
+	dumpGrid(ini,rho);
+
+	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
+
+	dumpGrid(ini, phi);
+
+	for(int q = 0; q < 5; q++) multiRho->preSmooth(phi, rho);
+
+	dumpGrid(ini, phi);
+
+
+	return;
+}
+
+void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
+
+	msg(STATUS|ONCE, "Hello from Restriction test, not done!");
+	//Load Grid info
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	// GridQuantity *phi = multiPhi->gridQuantities[0];
+	Grid *grid = rho->grid;
+	int *nGPoints = grid->nGPoints;
+
+	//Load GridQuantity
+	double *rhoVal = rho->val;
+
+
+	int ind = 0;
+	for(int j = 0; j < nGPoints[0]; j++){
+		for (int k = 0; k<nGPoints[1]; k++) {
+			if(k < 3)rhoVal[ind] = (double) 1;
+			ind++;
+		}
+	}
+
+	//Load fine and coarse Grid
+	GridQuantity *fRho = multiRho->gridQuantities[0];
+	// GridQuantity *cRho = multiRho->gridQuantities[1];
+
+	// dumpGridIndexes(ini, fRho);
+	// dumpGridIndexes(ini, cRho);
+	dumpGrid(ini, fRho);
+
+	multiRho->restrictor(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
+	multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
+
+	dumpGrid(ini, fRho);
+
+
+	// multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
+
+	return;
+}
+
+void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
+					MpiInfo *mpiInfo){
+
+	//Load
+	GridQuantity *rho = multiRho->gridQuantities[0];
+	Grid *grid = rho->grid;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
+
+	//Load GridQuantity
+	double *rhoVal = rho->val;
+
+	for(int ind = 0; ind < nGPointsProd[nDims]; ind++) rhoVal[ind] = 1.;
+
+	dumpGrid(ini, rho);
+
+	linearMGSolv(multiRho,multiPhi);
 
 
 	return;
@@ -163,6 +270,42 @@ void testGetSlice(dictionary *ini, GridQuantity *gridQuantity){
 	dumpGrid(ini, gridQuantity);
 }
 
+void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity){
+	Grid *grid = gridQuantity->grid;
+	int *nGPoints = grid->nGPoints;
+	long int *nGPointsProd = grid->nGPointsProd;
+	int nDims = grid->nDims;
+
+	if(nDims == 3){
+		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+					nGPoints[0], nGPoints[1], nGPoints[2]);
+		//Cycles trough and prints the grid (not optimized)
+		int p;
+		for(int l = 0; l < nGPoints[2]; l++){
+			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
+			for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
+				for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+					p = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
+					fMsg(ini,"parsedump", "%5d", p);
+				}
+				fMsg(ini,"parsedump", "\n\n");
+			}
+		}
+	} else if(nDims==2) {
+		fMsg(ini,"parsedump", "\t\t 2D grid: (%dx%d): \n \n",
+					nGPoints[0], nGPoints[1]);
+		int p;
+		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
+			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
+				p = j*nGPointsProd[0] + k*nGPointsProd[1];
+				fMsg(ini,"parsedump", "%5d", p);
+			}
+			fMsg(ini,"parsedump", "\n\n");
+		}
+
+	}
+}
+
 void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	Grid *grid = gridQuantity->grid;
@@ -171,7 +314,6 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 	int nDims = grid->nDims;
 
 	msg(STATUS|ONCE, "Dumps grid to parsefile");
-
 	if(nDims == 3){
 		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
 		 			nGPoints[0], nGPoints[1], nGPoints[2]);
@@ -203,3 +345,4 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 
 	return;
 }
+*/
