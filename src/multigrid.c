@@ -28,20 +28,23 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
     char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
 
-    if(!strcmp(preSmoothName,"gaussSeidel")){
-    	multigrid->preSmooth = &gaussSeidel;
+	int nDims = multigrid->gridQuantities[0]->grid->nDims;
+
+	if(!strcmp(preSmoothName,"gaussSeidel") && nDims == 2){
+		multigrid->preSmooth = &gaussSeidel2D;
+
     } else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"gaussSeidel")){
-    	multigrid->postSmooth = &gaussSeidel;
-    } else {
+    if(!strcmp(postSmoothName,"gaussSeidel") && nDims == 2){
+		multigrid->postSmooth = &gaussSeidel2D;
+ 	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"gaussSeidel")){
-    	multigrid->coarseSolv = &gaussSeidel;
+    if(!strcmp(coarseSolverName,"gaussSeidel") && nDims == 2){
+		multigrid->coarseSolv = &gaussSeidel2D;
     } else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
@@ -133,8 +136,10 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 
 	//Multigrid
 	int nLevels = iniparser_getint((dictionary *) ini, "multigrid:mgLevels", 0);
-	int nCycles = iniparser_getint((dictionary *) ini, "multigrid:mgCycles", 0);
-
+	int nMGCycles = iniparser_getint((dictionary *) ini, "multigrid:mgCycles", 0);
+	int nPreSmooth = iniparser_getint((dictionary *) ini, "multigrid:nPreSmooth", 0);
+	int nPostSmooth = iniparser_getint((dictionary *) ini, "multigrid:nPostSmooth", 0);
+	int nCoarseSolve = iniparser_getint((dictionary *) ini, "multigrid:nCoarseSolve", 0);
 	//Load data
 	int nDims = gridQuantity->grid->nDims;
 	int *nTGPoints = gridQuantity->grid->nTGPoints;
@@ -143,7 +148,7 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
 	if(!nLevels) msg(ERROR, "Multi Grid levels is 0, direct solver not implemented yet \n");
 
 
-	if(!nCycles) msg(ERROR, "MG cycles is 0 \n");
+	if(!nMGCycles) msg(ERROR, "MG cycles is 0 \n");
 
 
 	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
@@ -159,7 +164,10 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity){
     Multigrid *multigrid = malloc(sizeof(Multigrid));
 
     multigrid->nLevels = nLevels;
-    multigrid->nCycles = nCycles;
+    multigrid->nMGCycles = nMGCycles;
+	multigrid->nPreSmooth = nPreSmooth;
+	multigrid->nPostSmooth = nPostSmooth;
+	multigrid->nCoarseSolve = nCoarseSolve;
     multigrid->gridQuantities = gridQuantities;
 
     //Setting the algorithms to be used, pointer functions
@@ -186,49 +194,54 @@ void freeMultigrid(Multigrid *multigrid){
 }
 
 
-void jacobian(GridQuantity *phi,const GridQuantity *rho){
+void jacobian(GridQuantity *phi,const GridQuantity *rho, int nCycles){
 	printf("Hello from Jacobian \n");
 	return;
 }
 
-void gaussSeidel(GridQuantity *phi, const GridQuantity *rho){
+void gaussSeidel2D(GridQuantity *phi, const GridQuantity *rho, int nCycles){
 
 	//Common variables
 	Grid *grid = phi->grid;
 	int *nTGPoints = grid->nTGPoints;
 	long int *nGPointsProd = grid->nGPointsProd;
 
+
+
 	//Seperate values
 	double *phiVal = phi->val;
 	double *rhoVal = rho->val;
 
-	long int ind = nGPointsProd[1] + 1;
-	int j;
-	//Red Pass
-	// msg(STATUS, "Red indexes = ");
-	for(int k = 1; k < nTGPoints[1] + 1; k ++){
-		if(k%2) j = 1; else j = 2;
-		for(; j < nTGPoints[0] + 1; j += 2){
-			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-			phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
- 						phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
-						rhoVal[ind])*0.25;
-			// msg(STATUS, "%d", ind);
+	for(int c = 0; c < nCycles;c++){
+		long int ind = nGPointsProd[1] + 1;
+		int j;
+		//Red Pass
+		// msg(STATUS, "Red indexes = ");
+		for(int k = 1; k < nTGPoints[1] + 1; k ++){
+			if(k%2) j = 1; else j = 2;
+			for(; j < nTGPoints[0] + 1; j += 2){
+				ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+				phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
+							phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
+							rhoVal[ind])*0.25;
+				// msg(STATUS, "%d", ind);
+			}
+		}
+
+		//Black Pass
+		// msg(STATUS, "Black indexes = ");
+		for(int k = 1; k < nTGPoints[1] + 1; k ++){
+			if(k%2) j = 2; else j = 1;
+			for(; j < nTGPoints[0] + 1; j += 2){
+				ind = j*nGPointsProd[0] + k*nGPointsProd[1];
+				phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
+							phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
+							rhoVal[ind])*0.25;
+				// msg(STATUS, "%d", ind);
+			}
 		}
 	}
 
-	//Black Pass
-	// msg(STATUS, "Black indexes = ");
-	for(int k = 1; k < nTGPoints[1] + 1; k ++){
-		if(k%2) j = 2; else j = 1;
-		for(; j < nTGPoints[0] + 1; j += 2){
-			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-			phiVal[ind] = (phiVal[ind+nGPointsProd[0]] + phiVal[ind-nGPointsProd[0]] +
- 						phiVal[ind+nGPointsProd[1]] + phiVal[ind-nGPointsProd[1]] -
-						rhoVal[ind])*0.25;
-			// msg(STATUS, "%d", ind);
-		}
-	}
 
 	return;
 }
@@ -333,19 +346,21 @@ void bilinearProlong(GridQuantity *f, GridQuantity *c){
 
 void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
 
-	int nCycles = multiRho->nCycles;
+	int nMGCycles = multiRho->nMGCycles;
 	int nLevels = multiRho->nLevels;
+	int nCoarseSolve = multiRho->nCoarseSolve;
+	int nPreSmooth = multiRho->nPreSmooth;
 
 	GridQuantity *rho = multiRho->gridQuantities[0];
 	GridQuantity *phi = multiPhi->gridQuantities[0];
 
 	// msg(STATUS, "%d", nLevels);
 
-	for(int c = 0; c < nCycles; c++)
+	for(int c = 0; c < nMGCycles; c++)
 		for(int l = 0; l < nLevels; l++){
-			if(l==nLevels-1) multiRho->coarseSolv(rho, phi);	//Coarse grid
+			if(l==nLevels-1) multiRho->coarseSolv(rho, phi, nCoarseSolve);	//Coarse grid
 			else { //MG Rountine
-				multiRho->preSmooth(rho,phi);
+				multiRho->preSmooth(rho,phi, nPreSmooth);
 				//Defect calculation here
 				//Restrict defect
 				//Set inital guess

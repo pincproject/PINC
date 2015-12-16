@@ -262,7 +262,7 @@ void firstDerivative(const GridQuantity *scalar, GridQuantity *field){
 	return;
 }
 
-void secondDerivate(const GridQuantity *rho, GridQuantity *phi){
+void secondDerivative(const GridQuantity *phi, GridQuantity *rho){
 	//TBD
 	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
 

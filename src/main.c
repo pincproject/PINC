@@ -43,6 +43,17 @@ int main(int argc, char *argv[]){
 	Multigrid *multiPhi = allocMultigrid(ini, phi);
 	MpiInfo *mpiInfo = allocMpiInfo(ini);
 
+	int nDims = grid->nDims;
+	double *denorm = malloc(sizeof(*denorm));
+	double *dimens = malloc(sizeof(*dimens));
+
+	for(int d = 0; d < nDims;d++) denorm[d] = 1.;
+	for(int d = 0; d < nDims;d++) dimens[d] = 1.;
+
+	createGridQuantityH5(ini,rho,mpiInfo, denorm, dimens, "rho");
+	createGridQuantityH5(ini,phi,mpiInfo,denorm,dimens, "phi");
+
+	msg(STATUS,"hello");
 
 	/*
 	 *	TEST AREA
@@ -53,8 +64,8 @@ int main(int argc, char *argv[]){
  // 	testSwapHalo(ini, gridQuantity, mpiInfo);
  	testGaussSeidel(ini, multiRho, multiPhi, mpiInfo);
  // 	testRestriction(ini, multiRho, multiPhi, mpiInfo);
- 	// 	testMultigrid(ini, multiRho, multiPhi,mpiInfo);
- //		testDerivatives(ini, rho, phi);
+ // 	testMultigrid(ini, multiRho, multiPhi,mpiInfo);
+ // 	testDerivatives(ini, rho, phi);
 
 
 	/*
@@ -64,6 +75,9 @@ int main(int argc, char *argv[]){
 	freeGridQuantity(rho);
 	freeGridQuantity(phi);
 	freeMpiInfo(mpiInfo);
+
+	closeGridQuantityH5(rho);
+	closeGridQuantityH5(phi);
 	/*
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */

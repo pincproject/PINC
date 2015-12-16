@@ -80,25 +80,25 @@ void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 	double sin(double);
 
 	//Variables
-	double angle;
+	double coeffX = PI/nGPoints[0];
+	double coeffY = PI/nGPoints[1];
 
 	int ind = 0;
 	for(int j = 0; j < nGPoints[0]; j++){
 		// angle = 0;
 		for (int k = 0; k<nGPoints[1]; k++) {
 			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-			// rhoVal[ind] = (double) (j + 2*k);
-			rhoVal[ind] = (j*2*PI)/nGPoints[0];
+			// rhoVal[ind] = (double) (j*j + 2*k);
+			rhoVal[ind] = sin(j*coeffX)*sin(k*coeffY);
 		}
 	}
 
-	// dumpGridIndexes(ini, rho);
-	dumpGrid(ini,rho);
+	writeGridQuantityH5(rho, mpiInfo, 0.);
 
-	for(int q = 0; q < 2000; q++) multiRho->coarseSolv(phi, rho);
+	// multiRho->coarseSolv(phi, rho, 1000);
+	secondDerivative(phi, rho);
 
-	// dumpGrid(ini,phi);
-
+	writeGridQuantityH5(phi, mpiInfo, 0.);
 
 	return;
 }
@@ -165,7 +165,7 @@ void testDerivatives(dictionary *ini, GridQuantity *rho, GridQuantity *phi){
 
 	dumpGrid(ini, rho);
 
-	secondDerivate(rho,phi);
+	secondDerivative(rho,phi);
 
 	dumpGrid(ini, phi);
 
@@ -348,21 +348,21 @@ void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
 			for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
 				for(int j = 0; j < nGPoints[0]; j++){ //x-rows
 					p = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
-					fMsg(ini,"parsedump", "%5d", (int) gridQuantity->val[p]);
+					fMsg(ini,"parsedump", "%5f, ",  gridQuantity->val[p]);
 				}
 				fMsg(ini,"parsedump", "\n\n");
 			}
 		}
 	} else if(nDims==2) {
-		fMsg(ini,"parsedump", "\t\t 2D grid: (%dx%d): \n \n",
+		fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
 		 			nGPoints[0], nGPoints[1]);
 		int p;
 		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
 			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
 				p = j*nGPointsProd[0] + k*nGPointsProd[1];
-				fMsg(ini,"parsedump", "%6d", (int) gridQuantity->val[p]);
+				fMsg(ini,"parsedump", "%5f \t", gridQuantity->val[p]);
 			}
-			fMsg(ini,"parsedump", "\n\n");
+			fMsg(ini,"parsedump", "\n");
 		}
 
 	}

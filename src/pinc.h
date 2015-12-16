@@ -520,7 +520,7 @@ void firstDerivative(const GridQuantity *scalar, GridQuantity *field);
  *
  *
  */
-void secondDerivate(const GridQuantity *rho, GridQuantity *phi);
+void secondDerivative(const GridQuantity *phi, GridQuantity *rho);
 
 
 /******************************************************************************
