@@ -25,26 +25,24 @@
 
 void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
+	char *preSmoothName = iniparser_getstring((dictionary*)ini, "modules:preSmooth", "\0");
+    char *postSmoothName = iniparser_getstring((dictionary*)ini, "modules:postSmooth", "\0");
+    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "modules:coarseSolv", "\0");
 
-	int nDims = multigrid->grids[0]->rank - 1;
-
-	if(!strcmp(preSmoothName,"gaussSeidel") && nDims == 2){
+	if(!strcmp(preSmoothName,"gaussSeidel")){
 		multigrid->preSmooth = &gaussSeidel2D;
 
     } else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"gaussSeidel") && nDims == 2){
+    if(!strcmp(postSmoothName,"gaussSeidel")){
 		multigrid->postSmooth = &gaussSeidel2D;
  	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"gaussSeidel") && nDims == 2){
+    if(!strcmp(coarseSolverName,"gaussSeidel")){
 		multigrid->coarseSolv = &gaussSeidel2D;
     } else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");

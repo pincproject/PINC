@@ -270,44 +270,77 @@ void firstDerivative(const Grid *scalar, Grid *field){
 	return;
 }
 
-void secondDerivative(const Grid *phi, Grid *rho){
+void laplacian2D(Grid *phi, const Grid *rho){
 	//TBD
 	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
-	//
-	// //Load
-	// int nDims = rho->rank/rho->sizeProd[0];
-	// int *nTGPoints = rho->nTGPoints;
-	// long int *nGPointsProd = rho->nGPointsProd;
-	// int *nGhosts = rho->nGhosts;
-	//
-	// double *phiVal = phi->val;
-	// double *rhoVal = rho->val;
-	//
-	// int ind;
-	//
-	// if(nDims == 2){
-	// 	for(int j = nGhosts[0]; j < nGhosts[0] + nTGPoints[0]; j++){
-	// 		for(int k = nGhosts[1]; k < nGhosts[1] + nTGPoints[1]; k++){
-	// 			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-	// 			phiVal[ind] = -2.*nDims*rhoVal[ind];
-	// 			for(int d = 0; d < nDims ; d++)
-	// 				phiVal[ind] += rhoVal[ind + nGPointsProd[d]] +
-	// 							rhoVal[ind - nGPointsProd[d]];
-	// 		}
-	// 	}
-	// } else if( nDims == 3){
-	// 	for(int j = nGhosts[0]; j < nGhosts[0] + nTGPoints[0]; j++){
-	// 		for(int k = nGhosts[1]; k <  nGhosts[1] + nTGPoints[1]; k++){
-	// 			for(int l = nGhosts[2]; l < nGhosts[2] + nTGPoints[2]; l++){
-	// 				ind = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
-	// 				phiVal[ind] = -2.*nDims*rhoVal[ind];
-	// 				for(int d = 0; d < nDims ; d++)
-	// 					phiVal[ind] += rhoVal[ind + nGPointsProd[d]] +
-	// 								rhoVal[ind - nGPointsProd[d]];
-	// 			}
-	// 		}
-	// 	}
-	// } else msg(ERROR, "Derivatives only work for 2D and 3D");
+
+	//Load
+	int rank = rho->rank;
+	long int *sizeProd = rho->sizeProd;
+
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	// Index of neighboring nodes
+	int g = 0;
+	int gj = g + sizeProd[1];
+	int gjj= g - sizeProd[1];
+	int gk = g + sizeProd[2];
+	int gkk= g - sizeProd[2];
+
+	//Laplacian
+	for(int q = 0; q < sizeProd[rank]; q++){
+		phiVal[g] = -4.*rhoVal[g];
+		phiVal[g] += rhoVal[gj] + rhoVal[gjj]
+					+rhoVal[gk] + rhoVal[gkk];
+
+		//Increment indexes
+		g++;
+		gj++;
+		gjj++;
+		gk++;
+		gkk++;
+	}
+
+	return;
+}
+
+void laplacian3D(Grid *phi, const  Grid *rho){
+	//TBD
+	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
+
+	//Load
+	int rank = rho->rank;
+	long int *sizeProd = rho->sizeProd;
+
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	// Index of neighboring nodes
+	int g = 0;
+	int gj = g + sizeProd[1];
+	int gjj= g - sizeProd[1];
+	int gk = g + sizeProd[2];
+	int gkk= g - sizeProd[2];
+	int gl = g + sizeProd[3];
+	int gll= g - sizeProd[3];
+
+	//Laplacian
+	for(int q = 0; q < sizeProd[rank]; q++){
+		phiVal[g] = -6.*rhoVal[g];
+		phiVal[g] += rhoVal[gj] + rhoVal[gjj]
+					+rhoVal[gk] + rhoVal[gkk]
+					+rhoVal[gl] + rhoVal[gll];
+
+		//Increment indexes
+		g++;
+		gj++;
+		gjj++;
+		gk++;
+		gkk++;
+		gl++;
+		gll++;
+	}
 
 	return;
 }

@@ -517,7 +517,9 @@ void firstDerivative(const Grid *scalar, Grid *field);
  *
  *
  */
-void secondDerivative(const Grid *phi, Grid *rho);
+void laplacian3D(Grid *phi,const Grid *rho);
+
+void laplacian2D(Grid *phi,const Grid *rho);
 
  /**
  * @brief Normalize E-field

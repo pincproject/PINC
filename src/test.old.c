@@ -27,68 +27,8 @@
  *					DEFINITIONS
  ****************************************************************************/
 
-void testGridAndMGStructs(dictionary *ini, Grid *grid, Multigrid *multigrid){
-
-	msg(STATUS|ONCE, "Performing a test of grid structs");
 
 
-	msg(STATUS, "%d", grid->rank);
-
-	for(int i = 0; i < 5; i++){
-		grid->val[i] = 1.;
-	}
-
-	//Changing them from the multigrid struct
-	for(int i = 0; i < 5; i++){
-		multigrid->grids[0]->val[i] = 5.;
-	}
-
-
-	for(int i = 0; i < 5; i++){
-		grid->val[i] = 1.;
-	}
-
-	return;
-}
-
-// void testGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
-// 					MpiInfo *mpiInfo){
-// 	msg(STATUS|ONCE, "Hello from GaussSeidel test");
-// 	//Load Grid info
-// 	Grid *rho = multiRho->grids[0];
-// 	Grid *phi = multiPhi->grids[0];
-// 	int *nGPoints = rho->nGPoints;
-// 	long int *nGPointsProd = grid->nGPointsProd;
-//
-// 	//Load GridQuantity
-// 	double *rhoVal = rho->val;
-//
-// 	//Temp quick functions
-// 	double sin(double);
-//
-// 	//Variables
-// 	double coeffX = PI/nGPoints[0];
-// 	double coeffY = PI/nGPoints[1];
-//
-// 	int ind = 0;
-// 	for(int j = 0; j < nGPoints[0]; j++){
-// 		// angle = 0;
-// 		for (int k = 0; k<nGPoints[1]; k++) {
-// 			ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-// 			// rhoVal[ind] = (double) (j*j + 2*k);
-// 			rhoVal[ind] = sin(j*coeffX)*sin(k*coeffY);
-// 		}
-// 	}
-//
-// 	writeGridQuantityH5(rho, mpiInfo, 0.);
-//
-// 	// multiRho->coarseSolv(phi, rho, 1000);
-// 	secondDerivative(phi, rho);
-//
-// 	writeGridQuantityH5(phi, mpiInfo, 0.);
-//
-// 	return;
-// }
 //
 // void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 // 					MpiInfo *mpiInfo){
