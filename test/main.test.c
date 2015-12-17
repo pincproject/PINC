@@ -13,6 +13,7 @@
 int main(int argc, char *argv[]){
 
 	MPI_Init(&argc,&argv);
+	iniSetDummy(argc,argv);
 
 	testAux();
 	testIo();

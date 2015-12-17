@@ -51,3 +51,21 @@ void utRun(int (*fun)()){
 void utSummary(){
 	utRun(NULL);
 }
+
+dictionary *iniSetDummy(int argc, char **argv){
+
+	static char fileName[128];
+	if(argc==0){
+		return iniparser_load(fileName);
+	} else if(argc==2){
+		strcpy(fileName,argv[1]);
+		return NULL;
+	} else {
+		printf("error in iniSetDummy");
+		return NULL;
+	}
+}
+
+dictionary *iniGetDummy(){
+	return iniSetDummy(0,0);
+}

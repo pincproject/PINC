@@ -10,6 +10,7 @@
 #define TEST_H
 
 #include <stdarg.h>
+#include "iniparser.h"
 
 /**
  * @brief Tests an assertion.
@@ -84,6 +85,9 @@ int utAssertInner(const char *file, const char *func, int line, int test, const 
  * @see utAssert()
  */
 void utRun(int (*fun)());
+
+dictionary *iniGetDummy();
+dictionary *iniSetDummy(int argc,char **argv);
 
 /**
  * @brief	Prints a summary of the tests
