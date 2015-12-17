@@ -25,6 +25,7 @@ BRIEF_MEMBER_DESC	doc/doxygen/doxyfile.mk	/^BRIEF_MEMBER_DESC      = YES$/;"	m
 BUCKETSIZE	src/old/const.h	271;"	d
 BUCKETSIZE	src/old/triang/const.h	271;"	d
 BUFFSIZE	src/io.c	28;"	d	file:
+BUFFSIZE	test/test.c	13;"	d	file:
 BUILTIN_STL_SUPPORT	doc/doxygen/doxyfile.mk	/^BUILTIN_STL_SUPPORT    = NO$/;"	m
 CADD	makefile	/^CADD	= # Additional CFLAGS accessible from CLI$/;"	m
 CALLER_GRAPH	doc/doxygen/doxyfile.mk	/^CALLER_GRAPH           = NO$/;"	m
@@ -232,6 +233,7 @@ HALO_H	proof of concept/get boundary/challenge/halo.h	2;"	d
 HAVE_DOT	doc/doxygen/doxyfile.mk	/^HAVE_DOT               = NO$/;"	m
 HDIR	makefile	/^HDIR	= src$/;"	m
 HEAD	makefile	/^HEAD	= $(patsubst %,$(HDIR)\/%,$(HEAD_))$/;"	m
+HEAD_	makefile	/^HEAD_	= pinc.h pusher.h #multigrid.h$/;"	m
 HEAD_	makefile	/^HEAD_	= pinc.h pusher.h test.h multigrid.h$/;"	m
 HHC_LOCATION	doc/doxygen/doxyfile.mk	/^HHC_LOCATION           =$/;"	m
 HIDE_FRIEND_COMPOUNDS	doc/doxygen/doxyfile.mk	/^HIDE_FRIEND_COMPOUNDS  = NO$/;"	m
@@ -386,7 +388,7 @@ Np	script/distribution.py	/^Np = vel.shape[0]	# Number of particles$/;"	v
 OBJ	makefile	/^OBJ		= $(patsubst %,$(ODIR)\/%,$(OBJ_))$/;"	m
 OBJS	lib/iniparser/Makefile	/^OBJS = $(SRCS:.c=.o)$/;"	m
 OBJ_	makefile	/^OBJ_	= $(SRC_:.c=.o)$/;"	m
-ODIR	makefile	/^ODIR	= src$/;"	m
+ODIR	makefile	/^ODIR	= src\/obj$/;"	m
 ONCE	src/pinc.h	/^	ONCE = 0x10			\/\/\/< Output message from all MPI-nodes. To be bitwise ORed.$/;"	e	enum:__anon5
 OPTIMIZE_FOR_FORTRAN	doc/doxygen/doxyfile.mk	/^OPTIMIZE_FOR_FORTRAN   = NO$/;"	m
 OPTIMIZE_OUTPUT_FOR_C	doc/doxygen/doxyfile.mk	/^OPTIMIZE_OUTPUT_FOR_C  = NO$/;"	m
@@ -410,7 +412,7 @@ PEtotal	src/old/const.h	/^double *PEtotal;$/;"	v
 PEtotal	src/old/triang/const.h	/^double *PEtotal;$/;"	v
 PEtotalMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 PEtotalMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
-PI	src/test.c	24;"	d	file:
+PI	src/test.old.c	24;"	d	file:
 PINC_H	src/pinc.h	14;"	d
 PREDEFINED	doc/doxygen/doxyfile.mk	/^PREDEFINED             =$/;"	m
 PROBE	src/old/const.h	51;"	d
@@ -495,6 +497,7 @@ SP_SIMPLE_LRUP	src/old/triang/triangulate.h	107;"	d
 SQR	src/old/fmg/nrutil.h	5;"	d
 SRC	makefile	/^SRC		= $(patsubst %,$(SDIR)\/%,$(SRC_))$/;"	m
 SRCS	lib/iniparser/Makefile	/^SRCS = src\/iniparser.c \\$/;"	m
+SRC_	makefile	/^SRC_	= io.c aux.c population.c grid.c pusher.c #multigrid.c$/;"	m
 SRC_	makefile	/^SRC_	= main.c io.c aux.c population.c grid.c pusher.c test.c multigrid.c$/;"	m
 STATUS	src/pinc.h	/^	STATUS = 0x00,		\/\/\/< Normal status output about the progress of execution.$/;"	e	enum:__anon5
 STOOL_H_	proof of concept/stool/stool.h	9;"	d
@@ -543,8 +546,16 @@ Structs	doc/introduction/main.tex	/^		\\end{itemize}$/;"	b
 TAB_SIZE	doc/doxygen/doxyfile.mk	/^TAB_SIZE               = 4$/;"	m
 TAGFILES	doc/doxygen/doxyfile.mk	/^TAGFILES               =$/;"	m
 TCL_SUBST	doc/doxygen/doxyfile.mk	/^TCL_SUBST              =$/;"	m
+TDIR	makefile	/^TDIR	= test$/;"	m
 TEMPLATE_RELATIONS	doc/doxygen/doxyfile.mk	/^TEMPLATE_RELATIONS     = NO$/;"	m
+TESTHEAD	makefile	/^TESTHEAD= $(patsubst %,$(THDIR)\/%,$(TESTHEAD_))$/;"	m
+TESTHEAD_	makefile	/^TESTHEAD_ = test.h$/;"	m
+TESTOBJ	makefile	/^TESTOBJ	= $(patsubst %,$(TODIR)\/%,$(TESTOBJ_))$/;"	m
+TESTOBJ_	makefile	/^TESTOBJ_= test.o $(SRC_:.c=.test.o)$/;"	m
+TEST_H	test/test.h	10;"	d
+THDIR	makefile	/^THDIR	= test$/;"	m
 TOC_EXPAND	doc/doxygen/doxyfile.mk	/^TOC_EXPAND             = NO$/;"	m
+TODIR	makefile	/^TODIR	= test\/obj$/;"	m
 TOLERANCE	src/old/const.h	/^double TOLERANCE; \/\/convergence limit for Poisson solver$/;"	v
 TOLERANCE	src/old/triang/const.h	/^double TOLERANCE; \/\/convergence limit for Poisson solver$/;"	v
 TREEVIEW_WIDTH	doc/doxygen/doxyfile.mk	/^TREEVIEW_WIDTH         = 250$/;"	m
@@ -1808,6 +1819,7 @@ main	src/main.c	/^int main(int argc, char *argv[]){$/;"	f
 main	src/old/main_backup.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/old/triang/main.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/old/triang/main_backup.c	/^int main(int argc, char *argv[])$/;"	f
+main	test/main.test.c	/^int main(int argc, char *argv[]){$/;"	f
 makeDir	src/aux.c	/^static int makeDir(const char *dir){$/;"	f	file:
 makeParentPath	src/aux.c	/^int makeParentPath(const char *path){$/;"	f
 make_new_monotone_poly	src/old/triang/monotone.c	/^static int make_new_monotone_poly(mcur, v0, v1)$/;"	f	file:
@@ -2335,7 +2347,13 @@ tempy	src/old/const.h	/^double tempy[S]; \/*temperature in eV, y direction*\/$/;
 tempy	src/old/triang/const.h	/^double tempy[S]; \/*temperature in eV, y direction*\/$/;"	v
 tempz	src/old/const.h	/^double tempz[S];$/;"	v
 tempz	src/old/triang/const.h	/^double tempz[S];$/;"	v
-testGridAndMGStructs	src/test.c	/^void testGridAndMGStructs(dictionary *ini, Grid *grid, Multigrid *multigrid){$/;"	f
+testAux	test/aux.test.c	/^void testAux(){$/;"	f
+testGrid	test/grid.test.c	/^void testGrid(){$/;"	f
+testGridAndMGStructs	src/test.old.c	/^void testGridAndMGStructs(dictionary *ini, Grid *grid, Multigrid *multigrid){$/;"	f
+testIntArrProd	test/aux.test.c	/^static int testIntArrProd(){$/;"	f	file:
+testIo	test/io.test.c	/^void testIo(){$/;"	f
+testPopulation	test/population.test.c	/^void testPopulation(){$/;"	f
+testPusher	test/pusher.test.c	/^void testPusher(){$/;"	f
 testowy	src/old/const.h	/^FILE *testowy;$/;"	v
 testowy	src/old/triang/const.h	/^FILE *testowy;$/;"	v
 ti2te	src/old/const.h	/^double ti2te; \/*temperature ratio*\/$/;"	v
@@ -2396,6 +2414,10 @@ unitvecseg	src/old/triang/const.h	/^vectorst ** unitvec, **orthvec,  ** unitvecs
 updateStripes	doc/html/dynsections.js	/^function updateStripes()$/;"	f
 usave	src/old/triang/triangulate.h	/^  int usave, uside;		\/* I forgot what this means *\/$/;"	m	struct:__anon9
 uside	src/old/triang/triangulate.h	/^  int usave, uside;		\/* I forgot what this means *\/$/;"	m	struct:__anon9
+utAssert	test/test.h	60;"	d
+utAssertInner	test/test.c	/^int utAssertInner(const char *file, const char *func, int line, int test, const char * restrict format,...){$/;"	f
+utRun	test/test.c	/^void utRun(int (*fun)()){$/;"	f
+utSummary	test/test.c	/^void utSummary(){$/;"	f
 v	script/distribution.py	/^v = linspace(0,6,100)$/;"	v
 v0	src/old/triang/triangulate.h	/^  point_t v0, v1;		\/* two endpoints *\/$/;"	m	struct:__anon8
 v1	src/old/triang/triangulate.h	/^  point_t v0, v1;		\/* two endpoints *\/$/;"	m	struct:__anon8

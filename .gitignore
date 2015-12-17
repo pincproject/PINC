@@ -10,3 +10,6 @@ parsedump.txt
 **.h5
 gmon.out
 **gullik.ini
+src/main.local.c
+ut
+tags
