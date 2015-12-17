@@ -1364,6 +1364,7 @@ iniGetLongIntArr	src/io.c	/^long int* iniGetLongIntArr(const dictionary *ini, co
 iniGetNElements	src/io.c	/^int iniGetNElements(const dictionary* ini, const char* key){$/;"	f
 iniGetStrArr	src/io.c	/^char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){$/;"	f
 iniOpen	src/io.c	/^dictionary* iniOpen(int argc, char *argv[]){$/;"	f
+iniOpenDummy	test/grid.test.c	/^dictionary *iniOpenDummy(){$/;"	f
 iniparser_dump	lib/iniparser/src/iniparser.c	/^void iniparser_dump(dictionary * d, FILE * f)$/;"	f
 iniparser_dump_ini	lib/iniparser/src/iniparser.c	/^void iniparser_dump_ini(dictionary * d, FILE * f)$/;"	f
 iniparser_dumpsection_ini	lib/iniparser/src/iniparser.c	/^void iniparser_dumpsection_ini(dictionary * d, char * s, FILE * f)$/;"	f
@@ -2355,6 +2356,7 @@ tempy	src/old/triang/const.h	/^double tempy[S]; \/*temperature in eV, y directio
 tempz	src/old/const.h	/^double tempz[S];$/;"	v
 tempz	src/old/triang/const.h	/^double tempz[S];$/;"	v
 testAux	test/aux.test.c	/^void testAux(){$/;"	f
+testGValDebug	test/grid.test.c	/^int testGValDebug(){$/;"	f
 testGrid	test/grid.test.c	/^void testGrid(){$/;"	f
 testGridAndMGStructs	src/test.old.c	/^void testGridAndMGStructs(dictionary *ini, Grid *grid, Multigrid *multigrid){$/;"	f
 testIntArrProd	test/aux.test.c	/^static int testIntArrProd(){$/;"	f	file:

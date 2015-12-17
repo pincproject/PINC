@@ -7,8 +7,11 @@
  */
 
 #include "test.h"
+#include <mpi.h>
 
 int main(int argc, char *argv[]){
+
+	MPI_Init(&argc,&argv);
 
 	testAux();
 	testIo();
@@ -17,6 +20,8 @@ int main(int argc, char *argv[]){
 	testPusher();
 	testMultigrid();
 	utSummary();
+
+	MPI_Finalize();
 
 	return 0;
 }
