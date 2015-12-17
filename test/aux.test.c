@@ -9,7 +9,7 @@
 #include "pinc.h"
 #include "test.h"
 
-int testIntArrProd(){
+static int testIntArrProd(){
 	int arr[] = {2,34,9,1,6,6};
 	int prod = intArrProd(arr,6);
 	utAssert(prod==22032,"intArrProd doesn't work");
