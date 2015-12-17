@@ -131,4 +131,12 @@ void testIo();
  */
 void testPusher();
 
+/**
+ * @brief	Performs all tests in multigrid.test.c
+ * @return	void
+ *
+ * This prevents many small global test functions.
+ */
+void testMultigrid();
+
 #endif // TEST_H

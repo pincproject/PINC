@@ -20,7 +20,6 @@
 #include "iniparser.h"
 #include "pusher.h"
 #include "multigrid.h"
-#include "test.h"
 
 int main(int argc, char *argv[]){
 

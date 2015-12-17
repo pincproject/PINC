@@ -25,8 +25,8 @@ THDIR	= test
 
 
 
-HEAD_	= pinc.h pusher.h #multigrid.h
-SRC_	= io.c aux.c population.c grid.c pusher.c #multigrid.c
+HEAD_	= pinc.h pusher.h multigrid.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
 OBJ_	= $(SRC_:.c=.o)
 
 TESTOBJ_= test.o $(SRC_:.c=.test.o)

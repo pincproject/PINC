@@ -16,7 +16,7 @@
 #include <mpi.h>
 #include "pinc.h"
 #include "iniparser.h"
-#include "test.h"
+#include "test.old.h"
 
 /******************************************************************************
  *	USEFUL CONSTANTS FOR TESTFUNCTIONS

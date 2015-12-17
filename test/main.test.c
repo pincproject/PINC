@@ -15,6 +15,7 @@ int main(int argc, char *argv[]){
 	testGrid();
 	testPopulation();
 	testPusher();
+	testMultigrid();
 	utSummary();
 
 	return 0;
