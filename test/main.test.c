@@ -7,6 +7,7 @@
  */
 
 #include "test.h"
+#include "iniparser.h"
 #include <mpi.h>
 
 int main(int argc, char *argv[]){
