@@ -21,8 +21,8 @@ LDIR	= lib
 DDIR	= doc
 
 
-HEAD_	= pinc.h multigrid.h pusher.h test.h
-SRC_	= main.c io.c aux.c population.c grid.c multigrid.c pusher.c test.c
+HEAD_	= pinc.h pusher.h test.h multigrid.h
+SRC_	= main.c io.c aux.c population.c grid.c pusher.c test.c multigrid.c
 
 
 OBJ_	= $(SRC_:.c=.o)
@@ -38,6 +38,8 @@ LIBOBJ = $(patsubst %,$(LDIR)/%,$(LIBOBJ_))
 LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
 all: $(EXEC) cleantestdata doc
+
+test: $(EXEC)
 
 $(EXEC): $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"

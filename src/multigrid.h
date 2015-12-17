@@ -26,21 +26,21 @@
   * options are Gauss-Seidel Red-Black (gaussSeidel). More TBD.
   */
  typedef struct {
-    GridQuantity **gridQuantities;   ///< Array of Grid structs of decreasing coarseness
+    Grid **grids;   ///< Array of Grid structs of decreasing coarseness
     int nLevels;         			///< #Grid levels
     int nMGCycles;         			///< Multigrid cycles we want to run
 	int nPreSmooth;					///<
 	int nPostSmooth;
 	int nCoarseSolve;
 
-    void (*coarseSolv)(GridQuantity *phi, const GridQuantity *rho, const int nCycles);	///< Function pointer to a Coarse Grid Solver function
-    void (*postSmooth)(GridQuantity *phi, const GridQuantity *rho, const int nCycles);	///< Function pointer to a Post Smooth function
-    void (*preSmooth)(GridQuantity *phi, const GridQuantity *rho, const int nCycles);	///< Function pointer to a Pre Smooth function
-	void (*restrictor)(GridQuantity *fine, GridQuantity *coarse);	///< Function pointer to restrictor
-	void (*prolongator)(GridQuantity *fine, GridQuantity *coarse);	///< Function pointer to prolongator
+    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Pre Smooth function
+	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
+	void (*prolongator)(Grid *fine, const Grid *coarse);	///< Function pointer to prolongator
 } Multigrid;
 
-Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
+Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 
  /**
   * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
@@ -51,15 +51,15 @@ Multigrid *allocMultigrid(const dictionary *ini, GridQuantity *gridQuantity);
   * Variables freed: gridQuantity [1->end]
   *
   */
-void freeMultigrid(Multigrid *multigrid);
+void mgFree(Multigrid *multigrid);
 
 void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi);
 
-void gaussSeidel2D(GridQuantity *phi, const GridQuantity *rho, const int nCycles);
-void jacobian(GridQuantity *phi, const GridQuantity *rho, const int nCycles);
+void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles);
+void jacobian(Grid *phi, const Grid *rho, const int nCycles);
 
 //Restriction and prolongators
-void halfWeightRestrict(GridQuantity *fine, GridQuantity *coarse);
-void bilinearProlong(GridQuantity *fine, GridQuantity *coarse);
+void halfWeightRestrict(const Grid *fine, Grid *coarse);
+void bilinearProlong(Grid *fine,const Grid *coarse);
 
  #endif // MULTIGRID_H

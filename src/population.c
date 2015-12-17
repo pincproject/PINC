@@ -45,11 +45,76 @@ void toLocalFrame(Population *pop, const MpiInfo *mpiInfo);
  */
 void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
 
+/**
+ * @brief Computes specie-specific re-normalization factors for the E-field
+ * @param 	q			Charge [elementary charges] as given in input file
+ * @param	m			Mass [electron masses] as given in input file
+ * @param	nSpecies	Number of species (elements in q and m)
+ * @return 				Pointer to allocated array of factors
+ *
+ * The E-field is normally normalized using the charge and mass of specie 0,
+ * such that it becomes the discretized equivalent of acceleration of that
+ * specie. Henceforth, adding the electric field to the velocity without any
+ * form of multiplication readily yields the accelerated velocity. Multiplying
+ * the E-field by renormE[0], where renormE is the return value of this
+ * function, re-normalizes the E-field such that it represents the discretized
+ * acceleration for specie 1. Subsequent multiplication by renormE[1] (such that
+ * it has been multiplied by renormE[0]*renormE[1]) re-normalizes the E-field
+ * for specie 2 and so on. The last multiplicative factor, renorm[nSpecies-1],
+ * renormalizes it back to the original value, as normalized with respect to
+ * specie 0.
+ *
+ * E is normalized as follows:
+ * \f[
+ *	\bar{E_x} = K_1\frac{(\Delta t)^2}{\Delta x}\frac{q_0}{m_0}E_x
+ * \f]
+ * and similarly for the other components. \f$K_1\f$ is a factor which may be
+ * set unequal to 1 to speed up certain calculations.
+ *
+ * Remember to free the return value using free().
+ */
+double *computeRenormE(const double *q, const double *m, int nSpecies);
+
+/**
+ * @brief Computes specie-specific re-normalization factors for the charge density
+ * @param 	q			Charge [elementary charges] as given in input file
+ * @param	m			Mass [electron masses] as given in input file
+ * @param	nSpecies	Number of species (elements in q and m)
+ * @param	cellVolume	The volume of a cell in the mesh (product of 'stepSize')
+ * @param	timeStep	The time step
+ * @param	factor		Multiplicative factor used in normalizing rho
+ * @return 				Pointer to allocated array of factors
+ *
+ * When distributing charges onto the grid to compute the charge density rho,
+ * rather than having to multiply each contribution by the charge of the
+ * particle, rho can temporarily have a specie-specific normalization allowing
+ * the contribution simply to be added without having to multiply the weighting
+ * coefficient by any charge.
+ *
+ * Starting with a grid value rho equal to zero this can be assumed to be
+ * normalized for specie 0 and all the contributions for that specie can be
+ * added. Multiplying the whole grid by renormRho[0] the re-normalizes it for
+ * specie 1 such that it can be added. Doing this for all species, and
+ * mulitplying by renormRho[nSpecies-1] at the end, results in a comletely
+ * assembled charge density. The charge density in PINC is normalized
+ * using the charge and mass of specie 0 as is other quantities.
+ *
+ * Rho is normalized as follows:
+ * \f[
+ *	\bar{\rho} = K_1K_2(\Delta t)^2\left(\frac{q_0}{m_0}\right)\rho
+ * \f]
+ * where \f$K_1K_2\f$ is a multiplicative factor which can be set un-equal to 1
+ * to speed up certain calculations.
+ *
+ * Remember to free the return value using free().
+ */
+double *computeRenormRho(const double *q, const double *m, int nSpecies, double cellVolume, double timeStep, double factor);
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-Population *allocPopulation(const dictionary *ini){
+Population *pAlloc(const dictionary *ini){
 
 	// Sanity check
 	iniAssertEqualNElements(ini,4,"population:nParticles","population:nAlloc","population:q","population:m");
@@ -62,8 +127,8 @@ Population *allocPopulation(const dictionary *ini){
 	// Load data
 	int nSpecies;
 	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",&nSpecies);	// This is for all computing nodes
-	int nDims = iniGetNElements(ini,"grid:nTGPoints");
-	if(nDims==0) msg(ERROR,"grid:nTGPoints not found");
+	int nDims = iniGetNElements(ini,"grid:trueSize");
+	if(nDims==0) msg(ERROR,"grid:trueSize not found");
 
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
@@ -89,24 +154,25 @@ Population *allocPopulation(const dictionary *ini){
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
-	pop->q = iniGetDoubleArr(ini,"population:q",&nSpecies);
-	pop->m = iniGetDoubleArr(ini,"population:m",&nSpecies);
 	pop->nSpecies = nSpecies;
 	pop->nDims = nDims;
 	pop->iStart = iStart;
 	pop->iStop = iStop;
 	pop->energy = NULL;	// Assume unused for now
 
+	// Default normalization factors
+	pSetSpecieNorm(ini,pop,1,1);
+
 	return pop;
 
 }
 
-void freePopulation(Population *pop){
+void pFree(Population *pop){
 
 	free(pop->pos);
 	free(pop->vel);
-	free(pop->q);
-	free(pop->m);
+	free(pop->renormE);
+	free(pop->renormRho);
 	free(pop->energy);
 	free(pop->iStart);
 	free(pop->iStop);
@@ -114,7 +180,7 @@ void freePopulation(Population *pop){
 
 }
 
-void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
+void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
 
 	// Read from ini
 	int nSpecies, nDims;
@@ -174,7 +240,7 @@ void posUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, 
 
 }
 
-void posDebug(const dictionary *ini, Population *pop){
+void pPosDebug(const dictionary *ini, Population *pop){
 
 	int nSpecies;
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
@@ -205,7 +271,7 @@ void posDebug(const dictionary *ini, Population *pop){
 
 }
 
-void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
+void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 	iniAssertEqualNElements(ini,3,"population:temperature","population:drift","population:nParticles");
 
@@ -234,7 +300,29 @@ void velMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	free(velDrift);
 }
 
-void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName){
+void pVelSet(Population *pop, const double *vel){
+
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+
+			for(int d=0;d<nDims;d++){
+				pop->vel[i+d] = vel[d];
+			}
+
+		}
+
+	}
+
+}
+
+void pCreateH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName){
 
 	/*
 	 * CREATE FILE
@@ -314,7 +402,7 @@ void createPopulationH5(const dictionary *ini, Population *pop, const MpiInfo *m
 
 }
 
-void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){
 
 	int mpiRank = mpiInfo->mpiRank;
 	int mpiSize = mpiInfo->mpiSize;
@@ -392,7 +480,7 @@ void writePopulationH5(Population *pop, const MpiInfo *mpiInfo, double posN, dou
 	toLocalFrame(pop,mpiInfo);
 }
 
-void closePopulationH5(Population *pop){
+void pCloseH5(Population *pop){
 	H5Fclose(pop->h5);
 }
 
@@ -436,4 +524,60 @@ void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
 		}
 	}
+}
+
+double *computeRenormE(const double *q, const double *m, int nSpecies){
+
+	double *renormE = malloc(nSpecies*sizeof(*renormE));
+
+	for(int s=0;s<nSpecies-1;s++){
+		renormE[s] = (q[s+1]/m[s+1])/(q[s]/m[s]);
+	}
+	renormE[nSpecies-1] = (q[0]/m[0])/(q[nSpecies-1]/m[nSpecies-1]);
+
+	return renormE;
+}
+
+double *computeRenormRho(const double *q, const double *m, int nSpecies, double cellVolume, double timeStep, double factor){
+
+	double *qBar = malloc(nSpecies*sizeof(*qBar));
+	double *renormRho = malloc(nSpecies*sizeof(*renormRho));
+
+	for(int s=0;s<nSpecies;s++){
+		qBar[s] = factor*(pow(timeStep,2)/cellVolume)*(q[0]/m[0])*q[s];
+	}
+
+	for(int s=0;s<nSpecies-1;s++){
+		renormRho[s] = qBar[s]/qBar[s+1];
+	}
+	renormRho[nSpecies-1] = qBar[nSpecies-1];
+
+	free(qBar);
+	return renormRho;
+
+}
+
+void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor){
+
+	int nSpecies, nDims;
+	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
+	double timeStep = iniparser_getdouble((dictionary *)ini,"population:q",0.0);
+	double cellVolume = doubleArrProd(stepSize,nDims);
+
+	timeStep *= timeStepMul;
+
+	pop->renormE = computeRenormE(q,m,nSpecies);
+	pop->renormRho = computeRenormRho(q,m,nSpecies,cellVolume,timeStep,factor);
+
+	for(int s=0;s<nSpecies;s++){
+		printf("renormE[%i]=%f\n",s,pop->renormE[s]);
+		printf("renormRho[%i]=%f\n",s,pop->renormRho[s]);
+	}
+
+	free(q);
+	free(m);
+	free(stepSize);
+
 }

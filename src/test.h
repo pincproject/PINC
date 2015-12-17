@@ -21,33 +21,33 @@
 
 /**
  * @brief Tests that grids are accessible and editable from
- * GridQuantity and Multigrid structs
+ * Grid and Multigrid structs
  *
  * @param 	ini				dictionary
- * @param 	gridQuantity	GridQuantity
+ * @param 	Grid	Grid
  * @param 	multigrid 		Multigrid
  *
- * Populates a few grid points from gridQuantity, dumps them in the parsefile,
- * changes them from multigrid, dumps them again. Then they are changed from gridQuantity
+ * Populates a few grid points from Grid, dumps them in the parsefile,
+ * changes them from multigrid, dumps them again. Then they are changed from Grid
  * and dumped again
  *
  */
 
-void testGridAndMGStructs(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
+// void testGridAndMGStructs(dictionary *ini, Grid *Grid, Multigrid *multigrid);
 
 /**
  * @brief Temp manual test of boundary send/recieve function
  */
 
-void testBoundarySendRecieve(dictionary *ini, GridQuantity *gridQuantity, Multigrid *multigrid);
+// void testBoundarySendRecieve(dictionary *ini, Grid *Grid, Multigrid *multigrid);
 
 /*
  * temporary for testing slice function
  */
 
-void testGetSlice(dictionary *ini, GridQuantity *gridQuantity);
+void testGetSlice(dictionary *ini, Grid *Grid);
 
-void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo);
+void testSwapHalo(dictionary *ini, Grid *Grid, MpiInfo *mpiInfo);
 
 /**
  * Short testing routine of Gauss-Seidel RB algorithm
@@ -60,9 +60,9 @@ void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 					MpiInfo *mpiInfo);
 
-void testDerivatives(dictionary *ini, GridQuantity *rho, GridQuantity *phi);
+void testDerivatives(dictionary *ini, Grid *rho, Grid *phi);
 
-void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
+void dumpGridIndexes(dictionary *ini, Grid *grid);
 
 
 /**
@@ -81,4 +81,4 @@ void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity);
 	111111	222222
  * @endcode
  */
-void dumpGrid(dictionary *ini, GridQuantity *gridQuantity);
+void dumpGrid(dictionary *ini, Grid *grid);
