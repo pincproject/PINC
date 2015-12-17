@@ -10,30 +10,36 @@
 #include "test.h"
 #include "iniparser.h"
 
-dictionary *iniOpenDummy(){
-	return iniparser_load("test/test.ini");
-
-	dictionary *ini = malloc(sizeof(*ini));
-	iniparser_set(ini,"grid:trueSize","3,3,3");
-
-}
+// dictionary *iniOpenDummy(){
+// 	return iniparser_load("test/test.ini");
+//
+// 	dictionary *ini = malloc(sizeof(*ini));
+// 	iniparser_set(ini,"grid:trueSize","3,3,3");
+//
+// }
 
 int testGValDebug(){
 
-	dictionary *ini = iniOpenDummy();
-	Grid *grid = gAlloc(ini,3);
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-	free(ini);
+	// dictionary *ini = iniOpenDummy();
+	// dictionary *ini = iniGetDummy();
 
-	gValDebug(grid,mpiInfo);
-
-	// double *val = grid->val;
-
-	for(int i=0;i<60;i++){
-		// printf("%f\n",val[i]);
-	}
+	// double debye = iniparser_getdouble(ini,"grid:debye",0);
+	// printf("debye=%f\n",debye);
 
 	return 0;
+	// Grid *grid = gAlloc(ini,3);
+	// MpiInfo *mpiInfo = gAllocMpi(ini);
+	// free(ini);
+	//
+	// gValDebug(grid,mpiInfo);
+	//
+	// // double *val = grid->val;
+	//
+	// for(int i=0;i<60;i++){
+	// 	// printf("%f\n",val[i]);
+	// }
+	//
+	// return 0;
 
 }
 
