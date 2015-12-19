@@ -37,7 +37,91 @@ int testGValDebug(){
 
 }
 
-static int testLaplacian2D(){
+static int testFinDiff1st(){
+	//Tests F(x,y,z) = x^2 - z -> d/dx F = 2x, d/dy F = 0 and d/dz = -1
+	dictionary *ini = iniGetDummy();
+
+	int testResult = 0;
+
+	iniparser_set(ini, "grid:trueSize", "12,12,12");
+	iniparser_set(ini, "grid:stepSize", "1,1,12");
+	iniparser_set(ini, "grid:nGhostLayers", "1,1,1,1,1,1");
+
+	Grid *phi = gAlloc(ini, 1);
+	Grid *E = gAlloc(ini, 3);
+
+	iniparser_freedict(ini);
+
+	//Load
+	int *size = phi->size;
+	int *trueSize = phi->trueSize;
+	long int *sizeProd = phi->sizeProd;
+	long int *fieldSizeProd = E->sizeProd;
+	int *nGhostLayers = phi->nGhostLayers;
+
+	double *phiVal = phi->val;
+	double *eVal = E->val;
+
+	int ind;
+	for(int j = 0; j < size[1]; j++){
+		for (int k = 0; k<size[2]; k++) {
+			for(int l = 0; l<size[3]; l++){
+				ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				phiVal[ind] = (double) (j*j-l);
+			}
+		}
+	}
+
+	gFinDiff1st(phi, E);
+
+	//Test d/dx
+	double answer;
+	//Testing the inner grid
+	for(int j = nGhostLayers[1]; j < trueSize[1]; j++){
+		for(int k = nGhostLayers[2]; k < trueSize[2]; k++){
+			for(int l = nGhostLayers[3]; l < trueSize[3]; l++){
+				answer = (double) 2*j;
+				ind = j*fieldSizeProd[1] + k*fieldSizeProd[2] + l*fieldSizeProd[3];
+				if((eVal[ind]-answer < -0.001) || (eVal[ind] -answer > 0.001)) testResult = 1;
+			}
+		}
+	}
+	utAssert(testResult==0, "Failed centered Finite Difference: x Dim");
+	testResult = 0;
+	//Test d/dy
+	for(int j = nGhostLayers[1]; j < trueSize[1]; j++){
+		for(int k = nGhostLayers[2]; k < trueSize[2]; k++){
+			for(int l = nGhostLayers[3]; l < trueSize[3]; l++){
+				answer = (double) 0;
+				ind = 1 + j*fieldSizeProd[1] + k*fieldSizeProd[2] + l*fieldSizeProd[3];
+				if((eVal[ind]-answer < -0.001) || (eVal[ind] -answer > 0.001)) testResult = 1;
+			}
+		}
+	}
+	utAssert(testResult==0, "Failed centered Finite Difference: y Dim");
+	testResult = 0;
+	//Test d/dy
+	for(int j = nGhostLayers[1]; j < trueSize[1]; j++){
+		for(int k = nGhostLayers[2]; k < trueSize[2]; k++){
+			for(int l = nGhostLayers[3]; l < trueSize[3]; l++){
+				answer = (double) -1;
+				ind = 2 + j*fieldSizeProd[1] + k*fieldSizeProd[2] + l*fieldSizeProd[3];
+				if((eVal[ind]-answer < -0.001) || (eVal[ind] -answer > 0.001)){
+					testResult = 1;
+				}
+			}
+		}
+	}
+	utAssert(testResult==0, "Failed centered Finite Difference: z Dim");
+
+	gFree(phi);
+	gFree(E);
+
+	return 0;
+}
+
+
+static int testFinDiff2nd2D(){
 	/*
 	 * Tests d^2/dx^2 by setting the grid to f(x,y)=(3*x^2 - 0.5y^2) ignoring ghost nodes
 	 * The laplacan(f(x,y)) should then be 5 over the inner grid, where the operation
@@ -46,10 +130,6 @@ static int testLaplacian2D(){
 	dictionary *ini = iniGetDummy();
 
 	int testResult = 0;
-
-	/*
-	 * 2D
-	 */
 
 	iniparser_set(ini, "grid:trueSize", "12,12");
 	iniparser_set(ini, "grid:stepSize", "1,1");
@@ -77,13 +157,14 @@ static int testLaplacian2D(){
 		}
 	}
 
-	laplacian2D(phi,rho);
+	gFinDiff2nd2D(phi,rho);
 
 	//Testing the inner grid
+	double ans = 5.;
 	for(int j = nGhostLayers[1]; j < trueSize[1]; j++){
 		for(int k = nGhostLayers[2]; k < trueSize[2]; k++){
 			ind = j*sizeProd[1] + k*sizeProd[2];
-			if(phiVal[ind]-5. > 0.01) testResult = 1;
+			if((phiVal[ind]-ans > 0.01)|| (phiVal[ind]-ans < -0.01)) testResult = 1;
 		}
 	}
 
@@ -97,7 +178,7 @@ static int testLaplacian2D(){
 	return 0;
 }
 
-static int testLaplacian3D(){
+static int testgFinDiff2nd3D(){
 
 	/*
 	 * 3D Test laplacian(x - 2y^2 + 4z^3)
@@ -135,7 +216,7 @@ static int testLaplacian3D(){
 	 	}
 	}
 
-	laplacian3D(phi,rho);
+	gFinDiff2nd3D(phi,rho);
 
 	double answer;
 	//Testing the inner grid
@@ -144,7 +225,7 @@ static int testLaplacian3D(){
 			for(int l = nGhostLayers[3]; l < trueSize[2]; l++){
 				ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				answer = (double) -4 + 24*l;
-   			 	if((phiVal[ind]-answer > 0.01) || (phiVal[ind]-answer > 0.01))
+   			 	if((phiVal[ind]-answer > 0.001) || (phiVal[ind]-answer < -0.001))
  					testResult = 1;
 			}
 		}
@@ -161,7 +242,8 @@ static int testLaplacian3D(){
 // All tests for grid.c is contained in this function
 void testGrid(){
 	utRun(&testGValDebug);
-	utRun(&testLaplacian2D);
-	utRun(&testLaplacian3D);
+	utRun(&testFinDiff1st);
+	utRun(&testFinDiff2nd2D);
+	utRun(&testgFinDiff2nd3D);
 
 }

@@ -508,7 +508,7 @@ void gMulDouble(Grid *grid, double num);
  * @return	field	Field returned after derivating
  */
 
-void firstDerivative(const Grid *scalar, Grid *field);
+void gFinDiff1st(const Grid *scalar, Grid *field);
 
 /**
  * @brief Performs a 2nd order central space finite difference on a grid
@@ -517,9 +517,9 @@ void firstDerivative(const Grid *scalar, Grid *field);
  *
  *
  */
-void laplacian3D(Grid *phi,const Grid *rho);
+void gFinDiff2nd3D(Grid *phi,const Grid *rho);
 
-void laplacian2D(Grid *phi,const Grid *rho);
+void gFinDiff2nd2D(Grid *phi,const Grid *rho);
 
  /**
  * @brief Normalize E-field

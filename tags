@@ -1149,7 +1149,6 @@ findabv	src/old/grid.c	/^void findabv(int i)$/;"	f
 findabv	src/old/triang/grid.c	/^void findabv(int i)$/;"	f
 finddustvolume	src/old/dustg.c	/^double finddustvolume(int arc, char *arv[])$/;"	f
 finddustvolume	src/old/triang/dustg.c	/^double finddustvolume(int arc, char *arv[])$/;"	f
-firstDerivative	src/grid.c	/^void firstDerivative(const Grid *scalar, Grid *field){$/;"	f
 flux	src/old/const.h	/^double flux[S][6];$/;"	v
 flux	src/old/triang/const.h	/^double flux[S][6];$/;"	v
 fluxrest	src/old/const.h	/^double fluxrest[S][6];$/;"	v
@@ -1221,6 +1220,9 @@ gAlloc	src/grid.c	/^Grid *gAlloc(const dictionary *ini, int nValues){$/;"	f
 gAllocMpi	src/grid.c	/^MpiInfo *gAllocMpi(const dictionary *ini){$/;"	f
 gCloseH5	src/grid.c	/^void gCloseH5(Grid *grid){$/;"	f
 gCreateH5	src/grid.c	/^void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,$/;"	f
+gFinDiff1st	src/grid.c	/^void gFinDiff1st(const Grid *scalar, Grid *field){$/;"	f
+gFinDiff2nd2D	src/grid.c	/^void gFinDiff2nd2D(Grid *phi, const Grid *rho){$/;"	f
+gFinDiff2nd3D	src/grid.c	/^void gFinDiff2nd3D(Grid *phi, const  Grid *rho){$/;"	f
 gFree	src/grid.c	/^void gFree(Grid *grid){$/;"	f
 gFreeMpi	src/grid.c	/^void gFreeMpi(MpiInfo *mpiInfo){$/;"	f
 gMulDouble	src/grid.c	/^void gMulDouble(Grid *grid, double num){$/;"	f
@@ -1690,11 +1692,11 @@ l00495	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00495"><\/a><s
 l00496	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00496"><\/a><span class="lineno">  496<\/span>&#160;<\/div>$/;"	a
 l00503	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00503"><\/a><span class="lineno">  503<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#aed9d938b3bb77b5ea1d9a6add0ad2497">gMulDouble<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keywordtype">double<\/span> num);<\/div>$/;"	a
 l00504	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00504"><\/a><span class="lineno">  504<\/span>&#160;<\/div>$/;"	a
-l00511	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00511"><\/a><span class="lineno">  511<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9f8d775fe463e71b721d2cbc881adebd">firstDerivative<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *scalar, <a class="code" href="structGrid.html">Grid<\/a> *field);<\/div>$/;"	a
+l00511	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00511"><\/a><span class="lineno">  511<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#aa92c1db2255fdf90bc9d62d1baa36135">gFinDiff1st<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *scalar, <a class="code" href="structGrid.html">Grid<\/a> *field);<\/div>$/;"	a
 l00512	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00512"><\/a><span class="lineno">  512<\/span>&#160;<\/div>$/;"	a
-l00520	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00520"><\/a><span class="lineno">  520<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#ac0352b519191a989262f0df123e23d29">laplacian3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho);<\/div>$/;"	a
+l00520	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00520"><\/a><span class="lineno">  520<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a6db1f1756c6051f4f5f1695ae73d1c8f">gFinDiff2nd3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho);<\/div>$/;"	a
 l00521	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00521"><\/a><span class="lineno">  521<\/span>&#160;<\/div>$/;"	a
-l00522	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00522"><\/a><span class="lineno">  522<\/span>&#160;<span class="keywordtype">void<\/span> laplacian2D(<a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho);<\/div>$/;"	a
+l00522	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00522"><\/a><span class="lineno">  522<\/span>&#160;<span class="keywordtype">void<\/span> gFinDiff2nd2D(<a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho);<\/div>$/;"	a
 l00523	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00523"><\/a><span class="lineno">  523<\/span>&#160;<\/div>$/;"	a
 l00532	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00532"><\/a><span class="lineno">  532<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9a198420cad178835105bdce601ab7dc">gNormalizeE<\/a>(<span class="keyword">const<\/span> dictionary *ini, <a class="code" href="structGrid.html">Grid<\/a> *E);<\/div>$/;"	a
 l00533	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00533"><\/a><span class="lineno">  533<\/span>&#160;<\/div>$/;"	a
@@ -1762,8 +1764,6 @@ l00920	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00920"><\/a><s
 l00931	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00931"><\/a><span class="lineno">  931<\/span>&#160;<span class="keywordtype">char<\/span> *<a class="code" href="pinc_8h.html#a92f2f3198af6d49104d20310686030e1">strAllocCat<\/a>(<span class="keywordtype">int<\/span> n,...);<\/div>$/;"	a
 l00932	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00932"><\/a><span class="lineno">  932<\/span>&#160;<\/div>$/;"	a
 l00933	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00933"><\/a><span class="lineno">  933<\/span>&#160;<span class="preprocessor">#endif \/\/ PINC_H<\/span><\/div>$/;"	a
-laplacian2D	src/grid.c	/^void laplacian2D(Grid *phi, const Grid *rho){$/;"	f
-laplacian3D	src/grid.c	/^void laplacian3D(Grid *phi, const  Grid *rho){$/;"	f
 latex_count	doc/latex/Makefile	/^	latex_count=8 ; \\$/;"	m
 left	src/old/triang/triangulate.h	/^  int left, right;		\/* children *\/$/;"	m	struct:__anon10
 letter_G	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="letter_G"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;G&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
@@ -2360,17 +2360,18 @@ tempy	src/old/triang/const.h	/^double tempy[S]; \/*temperature in eV, y directio
 tempz	src/old/const.h	/^double tempz[S];$/;"	v
 tempz	src/old/triang/const.h	/^double tempz[S];$/;"	v
 testAux	test/aux.test.c	/^void testAux(){$/;"	f
+testFinDiff1st	test/grid.test.c	/^static int testFinDiff1st(){$/;"	f	file:
+testFinDiff2nd2D	test/grid.test.c	/^static int testFinDiff2nd2D(){$/;"	f	file:
 testGValDebug	test/grid.test.c	/^int testGValDebug(){$/;"	f
 testGaussSeidel	test/multigrid.test.c	/^static int testGaussSeidel(){$/;"	f	file:
 testGrid	test/grid.test.c	/^void testGrid(){$/;"	f
 testIntArrProd	test/aux.test.c	/^static int testIntArrProd(){$/;"	f	file:
 testIo	test/io.test.c	/^void testIo(){$/;"	f
-testLaplacian2D	test/grid.test.c	/^static int testLaplacian2D(){$/;"	f	file:
-testLaplacian3D	test/grid.test.c	/^static int testLaplacian3D(){$/;"	f	file:
 testMultigrid	test/multigrid.test.c	/^void testMultigrid(){$/;"	f
 testPopulation	test/population.test.c	/^void testPopulation(){$/;"	f
 testPusher	test/pusher.test.c	/^void testPusher(){$/;"	f
 testStructs	test/multigrid.test.c	/^static int testStructs(){$/;"	f	file:
+testgFinDiff2nd3D	test/grid.test.c	/^static int testgFinDiff2nd3D(){$/;"	f	file:
 testowy	src/old/const.h	/^FILE *testowy;$/;"	v
 testowy	src/old/triang/const.h	/^FILE *testowy;$/;"	v
 ti2te	src/old/const.h	/^double ti2te; \/*temperature ratio*\/$/;"	v

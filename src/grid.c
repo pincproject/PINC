@@ -263,16 +263,39 @@ static int *getSubdomain(const dictionary *ini){
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-void firstDerivative(const Grid *scalar, Grid *field){
+void gFinDiff1st(const Grid *scalar, Grid *field){
 
-	//TBD (Waiting untill new GridQuantity structs)
+	//Performs first order centered finite difference on scalar and returns a field
+
+	int rank =scalar->rank;
+	long int *sizeProd = scalar->sizeProd;
+	long int *fieldSizeProd = field->sizeProd;
+
+	double *scalarVal = scalar->val;
+	double *fieldVal = field->val;
+
+	//Scalar indexes
+	int sNext, sPrev;
+	int f;
+	int fNext = fieldSizeProd[1];
+
+	//Centered Finite difference
+	for(int d = 1; d < rank; d++){
+		sNext = sizeProd[d];
+		sPrev = -sizeProd[d];
+		f = d-1;
+		for(int g = 0; g < sizeProd[rank]; g++){
+			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
+			sNext++;
+			sPrev++;
+			f += fNext;
+		}
+	}
 
 	return;
 }
 
-void laplacian2D(Grid *phi, const Grid *rho){
-	//TBD
-	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
+void gFinDiff2nd2D(Grid *phi, const Grid *rho){
 
 	//Load
 	int rank = rho->rank;
@@ -283,10 +306,10 @@ void laplacian2D(Grid *phi, const Grid *rho){
 
 	// Index of neighboring nodes
 	int g = 0;
-	int gj = g + sizeProd[1];
-	int gjj= g - sizeProd[1];
-	int gk = g + sizeProd[2];
-	int gkk= g - sizeProd[2];
+	int gj = sizeProd[1];
+	int gjj= -sizeProd[1];
+	int gk = sizeProd[2];
+	int gkk= -sizeProd[2];
 
 	//Laplacian
 	for(int q = 0; q < sizeProd[rank]; q++){
@@ -305,7 +328,7 @@ void laplacian2D(Grid *phi, const Grid *rho){
 	return;
 }
 
-void laplacian3D(Grid *phi, const  Grid *rho){
+void gFinDiff2nd3D(Grid *phi, const  Grid *rho){
 	//TBD
 	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
 
