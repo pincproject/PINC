@@ -1,6 +1,6 @@
 /**
  * @file	    test.c
- * @author	    Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @author	    Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright   University of Oslo, Norway
  * @brief	    PINC temp tests
  * @date        09.10.15
@@ -70,57 +70,8 @@
 //
 // 	return;
 // }
-//
-// void testDerivatives(dictionary *ini, GridQuantity *rho, GridQuantity *phi){
-//
-// 	//Load
-// 	Grid *grid = rho->grid;
-// 	int *nGPoints = grid->nGPoints;
-// 	int nDims = grid->nDims;
-// 	double *rhoVal = rho->val;
-//
-// 	int ind = 0;
-// 	for(int j = 0; j < nGPoints[0]; j++){
-// 		// angle = 0;
-// 		for (int k = 0; k<nGPoints[1]; k++) {
-// 			// if(k>(0.5*nGPoints[1])) angle = 1.;
-// 			rhoVal[ind] = (double) (j*j + 2*k);
-// 			ind++;
-// 		}
-// 	}
-// 	dumpGridIndexes(ini, rho);
-//
-// 	dumpGrid(ini, rho);
-//
-// 	secondDerivative(rho,phi);
-//
-// 	dumpGrid(ini, phi);
-//
-//
-// 	return;
-// }
-//
-// void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
-// 					MpiInfo *mpiInfo){
-//
-// 	//Load
-// 	GridQuantity *rho = multiRho->gridQuantities[0];
-// 	Grid *grid = rho->grid;
-// 	long int *nGPointsProd = grid->nGPointsProd;
-// 	int nDims = grid->nDims;
-//
-// 	//Load GridQuantity
-// 	double *rhoVal = rho->val;
-//
-// 	for(int ind = 0; ind < nGPointsProd[nDims]; ind++) rhoVal[ind] = 1.;
-//
-// 	dumpGrid(ini, rho);
-//
-// 	// linearMGSolv(multiRho,multiPhi);
-//
-//
-// 	return;
-// }
+
+
 //
 // void testSwapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo){
 //

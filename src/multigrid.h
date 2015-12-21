@@ -3,7 +3,7 @@
 
 /**
  * @file		multigrid.h
- * @author		Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Poisson Solver, multigrid.
  * @date		26.10.15

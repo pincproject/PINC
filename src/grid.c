@@ -1,7 +1,7 @@
 /**
  * @file		grid.c
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Grid-struct handling.
  * @date		30.10.15
@@ -608,7 +608,9 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	sprintf(name,"/n=%.1f",n);
 
 	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
 	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+
 	H5Dclose(dataset);
 
 	H5Pclose(pList);
@@ -649,12 +651,17 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
     hid_t attrSpace;
     hid_t attribute;
 
+
 	attrSize = (hsize_t)nDims;
 	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+
 
 	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->stepSize);
     H5Aclose(attribute);
+
+
 
 	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);

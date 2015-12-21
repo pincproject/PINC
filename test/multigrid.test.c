@@ -1,6 +1,6 @@
 /**
  * @file		multigrid.test.c
- * @author		Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Unit tests for multigrid.c
  * @date		17.12.15
@@ -55,39 +55,7 @@ static int testStructs(){
 }
 
 static int testGaussSeidel(){
-	// //Load Grid info
-	// Grid *rho = multiRho->grids[0];
-	// Grid *phi = multiPhi->grids[0];
-	// int *nGPoints = rho->nGPoints;
-	// long int *nGPointsProd = grid->nGPointsProd;
-	//
-	// //Load GridQuantity
-	// double *rhoVal = rho->val;
-	//
-	// //Temp quick functions
-	// double sin(double);
-	//
-	// //Variables
-	// double coeffX = PI/nGPoints[0];
-	// double coeffY = PI/nGPoints[1];
-	//
-	// int ind = 0;
-	// for(int j = 0; j < nGPoints[0]; j++){
-	// 	// angle = 0;
-	// 	for (int k = 0; k<nGPoints[1]; k++) {
-	// 		ind = j*nGPointsProd[0] + k*nGPointsProd[1];
-	// 		// rhoVal[ind] = (double) (j*j + 2*k);
-	// 		rhoVal[ind] = sin(j*coeffX)*sin(k*coeffY);
-	// 	}
-	// }
-	//
-	// writeGridQuantityH5(rho, mpiInfo, 0.);
-	//
-	// // multiRho->coarseSolv(phi, rho, 1000);
-	// secondDerivative(phi, rho);
-	//
-	// writeGridQuantityH5(phi, mpiInfo, 0.);
-
+	
 	return 0;
 }
 

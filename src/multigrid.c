@@ -1,6 +1,6 @@
 /**
  * @file		multigrid.c
- * @author		Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Poisson Solver, multigrid.
  * @date		26.10.15
@@ -25,24 +25,24 @@
 
 void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "modules:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "modules:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "modules:coarseSolv", "\0");
+	char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
+    char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
+    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
 
-	if(!strcmp(preSmoothName,"gaussSeidel")){
+	if(!strcmp(preSmoothName,"gaussSeidel2D")){
 		multigrid->preSmooth = &gaussSeidel2D;
 
     } else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"gaussSeidel")){
+    if(!strcmp(postSmoothName,"gaussSeidel2D")){
 		multigrid->postSmooth = &gaussSeidel2D;
  	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"gaussSeidel")){
+    if(!strcmp(coarseSolverName,"gaussSeidel2D")){
 		multigrid->coarseSolv = &gaussSeidel2D;
     } else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");

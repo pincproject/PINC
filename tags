@@ -412,6 +412,7 @@ PEtotal	src/old/const.h	/^double *PEtotal;$/;"	v
 PEtotal	src/old/triang/const.h	/^double *PEtotal;$/;"	v
 PEtotalMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 PEtotalMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
+PI	src/main.local.c	24;"	d	file:
 PI	src/test.old.c	24;"	d	file:
 PINC_H	src/pinc.h	14;"	d
 PREDEFINED	doc/doxygen/doxyfile.mk	/^PREDEFINED             =$/;"	m
@@ -811,6 +812,7 @@ ddelta	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
 debruijn	proof of concept/interpolate/main.c	/^static const int debruijn[32] =$/;"	v	file:
+debugGaussSeidel	src/main.local.c	/^void debugGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,$/;"	f
 debye	src/old/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debye	src/old/triang/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debyetotal	src/old/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
@@ -1829,6 +1831,7 @@ main	proof of concept/tail call recursion/main.c	/^int main(int argc, char **arg
 main	proof of concept/tail call recursion/main.s	/^main:$/;"	l
 main	proof of concept/vectorfield/main.c	/^int main(int argc, char **argv){$/;"	f
 main	src/main.c	/^int main(int argc, char *argv[]){$/;"	f
+main	src/main.local.c	/^int main(int argc, char *argv[]){$/;"	f
 main	src/old/main_backup.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/old/triang/main.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/old/triang/main_backup.c	/^int main(int argc, char *argv[])$/;"	f

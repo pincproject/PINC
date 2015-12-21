@@ -1,7 +1,7 @@
 /**
  * @file	    main.c
  * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
- *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright   University of Oslo, Norway
  * @brief	    PINC main routine.
  * @date        08.10.15
@@ -44,7 +44,6 @@ int main(int argc, char *argv[]){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
-	//
 	// int nDims = grid->nDims;
 	// double *denorm = malloc(sizeof(*denorm));
 	// double *dimens = malloc(sizeof(*dimens));

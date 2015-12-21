@@ -1,7 +1,7 @@
 /**
  * @file		grid.test.c
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		Unit tests for grid.c
  * @date		17.12.15

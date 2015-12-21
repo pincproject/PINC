@@ -1,6 +1,6 @@
 /**
  * @file	    test.h
- * @author	    Gullik Vetvik Killie <gullikvk@fys.uio.no>
+ * @author	    Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  * @copyright   University of Oslo, Norway
  * @brief	    PINC temp tests
  * @date        09.10.15
