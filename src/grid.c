@@ -696,9 +696,12 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 		// HDF5 indices needs to be reversed compared to ours due to non-C ordering.
 		memDims[d]		= (hsize_t)size[rank-d-1];
 		memOffset[d]	= (hsize_t)nGhostLayers[rank-d-1];
-		fileDims[d]		= (hsize_t)trueSize[rank-d-1]*nSubdomains[rank-d-1];
-		fileOffset[d]	= (hsize_t)trueSize[rank-d-1]*subdomain[rank-d-1];
+		fileDims[d]		= (hsize_t)trueSize[rank-d-1]*nSubdomains[rank-d-2];
+		fileOffset[d]	= (hsize_t)trueSize[rank-d-1]*subdomain[rank-d-2];
 	}
+
+	fileDims[rank-1] = (hsize_t)trueSize[0];
+	fileOffset[rank-1] = (hsize_t)0.;
 
 	hid_t memSpace = H5Screate_simple(rank,memDims,NULL);
 	for(int d=0;d<nDims;d++) memDims[d] = trueSize[rank-d-1];
