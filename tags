@@ -812,7 +812,9 @@ ddelta	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/const.h	/^double ddelta, ddelta2;$/;"	v
 ddelta2	src/old/triang/const.h	/^double ddelta, ddelta2;$/;"	v
 debruijn	proof of concept/interpolate/main.c	/^static const int debruijn[32] =$/;"	v	file:
-debugGaussSeidel	src/main.local.c	/^void debugGaussSeidel(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,$/;"	f
+debugFillExponential	src/main.local.c	/^void debugFillExponential(Grid *grid){$/;"	f
+debugFillPolynomial	src/main.local.c	/^void debugFillPolynomial(Grid *grid){$/;"	f
+debugFillSin	src/main.local.c	/^void debugFillSin(Grid *grid){$/;"	f
 debye	src/old/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debye	src/old/triang/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debyetotal	src/old/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
@@ -1460,7 +1462,7 @@ ivxphs	src/old/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ivxphs	src/old/triang/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ix	src/old/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
 ix	src/old/triang/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
-jacobian	src/multigrid.c	/^void jacobian(Grid *phi,const Grid *rho, int nCycles){$/;"	f
+jacobian	src/multigrid.c	/^void jacobian(Grid *phi,const Grid *rho, const int nCycles){$/;"	f
 kenergy	src/old/const.h	/^  double kenergy;$/;"	m	struct:particle
 kenergy	src/old/triang/const.h	/^  double kenergy;$/;"	m	struct:particle
 key	lib/iniparser/src/dictionary.h	/^    char        **  key ;   \/** List of string keys *\/$/;"	m	struct:_dictionary_
@@ -2063,6 +2065,7 @@ ph_xmax	src/old/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_
 ph_xmax	src/old/triang/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
 ph_xmin	src/old/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
 ph_xmin	src/old/triang/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
+phi	script/grid_plots.py	/^phi = phi[:,:,0]$/;"	v
 phi	src/old/const.h	/^double *phi;$/;"	v
 phi	src/old/triang/const.h	/^double *phi;$/;"	v
 phiMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
@@ -2249,6 +2252,7 @@ renormE	src/pinc.h	/^	double *renormE;	\/\/\/< Re-normalization factors for E (n
 renormRho	src/pinc.h	/^	double *renormRho;	\/\/\/< Re-normalization factors for rho (nSpecies elements)$/;"	m	struct:__anon1
 resid	src/old/fmg/fmg.c	/^void resid(double ***res, double ***u, double ***rhs, int nx, int ny, int nz)$/;"	f
 restrictor	src/multigrid.h	/^	void (*restrictor)(const Grid *fine, Grid *coarse);	\/\/\/< Function pointer to restrictor$/;"	m	struct:__anon6
+rho	script/grid_plots.py	/^rho = rho[:,:,0]$/;"	v
 rho	src/old/const.h	/^  double rho;$/;"	m	struct:d_rho
 rho	src/old/const.h	/^double *rho; \/*array for charge density and collected charge on the dust*\/ $/;"	v
 rho	src/old/triang/const.h	/^  double rho;$/;"	m	struct:d_rho

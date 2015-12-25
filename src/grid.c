@@ -305,20 +305,18 @@ void gFinDiff2nd2D(Grid *phi, const Grid *rho){
 	double *rhoVal = rho->val;
 
 	// Index of neighboring nodes
-	int g = 0;
 	int gj = sizeProd[1];
 	int gjj= -sizeProd[1];
 	int gk = sizeProd[2];
 	int gkk= -sizeProd[2];
 
 	//Laplacian
-	for(int q = 0; q < sizeProd[rank]; q++){
+	for(int g = 0; g < sizeProd[rank]; g++){
 		phiVal[g] = -4.*rhoVal[g];
 		phiVal[g] += rhoVal[gj] + rhoVal[gjj]
 					+rhoVal[gk] + rhoVal[gkk];
 
 		//Increment indexes
-		g++;
 		gj++;
 		gjj++;
 		gk++;

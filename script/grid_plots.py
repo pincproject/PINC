@@ -6,15 +6,18 @@ import pylab as plt
 
 fileRho = h5py.File('../test_rho.grid.h5','r')
 rho = fileRho['/n=0.0']
+rho = rho[:,:,0]
 
 filePhi = h5py.File('../test_phi.grid.h5','r')
 phi = filePhi["/n=0.0"]
+phi = phi[:,:,0]
 
 
 x = np.arange(rho.shape[1])
 y = np.arange(rho.shape[0])
 
 X,Y = np.meshgrid(x,y)
+
 
 
 #Plotting

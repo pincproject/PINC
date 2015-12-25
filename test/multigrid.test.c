@@ -25,8 +25,9 @@ static int testStructs(){
 
 
 	Grid *grid = gAlloc(ini, 1);
+	printf("Hello before\n");
 	Multigrid *multigrid = mgAlloc(ini, grid);
-
+	printf("Hello after \n ");
 	iniparser_freedict(ini);
 
 
@@ -55,7 +56,7 @@ static int testStructs(){
 }
 
 static int testGaussSeidel(){
-	
+
 	return 0;
 }
 

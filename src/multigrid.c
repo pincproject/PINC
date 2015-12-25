@@ -29,6 +29,8 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
     char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
 
+
+	msg(STATUS, "%s", preSmoothName);
 	if(!strcmp(preSmoothName,"gaussSeidel2D")){
 		multigrid->preSmooth = &gaussSeidel2D;
 
@@ -213,8 +215,55 @@ void mgFree(Multigrid *multigrid){
 }
 
 
-void jacobian(Grid *phi,const Grid *rho, int nCycles){
-	printf("Hello from Jacobian \n");
+void jacobian(Grid *phi,const Grid *rho, const int nCycles){
+
+	//Common variables
+	int rank = phi->rank;
+	long int *sizeProd = phi->sizeProd;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+
+	// //Debug stuff
+	// int ind = 3*sizeProd[1] + 3*sizeProd[2];
+	//
+	// msg(STATUS, "grid point #%d at point: [3,3] = %f", ind, rhoVal[ind]);
+
+
+	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
+	for(int c = 0; c < nCycles; c++){
+		// Index of neighboring nodes
+		int gj = sizeProd[1];
+		int gjj= -sizeProd[1];
+		int gk = sizeProd[2];
+		int gkk= -sizeProd[2];
+
+
+
+		for(int g = 0; g < sizeProd[rank]; g++){
+			tempVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
+								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
+
+			// //Debug Stuff
+			// if(g == ind){
+			// 	msg(STATUS)
+			// 	msg(STATUS, "i+: %f", rhoVal[gj]);
+			// 	msg(STATUS, "i-: %f", rhoVal[gjj]);
+			// 	msg(STATUS, "j+: %f", rhoVal[gk]);
+			// 	msg(STATUS, "j-: %f", rhoVal[gkk]);
+			// }
+
+			gj++;
+			gjj++;
+			gk++;
+			gkk++;
+		}
+
+		for(int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
+	}
+
 	return;
 }
 
