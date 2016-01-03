@@ -37,6 +37,32 @@ int testGValDebug(){
 
 }
 
+static int testSwapHalo(){
+	//Not written because several comp nodes are not run in test mode
+	//
+	// dictionary *ini = iniGetDummy();
+	//
+	// iniparser_set(ini, "grid:trueSize", "6,6");
+	// iniparser_set(ini, "grid:stepSize", "1,1");
+	// iniparser_set(ini, "grid:nGhostLayers", "1,1,1,1");
+	//
+	// Grid *grid = gAlloc(ini, 1);
+	//
+	// //Load
+	// int *size = val->size;
+	// int *trueSize = val->trueSize;
+	// long int *sizeProd = val->sizeProd;
+	// int *nGhostLayers = val->nGhostLayers;
+	//
+	// //Fill grid
+	// for(int q = 0; q < sizeProd[rank]; q++) val[q] = 0.0;
+	//
+	// //Fill boundary layers
+	//
+
+	return 0;
+}
+
 static int testFinDiff1st(){
 	//Tests F(x,y,z) = x^2 - z -> d/dx F = 2x, d/dy F = 0 and d/dz = -1
 	dictionary *ini = iniGetDummy();
@@ -44,7 +70,7 @@ static int testFinDiff1st(){
 	int testResult = 0;
 
 	iniparser_set(ini, "grid:trueSize", "12,12,12");
-	iniparser_set(ini, "grid:stepSize", "1,1,12");
+	iniparser_set(ini, "grid:stepSize", "1,1,1");
 	iniparser_set(ini, "grid:nGhostLayers", "1,1,1,1,1,1");
 
 	Grid *phi = gAlloc(ini, 1);
@@ -242,6 +268,7 @@ static int testgFinDiff2nd3D(){
 // All tests for grid.c is contained in this function
 void testGrid(){
 	utRun(&testGValDebug);
+	utRun(&testSwapHalo);
 	utRun(&testFinDiff1st);
 	utRun(&testFinDiff2nd2D);
 	utRun(&testgFinDiff2nd3D);

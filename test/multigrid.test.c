@@ -11,6 +11,7 @@
 #include "multigrid.h"
 #include "iniparser.h"
 
+
 static int testStructs(){
 	/*
 	 * Checks that val is accessible and changeable from
@@ -25,9 +26,8 @@ static int testStructs(){
 
 
 	Grid *grid = gAlloc(ini, 1);
-	printf("Hello before\n");
+
 	Multigrid *multigrid = mgAlloc(ini, grid);
-	printf("Hello after \n ");
 	iniparser_freedict(ini);
 
 
@@ -60,8 +60,58 @@ static int testGaussSeidel(){
 	return 0;
 }
 
+static int testRestrictor(){
+	/*
+	 * Set up a predefined fine grid, then checks the restrictor against a
+	 * precalculated results
+	 */
+
+	dictionary *ini = iniGetDummy();
+
+	iniparser_set(ini, "grid:trueSize", "4,4");
+	iniparser_set(ini, "grid:stepSize", "1,1");
+	iniparser_set(ini, "grid:nGhostLayers", "1,1,1,1");
+	iniparser_set(ini, "multigrid:restrictor", "halfWeight");
+	iniparser_set(ini, "multigrid:mgLevels", "1");
+	iniparser_set(ini, "msgfiles:parsefile", "parsedump.txt");
+
+	Grid *fine = gAlloc(ini, 1);
+	Multigrid *multigrid = mgAlloc(ini, fine);
+	Grid *coarse = multigrid->grids[1];
+
+	iniparser_freedict(ini);
+
+	// multigrid->restrictor(fine, coarse);
+
+	//Populate and dump fine grid indexes
+	long int *fSizeProd = fine->sizeProd;
+	int rank = fine->rank;
+	double *fVal = fine->val;
+
+	for(long int g = 0; g < fSizeProd[rank]; g++){
+		fVal[g] = (double) g;
+	}
+
+	dumpGrid(ini, fine);
+
+	//Populate and dump coarse grid indexes
+	long int *cSizeProd = coarse->sizeProd;
+	double *cVal = coarse->val;
+
+	for(long int g = 0; g < 5; g++){
+		// cVal[g] = (double) g;
+	}
+
+	// dumpGrid(ini, coarse);
+
+
+
+	return 0;
+}
+
 // All tests for grid.c is contained in this function
 void testMultigrid(){
 	utRun(&testStructs);
 	utRun(&testGaussSeidel);
+	utRun(&testRestrictor);
 }

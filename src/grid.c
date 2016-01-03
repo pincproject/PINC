@@ -224,7 +224,7 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 
 	getSlice(slice, grid, d, offsetTake);
 	//Send and recieve (Need to check out if using one of the more sophisticated send
-	//functinos to MPI could be used)
+	//functions to MPI could be used)
 	MPI_Send(slice, nSlicePoints, MPI_DOUBLE, reciever, mpiRank, MPI_COMM_WORLD);
 	MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	setSlice(slice, grid, d, offsetPlace);
@@ -275,8 +275,8 @@ void gFinDiff1st(const Grid *scalar, Grid *field){
 	double *fieldVal = field->val;
 
 	//Scalar indexes
-	int sNext, sPrev;
-	int f;
+	long int sNext, sPrev;
+	long int f;
 	int fNext = fieldSizeProd[1];
 
 	//Centered Finite difference
@@ -368,60 +368,69 @@ void gFinDiff2nd3D(Grid *phi, const  Grid *rho){
 
 
 
-// void swapHalo(dictionary *ini, Grid *gridQuantity, MpiInfo *mpiInfo, int d){
-//
-// 	//Load MpiInfo
-// 	int mpiRank = mpiInfo->mpiRank;
-// 	int *subdomain = mpiInfo->subdomain;
-// 	int *nSubdomains = mpiInfo->nSubdomains;
-// 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
-//
-// 	//Load
-// 	Grid *grid = gridQuantity->grid;
-// 	int nDims = grid->nDims;
-// 	int *nGPoints = grid->nGPoints;
-//
-// 	//Local temporary variables
-// 	int reciever, sender;
-// 	int nSlicePoints = 1;
-// 	int offsetTake, offsetPlace;
-// 	for(int d = 0; d < nDims ; d++) nSlicePoints *=nGPoints[d];
-// 	nSlicePoints *= 1./nGPoints[d];
-//
-// 	/*****************************************************
-// 	 *			Sending and recieving upper
-// 	******************************************************/
-// 	offsetTake = nGPoints[d]-1;
-// 	offsetPlace = 0;
-// 	reciever = (mpiRank + nSubdomainsProd[d]);
-// 	sender = (mpiRank - nSubdomainsProd[d]);
-//
-// 	//Here we need an implementation of the boundary conditions, I will probably put in a function called boundaryCond(...)
-// 	//here, or alternatively deal with the boundary some other place
-// 	if(subdomain[d] == nSubdomains[d] - 1) reciever -= 2*nSubdomainsProd[d];
-// 	if(subdomain[d] == 0) sender += 2*nSubdomainsProd[d];
-//
-// 	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
-// 					sender, mpiRank, gridQuantity);
-//
-// 	/*****************************************************
-// 	 *			Sending and recieving lower
-// 	******************************************************/
-// 	offsetTake = 1;
-// 	offsetPlace = nGPoints[d]-1;
-// 	reciever = (mpiRank - nSubdomainsProd[d]);
-// 	sender = (mpiRank + nSubdomainsProd[d]);
-//
-// 	//Boundary
-// 	if(subdomain[d] == nSubdomains[d] - 1) sender -= 2*nSubdomainsProd[d];
-// 	if(subdomain[d] == 0) reciever += 2*nSubdomainsProd[d];
-//
-// 	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
-// 					sender, mpiRank, gridQuantity);
-//
-//
-// 	return;
-// }
+void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d){
+
+	//Load MpiInfo
+	int mpiRank = mpiInfo->mpiRank;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
+
+	//Load
+	int rank = grid->rank;
+	int *size = grid->size;
+
+	//Local temporary variables
+	int reciever, sender;
+	int nSlicePoints = 1;
+	int offsetTake, offsetPlace;
+	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+	nSlicePoints *= 1./size[d];
+
+	//
+	int dSubDomain = d - 1;
+
+	/*****************************************************
+	 *			Sending and recieving upper
+	******************************************************/
+	offsetTake = size[d]-1;
+	offsetPlace = 0;
+	reciever = (mpiRank + nSubdomainsProd[dSubDomain]);
+	sender = (mpiRank - nSubdomainsProd[dSubDomain]);
+
+	//Here we need an implementation of the boundary conditions, I will probably put in a function called boundaryCond(...)
+	//here, or alternatively deal with the boundary some other place
+	if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1)
+		reciever -= 2*nSubdomainsProd[dSubDomain];
+	if(subdomain[dSubDomain] == 0)
+		sender += 2*nSubdomainsProd[dSubDomain];
+
+	msg(STATUS|ONCE, "nSlicePoints: %d", nSlicePoints);
+	msg(STATUS, "[%dx%d] \t sender: %d, reciever: %d", subdomain[0],subdomain[1],sender,reciever);
+	// return;
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+					sender, mpiRank, grid);
+
+
+
+	/*****************************************************
+	 *			Sending and recieving lower
+	******************************************************/
+	offsetTake = 1;
+	offsetPlace = size[d+1]-1;
+	reciever = (mpiRank - nSubdomainsProd[dSubDomain]);
+	sender = (mpiRank + nSubdomainsProd[dSubDomain]);
+
+	//Boundary
+	if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1) sender -= 2*nSubdomainsProd[dSubDomain];
+	if(subdomain[dSubDomain] == 0) reciever += 2*nSubdomainsProd[dSubDomain];
+
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+					sender, mpiRank, grid);
+
+
+	return;
+}
 
 
 Grid *gAlloc(const dictionary *ini, int nValues){
@@ -577,7 +586,6 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 	double *v = grid->val;
 
 	for(long int p=0;p<sizeProd[rank];p++){
-
 		v[p] = 0;
 		long int temp = p;
 
@@ -585,7 +593,6 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 			v[p] += (temp%size[d])*pow(10,d-1) + mpiRank*1000;
 			temp/=size[d];
 		}
-
 	}
 }
 

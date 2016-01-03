@@ -25,26 +25,27 @@
 
 void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "algorithms:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "algorithms:coarseSolv", "\0");
+	char *preSmoothName = iniparser_getstring((dictionary*)ini, "modules:preSmooth", "\0");
+    char *postSmoothName = iniparser_getstring((dictionary*)ini, "modules:postSmooth", "\0");
+    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "modules:coarseSolv", "\0");
 
+	int nDims = multigrid->grids[0]->rank-1;
 
-	msg(STATUS, "%s", preSmoothName);
-	if(!strcmp(preSmoothName,"gaussSeidel2D")){
-		multigrid->preSmooth = &gaussSeidel2D;
+	if(!strcmp(preSmoothName,"gaussSeidel")){
+		if(nDims == 2)	multigrid->preSmooth = &gaussSeidel2D;
+		// else if(nDims == 3) multigrid->preSmooth = &gaussSeidel3D;
 
     } else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"gaussSeidel2D")){
+    if(!strcmp(postSmoothName,"gaussSeidel")){
 		multigrid->postSmooth = &gaussSeidel2D;
  	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"gaussSeidel2D")){
+    if(!strcmp(coarseSolverName,"gaussSeidel")){
 		multigrid->coarseSolv = &gaussSeidel2D;
     } else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
@@ -64,13 +65,19 @@ void setRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	char *restrictor = iniparser_getstring((dictionary*)ini, "multigrid:restrictor", "\0");
 	char *prolongator = iniparser_getstring((dictionary*)ini, "multigrid:prolongator", "\0");
 
+	int rank = multigrid->grids[0]->rank;
+
 	if(!strcmp(restrictor, "halfWeight")){
-		multigrid->restrictor = &halfWeightRestrict;
+		if(rank == 3)	multigrid->restrictor = &halfWeightRestrict2D;
+		else if(rank == 4) multigrid->restrictor = &halfWeightRestrict3D;
+		else msg(ERROR, "No restricting algorithm for D%d", rank-1);
 	} else {
 		msg(ERROR, "No restrict stencil specified");
 	}
 	if(!strcmp(prolongator, "bilinear")){
-		multigrid->prolongator = &bilinearProlong;
+		if(rank == 3)	multigrid->prolongator = &bilinearProlong2D;
+		else if(rank==4)	multigrid->prolongator = &bilinearProlong3D;
+		else msg(ERROR, "No restricting algorithm for D%d", rank-1);
 	} else {
 		msg(ERROR, "No prolongation stencil specified");
 	}
@@ -82,7 +89,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 						const int nLevels){
 
 	//Gather information on finest grid
-	Grid **grids = malloc(nLevels * sizeof(*grids));
+	Grid **grids = malloc((nLevels+1) * sizeof(Grid));
 
 	int *trueSize = grid->trueSize;
 	int *nGhostLayers = grid->nGhostLayers;
@@ -93,7 +100,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 	//Cycle through subgrids
 	for(int q = 1; q < nLevels; q++){
-
 		//Allocate
 		int *subTrueSize = malloc(rank*sizeof(subTrueSize));
 		int *subSize = malloc(rank *sizeof(*subSize));
@@ -311,66 +317,159 @@ void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles){
 	return;
 }
 
-void halfWeightRestrict(const Grid *fine, Grid *coarse){
-	// msg(STATUS, "Hello from restrictor");
+void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
+
+	//Load fine grid
+	double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+	int *cSize = coarse->size;
+
+	//Indexes
+	long int c = cSizeProd[1] + cSizeProd[2] + cSizeProd[3];
+
+	long int f = fSizeProd[1] + fSizeProd[2] + fSizeProd[3];
+	long int fj  = f + fSizeProd[1];
+	long int fjj = f - fSizeProd[1];
+	long int fk  = f + fSizeProd[2];
+	long int fkk = f - fSizeProd[2];
+	long int fl  = f + fSizeProd[3];
+ 	long int fll = f - fSizeProd[3];
+
+	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
+	int fKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2] + fSizeProd[2];
+	int cLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*cSizeProd[2];
+	int fLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*fSizeProd[2] + fSizeProd[3];
+
+	int coeff = 1./12.;
 	//
-	// //Load f grid
-	// double *fVal = fine->val;
-	// long int *fProd = fine->sizeProd;
-	//
-	// //Load c grid
-	// double *cVal = coarse->val;
-	// int *ctrueSize = coarse->trueSize;
-	// long int *cProd = coarse->sizeProd;
-	//
-	// //Coarse and fine indexes
-	// long int cInd;
-	// long int fInd;
-	//
-	// int kF = 1;
-	// int jF = 1;
-	//
-	// //Cycle through the c grid
-	// //Spagetti code (To be improved)
-	// for(int kC=1; kC < ctrueSize[1]+1; kC++){
-	// 	for(int jC=1; jC < ctrueSize[0]+1;jC++){
-	// 		cInd = jC*cProd[0] + kC*cProd[1];
-	// 		fInd = jF*fProd[0] + kF*fProd[1];
-	// 		cVal[cInd] = 0.125*(4*fVal[fInd] + fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]
- // 						+ fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
-	// 		jF += 2;
-	// 	}
-	// 	kF += 2;
-	// 	jF = 1;
-	// }
-	//
-	//
+	// msg(STATUS, "Coarse SizeProds = [%d, %d, %d, %d]", cSizeProd[0], cSizeProd[1], cSizeProd[2], cSizeProd[3]);
+	// msg(STATUS, "Fine SizeProds = [%d, %d, %d, %d]", fSizeProd[0], fSizeProd[1], fSizeProd[2], fSizeProd[3]);
+	// // msg(STATUS, "nSize: %d", cSizeProd[rank]);
+
+	//Cycle Coarse grid
+	for(int l = nGhostLayers[3]; l<cSize[3]-nGhostLayers[rank+3]; l++){
+		for(int k = nGhostLayers[2]; k < cSize[2]-nGhostLayers[rank + 2]; k++){
+			for(int j = nGhostLayers[1]; j < cSize[1]-nGhostLayers[rank+1]; j++){
+				// msg(STATUS, "c=%d, f = [%d] (%d %d %d %d %d %d)", c, f , fj, fjj, fk, fkk, fl, fll);
+				cVal[c] = coeff*(6*fVal[f] + fVal[fj] + fVal[fjj] + fVal[fk] + fVal[fkk] + fVal[fl] + fVal[fll]);
+				c++;
+				f  +=2;
+				fj +=2;
+				fjj+=2;
+				fk +=2;
+				fkk+=2;
+				fl +=2;
+				fll+=2;
+			}
+			c  += cKEdgeInc;
+			f  += fKEdgeInc;
+			fj += fKEdgeInc;
+			fjj+= fKEdgeInc;
+			fk += fKEdgeInc;
+			fkk+= fKEdgeInc;
+			fl += fKEdgeInc;
+			fll+= fKEdgeInc;
+		}
+		c  += cLEdgeInc;
+		f  += fLEdgeInc;
+		fj += fLEdgeInc;
+		fjj+= fLEdgeInc;
+		fk += fLEdgeInc;
+		fkk+= fLEdgeInc;
+		fl += fLEdgeInc;
+		fll+= fLEdgeInc;
+	}
 
 	return;
 }
 
-void bilinearProlong(Grid *fine, const Grid *coarse){
+void halfWeightRestrict2D(const Grid *fine, Grid *coarse){
+	msg(STATUS, "Hello from restrictor");
 
-	// //Load f grid
-	// double *fVal = f->val;
-	// Grid *fGrid = f->grid;
-	// long int *fProd = fGrid->sizeProd;
-	// int *ftrueSize = fGrid->trueSize;
-	//
-	//
-	// //Load c grid
-	// double *cVal = c->val;
-	// Grid *cGrid = c->grid;
-	// long int *cProd = cGrid->sizeProd;
-	// int *ctrueSize = cGrid->trueSize;
-	//
-	// //Coarse and fine indexes
-	// long int cInd;
-	// long int fInd;
-	//
-	// int kF = 1;
-	// int jF = 1;
-	//
+	//Load fine grid
+	double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+	int *cSize = coarse->size;
+
+	//Indexes
+	long int c = cSizeProd[2] + cSizeProd[1];
+
+	long int f = fSizeProd[2] + fSizeProd[1];
+	long int fj = f + fSizeProd[1];
+	long int fjj = f - fSizeProd[1];
+	long int fk = f + fSizeProd[2];
+	long int fkk = f - fSizeProd[2];
+
+	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
+	int fKEdgeInc = cKEdgeInc + fSizeProd[2];
+
+	//Cycle Coarse grid
+	for(int k = nGhostLayers[2]; k < cSize[2]-nGhostLayers[rank + 2]; k++){
+		for(int j = nGhostLayers[1]; j < cSize[1]-nGhostLayers[rank+1]; j++){
+			// msg(STATUS, "c=%d, f = [%d] (%d %d %d %d)", c, f , fj, fjj, fk, fkk);
+			cVal[c] = 0.125*(4*fVal[f] + fVal[fj] + fVal[fjj] + fVal[fk] + fVal[fkk]);
+			c++;
+			f  +=2;
+			fj +=2;
+			fjj+=2;
+			fk +=2;
+			fkk+=2;
+		}
+		c  += cKEdgeInc;
+		f  += fKEdgeInc;
+		fj += fKEdgeInc;
+		fjj+= fKEdgeInc;
+		fk += fKEdgeInc;
+		fkk+= fKEdgeInc;
+	}
+
+	return;
+}
+
+void bilinearProlong3D(Grid *fine, const Grid *coarse){
+	return;
+}
+
+
+void bilinearProlong2D(Grid *fine, const Grid *coarse){
+
+	//Load fine grid
+	double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int *fSize = fine->sizeProd;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+
+	//Indexes
+	long int f = fSizeProd[2] + fSizeProd[1];
+
+	long int c = cSizeProd[2] + cSizeProd[1];
+
+	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
+	int fKEdgeInc = cKEdgeInc + fSizeProd[2];
+
+	//Direct insertion c->f
+	for(int k = nGhostLayers[2]; k < fSize[2]-nGhostLayers[rank + 2]; k++){
+		for(int j = nGhostLayers[1]; j < fSize[1]-nGhostLayers[rank+1]; j++){
+
+		}
+	}
 	// //Cycle through the c grid, and copy in onto corresponding fGrid points
 	// //Spagetti code (To be improved)
 	// for(int kC=1; kC < ctrueSize[1]+1; kC++){
@@ -399,8 +498,6 @@ void bilinearProlong(Grid *fine, const Grid *coarse){
 	// 			fVal[fInd] = 0.5*(fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
 	// 	}
 	// }
-
-
 
 	return;
 }

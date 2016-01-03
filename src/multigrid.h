@@ -59,7 +59,10 @@ void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles);
 void jacobian(Grid *phi, const Grid *rho, const int nCycles);
 
 //Restriction and prolongators
-void halfWeightRestrict(const Grid *fine, Grid *coarse);
-void bilinearProlong(Grid *fine,const Grid *coarse);
+void halfWeightRestrict2D(const Grid *fine, Grid *coarse);
+void halfWeightRestrict3D(const Grid *fine, Grid *coarse);
+void bilinearProlong2D(Grid *fine,const Grid *coarse);
+void bilinearProlong3D(Grid *fine,const Grid *coarse);
+
 
  #endif // MULTIGRID_H

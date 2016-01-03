@@ -29,7 +29,6 @@
 
 
 
-//
 // void testRestriction(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 // 					MpiInfo *mpiInfo){
 //
@@ -207,42 +206,3 @@
 // 	}
 // }
 //
-// void dumpGrid(dictionary *ini, GridQuantity *gridQuantity){
-//
-// 	Grid *grid = gridQuantity->grid;
-// 	int *nGPoints = grid->nGPoints;
-// 	long int *nGPointsProd = grid->nGPointsProd;
-// 	int nDims = grid->nDims;
-//
-// 	msg(STATUS|ONCE, "Dumps grid to parsefile");
-// 	if(nDims == 3){
-// 		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
-// 		 			nGPoints[0], nGPoints[1], nGPoints[2]);
-// 		//Cycles trough and prints the grid (not optimized)
-// 		int p;
-// 		for(int l = 0; l < nGPoints[2]; l++){
-// 			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
-// 			for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
-// 				for(int j = 0; j < nGPoints[0]; j++){ //x-rows
-// 					p = j*nGPointsProd[0] + k*nGPointsProd[1] + l*nGPointsProd[2];
-// 					fMsg(ini,"parsedump", "%5f, ",  gridQuantity->val[p]);
-// 				}
-// 				fMsg(ini,"parsedump", "\n\n");
-// 			}
-// 		}
-// 	} else if(nDims==2) {
-// 		fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
-// 		 			nGPoints[0], nGPoints[1]);
-// 		int p;
-// 		for(int k = nGPoints[1] - 1; k > -1; k--){ //y-rows
-// 			for(int j = 0; j < nGPoints[0]; j++){ //x-rows
-// 				p = j*nGPointsProd[0] + k*nGPointsProd[1];
-// 				fMsg(ini,"parsedump", "%5f \t", gridQuantity->val[p]);
-// 			}
-// 			fMsg(ini,"parsedump", "\n");
-// 		}
-//
-// 	}
-//
-// 	return;
-// }

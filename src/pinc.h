@@ -475,7 +475,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
  */
-//void swapHalo(dictionary *ini, Grid *Grid, MpiInfo *mpiInfo, int d);
+void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Set all values in grid to zero
@@ -929,5 +929,15 @@ int *intArrMul(const int *a, const int *b, int nElements);
  * Make sure to call free().
  */
 char *strAllocCat(int n,...);
+
+/**
+ * @brief Writes grid structs to a parsefile
+ * @param ini 		dictionary of the input file
+ * @param grid 		grid struct
+ *
+ * Debug help
+ */
+
+void dumpGrid(dictionary *ini, Grid *grid);
 
 #endif // PINC_H
