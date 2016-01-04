@@ -269,7 +269,7 @@ int makeParentPath(const char *path){
  			for(int k = size[2] - 1; k > -1; k--){ //y-rows
  				for(int j = 0; j < size[1]; j++){ //x-rows
  					p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
- 					fMsg(ini,"parsedump", "%5f, ",  grid->val[p]);
+ 					fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
  				}
  				fMsg(ini,"parsedump", "\n\n");
  			}
@@ -281,7 +281,7 @@ int makeParentPath(const char *path){
  		for(int k = size[2] - 1; k > -1; k--){ //y-rows
  			for(int j = 0; j < size[1]; j++){ //x-rows
  				p = j*size[0] + k*size[1];
- 				fMsg(ini,"parsedump", "%5f \t", grid->val[p]);
+ 				fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
  			}
  			fMsg(ini,"parsedump", "\n");
  		}

@@ -246,8 +246,6 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles){
 		int gk = sizeProd[2];
 		int gkk= -sizeProd[2];
 
-
-
 		for(int g = 0; g < sizeProd[rank]; g++){
 			tempVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
 								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
@@ -438,66 +436,106 @@ void halfWeightRestrict2D(const Grid *fine, Grid *coarse){
 	return;
 }
 
-void bilinearProlong3D(Grid *fine, const Grid *coarse){
-	return;
-}
+void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 
-
-void bilinearProlong2D(Grid *fine, const Grid *coarse){
+	msg(STATUS, "HEllo from 3D prolongator");
 
 	//Load fine grid
 	double *fVal = fine->val;
 	long int *fSizeProd = fine->sizeProd;
-	int *fSize = fine->sizeProd;
+	int *fSize = fine->size;
 	int rank = fine->rank;
 	int *nGhostLayers = fine->nGhostLayers;
 
 	//Load coarse grid
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
+	int *cSize = coarse->size;
 
-	//Indexes
+	//Help Indexes
 	long int f = fSizeProd[2] + fSizeProd[1];
-
 	long int c = cSizeProd[2] + cSizeProd[1];
+
+	//Edge jumps
+	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
+	int fKEdgeInc = cKEdgeInc + fSizeProd[2];
+
+
+
+	return;
+}
+
+
+void bilinearProlong2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
+	msg(STATUS, "HEllo from 2D prolongator");
+
+	//Load fine grid
+	double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int *fSize = fine->size;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+	int *cSize = coarse->size;
+
+	//Help Indexes
+	long int f = fSizeProd[2] + fSizeProd[1];
+	long int c = cSizeProd[2] + cSizeProd[1];
+	long int fNext;
+	long int fPrev;
 
 	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
 	int fKEdgeInc = cKEdgeInc + fSizeProd[2];
 
 	//Direct insertion c->f
-	for(int k = nGhostLayers[2]; k < fSize[2]-nGhostLayers[rank + 2]; k++){
-		for(int j = nGhostLayers[1]; j < fSize[1]-nGhostLayers[rank+1]; j++){
+	for(int k = nGhostLayers[2]; k < cSize[2]-nGhostLayers[rank + 2]; k++){
+		for(int j = nGhostLayers[1]; j < cSize[1]-nGhostLayers[rank+1]; j++){
+			fVal[f] = cVal[c];
+			c++;
+			f+=2;
+		}
+		c+= cKEdgeInc;
+		f+= fKEdgeInc;
+	}
 
+	//Filling ghost cells
+	gSwapHalo(fine, mpiInfo, 2);
+
+ 	f= fSizeProd[1];
+	fNext = f + fSizeProd[2];
+	fPrev = f - fSizeProd[2];
+	//Odd numbered columns, interpolating vertically
+	for(int k = 0; k < fSize[2]; k+=2){
+		for(int j = 0; j < fSize[1]; j+=2){
+			fVal[f] += 0.5*(fVal[fPrev]+fVal[fNext]);
+			f 		+= 2;
+			fNext 	+= 2;
+			fPrev 	+= 2;
+		}
+		f		+= fSizeProd[2];
+		fNext 	+= fSizeProd[2];
+		fPrev 	+= fSizeProd[2];
+	}
+
+	//Filling ghost cells
+	gSwapHalo(fine, mpiInfo, 1);
+
+	//Even numbered columns, interpolating horizontally
+	f = 0;
+	fNext = f + fSizeProd[1];
+	fPrev = f - fSizeProd[1];
+
+	for(int k = 0; k < fSize[2]; k+=1){
+		for(int j = 0; j < fSize[1]; j+=2){
+			fVal[f] += 0.5*(fVal[fPrev]+fVal[fNext]);
+			f 		+= 2;
+			fNext 	+= 2;
+			fPrev 	+= 2;
 		}
 	}
-	// //Cycle through the c grid, and copy in onto corresponding fGrid points
-	// //Spagetti code (To be improved)
-	// for(int kC=1; kC < ctrueSize[1]+1; kC++){
-	// 	for(int jC=1; jC < ctrueSize[0]+1;jC++){
-	// 		cInd = jC*cProd[0] + kC*cProd[1];
-	// 		fInd = jF*fProd[0] + kF*fProd[1];
-	// 		fVal[fInd] = cVal[cInd];
-	// 		jF += 2;
-	// 	}
-	// 	kF += 2;
-	// 	jF = 1;
-	// }
-	//
-	// //Odd numbered columns, interpolating vertically
-	// for(int kF=1; kF<ftrueSize[1]+1;kF+=2){
-	// 	for(int jF=2; jF<ftrueSize[0]+1;jF+=2){
-	// 			fInd = jF*fProd[0]+kF*fProd[1];
-	// 			fVal[fInd] = 0.5*(fVal[fInd+fProd[0]] + fVal[fInd-fProd[0]]);
-	// 	}
-	// }
-	//
-	// //Even numbered columns, interpolating horizontally
-	// for(int kF=2; kF<ftrueSize[1]+1;kF+=2){
-	// 	for(int jF=1; jF<ftrueSize[0]+1;jF+=2){
-	// 			fInd = jF*fProd[0]+kF*fProd[1];
-	// 			fVal[fInd] = 0.5*(fVal[fInd+fProd[1]] + fVal[fInd-fProd[1]]);
-	// 	}
-	// }
 
 	return;
 }

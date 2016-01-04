@@ -59,7 +59,7 @@ static int *getSubdomain(const dictionary *ini);
  * slice = \f( [1, 6, 11, 16] \f)
  *
  * @see setSlice
- * @see swapHalo
+ * @see gSwapHalo
  **/
 
 void getSlice(double *slice, const Grid *grid, int d, int offset);
@@ -92,7 +92,7 @@ void getSlice(double *slice, const Grid *grid, int d, int offset);
  * @endcode
  *
  * @see setSlice
- * @see swapHalo
+ * @see gSwapHalo
  */
 void setSlice(const double *slice, Grid *grid, int d, int offset);
 
@@ -128,7 +128,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  *
  * @see getSlice
  * @see setSlice
- * @see swapHalo
+ * @see gSwapHalo
  */
 void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int reciever,
@@ -368,7 +368,7 @@ void gFinDiff2nd3D(Grid *phi, const  Grid *rho){
 
 
 
-void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d){
+void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -387,27 +387,29 @@ void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d){
 	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
 	nSlicePoints *= 1./size[d];
 
-	//
+
 	int dSubDomain = d - 1;
 
 	/*****************************************************
 	 *			Sending and recieving upper
 	******************************************************/
-	offsetTake = size[d]-1;
+	offsetTake = size[d]-2;
 	offsetPlace = 0;
 	reciever = (mpiRank + nSubdomainsProd[dSubDomain]);
 	sender = (mpiRank - nSubdomainsProd[dSubDomain]);
 
 	//Here we need an implementation of the boundary conditions, I will probably put in a function called boundaryCond(...)
 	//here, or alternatively deal with the boundary some other place
-	if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1)
-		reciever -= 2*nSubdomainsProd[dSubDomain];
-	if(subdomain[dSubDomain] == 0)
-		sender += 2*nSubdomainsProd[dSubDomain];
+	if(nSubdomains[dSubDomain] == 1){
+		reciever -= nSubdomainsProd[dSubDomain];
+		sender += nSubdomainsProd[dSubDomain];
+	} else {
+		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1)
+			reciever -= 2*nSubdomainsProd[dSubDomain];
+		if(subdomain[dSubDomain] == 0)
+			sender += 2*nSubdomainsProd[dSubDomain];
+	}
 
-	msg(STATUS|ONCE, "nSlicePoints: %d", nSlicePoints);
-	msg(STATUS, "[%dx%d] \t sender: %d, reciever: %d", subdomain[0],subdomain[1],sender,reciever);
-	// return;
 	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
 					sender, mpiRank, grid);
 
@@ -417,13 +419,18 @@ void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d){
 	 *			Sending and recieving lower
 	******************************************************/
 	offsetTake = 1;
-	offsetPlace = size[d+1]-1;
+	offsetPlace = size[d]-1;
 	reciever = (mpiRank - nSubdomainsProd[dSubDomain]);
 	sender = (mpiRank + nSubdomainsProd[dSubDomain]);
 
 	//Boundary
-	if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1) sender -= 2*nSubdomainsProd[dSubDomain];
-	if(subdomain[dSubDomain] == 0) reciever += 2*nSubdomainsProd[dSubDomain];
+	if(nSubdomains[dSubDomain] == 1){
+		reciever += nSubdomainsProd[dSubDomain];
+		sender -= nSubdomainsProd[dSubDomain];
+	} else {
+		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1) sender -= 2*nSubdomainsProd[dSubDomain];
+		if(subdomain[dSubDomain] == 0) reciever += 2*nSubdomainsProd[dSubDomain];
+	}
 
 	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
 					sender, mpiRank, grid);

@@ -105,7 +105,7 @@
 // 		}
 // 	}
 //
-// 	swapHalo(ini, gridQuantity, mpiInfo, 1);
+// 	gSwapHalo(ini, gridQuantity, mpiInfo, 1);
 //
 // 	if(mpiRank == 0) fMsg(ini, "parsedump", "\n\nSwapping halos\n\n");
 //
@@ -165,7 +165,7 @@
 // 	}
 // 	dumpGrid(ini, gridQuantity);
 //
-// 	// swapHalo(ini, gridQuantity);
+// 	// gSwapHalo(ini, gridQuantity);
 //
 // 	dumpGrid(ini, gridQuantity);
 // }

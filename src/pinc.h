@@ -475,7 +475,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
  */
-void swapHalo(Grid *grid, MpiInfo *mpiInfo, int d);
+void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Set all values in grid to zero
