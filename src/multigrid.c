@@ -444,6 +444,7 @@ void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	double *fVal = fine->val;
 	long int *fSizeProd = fine->sizeProd;
 	int *fSize = fine->size;
+	int *fTrueSize =fine->trueSize;
 	int rank = fine->rank;
 	int *nGhostLayers = fine->nGhostLayers;
 
@@ -451,15 +452,103 @@ void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
 	int *cSize = coarse->size;
+	int *cTrueSize = coarse->trueSize;
 
 	//Help Indexes
-	long int f = fSizeProd[2] + fSizeProd[1];
-	long int c = cSizeProd[2] + cSizeProd[1];
+	long int f = fSizeProd[1] + fSizeProd[2] + fSizeProd[3];
+	long int c = cSizeProd[1] + cSizeProd[2] + cSizeProd[3];
+	long int fNext;
+	long int fPrev;
 
 	//Edge jumps
 	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
 	int fKEdgeInc = cKEdgeInc + fSizeProd[2];
+	int cLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*cSizeProd[2];
+	int fLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*fSizeProd[2] + fSizeProd[3];
 
+	//Direct insertion c->f
+	for(int l = 0; l < cTrueSize[3]; l++){
+		for(int k = 0; k < cTrueSize[2]; k++){
+			for(int j = 0; j < cTrueSize[1]; j++){
+				fVal[f] = cVal[c];
+				c++;
+				f+=2;
+			}
+			c+= cKEdgeInc;
+			f+= fKEdgeInc;
+		}
+		c+= cLEdgeInc;
+		f+= fLEdgeInc;
+	}
+
+	//Filling ghostlayer
+	gSwapHalo(fine, mpiInfo, 3);
+
+	//Interpolation 3rd Dim
+	f = fSizeProd[1] + fSizeProd[2] + 2*fSizeProd[3];
+	fNext = f + fSizeProd[3];
+	fPrev = f - fSizeProd[3];
+
+	for(int l = 0; l < fTrueSize[3]; l+=2){
+		for(int k = 0; k < fSize[2]; k+=2){
+			for(int j = 0; j < fSize[1]; j+=2){
+				fVal[f] = 0.5*(fVal[fPrev]+fVal[fNext]);
+				f +=2;
+				fNext +=2;
+				fPrev +=2;
+			}
+			f		+=fSizeProd[2];
+			fNext 	+=fSizeProd[2];
+			fPrev 	+=fSizeProd[2];
+		}
+		f		+=fSizeProd[3];
+		fNext 	+=fSizeProd[3];
+		fPrev 	+=fSizeProd[3];
+	}
+
+
+	gSwapHalo(fine, mpiInfo, 2);
+
+
+	//Interpolation 2nd Dim
+	f = fSizeProd[1] + 2*fSizeProd[2] + fSizeProd[3];
+	fNext = f + fSizeProd[2];
+	fPrev = f - fSizeProd[2];
+
+	for(int l = 0; l < fTrueSize[3]; l++){
+		for(int k = 0; k < fSize[2]; k+=2){
+			for(int j = 0; j < fSize[1]; j+=2){
+				fVal[f] = 0.5*(fVal[fPrev]+fVal[fNext]);
+				f +=2;
+				fNext +=2;
+				fPrev +=2;
+			}
+			f		+=fSizeProd[2];
+			fNext 	+=fSizeProd[2];
+			fPrev 	+=fSizeProd[2];
+		}
+	}
+
+	gSwapHalo(fine, mpiInfo, 1);
+
+	//Interpolation 2nd Dim
+	f = 2*fSizeProd[1] + fSizeProd[2] + fSizeProd[3];
+	fNext = f + fSizeProd[1];
+	fPrev = f - fSizeProd[1];
+
+	for(int l = 0; l < fTrueSize[3]; l++){
+		for(int k = 0; k < fTrueSize[2]; k++){
+			for(int j = 0; j < fSize[1]; j+=2){
+				fVal[f] = 0.5*(fVal[fPrev]+fVal[fNext]);
+				f +=2;
+				fNext +=2;
+				fPrev +=2;
+			}
+		}
+		f		+=2*fSizeProd[2];
+		fNext 	+=2*fSizeProd[2];
+		fPrev 	+=2*fSizeProd[2];
+	}
 
 
 	return;
