@@ -326,35 +326,32 @@ void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
 	//Load coarse grid
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
+	int *cTrueSize = coarse->trueSize;
 	int *cSize = coarse->size;
 
-	//Indexes
-	long int c = cSizeProd[1] + cSizeProd[2] + cSizeProd[3];
 
-	long int f = fSizeProd[1] + fSizeProd[2] + fSizeProd[3];
+	//Indexes
+	long int c = cSizeProd[1]*nGhostLayers[1] + cSizeProd[2]*nGhostLayers[2] + cSizeProd[3]*nGhostLayers[3];
+
+	long int f = fSizeProd[1]*nGhostLayers[1] + fSizeProd[2]*nGhostLayers[2] + fSizeProd[3]*nGhostLayers[3];
 	long int fj  = f + fSizeProd[1];
 	long int fjj = f - fSizeProd[1];
 	long int fk  = f + fSizeProd[2];
 	long int fkk = f - fSizeProd[2];
 	long int fl  = f + fSizeProd[3];
- 	long int fll = f - fSizeProd[3];
+	long int fll = f - fSizeProd[3];
 
 	int cKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2];
 	int fKEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2] + fSizeProd[2];
 	int cLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*cSizeProd[2];
 	int fLEdgeInc = (nGhostLayers[3] + nGhostLayers[rank + 3])*fSizeProd[2] + fSizeProd[3];
 
-	int coeff = 1./12.;
-	//
-	// msg(STATUS, "Coarse SizeProds = [%d, %d, %d, %d]", cSizeProd[0], cSizeProd[1], cSizeProd[2], cSizeProd[3]);
-	// msg(STATUS, "Fine SizeProds = [%d, %d, %d, %d]", fSizeProd[0], fSizeProd[1], fSizeProd[2], fSizeProd[3]);
-	// // msg(STATUS, "nSize: %d", cSizeProd[rank]);
+	double coeff = 1./12.;
 
 	//Cycle Coarse grid
-	for(int l = nGhostLayers[3]; l<cSize[3]-nGhostLayers[rank+3]; l++){
-		for(int k = nGhostLayers[2]; k < cSize[2]-nGhostLayers[rank + 2]; k++){
-			for(int j = nGhostLayers[1]; j < cSize[1]-nGhostLayers[rank+1]; j++){
-				// msg(STATUS, "c=%d, f = [%d] (%d %d %d %d %d %d)", c, f , fj, fjj, fk, fkk, fl, fll);
+	for(int l = 0; l<cTrueSize[3]; l++){
+		for(int k = 0; k < cTrueSize[2]; k++){
+			for(int j = 0; j < cTrueSize[1]; j++){
 				cVal[c] = coeff*(6*fVal[f] + fVal[fj] + fVal[fjj] + fVal[fk] + fVal[fkk] + fVal[fl] + fVal[fll]);
 				c++;
 				f  +=2;
@@ -506,9 +503,7 @@ void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 		fPrev 	+=fSizeProd[3];
 	}
 
-
 	gSwapHalo(fine, mpiInfo, 2);
-
 
 	//Interpolation 2nd Dim
 	f = fSizeProd[1] + 2*fSizeProd[2] + fSizeProd[3];
