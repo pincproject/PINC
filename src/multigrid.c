@@ -221,7 +221,7 @@ void mgFree(Multigrid *multigrid){
 }
 
 
-void jacobian(Grid *phi,const Grid *rho, const int nCycles){
+void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
 
 	//Common variables
 	int rank = phi->rank;
@@ -231,14 +231,9 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles){
 	double *phiVal = phi->val;
 	double *rhoVal = rho->val;
 
-
-	// //Debug stuff
-	// int ind = 3*sizeProd[1] + 3*sizeProd[2];
-	//
-	// msg(STATUS, "grid point #%d at point: [3,3] = %f", ind, rhoVal[ind]);
-
-
+	//Temporary value
 	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
+
 	for(int c = 0; c < nCycles; c++){
 		// Index of neighboring nodes
 		int gj = sizeProd[1];
@@ -246,18 +241,9 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles){
 		int gk = sizeProd[2];
 		int gkk= -sizeProd[2];
 
-		for(int g = 0; g < sizeProd[rank]; g++){
+		for(long int g = 0; g < sizeProd[rank]; g++){
 			tempVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
 								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
-
-			// //Debug Stuff
-			// if(g == ind){
-			// 	msg(STATUS)
-			// 	msg(STATUS, "i+: %f", rhoVal[gj]);
-			// 	msg(STATUS, "i-: %f", rhoVal[gjj]);
-			// 	msg(STATUS, "j+: %f", rhoVal[gk]);
-			// 	msg(STATUS, "j-: %f", rhoVal[gkk]);
-			// }
 
 			gj++;
 			gjj++;
@@ -266,54 +252,295 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles){
 		}
 
 		for(int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
+		for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
 	}
 
 	return;
 }
 
-void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles){
+inline static void loopRedBlack2D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc,
+				long int g, long int gj, long int gjj, long int gk, long int gkk){
+
+	gj = g + sizeProd[1];
+	gjj= g - sizeProd[1];
+	gk = g + sizeProd[2];
+	gkk= g - sizeProd[2];
+
+	for(int k = 1; k < trueSize[2]; k +=2){
+		for(int j = 1; j < trueSize[1]; j += 2){
+			phiVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
+								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
+			g	+=2;
+			gj	+=2;
+			gjj	+=2;
+			gk	+=2;
+			gkk	+=2;
+		}
+		g	+=kEdgeInc;
+		gj	+=kEdgeInc;
+		gjj	+=kEdgeInc;
+		gk	+=kEdgeInc;
+		gkk	+=kEdgeInc;
+	}
+
+	return;
+}
+
+void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 	//Common variables
 	int *trueSize = phi->trueSize;
+	int *nGhostLayers = phi->nGhostLayers;
 	long int *sizeProd = phi->sizeProd;
+	int rank = phi->rank;
 
 	//Seperate values
 	double *phiVal = phi->val;
 	double *rhoVal = rho->val;
 
-	for(int c = 0; c < nCycles;c++){
-		long int ind = sizeProd[1] + 1;
-		int j;
-		//Red Pass
-		// msg(STATUS, "Red indexes = ");
-		for(int k = 1; k < trueSize[1] + 1; k ++){
-			if(k%2) j = 1; else j = 2;
-			for(; j < trueSize[0] + 1; j += 2){
-				ind = j*sizeProd[0] + k*sizeProd[1];
-				phiVal[ind] = (phiVal[ind+sizeProd[0]] + phiVal[ind-sizeProd[0]] +
-							phiVal[ind+sizeProd[1]] + phiVal[ind-sizeProd[1]] -
-							rhoVal[ind])*0.25;
-				// msg(STATUS, "%d", ind);
-			}
-		}
+	//Indexes
+	long int g;
+	long int gj;
+	long int gjj;
+	long int gk;
+	long int gkk;
 
-		//Black Pass
-		// msg(STATUS, "Black indexes = ");
-		for(int k = 1; k < trueSize[1] + 1; k ++){
-			if(k%2) j = 2; else j = 1;
-			for(; j < trueSize[0] + 1; j += 2){
-				ind = j*sizeProd[0] + k*sizeProd[1];
-				phiVal[ind] = (phiVal[ind+sizeProd[0]] + phiVal[ind-sizeProd[0]] +
-							phiVal[ind+sizeProd[1]] + phiVal[ind-sizeProd[1]] -
-							rhoVal[ind])*0.25;
-				// msg(STATUS, "%d", ind);
-			}
-		}
+	for(int c = 0; c < nCycles;c++){
+
+		//Increments
+		int kEdgeInc = nGhostLayers[2] + nGhostLayers[rank + 2] + sizeProd[2];
+
+		/**************************
+		 *	Red Pass
+		 *************************/
+		//Odd numbered rows
+		g = nGhostLayers[1] + sizeProd[2];
+		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g, gj, gjj, gk, gkk);
+
+		//Even numbered columns
+		g = nGhostLayers[1] + 1 + 2*sizeProd[2];
+		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g, gj, gjj, gk, gkk);
+
+		for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
+
+		/***********************************
+		 *	Black pass
+		 **********************************/
+		//Odd numbered rows
+		g = nGhostLayers[1] + 1 + sizeProd[2];
+		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g, gj, gjj, gk, gkk);
+
+		//Even numbered columns
+		g = nGhostLayers[1] + 2*sizeProd[2];
+		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g, gj, gjj, gk, gkk);
+
+
+		for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
 	}
 
 
 	return;
 }
+
+inline static void loopRedBlack3D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc, int lEdgeInc,
+				long int g, long int gj, long int gjj, long int gk, long int gkk, long int gl, long int gll){
+
+	gj = g + sizeProd[1];
+	gjj= g - sizeProd[1];
+	gk = g + sizeProd[2];
+	gkk= g - sizeProd[2];
+	gl = g + sizeProd[3];
+	gll= g - sizeProd[3];
+
+	for(int l = 0; l<trueSize[3]; l+=2){
+		for(int k = 0; k < trueSize[2]; k+=2){
+			for(int j = 0; j < trueSize[1]; j+=2){
+				// msg(STATUS, "g=%d", g);
+				phiVal[g] = 0.125*(phiVal[gj] + phiVal[gjj] +
+								phiVal[gk] + phiVal[gkk] +
+								phiVal[gl] + phiVal[gll] + rhoVal[g]);
+				g	+=2;
+				gj	+=2;
+				gjj	+=2;
+				gk	+=2;
+				gkk	+=2;
+				gl	+=2;
+				gll	+=2;
+			}
+		g	+=kEdgeInc;
+		gj	+=kEdgeInc;
+		gjj	+=kEdgeInc;
+		gk	+=kEdgeInc;
+		gkk	+=kEdgeInc;
+		gl	+=kEdgeInc;
+		gll	+=kEdgeInc;
+		}
+	g	+=lEdgeInc;
+	gj	+=lEdgeInc;
+	gjj	+=lEdgeInc;
+	gk	+=lEdgeInc;
+	gkk	+=lEdgeInc;
+	gl	+=lEdgeInc;
+	gll	+=lEdgeInc;
+	}
+
+	return;
+}
+
+void gaussSeidel3DStandard(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+	//Common variables
+	int *trueSize = phi->trueSize;
+	int *size = phi->size;
+	int *nGhostLayers = phi->nGhostLayers;
+	long int *sizeProd = phi->sizeProd;
+	int rank = phi->rank;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	//Indexes
+	long int g;
+	int gj = sizeProd[1];
+	int gk = sizeProd[2];
+	int gl = sizeProd[3];
+
+	/*********************
+	 *	Red Pass
+	 ********************/
+	g = sizeProd[3]*nGhostLayers[3];
+	for(int l = 0; l < trueSize[3];l++){
+		for(int k = 0; k < size[2]; k++){
+			for(int j = 0; j < size[1]; j+=2){
+				phiVal[g] = 0.125*(	phiVal[g+gj] + phiVal[g-gj] +
+									phiVal[g+gk] + phiVal[g-gk] +
+									phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
+				g	+=2;
+			}
+			if(l%2){
+				if(k%2)	g+=1; else g-=1;
+			} else {
+				if(k%2) g-=1; else g+=1;
+			}
+
+		}
+		if(l%2) g-=1; else g+=1;
+	}
+
+	for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
+
+	/*********************
+	 *	Black pass
+	 ********************/
+	 g = sizeProd[1] + sizeProd[3]*nGhostLayers[3];
+	 for(int l = 0; l < trueSize[3];l++){
+	 	for(int k = 0; k < size[2]; k++){
+	 		for(int j = 0; j < size[1]; j+=2){
+	 			phiVal[g] = 0.125*(	phiVal[g+gj] + phiVal[g-gj] +
+	 								phiVal[g+gk] + phiVal[g-gk] +
+	 								phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
+
+	 			g	+=2;
+	 		}
+	 		if(l%2){
+	 			if(k%2)	g-=1; else g+=1;
+	 		} else {
+	 			if(k%2) g+=1; else g-=1;
+	 		}
+
+	 	}
+	 	if(l%2) g+=1; else g-=1;
+	 }
+
+	 for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
+
+	return;
+}
+
+
+void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+
+	//Common variables
+	int *trueSize = phi->trueSize;
+	int *nGhostLayers = phi->nGhostLayers;
+	long int *sizeProd = phi->sizeProd;
+	int rank = phi->rank;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	//Indexes
+	long int g;
+	long int gj;
+	long int gjj;
+	long int gk;
+	long int gkk;
+	long int gl;
+	long int gll;
+
+
+	int kEdgeInc = (nGhostLayers[1] + nGhostLayers[rank+1]) + sizeProd[2];
+	int lEdgeInc = (nGhostLayers[2] + nGhostLayers[rank+2])*sizeProd[2] + sizeProd[3];
+
+
+	for(int c = 0; c < nCycles;c++){
+
+		/**************************
+		 *	Red Pass
+		 *************************/
+		//Odd layers - Odd Rows
+		g = nGhostLayers[1]*sizeProd[1] + nGhostLayers[2]*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+						g, gj, gjj, gk, gkk, gl, gll);
+
+		//Odd layers - Even Rows
+		g = (nGhostLayers[1]+1)*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+						g, gj, gjj, gk, gkk, gl, gll);
+
+		//Even layers - Odd Rows
+		g = (nGhostLayers[1])*sizeProd[1] + (nGhostLayers[2])*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
+		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+						g, gj, gjj, gk, gkk, gl, gll);
+
+		//Even layers - Even Rows
+		g = (nGhostLayers[1] + 1)*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
+		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+						g, gj, gjj, gk, gkk, gl, gll);
+
+		for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
+
+		/***********************************
+		 *	Black pass
+		 **********************************/
+		 //Odd layers - Odd Rows
+ 		g = (nGhostLayers[1]*sizeProd[1]+1) + nGhostLayers[2]*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+ 		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+ 						g, gj, gjj, gk, gkk, gl, gll);
+
+ 		//Odd layers - Even Rows
+ 		g = (nGhostLayers[1])*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+ 		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+ 						g, gj, gjj, gk, gkk, gl, gll);
+
+ 		//Even layers - Odd Rows
+ 		g = (nGhostLayers[1])*sizeProd[1] + (nGhostLayers[2])*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
+ 		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+ 						g, gj, gjj, gk, gkk, gl, gll);
+
+		//Even layers - Even Rows
+ 		g = (nGhostLayers[1]+1)*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
+ 		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,
+ 						g, gj, gjj, gk, gkk, gl, gll);
+
+		for(int d = 1; d < rank; d++) gSwapHalo(phi, mpiInfo, d);
+	}
+
+
+	return;
+}
+
 
 void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
 
@@ -327,7 +554,6 @@ void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
 	int *cTrueSize = coarse->trueSize;
-	int *cSize = coarse->size;
 
 
 	//Indexes
@@ -448,7 +674,6 @@ void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	//Load coarse grid
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
-	int *cSize = coarse->size;
 	int *cTrueSize = coarse->trueSize;
 
 	//Help Indexes
@@ -626,7 +851,7 @@ void bilinearProlong2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 
 
 
-void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
+void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi, const MpiInfo *mpiInfo){
 
 	int nMGCycles = multiRho->nMGCycles;
 	int nLevels = multiRho->nLevels;
@@ -640,9 +865,9 @@ void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){
 
 	for(int c = 0; c < nMGCycles; c++)
 		for(int l = 0; l < nLevels; l++){
-			if(l==nLevels-1) multiRho->coarseSolv(rho, phi, nCoarseSolve);	//Coarse grid
+			if(l==nLevels-1) multiRho->coarseSolv(rho, phi, nCoarseSolve, mpiInfo);	//Coarse grid
 			else { //MG Rountine
-				multiRho->preSmooth(rho,phi, nPreSmooth);
+				multiRho->preSmooth(rho,phi, nPreSmooth, mpiInfo);
 				//Defect calculation here
 				//Restrict defect
 				//Set inital guess

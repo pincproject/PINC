@@ -33,9 +33,9 @@
 	int nPostSmooth;
 	int nCoarseSolve;
 
-    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Coarse Grid Solver function
-    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Post Smooth function
-    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles);	///< Function pointer to a Pre Smooth function
+    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
 	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
 	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
 } Multigrid;
@@ -53,10 +53,11 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
-void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi);
+void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi, const MpiInfo *mpiInfo);
 
-void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles);
-void jacobian(Grid *phi, const Grid *rho, const int nCycles);
+void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void jacobian(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 //Restriction and prolongators
 void halfWeightRestrict2D(const Grid *fine, Grid *coarse);

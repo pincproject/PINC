@@ -715,7 +715,7 @@ clockend	src/old/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockend	src/old/triang/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockstart	src/old/const.h	/^clock_t clockstart, clockend;$/;"	v
 clockstart	src/old/triang/const.h	/^clock_t clockstart, clockend;$/;"	v
-coarseSolv	src/multigrid.h	/^    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles);	\/\/\/< Function pointer to a Coarse Grid Solver function$/;"	m	struct:__anon6
+coarseSolv	src/multigrid.h	/^    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	\/\/\/< Function pointer to a Coarse Grid Solver function$/;"	m	struct:__anon6
 computeRenormE	src/population.c	/^double *computeRenormE(const double *q, const double *m, int nSpecies){$/;"	f
 computeRenormRho	src/population.c	/^double *computeRenormRho(const double *q, const double *m, int nSpecies, double cellVolume, double timeStep, double factor){$/;"	f
 cond_present	src/old/const.h	/^int cond_present,dustmove;$/;"	v
@@ -816,6 +816,8 @@ debruijn	proof of concept/interpolate/main.c	/^static const int debruijn[32] =$/
 debugFillExponential	src/main.local.c	/^void debugFillExponential(Grid *grid){$/;"	f
 debugFillPolynomial	src/main.local.c	/^void debugFillPolynomial(Grid *grid){$/;"	f
 debugFillSin	src/main.local.c	/^void debugFillSin(Grid *grid){$/;"	f
+debugGSRB	src/main.local.c	/^void debugGSRB(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
+debugJacobian	src/main.local.c	/^void debugJacobian(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugProlongator	src/main.local.c	/^void debugProlongator(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugRestrictor	src/main.local.c	/^void debugRestrictor(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugSwapHalo	src/main.local.c	/^void debugSwapHalo(dictionary *ini, Grid *grid, MpiInfo *mpiInfo){$/;"	f
@@ -1242,7 +1244,9 @@ gSwapHalo	src/grid.c	/^void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d)
 gValDebug	src/grid.c	/^void gValDebug(Grid *grid, const MpiInfo *mpiInfo){$/;"	f
 gWriteH5	src/grid.c	/^void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){$/;"	f
 gZero	src/grid.c	/^void gZero(Grid *grid){$/;"	f
-gaussSeidel2D	src/multigrid.c	/^void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles){$/;"	f
+gaussSeidel2D	src/multigrid.c	/^void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
+gaussSeidel3D	src/multigrid.c	/^void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
+gaussSeidel3DStandard	src/multigrid.c	/^void gaussSeidel3DStandard(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
 gaussian	script/distribution.py	/^gaussian   = ((1\/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2\/vth)**2)$/;"	v
 gen_bgnd	src/old/generate.c	/^void gen_bgnd(void)$/;"	f
 gen_bgnd	src/old/generate_bug.c	/^void gen_bgnd(void)$/;"	f
@@ -1470,7 +1474,7 @@ ivxphs	src/old/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ivxphs	src/old/triang/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ix	src/old/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
 ix	src/old/triang/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
-jacobian	src/multigrid.c	/^void jacobian(Grid *phi,const Grid *rho, const int nCycles){$/;"	f
+jacobian	src/multigrid.c	/^void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){$/;"	f
 kenergy	src/old/const.h	/^  double kenergy;$/;"	m	struct:particle
 kenergy	src/old/triang/const.h	/^  double kenergy;$/;"	m	struct:particle
 key	lib/iniparser/src/dictionary.h	/^    char        **  key ;   \/** List of string keys *\/$/;"	m	struct:_dictionary_
@@ -1562,9 +1566,9 @@ l00032	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00032"><\
 l00033	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00033"><\/a><span class="lineno">   33<\/span>&#160;    <span class="keywordtype">int<\/span> nPostSmooth;<\/div>$/;"	a
 l00034	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00034"><\/a><span class="lineno">   34<\/span>&#160;    <span class="keywordtype">int<\/span> nCoarseSolve;<\/div>$/;"	a
 l00035	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00035"><\/a><span class="lineno">   35<\/span>&#160;<\/div>$/;"	a
-l00036	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00036"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a66c785f1d6ff0ff6f0ed403ec59209db">   36<\/a><\/span>&#160;    void (*coarseSolv)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles);  <\/div>$/;"	a
-l00037	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00037"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a72ead5f278d47f787a4c46c0ecef3ec3">   37<\/a><\/span>&#160;    void (*postSmooth)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles);  <\/div>$/;"	a
-l00038	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00038"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a124881c7e8be424e527e6d41322d57dd">   38<\/a><\/span>&#160;    void (*preSmooth)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles);   <\/div>$/;"	a
+l00036	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00036"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#ae9e84ef873a30c5674565959f91e00a1">   36<\/a><\/span>&#160;    void (*coarseSolv)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);  <\/div>$/;"	a
+l00037	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00037"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a628c3fa91758922649b4d305e0aae4e1">   37<\/a><\/span>&#160;    void (*postSmooth)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);  <\/div>$/;"	a
+l00038	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00038"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#a32fa46544a4cf0a3ec56e52b7e54348f">   38<\/a><\/span>&#160;    void (*preSmooth)(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);   <\/div>$/;"	a
 l00038	doc/html/pusher_8h_source.html	/^<div class="line"><a name="l00038"><\/a><span class="lineno">   38<\/span>&#160; <span class="keywordtype">void<\/span> <a class="code" href="pusher_8h.html#a614da237aea53934849b87fe533d114c">puBndPeriodic<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *grid);<\/div>$/;"	a
 l00039	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00039"><\/a><span class="lineno"><a class="line" href="structMultigrid.html#ad21e55cab30da30d81913a89189741ec">   39<\/a><\/span>&#160;    void (*restrictor)(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse); <\/div>$/;"	a
 l00039	doc/html/pusher_8h_source.html	/^<div class="line"><a name="l00039"><\/a><span class="lineno">   39<\/span>&#160;<\/div>$/;"	a
@@ -1577,22 +1581,23 @@ l00050	doc/html/pusher_8h_source.html	/^<div class="line"><a name="l00050"><\/a>
 l00051	doc/html/pusher_8h_source.html	/^<div class="line"><a name="l00051"><\/a><span class="lineno">   51<\/span>&#160;<\/div>$/;"	a
 l00054	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00054"><\/a><span class="lineno">   54<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a16df94d536cbbc6a94c43578d96cb2a6">mgFree<\/a>(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multigrid);<\/div>$/;"	a
 l00055	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00055"><\/a><span class="lineno">   55<\/span>&#160;<\/div>$/;"	a
-l00056	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<span class="keywordtype">void<\/span> linearMGSolv(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi);<\/div>$/;"	a
+l00056	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00056"><\/a><span class="lineno">   56<\/span>&#160;<span class="keywordtype">void<\/span> linearMGSolv(<a class="code" href="structMultigrid.html">Multigrid<\/a> *multiRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *multiPhi, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00057	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00057"><\/a><span class="lineno">   57<\/span>&#160;<\/div>$/;"	a
-l00058	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno">   58<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel2D(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles);<\/div>$/;"	a
-l00059	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<span class="keywordtype">void<\/span> jacobian(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles);<\/div>$/;"	a
-l00060	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<\/div>$/;"	a
-l00061	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;<span class="comment">\/\/Restriction and prolongators<\/span><\/div>$/;"	a
+l00058	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00058"><\/a><span class="lineno">   58<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel3D(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00059	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00059"><\/a><span class="lineno">   59<\/span>&#160;<span class="keywordtype">void<\/span> gaussSeidel2D(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00060	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00060"><\/a><span class="lineno">   60<\/span>&#160;<span class="keywordtype">void<\/span> jacobian(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00061	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno">   61<\/span>&#160;<\/div>$/;"	a
 l00061	doc/html/test_8h_source.html	/^<div class="line"><a name="l00061"><\/a><span class="lineno"><a class="line" href="test_8h.html#a80ec367815f1e68a08f6b6390181a30a">   61<\/a><\/span>&#160;<span class="preprocessor">#define utAssert(...) do { int fail = utAssertInner(__FILE__,__func__,__LINE__,__VA_ARGS__); if(fail) return 1; } while (0)<\/span><\/div>$/;"	a
-l00062	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno">   62<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict2D(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
+l00062	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno">   62<\/span>&#160;<span class="comment">\/\/Restriction and prolongators<\/span><\/div>$/;"	a
 l00062	doc/html/test_8h_source.html	/^<div class="line"><a name="l00062"><\/a><span class="lineno">   62<\/span>&#160;<\/div>$/;"	a
-l00063	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno">   63<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict3D(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
-l00064	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno">   64<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong2D(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00065	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno">   65<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong3D(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00066	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00066"><\/a><span class="lineno">   66<\/span>&#160;<\/div>$/;"	a
+l00063	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00063"><\/a><span class="lineno">   63<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict2D(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
+l00064	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00064"><\/a><span class="lineno">   64<\/span>&#160;<span class="keywordtype">void<\/span> halfWeightRestrict3D(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
+l00065	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00065"><\/a><span class="lineno">   65<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong2D(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00066	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00066"><\/a><span class="lineno">   66<\/span>&#160;<span class="keywordtype">void<\/span> bilinearProlong3D(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00067	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00067"><\/a><span class="lineno">   67<\/span>&#160;<\/div>$/;"	a
-l00068	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00068"><\/a><span class="lineno">   68<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
+l00068	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00068"><\/a><span class="lineno">   68<\/span>&#160;<\/div>$/;"	a
 l00068	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00068"><\/a><span class="lineno"><a class="line" href="structPopulation.html">   68<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
+l00069	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00069"><\/a><span class="lineno">   69<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
 l00069	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00069"><\/a><span class="lineno"><a class="line" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">   69<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#aefda644b2d7fd5341a046e9e4eb2ca7f">pos<\/a>;        <\/div>$/;"	a
 l00070	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00070"><\/a><span class="lineno"><a class="line" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">   70<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structPopulation.html#afd2ad54ea56bd55664129a1be9c14a17">vel<\/a>;        <\/div>$/;"	a
 l00070	doc/html/pusher_8h_source.html	/^<div class="line"><a name="l00070"><\/a><span class="lineno">   70<\/span>&#160; <span class="keywordtype">void<\/span> <a class="code" href="pusher_8h.html#a67f3253e5dbeaa24f837f4b287f9050a">puAcc3D1<\/a>(<a class="code" href="structPopulation.html">Population<\/a> *pop, <a class="code" href="structGrid.html">Grid<\/a> *E);<\/div>$/;"	a
@@ -1788,7 +1793,7 @@ letter_M	doc/html/classes.html	/^<\/td><td rowspan="2" valign="bottom"><a name="
 letter_P	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="letter_P"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;P&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 letter_T	doc/html/classes.html	/^<\/td><td valign="top"><a class="el" href="structMultigrid.html">Multigrid<\/a>&#160;&#160;&#160;<\/td><td rowspan="2" valign="bottom"><a name="letter_T"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;T&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 line_status	lib/iniparser/src/iniparser.c	/^} line_status ;$/;"	t	typeref:enum:_line_status_	file:
-linearMGSolv	src/multigrid.c	/^void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi){$/;"	f
+linearMGSolv	src/multigrid.c	/^void linearMGSolv(Multigrid *multiRho, Multigrid *multiPhi, const MpiInfo *mpiInfo){$/;"	f
 listGetNElements	src/io.c	/^static int listGetNElements(const char* list){$/;"	f	file:
 listToStrArr	src/io.c	/^static char** listToStrArr(const char* restrict list){$/;"	f	file:
 llb	src/old/const.h	/^double llb[S], lzet[S], lv0[S]; \/\/lower bound, partition funct, initial velocity$/;"	v
@@ -1818,6 +1823,8 @@ lminarg2	src/old/fmg/nrutil.h	/^static long lminarg1,lminarg2;$/;"	v
 lo	src/old/triang/triangulate.h	/^  point_t hi, lo;		\/* max\/min y-values *\/$/;"	m	struct:__anon9
 locate_endpoint	src/old/triang/construct.c	/^int locate_endpoint(v, vo, r)$/;"	f
 longIntArrCumProd	src/aux.c	/^long int *longIntArrCumProd(const int *a, int nElements){$/;"	f
+loopRedBlack2D	src/multigrid.c	/^inline static void loopRedBlack2D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc,$/;"	f	file:
+loopRedBlack3D	src/multigrid.c	/^inline static void loopRedBlack3D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc, int lEdgeInc,$/;"	f	file:
 lostlist	src/old/const.h	/^long int lostlist[S][NPART_MAX];\/*list of lost part.,each specie*\/$/;"	v
 lostlist	src/old/triang/const.h	/^long int lostlist[S][NPART_MAX];\/*list of lost part.,each specie*\/$/;"	v
 lostpart	src/old/const.h	/^long int lostpart[S]; \/*no. of lost particles,each species*\/$/;"	v
@@ -2103,7 +2110,7 @@ points_on_sphere	src/old/spherical.c	/^void points_on_sphere(int dustnumber, int
 points_on_sphere	src/old/triang/spherical.c	/^void points_on_sphere(int dustnumber, int numberofpoints)$/;"	f
 pos	src/pinc.h	/^	double *pos;		\/\/\/< Position$/;"	m	struct:__anon1
 posToSubdomain	src/pinc.h	/^	double *posToSubdomain;		\/\/\/< Factor for converting position to subdomain (nDims elements)$/;"	m	struct:__anon2
-postSmooth	src/multigrid.h	/^    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles);	\/\/\/< Function pointer to a Post Smooth function$/;"	m	struct:__anon6
+postSmooth	src/multigrid.h	/^    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	\/\/\/< Function pointer to a Post Smooth function$/;"	m	struct:__anon6
 pot2D	src/old/const.h	/^FILE *pot2Dclr,*pot2D,*efx,*efy, *efz,*frho,*idens,*edens;$/;"	v
 pot2D	src/old/triang/const.h	/^FILE *pot2Dclr,*pot2D,*efx,*efy, *efz,*frho,*idens,*edens;$/;"	v
 pot2Dav	src/old/const.h	/^FILE *curr, *poten, *potclr, *pot2Dav; \/\/OLD$/;"	v
@@ -2122,7 +2129,7 @@ potconvMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMA
 potconvMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 poten	src/old/const.h	/^FILE *curr, *poten, *potclr, *pot2Dav; \/\/OLD$/;"	v
 poten	src/old/triang/const.h	/^FILE *curr, *poten, *potclr, *pot2Dav; \/\/OLD$/;"	v
-preSmooth	src/multigrid.h	/^    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles);	\/\/\/< Function pointer to a Pre Smooth function$/;"	m	struct:__anon6
+preSmooth	src/multigrid.h	/^    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	\/\/\/< Function pointer to a Pre Smooth function$/;"	m	struct:__anon6
 prev	script/distribution.py	/^prev = start$/;"	v
 prev	src/old/triang/triangulate.h	/^  int prev;			\/* Previous segment *\/$/;"	m	struct:__anon8
 prev	src/old/triang/triangulate.h	/^  int prev;			\/* describing the monotone *\/$/;"	m	struct:__anon11
