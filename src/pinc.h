@@ -531,6 +531,18 @@ void gFinDiff2nd2D(Grid *phi,const Grid *rho);
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
 
+
+/**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+*	Adds one grid to another. result = result + addition 
+*
+*/
+
+void gAddTo(Grid *result, Grid *addition);
+
 /******************************************************************************
  * DEFINED IN IO.C
  *****************************************************************************/

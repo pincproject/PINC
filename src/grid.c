@@ -295,14 +295,14 @@ void gFinDiff1st(const Grid *scalar, Grid *field){
 	return;
 }
 
-void gFinDiff2nd2D(Grid *phi, const Grid *rho){
+void gFinDiff2nd2D(Grid *result, const Grid *object){
 
 	//Load
-	int rank = rho->rank;
-	long int *sizeProd = rho->sizeProd;
+	int rank = object->rank;
+	long int *sizeProd = object->sizeProd;
 
-	double *phiVal = phi->val;
-	double *rhoVal = rho->val;
+	double *resultVal = result->val;
+	double *objectVal = object->val;
 
 	// Index of neighboring nodes
 	int gj = sizeProd[1];
@@ -312,9 +312,9 @@ void gFinDiff2nd2D(Grid *phi, const Grid *rho){
 
 	//Laplacian
 	for(int g = 0; g < sizeProd[rank]; g++){
-		phiVal[g] = -4.*rhoVal[g];
-		phiVal[g] += rhoVal[gj] + rhoVal[gjj]
-					+rhoVal[gk] + rhoVal[gkk];
+		resultVal[g] = -4.*objectVal[g];
+		resultVal[g] += objectVal[gj] + objectVal[gjj]
+					+objectVal[gk] + objectVal[gkk];
 
 		//Increment indexes
 		gj++;
@@ -326,16 +326,16 @@ void gFinDiff2nd2D(Grid *phi, const Grid *rho){
 	return;
 }
 
-void gFinDiff2nd3D(Grid *phi, const  Grid *rho){
+void gFinDiff2nd3D(Grid *result, const  Grid *object){
 	//TBD
 	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
 
 	//Load
-	int rank = rho->rank;
-	long int *sizeProd = rho->sizeProd;
+	int rank = object->rank;
+	long int *sizeProd = object->sizeProd;
 
-	double *phiVal = phi->val;
-	double *rhoVal = rho->val;
+	double *resultVal = result->val;
+	double *objectVal = object->val;
 
 	// Index of neighboring nodes
 	int g = 0;
@@ -348,10 +348,10 @@ void gFinDiff2nd3D(Grid *phi, const  Grid *rho){
 
 	//Laplacian
 	for(int q = 0; q < sizeProd[rank]; q++){
-		phiVal[g] = -6.*rhoVal[g];
-		phiVal[g] += rhoVal[gj] + rhoVal[gjj]
-					+rhoVal[gk] + rhoVal[gkk]
-					+rhoVal[gl] + rhoVal[gll];
+		resultVal[g] = -6.*objectVal[g];
+		resultVal[g] += objectVal[gj] + objectVal[gjj]
+					+objectVal[gk] + objectVal[gkk]
+					+objectVal[gl] + objectVal[gll];
 
 		//Increment indexes
 		g++;
@@ -770,5 +770,16 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 	for(int p=0;p<E->sizeProd[E->rank];p++){
 		E->val[p] /= stepSize[p%E->size[0]];
 	}
+
+}
+
+void gAddTo(Grid *result, Grid *addition){
+
+	int rank = result->rank;
+	long int *sizeProd = result->sizeProd;
+	double *resultVal = result->val;
+	double *addVal = addition->val;
+
+	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] += addVal[g];
 
 }
