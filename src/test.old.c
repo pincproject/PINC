@@ -55,14 +55,14 @@
 // 	GridQuantity *fRho = multiRho->gridQuantities[0];
 // 	// GridQuantity *cRho = multiRho->gridQuantities[1];
 //
-// 	// dumpGridIndexes(ini, fRho);
-// 	// dumpGridIndexes(ini, cRho);
-// 	dumpGrid(ini, fRho);
+// 	// dumpWholeGridIndexes(ini, fRho);
+// 	// dumpWholeGridIndexes(ini, cRho);
+// 	dumpWholeGrid(ini, fRho);
 //
 // 	multiRho->restrictor(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
 // 	multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
 //
-// 	dumpGrid(ini, fRho);
+// 	dumpWholeGrid(ini, fRho);
 //
 //
 // 	// multiRho->prolongator(multiRho->gridQuantities[0], multiRho->gridQuantities[1]);
@@ -101,11 +101,11 @@
 // 		if(mpiRank == rank){
 // 			fMsg(ini, "parsedump", "rank = %d,\tsubdomain = [%d,%d]",
 //  					mpiRank, subdomain[0], subdomain[1]);
-// 			dumpGrid(ini, gridQuantity);
+// 			dumpWholeGrid(ini, gridQuantity);
 // 		}
 // 	}
 //
-// 	gSwapHalo(ini, gridQuantity, mpiInfo, 1);
+// 	gSwapGhostsDim(ini, gridQuantity, mpiInfo, 1);
 //
 // 	if(mpiRank == 0) fMsg(ini, "parsedump", "\n\nSwapping halos\n\n");
 //
@@ -114,7 +114,7 @@
 // 		if(mpiRank == rank){
 // 			fMsg(ini, "parsedump", "rank = %d,\tsubdomain = [%d,%d]",
 //  					mpiRank, subdomain[0], subdomain[1]);
-// 			dumpGrid(ini, gridQuantity);
+// 			dumpWholeGrid(ini, gridQuantity);
 // 		}
 // 	}
 //
@@ -163,14 +163,14 @@
 // 			ind++;
 // 		}
 // 	}
-// 	dumpGrid(ini, gridQuantity);
+// 	dumpWholeGrid(ini, gridQuantity);
 //
-// 	// gSwapHalo(ini, gridQuantity);
+// 	// gSwapGhostsDim(ini, gridQuantity);
 //
-// 	dumpGrid(ini, gridQuantity);
+// 	dumpWholeGrid(ini, gridQuantity);
 // }
 //
-// void dumpGridIndexes(dictionary *ini, GridQuantity *gridQuantity){
+// void dumpWholeGridIndexes(dictionary *ini, GridQuantity *gridQuantity){
 // 	Grid *grid = gridQuantity->grid;
 // 	int *nGPoints = grid->nGPoints;
 // 	long int *nGPointsProd = grid->nGPointsProd;

@@ -22,6 +22,19 @@ phi4 = filePhi["/n=4.0"]
 phi4 = phi4[:,:,0]
 phi5 = filePhi["/n=5.0"]
 phi5 = phi5[:,:,0]
+phi6 = filePhi["/n=6.0"]
+phi6 = phi6[:,:,0]
+phi7 = filePhi["/n=7.0"]
+phi7 = phi7[:,:,0]
+phi8 = filePhi["/n=8.0"]
+phi8 = phi8[:,:,0]
+phi9 = filePhi["/n=9.0"]
+phi9 = phi9[:,:,0]
+phi10 = filePhi["/n=10.0"]
+phi10 = phi10[:,:,0]
+phi11 = filePhi["/n=11.0"]
+phi11 = phi11[:,:,0]
+
 
 x = np.arange(rho.shape[1])
 y = np.arange(rho.shape[0])
@@ -29,9 +42,14 @@ y = np.arange(rho.shape[0])
 X,Y = np.meshgrid(x,y)
 
 
-vmin = np.min(phi5)
-vmax = np.max(phi5)
-levels=np.arange(vmin,vmax, 2./50.)
+# vmin = np.min(phi11)
+# vmax = np.max(phi11)
+# vmin = -100
+# vmax = 200
+vmin = -1
+vmax = 4
+
+levels=np.arange(vmin,vmax, np.abs(vmax - vmin)/50.)
 
 fig, ax = plt.subplots(1)
 im = ax.contourf(X,Y,rho)
@@ -41,20 +59,24 @@ cbar_ax = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 fig.colorbar(im, cax=cbar_ax, orientation = "horizontal")
 
 
-fig, ax = plt.subplots(2,3, sharex= True , sharey = True)
-ax[0,0].contourf(X,Y,phi0, levels = levels)
+fig, ax = plt.subplots(4,3, sharex= True , sharey = True)
+im = ax[0,0].contourf(X,Y,phi0, levels = levels)
 ax[0,1].contourf(X,Y,phi1, levels = levels)
 ax[0,2].contourf(X,Y,phi2, levels = levels)
 ax[1,0].contourf(X,Y,phi3, levels = levels)
 ax[1,1].contourf(X,Y,phi4, levels = levels)
 ax[1,2].contourf(X,Y,phi5, levels = levels)
+ax[2,0].contourf(X,Y,phi6, levels = levels)
+ax[2,1].contourf(X,Y,phi7, levels = levels)
+ax[2,2].contourf(X,Y,phi8, levels = levels)
+ax[3,0].contourf(X,Y,phi9, levels = levels)
+ax[3,1].contourf(X,Y,phi10, levels = levels)
+ax[3,2].contourf(X,Y,phi11, levels = levels)
 
 fig.subplots_adjust(bottom = 0.25)
 
 cbar_ax = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 fig.colorbar(im, cax=cbar_ax, orientation = "horizontal")
 
-print np.max(phi4)
-print np.max(phi5)
 
 plt.show()

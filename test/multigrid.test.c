@@ -93,7 +93,7 @@ static int testRestrictor(){
 		fVal[g] = (double) g;
 	}
 
-	dumpGrid(ini, fine);
+	dumpWholeGrid(ini, fine);
 
 	//Populate and dump coarse grid indexes
 	long int *cSizeProd = coarse->sizeProd;
@@ -103,7 +103,7 @@ static int testRestrictor(){
 		// cVal[g] = (double) g;
 	}
 
-	// dumpGrid(ini, coarse);
+	// dumpWholeGrid(ini, coarse);
 
 
 

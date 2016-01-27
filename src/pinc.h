@@ -114,6 +114,19 @@ typedef struct{
 } MpiInfo;
 
 /**
+ * @brief Defines different types of boundary conditons
+ * @see gAlloc
+ * @see gBnd
+ */
+typedef enum{
+	PERIODIC = 0x01,		///< Periodic boundary conditions.
+	DIRICHLET = 0x02,		///< Dirichlet boundary condtions.
+	NEUMANN = 0x03,			///< Neumann boundary conditons.
+	NONE = 0x10				///< For nValues
+} bndType;
+
+
+/**
  * @brief A grid-valued quantity, for instance charge density or E-field.
  *
  * This datatype can represent both scalar fields and vector fields on an N-
@@ -239,6 +252,9 @@ typedef struct{
 	hid_t h5;					///< HDF5 file handler
 	hid_t h5MemSpace;			///< HDF5 memory space description
 	hid_t h5FileSpace;			///< HDF5 file space description
+
+	bndType *bnd;				///< Array storing boundary conditions
+
 } Grid;
 
 typedef struct timespec TimeSpec;
@@ -475,7 +491,22 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
  */
-void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d);
+void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d);
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param ini			dictionary
+ * @param *Grid	Grid struct
+ * @param *mpiInfo		MpiInfo struct
+ *
+ * Swaps the whole halo surrounding the true grid point with the surrounding sub domains.
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see getSendRecvSetSlice
+ * @see gSwapGhostsDim
+ */
+void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo);
+
 
 /**
  * @brief Set all values in grid to zero
@@ -519,7 +550,7 @@ void gFinDiff1st(const Grid *scalar, Grid *field);
  */
 void gFinDiff2nd3D(Grid *phi,const Grid *rho);
 
-void gFinDiff2nd2D(Grid *phi,const Grid *rho);
+void gFinDiff2nd2D(Grid *phi,const Grid *rho,const  MpiInfo *mpiInfo);
 
  /**
  * @brief Normalize E-field
@@ -537,11 +568,23 @@ void gNormalizeE(const dictionary *ini, Grid *E);
 * @param	result		Grid added to
 * @param	addition	Grid that is added to the other
 *
-*	Adds one grid to another. result = result + addition 
+*	Adds one grid to another. result = result + addition
 *
 */
 
 void gAddTo(Grid *result, Grid *addition);
+
+/**
+ * @brief Applies boundary conditions to edge
+ * @param 	grid		Grid to apply boundary conditions to
+ * @param	mpiInfo		Info about subdomain
+ *
+ * @return 	grid		Returns grid with changed boundary
+ *
+ * Applies boundary conditions
+ */
+
+void gBnd(Grid *grid,const MpiInfo *mpiInfo);
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -950,6 +993,8 @@ char *strAllocCat(int n,...);
  * Debug help
  */
 
-void dumpGrid(dictionary *ini, Grid *grid);
+void dumpWholeGrid(dictionary *ini, Grid *grid);
+
+void dumpTrueGrid(dictionary *ini, Grid *grid);
 
 #endif // PINC_H

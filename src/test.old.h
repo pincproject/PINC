@@ -62,7 +62,7 @@ void testMultigrid(dictionary *ini, Multigrid *multiRho, Multigrid *multiPhi,
 
 void testDerivatives(dictionary *ini, Grid *rho, Grid *phi);
 
-void dumpGridIndexes(dictionary *ini, Grid *grid);
+void dumpWholeGridIndexes(dictionary *ini, Grid *grid);
 
 
 /**
@@ -81,4 +81,4 @@ void dumpGridIndexes(dictionary *ini, Grid *grid);
 	111111	222222
  * @endcode
  */
-void dumpGrid(dictionary *ini, Grid *grid);
+void dumpWholeGrid(dictionary *ini, Grid *grid);

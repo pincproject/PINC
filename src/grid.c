@@ -59,7 +59,7 @@ static int *getSubdomain(const dictionary *ini);
  * slice = \f( [1, 6, 11, 16] \f)
  *
  * @see setSlice
- * @see gSwapHalo
+ * @see gSwapGhostsDim
  **/
 
 void getSlice(double *slice, const Grid *grid, int d, int offset);
@@ -92,7 +92,7 @@ void getSlice(double *slice, const Grid *grid, int d, int offset);
  * @endcode
  *
  * @see setSlice
- * @see gSwapHalo
+ * @see gSwapGhostsDim
  */
 void setSlice(const double *slice, Grid *grid, int d, int offset);
 
@@ -115,7 +115,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  * @param offsetTake 		Offset of slice to get
  * @param offsetSet 		Offset of where to set slice
  * @param d					Dimension
- * @param reciever 			mpiRank of subdomain to recieve slice
+ * @param receiver 			mpiRank of subdomain to recieve slice
  * @param sender 			mpiRank of subdomain,
 							this node is to recieve from
  * @param mpiRank 			mpiRank of this node
@@ -128,10 +128,10 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  *
  * @see getSlice
  * @see setSlice
- * @see gSwapHalo
+ * @see gSwapGhostsDim
  */
 void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int reciever,
+					const int offsetPlace, const int d, const int receiver,
 					const int sender, const int mpiRank, Grid *grid);
 
 /******************************************************************************
@@ -217,17 +217,24 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 }
 
 void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int reciever,
+					const int offsetPlace, const int d, const int receiver,
 					const int sender, const int mpiRank, Grid *grid){
 
 	double *slice = grid->slice;
 
+	MPI_Request		sendRequest,recvRequest;
+	MPI_Status 		status;
+
 	getSlice(slice, grid, d, offsetTake);
-	//Send and recieve (Need to check out if using one of the more sophisticated send
-	//functions to MPI could be used)
-	MPI_Send(slice, nSlicePoints, MPI_DOUBLE, reciever, mpiRank, MPI_COMM_WORLD);
-	MPI_Recv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, receiver, mpiRank, MPI_COMM_WORLD, &sendRequest);
+
+	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, &recvRequest);
+
+	MPI_Wait(&recvRequest, &status);
 	setSlice(slice, grid, d, offsetPlace);
+
+
+	return;
 }
 
 static int *getSubdomain(const dictionary *ini){
@@ -295,7 +302,7 @@ void gFinDiff1st(const Grid *scalar, Grid *field){
 	return;
 }
 
-void gFinDiff2nd2D(Grid *result, const Grid *object){
+void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){
 
 	//Load
 	int rank = object->rank;
@@ -366,9 +373,16 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 	return;
 }
 
+void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo){
 
+	int rank = grid->rank;
 
-void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d){
+	for(int d = 1; d < rank; d++) gSwapGhostsDim(grid, mpiInfo, d);
+
+	return;
+}
+
+void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -381,7 +395,7 @@ void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d){
 	int *size = grid->size;
 
 	//Local temporary variables
-	int reciever, sender;
+	int receiver, sender;
 	int nSlicePoints = 1;
 	int offsetTake, offsetPlace;
 	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
@@ -390,49 +404,48 @@ void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	int dSubDomain = d - 1;
 
+
 	/*****************************************************
 	 *			Sending and recieving upper
 	******************************************************/
 	offsetTake = size[d]-2;
 	offsetPlace = 0;
-	reciever = (mpiRank + nSubdomainsProd[dSubDomain]);
+	receiver = (mpiRank + nSubdomainsProd[dSubDomain]);
 	sender = (mpiRank - nSubdomainsProd[dSubDomain]);
 
-	//Here we need an implementation of the boundary conditions, I will probably put in a function called boundaryCond(...)
-	//here, or alternatively deal with the boundary some other place
+	//Edge subdomains
 	if(nSubdomains[dSubDomain] == 1){
-		reciever -= nSubdomainsProd[dSubDomain];
+		receiver -= nSubdomainsProd[dSubDomain];
 		sender += nSubdomainsProd[dSubDomain];
 	} else {
 		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1)
-			reciever -= 2*nSubdomainsProd[dSubDomain];
+			receiver -= 2*nSubdomainsProd[dSubDomain];
 		if(subdomain[dSubDomain] == 0)
 			sender += 2*nSubdomainsProd[dSubDomain];
 	}
 
-	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
 					sender, mpiRank, grid);
-
-
 
 	/*****************************************************
 	 *			Sending and recieving lower
 	******************************************************/
 	offsetTake = 1;
 	offsetPlace = size[d]-1;
-	reciever = (mpiRank - nSubdomainsProd[dSubDomain]);
+	receiver = (mpiRank - nSubdomainsProd[dSubDomain]);
 	sender = (mpiRank + nSubdomainsProd[dSubDomain]);
 
 	//Boundary
 	if(nSubdomains[dSubDomain] == 1){
-		reciever += nSubdomainsProd[dSubDomain];
+		receiver += nSubdomainsProd[dSubDomain];
 		sender -= nSubdomainsProd[dSubDomain];
 	} else {
 		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1) sender -= 2*nSubdomainsProd[dSubDomain];
-		if(subdomain[dSubDomain] == 0) reciever += 2*nSubdomainsProd[dSubDomain];
+		if(subdomain[dSubDomain] == 0) receiver += 2*nSubdomainsProd[dSubDomain];
 	}
 
-	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, reciever,
+	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
 					sender, mpiRank, grid);
 
 
@@ -503,6 +516,27 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
 	double *slice = malloc(nSliceMax*sizeof(*slice));
 
+	//Set boundary conditions
+	int nBnd;
+	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , &nBnd);
+	int inc = 1;
+
+	bndType *bnd = malloc(2*rank*sizeof(*bnd));
+	bnd[0] = NONE;
+	bnd[rank] = NONE;
+	for(int b = 0; b < nBnd; b++){
+		if(strcmp(boundaries[b], "PERIODIC")){
+			bnd[b+inc] = PERIODIC;
+		} else if(strcmp(boundaries[b], "DIRICHLET")){
+			bnd[b+inc] = DIRICHLET;
+		} else if(strcmp(boundaries[b], "NEUMANN")){
+			bnd[b+inc] = NEUMANN;
+		}
+		if(b == rank-2) inc = 2;
+	}
+
+
+
 	/* Store in Grid */
 	Grid *grid = malloc(sizeof(*grid));
 
@@ -515,6 +549,7 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->val = val;
 	grid->h5 = 0;	// Must be activated separately
 	grid->slice = slice;
+	grid->bnd = bnd;
 
 	return grid;
 }
@@ -580,6 +615,7 @@ void gFree(Grid *grid){
 	free(grid->stepSize);
 	free(grid->val);
 	free(grid->slice);
+	free(grid->bnd);
 	free(grid);
 
 }
@@ -782,4 +818,49 @@ void gAddTo(Grid *result, Grid *addition){
 
 	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] += addVal[g];
 
+}
+
+void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+
+	msg(STATUS, "Hello from Dirichlet");
+
+}
+
+void gPeriodic(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
+
+	msg(STATUS, "Hello from Periodic");
+
+	return;
+}
+
+void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
+	msg(STATUS, "Hello from Neumann");
+
+	return;
+}
+
+void gBnd(Grid *grid, const MpiInfo *mpiInfo){
+	msg(STATUS, "Hello from boundary function");
+
+	int rank = grid->rank;
+	bndType *bnd = grid->bnd;
+
+	//Lower edge
+	for (int d = 1; d < rank; d++){
+		if(bnd[d] == PERIODIC)	gPeriodic(grid, d, mpiInfo);
+		else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+		else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+		else msg(ERROR, "No boundary conditions found for edge %d", d);
+	}
+
+	//Upper edge
+	for (int d = rank+1; d < 2*rank; d++){
+		if(bnd[d] == PERIODIC)	gPeriodic(grid, d, mpiInfo);
+		else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+		else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+		else msg(ERROR, "No boundary conditions found for edge %d", d);
+	}
+
+
+	return;
 }

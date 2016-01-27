@@ -53,7 +53,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
-void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void linearMGSolv(dictionary *ini, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 void gaussSeidel3DStandard(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);

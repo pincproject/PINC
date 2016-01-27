@@ -27,6 +27,7 @@ int main(int argc, char *argv[]){
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
 	MPI_Init(&argc,&argv);
+	MPI_Request	send_request,recv_request;
 	msg(STATUS|ONCE,"PINC started.");
 	MPI_Barrier(MPI_COMM_WORLD);
 

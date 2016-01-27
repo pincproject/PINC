@@ -252,7 +252,7 @@ int makeParentPath(const char *path){
  *			Debug help
  ***************************************************************************/
 
- void dumpGrid(dictionary *ini, Grid *grid){
+ void dumpTrueGrid(dictionary *ini, Grid *grid){
 
  	int *size = grid->size;
  	long int *sizeProd = grid->sizeProd;
@@ -264,10 +264,10 @@ int makeParentPath(const char *path){
  		 			size[1], size[2], size[3]);
  		//Cycles trough and prints the grid (not optimized)
  		int p;
- 		for(int l = 0; l < size[3]; l++){
+ 		for(int l = 1; l < size[3]-1; l++){
  			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
- 			for(int k = size[2] - 1; k > -1; k--){ //y-rows
- 				for(int j = 0; j < size[1]; j++){ //x-rows
+ 			for(int k = size[2] - 2; k > 0; k--){ //y-rows
+ 				for(int j = 1; j < size[1]-1; j++){ //x-rows
  					p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
  					fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
  				}
@@ -276,10 +276,10 @@ int makeParentPath(const char *path){
  		}
  	} else if(nDims==2) {
  		fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
- 		 			size[0], size[1]);
+ 		 			size[1], size[2]);
  		int p;
- 		for(int k = size[2] - 1; k > -1; k--){ //y-rows
- 			for(int j = 0; j < size[1]; j++){ //x-rows
+ 		for(int k = size[2] - 2; k > 0; k--){ //y-rows
+ 			for(int j = 1; j < size[1]-1; j++){ //x-rows
  				p = j*size[0] + k*size[1];
  				fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
  			}
@@ -289,4 +289,43 @@ int makeParentPath(const char *path){
  	}
 
  	return;
+ }
+
+ void dumpWholeGrid(dictionary *ini, Grid *grid){
+
+    int *size = grid->size;
+    long int *sizeProd = grid->sizeProd;
+    int nDims = grid->rank -1;
+
+    msg(STATUS|ONCE, "Dumps grid to parsefile");
+    if(nDims == 3){
+ 	   fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+ 				   size[1], size[2], size[3]);
+ 	   //Cycles trough and prints the grid (not optimized)
+ 	   int p;
+ 	   for(int l = 0; l < size[3]; l++){
+ 		   fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
+ 		   for(int k = size[2] - 1; k > -1; k--){ //y-rows
+ 			   for(int j = 0; j < size[1]; j++){ //x-rows
+ 				   p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+ 				   fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
+ 			   }
+ 			   fMsg(ini,"parsedump", "\n\n");
+ 		   }
+ 	   }
+    } else if(nDims==2) {
+ 	   fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
+ 				   size[1], size[2]);
+ 	   int p;
+ 	   for(int k = size[2] - 1; k > -1; k--){ //y-rows
+ 		   for(int j = 0; j < size[1]; j++){ //x-rows
+ 			   p = j*size[0] + k*size[1];
+ 			   fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
+ 		   }
+ 		   fMsg(ini,"parsedump", "\n");
+ 	   }
+
+    }
+
+    return;
  }
