@@ -145,12 +145,16 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		double *val = malloc(subSizeProd[rank]*sizeof(*val));
 		double *slice = malloc(nSliceMax*sizeof(*slice));
 
+		//Ghost layer vector
+		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
+		for(int d = 0; d < 2*rank; d++)	subNGhostLayers[d] = nGhostLayers[d];
+
 		//Assign to grid
 		Grid *grid = malloc(sizeof(Grid));
 		grid->rank = rank;
 		grid->size = subSize;
 		grid->sizeProd = subSizeProd;
-		grid->nGhostLayers = nGhostLayers;
+		grid->nGhostLayers = subNGhostLayers;
 		grid->trueSize = subTrueSize;
 		grid->val = val;
 		grid->slice = slice;
@@ -161,10 +165,93 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 	return grids;
 }
 
+/*************************************************
+ *		Inline functions
+ ************************************************/
+
+ inline static void loopRedBlack2D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc,
+ 				long int g, long int gj, long int gjj, long int gk, long int gkk){
+
+ 	gj = g + sizeProd[1];
+ 	gjj= g - sizeProd[1];
+ 	gk = g + sizeProd[2];
+ 	gkk= g - sizeProd[2];
+
+ 	for(int k = 1; k < trueSize[2]; k +=2){
+ 		for(int j = 1; j < trueSize[1]; j += 2){
+ 			phiVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
+ 								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
+ 			g	+=2;
+ 			gj	+=2;
+ 			gjj	+=2;
+ 			gk	+=2;
+ 			gkk	+=2;
+ 		}
+ 		g	+=kEdgeInc;
+ 		gj	+=kEdgeInc;
+ 		gjj	+=kEdgeInc;
+ 		gk	+=kEdgeInc;
+ 		gkk	+=kEdgeInc;
+ 	}
+
+ 	return;
+ }
+
+ inline static void loopRedBlack3D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc, int lEdgeInc,
+ 				long int g, long int gj, long int gjj, long int gk, long int gkk, long int gl, long int gll){
+
+ 	gj = g + sizeProd[1];
+ 	gjj= g - sizeProd[1];
+ 	gk = g + sizeProd[2];
+ 	gkk= g - sizeProd[2];
+ 	gl = g + sizeProd[3];
+ 	gll= g - sizeProd[3];
+
+ 	for(int l = 0; l<trueSize[3]; l+=2){
+ 		for(int k = 0; k < trueSize[2]; k+=2){
+ 			for(int j = 0; j < trueSize[1]; j+=2){
+ 				// msg(STATUS, "g=%d", g);
+ 				phiVal[g] = 0.125*(phiVal[gj] + phiVal[gjj] +
+ 								phiVal[gk] + phiVal[gkk] +
+ 								phiVal[gl] + phiVal[gll] + rhoVal[g]);
+ 				g	+=2;
+ 				gj	+=2;
+ 				gjj	+=2;
+ 				gk	+=2;
+ 				gkk	+=2;
+ 				gl	+=2;
+ 				gll	+=2;
+ 			}
+ 		g	+=kEdgeInc;
+ 		gj	+=kEdgeInc;
+ 		gjj	+=kEdgeInc;
+ 		gk	+=kEdgeInc;
+ 		gkk	+=kEdgeInc;
+ 		gl	+=kEdgeInc;
+ 		gll	+=kEdgeInc;
+ 		}
+ 	g	+=lEdgeInc;
+ 	gj	+=lEdgeInc;
+ 	gjj	+=lEdgeInc;
+ 	gk	+=lEdgeInc;
+ 	gkk	+=lEdgeInc;
+ 	gl	+=lEdgeInc;
+ 	gll	+=lEdgeInc;
+ 	}
+
+ 	return;
+ }
+
+
 
 /*************************************************
  *		DEFINITIONS
  ************************************************/
+/*************************************************
+ * 		ALLOCATIONS
+ * 		DESTRUCTORS
+ ************************************************/
+
 
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
@@ -214,19 +301,22 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 }
 
 void mgFree(Multigrid *multigrid){
-	//
-	// Grid **grids = multigrid->grids;
-	// int nLevels = multigrid->nLevels;
 
-	// for(int n = 1; n < nLevels; n++)
-	// {
-	// 	gFree(grids[n]);
-	// }
-	// free(multigrid);
+	Grid **grids = multigrid->grids;
+	int nLevels = multigrid->nLevels;
 
-	msg(STATUS, "Freeing of multigrid not complete");
+	for(int n = 1; n < nLevels; n++)
+	{
+		gFree(grids[n]);
+	}
+	free(multigrid);
+
 	return;
 }
+
+/******************************************************
+ *		Iterative Solvers
+ *****************************************************/
 
 
 void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
@@ -234,8 +324,6 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 	//Common variables
 	int rank = phi->rank;
 	long int *sizeProd = phi->sizeProd;
-	int *size = phi->size;
-	// int *subdomain = mpiInfo->subdomain;
 
 	//Seperate values
 	double *phiVal = phi->val;
@@ -244,10 +332,8 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 	//Temporary value
 	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
 
-	long int normalize = 2*sizeProd[1] + 2*sizeProd[2];
+	long int normalize = 3*sizeProd[1] + 3*sizeProd[2];
 
-	//Debug
-	int *trueSize = phi->trueSize;
 
 	for(int c = 0; c < nCycles; c++){
 		// Index of neighboring nodes
@@ -268,10 +354,7 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 
 		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
 
-		//Reference potential
-		// if(subdomain[0] == 0 && subdomain[1] == 0){
-			phiVal[normalize] = 0.;
-		// }
+		phiVal[normalize] = 0.;
 
 		for(int d = 1; d < rank; d++) gSwapGhostsDim(phi, mpiInfo, d);
 
@@ -287,33 +370,6 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 	return;
 }
 
-inline static void loopRedBlack2D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc,
-				long int g, long int gj, long int gjj, long int gk, long int gkk){
-
-	gj = g + sizeProd[1];
-	gjj= g - sizeProd[1];
-	gk = g + sizeProd[2];
-	gkk= g - sizeProd[2];
-
-	for(int k = 1; k < trueSize[2]; k +=2){
-		for(int j = 1; j < trueSize[1]; j += 2){
-			phiVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
-								phiVal[gk] + phiVal[gkk] + rhoVal[g]);
-			g	+=2;
-			gj	+=2;
-			gjj	+=2;
-			gk	+=2;
-			gkk	+=2;
-		}
-		g	+=kEdgeInc;
-		gj	+=kEdgeInc;
-		gjj	+=kEdgeInc;
-		gk	+=kEdgeInc;
-		gkk	+=kEdgeInc;
-	}
-
-	return;
-}
 
 void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
@@ -452,50 +508,6 @@ void gaussSeidel3DStandard(Grid *phi, const Grid *rho, int nCycles, const MpiInf
 	return;
 }
 
-inline static void loopRedBlack3D(double *rhoVal,double *phiVal,long int *sizeProd, int *trueSize, int kEdgeInc, int lEdgeInc,
-				long int g, long int gj, long int gjj, long int gk, long int gkk, long int gl, long int gll){
-
-	gj = g + sizeProd[1];
-	gjj= g - sizeProd[1];
-	gk = g + sizeProd[2];
-	gkk= g - sizeProd[2];
-	gl = g + sizeProd[3];
-	gll= g - sizeProd[3];
-
-	for(int l = 0; l<trueSize[3]; l+=2){
-		for(int k = 0; k < trueSize[2]; k+=2){
-			for(int j = 0; j < trueSize[1]; j+=2){
-				// msg(STATUS, "g=%d", g);
-				phiVal[g] = 0.125*(phiVal[gj] + phiVal[gjj] +
-								phiVal[gk] + phiVal[gkk] +
-								phiVal[gl] + phiVal[gll] + rhoVal[g]);
-				g	+=2;
-				gj	+=2;
-				gjj	+=2;
-				gk	+=2;
-				gkk	+=2;
-				gl	+=2;
-				gll	+=2;
-			}
-		g	+=kEdgeInc;
-		gj	+=kEdgeInc;
-		gjj	+=kEdgeInc;
-		gk	+=kEdgeInc;
-		gkk	+=kEdgeInc;
-		gl	+=kEdgeInc;
-		gll	+=kEdgeInc;
-		}
-	g	+=lEdgeInc;
-	gj	+=lEdgeInc;
-	gjj	+=lEdgeInc;
-	gk	+=lEdgeInc;
-	gkk	+=lEdgeInc;
-	gl	+=lEdgeInc;
-	gll	+=lEdgeInc;
-	}
-
-	return;
-}
 
 
 void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
@@ -580,6 +592,10 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 
 	return;
 }
+
+/***********************************************************
+ *			RESTRICTORS/PROLONGATORS
+ **********************************************************/
 
 
 void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
@@ -885,6 +901,10 @@ void bilinearProlong2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 	return;
 }
 
+/*******************************************************
+ *			VARIOUS COMPUTATIONS (RESIDUAL)
+ ******************************************************/
+
 void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){
 
 	//Load
@@ -903,6 +923,10 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 
 	return;
 }
+
+/*****************************************************
+ *			MG CYCLES
+ ****************************************************/
 
 void inline static mgVCycle(dictionary *ini, int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo){
