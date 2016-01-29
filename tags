@@ -831,7 +831,7 @@ debugGSRB	src/main.local.c	/^void debugGSRB(dictionary *ini, MpiInfo *mpiInfo){$
 debugProlongator	src/main.local.c	/^void debugProlongator(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugRestrictor	src/main.local.c	/^void debugRestrictor(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugSolver	src/main.local.c	/^void debugSolver(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
-debugSwapGhostsDim	src/main.local.c	/^void debugSwapGhostsDim(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
+debugSwapHalo	src/main.local.c	/^void debugSwapHalo(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debye	src/old/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debye	src/old/triang/const.h	/^double debye[S]; \/*debye length*\/$/;"	v
 debyetotal	src/old/const.h	/^double debyetotal; \/*total debye length*\/$/;"	v
@@ -1246,19 +1246,19 @@ gAllocMpi	src/grid.c	/^MpiInfo *gAllocMpi(const dictionary *ini){$/;"	f
 gBnd	src/grid.c	/^void gBnd(Grid *grid, const MpiInfo *mpiInfo){$/;"	f
 gCloseH5	src/grid.c	/^void gCloseH5(Grid *grid){$/;"	f
 gCreateH5	src/grid.c	/^void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,$/;"	f
-gDirichlet	src/grid.c	/^void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){$/;"	f
+gDirichlet	src/grid.c	/^void gDirichlet(Grid *grid, const int boundary, int side, double constant,  const  MpiInfo *mpiInfo){$/;"	f
 gFinDiff1st	src/grid.c	/^void gFinDiff1st(const Grid *scalar, Grid *field){$/;"	f
 gFinDiff2nd2D	src/grid.c	/^void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){$/;"	f
 gFinDiff2nd3D	src/grid.c	/^void gFinDiff2nd3D(Grid *result, const  Grid *object){$/;"	f
 gFree	src/grid.c	/^void gFree(Grid *grid){$/;"	f
 gFreeMpi	src/grid.c	/^void gFreeMpi(MpiInfo *mpiInfo){$/;"	f
 gMulDouble	src/grid.c	/^void gMulDouble(Grid *grid, double num){$/;"	f
-gNeumann	src/grid.c	/^void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){$/;"	f
+gNeumann	src/grid.c	/^void gNeumann(Grid *grid, const int boundary,int side, double constant, const MpiInfo *mpiInfo){$/;"	f
 gNormalizeE	src/grid.c	/^void gNormalizeE(const dictionary *ini, Grid *E){$/;"	f
-gPeriodic	src/grid.c	/^void gPeriodic(Grid *grid, const int boundary, const MpiInfo *mpiInfo){$/;"	f
+gPeriodic	src/grid.c	/^static void gPeriodic(){$/;"	f	file:
 gSet	src/grid.c	/^void gSet(Grid *grid, const double *value){$/;"	f
-gSwapGhostsDim	src/grid.c	/^void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d){$/;"	f
 gSwapHalo	src/grid.c	/^void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo){$/;"	f
+gSwapHaloDim	src/grid.c	/^void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){$/;"	f
 gValDebug	src/grid.c	/^void gValDebug(Grid *grid, const MpiInfo *mpiInfo){$/;"	f
 gWriteH5	src/grid.c	/^void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){$/;"	f
 gZero	src/grid.c	/^void gZero(Grid *grid){$/;"	f
@@ -1752,7 +1752,7 @@ l00469	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00469"><\/a><s
 l00470	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00470"><\/a><span class="lineno">  470<\/span>&#160;<\/div>$/;"	a
 l00476	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00476"><\/a><span class="lineno">  476<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#afcb6476a8d79094c848d853912d97f45">gFreeMpi<\/a>(<a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00477	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00477"><\/a><span class="lineno">  477<\/span>&#160;<\/div>$/;"	a
-l00494	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00494"><\/a><span class="lineno">  494<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9f89f06ab53752766032fa6e4609218d">gSwapGhostsDim<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">int<\/span> d);<\/div>$/;"	a
+l00494	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00494"><\/a><span class="lineno">  494<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a9abaf4500bb5b240674464c7a1135f35">gSwapHaloDim<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo, <span class="keywordtype">int<\/span> d);<\/div>$/;"	a
 l00495	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00495"><\/a><span class="lineno">  495<\/span>&#160;<\/div>$/;"	a
 l00508	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00508"><\/a><span class="lineno">  508<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#aa9718ba36bd4915e518db017f3c5d2b7">gSwapHalo<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00509	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00509"><\/a><span class="lineno">  509<\/span>&#160;<\/div>$/;"	a
@@ -1774,7 +1774,7 @@ l00564	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00564"><\/a><s
 l00565	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00565"><\/a><span class="lineno">  565<\/span>&#160;<\/div>$/;"	a
 l00575	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00575"><\/a><span class="lineno">  575<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#aa9ee64f164f7d7105ae419cc0dec3e8e">gAddTo<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *result, <a class="code" href="structGrid.html">Grid<\/a> *addition);<\/div>$/;"	a
 l00576	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00576"><\/a><span class="lineno">  576<\/span>&#160;<\/div>$/;"	a
-l00587	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00587"><\/a><span class="lineno">  587<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a79c5d5b014bff99dfe25932161ff1296">gBnd<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid,<span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00587	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00587"><\/a><span class="lineno">  587<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="pinc_8h.html#a79c5d5b014bff99dfe25932161ff1296">gBnd<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00588	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00588"><\/a><span class="lineno">  588<\/span>&#160;<\/div>$/;"	a
 l00589	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00589"><\/a><span class="lineno">  589<\/span>&#160;<span class="comment">\/******************************************************************************<\/span><\/div>$/;"	a
 l00590	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00590"><\/a><span class="lineno">  590<\/span>&#160;<span class="comment"> * DEFINED IN IO.C<\/span><\/div>$/;"	a
@@ -1958,7 +1958,8 @@ mgAlloc	src/multigrid.c	/^Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 mgAllocSubGrids	src/multigrid.c	/^Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,$/;"	f
 mgFree	src/multigrid.c	/^void mgFree(Multigrid *multigrid){$/;"	f
 mgResidual	src/multigrid.c	/^void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){$/;"	f
-mgVCycle	src/multigrid.c	/^void inline static mgVCycle(dictionary *ini, int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f	file:
+mgVRecursive	src/multigrid.c	/^void inline static mgVRecursive(dictionary *ini, int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f	file:
+mgVRegular	src/multigrid.c	/^void mgVRegular(int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f
 mglin	src/old/fmg/fmg.c	/^void mglin(double *u, int ncycle)$/;"	f
 mglin_destroy	src/old/fmg/fmg.c	/^void mglin_destroy()$/;"	f
 mglin_init	src/old/fmg/fmg.c	/^void mglin_init(int nx, int ny, int nz)$/;"	f

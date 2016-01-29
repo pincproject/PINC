@@ -59,7 +59,7 @@ static int *getSubdomain(const dictionary *ini);
  * slice = \f( [1, 6, 11, 16] \f)
  *
  * @see setSlice
- * @see gSwapGhostsDim
+ * @see gSwapHaloDim
  **/
 
 void getSlice(double *slice, const Grid *grid, int d, int offset);
@@ -92,7 +92,7 @@ void getSlice(double *slice, const Grid *grid, int d, int offset);
  * @endcode
  *
  * @see setSlice
- * @see gSwapGhostsDim
+ * @see gSwapHaloDim
  */
 void setSlice(const double *slice, Grid *grid, int d, int offset);
 
@@ -128,7 +128,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  *
  * @see getSlice
  * @see setSlice
- * @see gSwapGhostsDim
+ * @see gSwapHaloDim
  */
 void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int receiver,
@@ -225,6 +225,7 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 	MPI_Request		sendRequest,recvRequest;
 	MPI_Status 		status;
 
+	// msg(STATUS|ONCE, "HEllo");
 	getSlice(slice, grid, d, offsetTake);
 	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, receiver, mpiRank, MPI_COMM_WORLD, &sendRequest);
 
@@ -377,12 +378,12 @@ void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
 
-	for(int d = 1; d < rank; d++) gSwapGhostsDim(grid, mpiInfo, d);
+	for(int d = 1; d < rank; d++) gSwapHaloDim(grid, mpiInfo, d);
 
 	return;
 }
 
-void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d){
+void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -525,13 +526,13 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	bnd[0] = NONE;
 	bnd[rank] = NONE;
 	for(int b = 0; b < nBnd; b++){
-		if(strcmp(boundaries[b], "PERIODIC")){
+		if(!strcmp(boundaries[b], "PERIODIC")){
 			bnd[b+inc] = PERIODIC;
-		} else if(strcmp(boundaries[b], "DIRICHLET")){
+		} else if(!strcmp(boundaries[b], "DIRICHLET")){
 			bnd[b+inc] = DIRICHLET;
-		} else if(strcmp(boundaries[b], "NEUMANN")){
+		} else if(!strcmp(boundaries[b], "NEUMANN")){
 			bnd[b+inc] = NEUMANN;
-		}
+		} else msg(ERROR, "No boundary condition selected for edge %d", b);
 		if(b == rank-2) inc = 2;
 	}
 
@@ -820,46 +821,91 @@ void gAddTo(Grid *result, Grid *addition){
 
 }
 
-void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+/****************************************************************
+ *		Boundary conditions
+ ***************************************************************/
 
-	msg(STATUS, "Hello from Dirichlet");
-
-}
-
-void gPeriodic(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
-
-	msg(STATUS, "Hello from Periodic");
+static void gPeriodic(){
 
 	return;
 }
 
-void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
-	msg(STATUS, "Hello from Neumann");
+void gDirichlet(Grid *grid, const int boundary, int side, double constant,  const  MpiInfo *mpiInfo){
+
+	// msg(STATUS, "Hello from Dirichlet");
+
+	//Load data
+	int rank = grid->rank;
+	int *size = grid->size;
+	double *slice = grid->slice;
+	int d = boundary%rank;
+
+	int nSlicePoints = 1;
+
+
+	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+	nSlicePoints *= 1./size[d];
+
+	for(int s = 0; s < nSlicePoints; s++) slice[s] = constant;
+
+	setSlice(slice, grid, d, side*(size[d]-1));
+
+	return;
+
+}
+
+void gNeumann(Grid *grid, const int boundary,int side, double constant, const MpiInfo *mpiInfo){
+
+	//Load data
+	int rank = grid->rank;
+	int *size = grid->size;
+	double *slice = grid->slice;
+	int d = boundary%rank;
+
+	int nSlicePoints = 1;
+	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+	nSlicePoints *= 1./size[d];
+
+	getSlice(slice, grid, d, side*(size[d]-1)+1);
+
+	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant;
+
+	setSlice(slice, grid, d, side*(size[d]-1));
 
 	return;
 }
 
 void gBnd(Grid *grid, const MpiInfo *mpiInfo){
-	msg(STATUS, "Hello from boundary function");
 
 	int rank = grid->rank;
 	bndType *bnd = grid->bnd;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
 
-	//Lower edge
-	for (int d = 1; d < rank; d++){
-		if(bnd[d] == PERIODIC)	gPeriodic(grid, d, mpiInfo);
-		else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
-		else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
-		else msg(ERROR, "No boundary conditions found for edge %d", d);
+	for(int d = 1; d < rank; d++){
+		if(subdomain[d-1] == 0 || subdomain[d-1]==nSubdomains[d-1]-1){
+			if(bnd[d] == PERIODIC)	gPeriodic();
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d + (size[d]-1), 0, 10., mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 0, 5., mpiInfo);
+			else msg(ERROR, "No boundary conditions found for edge %d", d);
+		}
 	}
 
-	//Upper edge
-	for (int d = rank+1; d < 2*rank; d++){
-		if(bnd[d] == PERIODIC)	gPeriodic(grid, d, mpiInfo);
-		else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
-		else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
-		else msg(ERROR, "No boundary conditions found for edge %d", d);
-	}
+	// //Lower edge
+	// for (int d = 1; d < rank; d++){
+	// 	if(bnd[d] == PERIODIC)	gPeriodic();
+	// 	else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0, 0., mpiInfo);
+	// 	else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 0, 5., mpiInfo);
+	// 	else msg(ERROR, "No boundary conditions found for edge %d", d);
+	// }
+	//
+	// //Upper edge
+	// for (int d = rank+1; d < 2*rank; d++){
+	// 	if(bnd[d] == PERIODIC)	gPeriodic();
+	// 	else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 1, 0., mpiInfo);
+	// 	else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 1, 5., mpiInfo);
+	// 	else msg(ERROR, "No boundary conditions found for edge %d", d);
+	// }
 
 
 	return;

@@ -491,7 +491,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
  */
-void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d);
+void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
@@ -503,7 +503,7 @@ void gSwapGhostsDim(Grid *grid, const MpiInfo *mpiInfo, int d);
  *
  * NB! Only works with 1 ghost layer.
  * @see getSendRecvSetSlice
- * @see gSwapGhostsDim
+ * @see gSwapHaloDim
  */
 void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo);
 
@@ -584,7 +584,7 @@ void gAddTo(Grid *result, Grid *addition);
  * Applies boundary conditions
  */
 
-void gBnd(Grid *grid,const MpiInfo *mpiInfo);
+void gBnd(Grid *grid, const MpiInfo *mpiInfo);
 
 /******************************************************************************
  * DEFINED IN IO.C
