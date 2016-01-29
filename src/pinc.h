@@ -1,7 +1,7 @@
 /**
  * @file		pinc.h
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- 				Gullik Vetvik Killie <gullikvk@gys.uio.no>
+ 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		PINC main header.
  * @date		11.10.15
@@ -111,6 +111,19 @@ typedef struct{
 	int *nSubdomainsProd;		///< Cumulative product of nSubdomains (nDims+1 elements)
 	int *offset;				///< Offset from global reference frame (nDims elements)
 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+
+	int nSpecies;				///< Number of species
+	int nNeighbors;				///< Number of neighbors (3^nDims-1) TBD: Omit if it's faster to recompute each time
+	int neighborhoodCenter;		///< Index of center/self in neighborhood
+	long int **migrants;		///< nMigrants (DEPRECATED)
+	long int **migrantsDummy;	///< Useful in computations (DEPRECATED)
+	long int *nEmigrants;		///< Number of migrants of each specie to each neighbor (nSpecies*nNeighbor elements)
+	long int *nEmigrantsAlloc;	///< Number of migrants allocated for to each neighbor (nNeighbor elements)
+	long int *nImmigrants;		///< Number of immigrants of each specie from each neighbour (nSpecies*nNeighbor elements)
+	double **emigrants;			///< Buffer to house emigrants
+	double **emigrantsDummy;	///< YAY
+	double *immigrants;			///< Buffer to house immigrants
+	double *thresholds;			///< Threshold for migration (2*nDims elements)
 } MpiInfo;
 
 /**
@@ -352,10 +365,39 @@ void pVelSet(Population *pop, const double *vel);
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
 
 /**
+ * @brief	Add new particle to population
+ * @param[in,out]	pop		Population
+ * @param			s		Specie of new particle
+ * @param			pos		Position of new particle (nDims elements)
+ * @param			vel		Velocity of new particle (nDims elements)
+ * @return			void
+ */
+void pNew(Population *pop, int s, const double *pos, const double *vel);
+
+/**
+ * @brief	Cut a particle from a population
+ * @param[in,out]	pop		Population
+ * @param			s		Which specie the particle belongs to
+ * @param			p		Which index p the particle starts at
+ * @param[out]		pos		The particle's position
+ * @param[out]		vel		The particle's velocity
+ * @return					void
+ *
+ * Note that the particle to fetch is adressed by the array index p. Thus,
+ * if the third particle in the population is to be fetched p=2*nDims. In
+ * addition, the specie it belongs to, s, must be specified. This rather odd
+ * way of specifying which particle to fetch is because p and s of the particle
+ * in quest is often already known and calculating p and s from for instance the
+ * particle number i is then unnecessary amount of operations. Failure to
+ * provide valid values of p and s results in unpredictable behaviour, with
+ * the likely consequence of corrupting the whole population.
+ */
+void pCut(Population *pop, int s, long int p, double *pos, double *vel);
+
+/**
  * @brief	Creates .pop.h5-file to store population in
  * @param	ini				Dictionary to input file
  * @param	pop[in,out]		Population
- * @param	mpiInfo			MpiInfo
  * @param	fName			Filename
  * @return	void
  * @see pWriteH5(), pCloseH5()
@@ -390,7 +432,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  * dimensionalizing factor converts the axes to meters. Likewise for the
  * velocity factors.
  */
-void pCreateH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName);
+void pCreateH5(const dictionary *ini, Population *pop, const char *fName);
 
 /**
  * @brief	Stores particles in Population in .pop.h5-file
@@ -495,12 +537,12 @@ void gZero(Grid *grid);
 void gSet(Grid *grid, const double *value);
 
 /**
- * @brief Multiply all values in grid by a double
+ * @brief Multiply all values in grid by a number
  * @param	grid	Grid
- * @param	num		Double to multiply by
+ * @param	num		Number to multiply by
  * @return			void
  */
-void gMulDouble(Grid *grid, double num);
+void gMul(Grid *grid, double num);
 
 /**
  * @brief Normalize E-field
@@ -511,6 +553,9 @@ void gMulDouble(Grid *grid, double num);
  * object according to step-size, time step and mass and charge of specie 0.
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
+
+void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid);
+void gDestroyNeighborhood(MpiInfo *mpiInfo);
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -814,14 +859,14 @@ void gCloseH5(Grid *grid);
  *
  * Remember to free using freeTimer().
  */
-Timer *allocTimer(int rank);
+Timer *tAlloc(int rank);
 
 /**
  * @brief	Frees a Timer struct allocated with allocTimer()
  * @param	timer 	Pointer to Timer struct
  * @see		Timer, allocTimer()
  */
-void freeTimer(Timer *timer);
+void tFree(Timer *timer);
 
 /**
  * @brief	Prints a message along with timing information
@@ -848,7 +893,7 @@ void tMsg(Timer *timer, const char *restrict format, ...);
  * @param	nElements	Number of elements in array
  * @return	Product
  */
-int intArrProd(const int *a, int nElements);
+int aiProd(const int *a, int nElements);
 
 /**
  * @brief Returns the product of all elements in a double array
@@ -856,7 +901,7 @@ int intArrProd(const int *a, int nElements);
  * @param	nElements	Number of elements in array
  * @return	Product
  */
-double doubleArrProd(const double *a, int nElements);
+double adProd(const double *a, int nElements);
 
 /**
  * @brief Returns the cumulative product of the elements in an integer array
@@ -872,7 +917,7 @@ double doubleArrProd(const double *a, int nElements);
  *	...
  * @endcode
  */
-int *intArrCumProd(const int *a, int nElements);
+int *aiCumProd(const int *a, int nElements);
 
 /**
  * @brief Returns the cumulative product of the elements in an long integer array
@@ -888,7 +933,7 @@ int *intArrCumProd(const int *a, int nElements);
  *	...
  * @endcode
  */
-long int *longIntArrCumProd(const int *a, int nElements);
+long int *ailCumProd(const int *a, int nElements);
 
 /**
  * @brief Returns the product of all elements in an integer array
@@ -897,7 +942,23 @@ long int *longIntArrCumProd(const int *a, int nElements);
  * @param	nElements	Number of elements in arrays
  * @return	Pointer to allocated array of size nElements
  */
-int *intArrMul(const int *a, const int *b, int nElements);
+int *aiMul(const int *a, const int *b, int nElements);
+
+/**
+ * @brief Returns the maximum element in an integer array
+ * @param	a			pointer to array
+ * @param	nElements	Number of elements in arrays
+ * @return	Maximum value
+ */
+int aiMax(const int *a, int nElements);
+
+/**
+ * @brief Returns the maximum element in a long integer array
+ * @param	a			pointer to array
+ * @param	nElements	Number of elements in arrays
+ * @return	Maximum value
+ */
+long int alMax(const int long *a, int nElements);
 
 /**
  * @brief Concatenates strings
@@ -910,5 +971,100 @@ int *intArrMul(const int *a, const int *b, int nElements);
  * Make sure to call free().
  */
 char *strAllocCat(int n,...);
+
+/**
+ * @brief Tests if two int arrays are equal
+ * @param	a			First array
+ * @param	b			Second array
+ * @param	nElements	Number of elements in arrays
+ * @return				True if all elements are equal
+ *
+ * NB: May be deleted. Use arrEq() instead (at least for low performance tasks).
+ */
+int aiEq(const int *a, const int *b, long int nElements);
+
+/**
+ * @brief Tests if two long int arrays are equal
+ * @param	a			First array
+ * @param	b			Second array
+ * @param	nElements	Number of elements in arrays
+ * @return				True if all elements are equal
+ *
+ * NB: May be deleted. Use arrEq() instead (at least for low performance tasks).
+ */
+int ailEq(const long int *a, const long int *b, long int nElements);
+
+/**
+ * @brief Tests if two arrays are equal
+ * @param	a			First array
+ * @param	b			Second array
+ * @param	nBytes		Number of bytes in array
+ * @return				True if all elements are equal
+ *
+ * Can be used on any datatype by casting pointers to char (which is atomically
+ * of 1 byte). For instance for long int:
+ *
+ * @code
+ *	long int a[] = {1,2,3};
+ *	long int b[] = {1,2,4};
+ *	int t = arrEq((char*)a,(char*)b,3*sizeof(*a));
+ * @endcode
+ *
+ * Remember that variables or arrays of floating point types should not be
+ * tested for equality due to arithmetic precision. See doubleArrEq().
+ */
+int aEq(const char *a, const char *b, long int nBytes);
+
+/**
+ * @brief Tests if two arrays of doubles are equal to within a certain tolerance
+ * @param	a			First array
+ * @param	b			Second array
+ * @param	nElements	Number of elements in array
+ * @param	tol			Tolerance
+ * @return				True if all elements are equal to within tolerance
+ *
+ * Note that each element has to be equal to within tol, thus making
+ * tol the maximum metric between the two vectors a and b.
+ */
+int adEq(const double *a, const double *b, long int nElements, double tol);
+
+/**
+ * @brief Sets values in an array of doubles
+ * @param	a	Address to start writing doubles to
+ * @param	n	Number of elements to set
+ * @param	...	Values to set
+ * @return		void
+ *
+ * Example (sets elements 10,11 and 12 to 1,2 and 3, respectively):
+ * @code
+ *	double pos[30];
+ *	doubleArrSet(pos[10],3,1,2,3);
+ * @endcode
+ */
+void adSet(double *a, long int n, ...);
+void aiSet(int *a, long int n, ...);
+void alSet(long int *a, long int n, ...);
+
+int aiDotProd(const int *a, const int *b, int n);
+
+void adSetAll(double *a, long int n, double value);
+void alSetAll(long int *a, long int n, long int value);
+
+#define aiPrint(a,n) do { aiPrintInner(a,n,#a); } while (0)
+#define alPrint(a,n) do { alPrintInner(a,n,#a); } while (0)
+#define adPrint(a,n) do { adPrintInner(a,n,#a); } while (0)
+void aiPrintInner(int *a, long int n, char *varName);
+void alPrintInner(long int *a, long int n, char *varName);
+void adPrintInner(double *a, long int n, char *varName);
+
+void aiShift(int *a, long int n, int value);
+void alShift(long int *a, long int n, long int value);
+
+int alEq(const long int *a, const long int *b, long int nElements);
+
+int puRankToNeighbor(MpiInfo *mpiInfo, int rank);
+int puNeighborToRank(MpiInfo *mpiInfo, int neighbor);
+void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
+void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
 
 #endif // PINC_H

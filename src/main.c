@@ -71,9 +71,9 @@ int main(int argc, char *argv[]){
 	pos[61] = 0;
 	pos[62] = 0;
 
-	gMulDouble(E,0.5);
+	gMul(E,0.5);
 	puAcc3D1(pop,E);
-	gMulDouble(E,2);
+	gMul(E,2);
 
 	int N = 10;
 	for(int n=0;n<N;n++){

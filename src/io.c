@@ -81,12 +81,19 @@ static int listGetNElements(const char* list);
 dictionary* iniOpen(int argc, char *argv[]){
 
 	// Sanity check on input arguments
-	if(argc!=2)
-		msg(ERROR,"exactly one argument expected (the input file).");
+	if(argc<2)
+		msg(ERROR,"at least one argument expected (the input file).");
 
 	// Open ini-file
 	dictionary *ini = iniparser_load(argv[1]);
 	if(ini==NULL) msg(ERROR,"Failed to open %s.",argv[1]);
+
+	for(int i=2;i<argc;i++){
+		char *value = strstr(argv[i],"=");
+		*value = '\0';
+		value++;
+		iniparser_set(ini,argv[i],value);
+	}
 
 	// Start new fmsg()-files (iterate through all files in [msgfiles] section)
 	int nKeys = iniparser_getsecnkeys(ini,"msgfiles");

@@ -253,7 +253,10 @@ void pPosDebug(const dictionary *ini, Population *pop){
 		nParticles[s] /= mpiSize;
 	}
 
-	int nDims = pop->nDims;
+	int nDims = pop->nDims;	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
+	alSet(nMigrantsResult,81,	1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
+								1,1,0,1,1,0,1,1,0,3,3,0,0,0,0,4,4,0,1,1,0,1,1,0,1,1,0,
+								1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0);
 
 	for(int s=0;s<nSpecies;s++){
 		long int iStart = pop->iStart[s];
@@ -311,18 +314,51 @@ void pVelSet(Population *pop, const double *vel){
 		long int iStop = pop->iStop[s];
 
 		for(long int i=iStart;i<iStop;i++){
-
 			for(int d=0;d<nDims;d++){
-				pop->vel[i+d] = vel[d];
+				pop->vel[i*nDims+d] = vel[d];
 			}
-
 		}
+	}
+}
+
+void pNew(Population *pop, int s, const double *pos, const double *vel){
+
+	int nDims = pop->nDims;
+	long int *iStart = pop->iStart;
+	long int *iStop = pop->iStop;	// New particle added here
+
+	if(iStop[s]>=iStart[s+1])
+		msg(WARNING,"Not enough allocated memory to add new particle to specie %i. New particle ignored.",s);
+	else {
+
+		long int p = iStop[s]*nDims;
+		for(int d=0;d<nDims;d++){
+			pop->pos[p+d] = pos[d];
+			pop->vel[p+d] = vel[d];
+		}
+		iStop[s]++;
 
 	}
 
 }
 
-void pCreateH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName){
+void pCut(Population *pop, int s, long int p, double *pos, double *vel){
+
+	int nDims = pop->nDims;
+	long int pLast = (pop->iStop[s]-1)*nDims;
+
+	for(int d=0;d<nDims;d++){
+		pos[d] = pop->pos[p+d];
+		vel[d] = pop->vel[p+d];
+		pop->pos[p+d] = pop->pos[pLast+d];
+		pop->vel[p+d] = pop->vel[pLast+d];
+	}
+
+	pop->iStop[s]--;
+
+}
+
+void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
 
 	/*
 	 * CREATE FILE
@@ -563,18 +599,13 @@ void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, 
 	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
 	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"population:q",0.0);
-	double cellVolume = doubleArrProd(stepSize,nDims);
+	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
+	double cellVolume = adProd(stepSize,nDims);
 
 	timeStep *= timeStepMul;
 
 	pop->renormE = computeRenormE(q,m,nSpecies);
 	pop->renormRho = computeRenormRho(q,m,nSpecies,cellVolume,timeStep,factor);
-
-	for(int s=0;s<nSpecies;s++){
-		printf("renormE[%i]=%f\n",s,pop->renormE[s]);
-		printf("renormRho[%i]=%f\n",s,pop->renormRho[s]);
-	}
 
 	free(q);
 	free(m);

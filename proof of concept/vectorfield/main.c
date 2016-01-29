@@ -152,6 +152,51 @@ void accA2(const double *E, const double *pos, double *vel, const long int *nGPo
 
 }
 
+inline void interpAb(double *result, const double *val, const double *pos, const long int *sizeProd){
+
+	// Integer parts of position
+	int j = (int) pos[0];
+	int k = (int) pos[1];
+	int l = (int) pos[2];
+
+	// Decimal parts of position and their complement
+	double x = pos[0]-j;
+	double y = pos[1]-k;
+	double z = pos[2]-l;
+	double xcomp = 1-x;
+	double ycomp = 1-y;
+	double zcomp = 1-z;
+
+	// Index of neighbouring nodes
+	long int p 		= j + k*sizeProd[1] + l*sizeProd[2];
+	long int pj 	= p + 1;//sizeProd[1];
+	long int pk 	= p + sizeProd[1];
+	long int pjk 	= pk + 1;//sizeProd[1];
+	long int pl 	= p + sizeProd[2];
+	long int pjl 	= pl + 1;//sizeProd[1];
+	long int pkl 	= pl + sizeProd[1];
+	long int pjkl 	= pkl + 1;//sizeProd[1];
+
+	// Linear interpolation
+	for(int g=0;g<3;g++){
+		int v = g*sizeProd[3];
+		result[g] +=	zcomp*(	 ycomp*(xcomp*val[p   +v]+x*val[pj  +v])
+								+y    *(xcomp*val[pk  +v]+x*val[pjk +v]) )
+						+z    *( ycomp*(xcomp*val[pl  +v]+x*val[pjl +v])
+								+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
+	}
+}
+
+void accAb(const double *E, const double *pos, double *vel, const long int *sizeProd, int nDims, long int nParticles){
+
+	for(long int i=0;i<nParticles;i++){
+		interpAb(vel,E,pos,sizeProd);
+		vel+=nDims;
+		pos+=nDims;
+	}
+
+}
+
 /*
  * Alternative B:
  * Store components lumped together one grid node at a time
@@ -271,6 +316,28 @@ void accB(const double *E, const double *pos, double *vel, const long int *nGPoi
 
 }
 
+void accBd(const double *E, const double *pos, double *vel, const long int *sizeProd, int nDims, long int nParticles){
+
+	double result[3];
+	// for(long int i=0;i<nParticles;i++){
+	// 	interpB(result,E,pos,nGPointsProd);
+	// 	for(int d=0;d<nDims;d++){
+	// 		*(vel++) += result[d];
+	// 	}
+	// 	pos += nDims;
+	// }
+
+	for(long int i=0;i<nParticles;i++){
+		interpBb(result,E,pos,sizeProd);
+		for(int d=0;d<nDims;d++){
+			*(vel++) += result[d];
+		}
+		pos += nDims;
+	}
+
+}
+
+
 void accBb(const double *E, const double *pos, double *vel, const long int *sizeProd, int nDims, long int nParticles, double *result){
 
 	for(long int i=0;i<nParticles;i++){
@@ -292,6 +359,9 @@ void accBc(const double *E, const double *pos, double *vel, const long int *size
 	}
 
 }
+
+
+
 /*
  * MAIN ROUTINE
  */
@@ -349,6 +419,11 @@ int main(int argc, char **argv){
 	double *velB = malloc(nDims*nParticles*sizeof(*velB));
 	double *velBb = malloc(nDims*nParticles*sizeof(*velBb));
 	double *velBc = malloc(nDims*nParticles*sizeof(*velBc));
+	double *velBd = malloc(nDims*nParticles*sizeof(*velBd));
+
+
+	double *velAb = malloc(nDims*nParticles*sizeof(*velAb));
+
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 	for(long int i=0;i<nParticles*nDims;i++){
 		pos[i] = gsl_rng_uniform(rng)*(nGPoints[i%nDims]-1);
@@ -359,6 +434,9 @@ int main(int argc, char **argv){
 		velB[i] = velA1[i];
 		velBb[i] = velA1[i];
 		velBc[i] = velA1[i];
+		velBd[i] = velA1[i];
+
+		velAb[i] = velA1[i];
 
 	}
 	gsl_rng_free(rng);
@@ -410,8 +488,15 @@ int main(int argc, char **argv){
 	tprobe("accBc");
 	tprobe(NULL);
 
+	accAb(EA,pos,velAb,nGPointsProd,nDims,nParticles);
+	tprobe("accAb");
+	tprobe(NULL);
 
-	for(int i=0;i<2&&i<nParticles;i++){
+	accBd(EB,pos,velBd,sizeProd,nDims,nParticles);
+	tprobe("accBd");
+	tprobe(NULL);
+
+	for(int i=0;i<3&&i<nParticles;i++){
 		printf("velA1 [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velA1[3*i],velA1[3*i+1],velA1[3*i+2]);
 		printf("velA1b[%i]=(%12.2f,%12.2f,%12.2f)\n",i,velA1b[3*i],velA1b[3*i+1],velA1b[3*i+2]);
 		printf("velA1c[%i]=(%12.2f,%12.2f,%12.2f)\n",i,velA1c[3*i],velA1c[3*i+1],velA1c[3*i+2]);
@@ -419,5 +504,7 @@ int main(int argc, char **argv){
 		printf("velB  [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velB[3*i],velB[3*i+1],velB[3*i+2]);
 		printf("velBb [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velBb[3*i],velBb[3*i+1],velBb[3*i+2]);
 		printf("velBc [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velBc[3*i],velBc[3*i+1],velBc[3*i+2]);
+		printf("velAb [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velAb[3*i],velAb[3*i+1],velAb[3*i+2]);
+		printf("velBd [%i]=(%12.2f,%12.2f,%12.2f)\n",i,velBd[3*i],velBd[3*i+1],velBd[3*i+2]);
 	}
 }

@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <math.h>
 
 /******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
@@ -37,7 +38,7 @@ static int makeDir(const char *dir);
  * ARRAY FUNCTIONS
  *****************************************************************************/
 
-int *intArrMul(const int *a, const int *b, int nElements){
+int *aiMul(const int *a, const int *b, int nElements){
 
 	int *result = malloc(nElements*sizeof(int));
 
@@ -49,7 +50,47 @@ int *intArrMul(const int *a, const int *b, int nElements){
 
 }
 
-int *intArrCumProd(const int *a, int nElements){
+// Shift all elements by value (aiAdd is reserved for adding to arrays)
+void aiShift(int *a, long int n, int value){
+
+	for(long int i=0;i<n;i++){
+		a[i] += value;
+	}
+
+}
+void alShift(long int *a, long int n, long int value){
+
+	for(long int i=0;i<n;i++){
+		a[i] += value;
+	}
+
+}
+
+int aiMax(const int *a, int nElements){
+
+	int max = a[0];
+
+	for(int i=1;i<nElements;i++){
+		if(a[i] > max) max = a[i];
+	}
+
+	return max;
+
+}
+
+long int alMax(const long int *a, int nElements){
+
+	int max = a[0];
+
+	for(int i=1;i<nElements;i++){
+		if(a[i] > max) max = a[i];
+	}
+
+	return max;
+
+}
+
+int *aiCumProd(const int *a, int nElements){
 
 	int *result = malloc((nElements+1)*sizeof(*result));
 	result[0]=1;
@@ -62,7 +103,7 @@ int *intArrCumProd(const int *a, int nElements){
 
 }
 
-long int *longIntArrCumProd(const int *a, int nElements){
+long int *ailCumProd(const int *a, int nElements){
 
 	long int *result = malloc((nElements+1)*sizeof(*result));
 	result[0]=1;
@@ -75,7 +116,7 @@ long int *longIntArrCumProd(const int *a, int nElements){
 
 }
 
-int intArrProd(const int *a, int nElements){
+int aiProd(const int *a, int nElements){
 
 	int result = 1;
 	for(int i=0;i<nElements;i++){
@@ -85,7 +126,16 @@ int intArrProd(const int *a, int nElements){
 	return result;
 }
 
-double doubleArrProd(const double *a, int nElements){
+int aiDotProd(const int *a, const int *b, int nElements){
+
+	int result = 0;
+	for(int i=0;i<nElements;i++){
+		result += a[i]*b[i];
+	}
+	return result;
+}
+
+double adProd(const double *a, int nElements){
 
 	double result = 1;
 	for(int i=0;i<nElements;i++){
@@ -96,25 +146,134 @@ double doubleArrProd(const double *a, int nElements){
 
 }
 
+int aiEq(const int *a, const int *b, long int nElements){
+	int equal = 1;
+	for(long int i=0;i<nElements;i++) if(a[i]!=b[i]) equal=0;
+	return equal;
+}
+
+int alEq(const long int *a, const long int *b, long int nElements){
+	int equal = 1;
+	for(long int i=0;i<nElements;i++) if(a[i]!=b[i]) equal=0;
+	return equal;
+}
+
+int aEq(const char *a, const char *b, long int nBytes){
+	int equal = 1;
+	for(long int i=0;i<nBytes;i++) if(a[i]!=b[i]) equal=0;
+	return equal;
+}
+
+int adEq(const double *a, const double *b, long int nElements, double tol){
+	for(long int i=0;i<nElements;i++){
+		if(fabs(a[i]-b[i])>tol) return 0;
+	}
+	return 1;
+}
+
+void adSet(double *a, long int n, ...){
+
+	va_list args;
+	va_start(args,n);
+
+	for(int i=0;i<n;i++){
+		double arg = va_arg(args,double);
+		a[i] = arg;
+	}
+
+	va_end(args);
+
+}
+
+void aiSet(int *a, long int n, ...){
+
+	va_list args;
+	va_start(args,n);
+
+	for(long int i=0;i<n;i++){
+		int arg = va_arg(args,int);
+		a[i] = arg;
+	}
+
+	va_end(args);
+
+}
+
+void alSet(long int *a, long int n, ...){
+
+	va_list args;
+	va_start(args,n);
+
+	for(long int i=0;i<n;i++){
+		int arg = va_arg(args,long int);
+		a[i] = arg;
+	}
+
+	va_end(args);
+
+}
+
+void adSetAll(double *a, long int n, double value){
+
+	for(long int i=0;i<n;i++) a[i] = value;
+
+}
+
+void alSetAll(long int *a, long int n, long int value){
+
+	for(long int i=0;i<n;i++) a[i] = value;
+
+}
+
+void adPrintInner(double *a, long int n, char *varName){
+
+	printf("%s = \n  [",varName);
+	for(int i=0;i<n-1;i++){
+		printf("%f ",a[i]);
+	}
+	printf("%f]\n",a[n-1]);
+
+}
+
+void aiPrintInner(int *a, long int n, char *varName){
+
+	printf("%s = \n  [",varName);
+	for(int i=0;i<n-1;i++){
+		printf("%i ",a[i]);
+	}
+	printf("%i]\n",a[n-1]);
+
+}
+
+void alPrintInner(long int *a, long int n, char *varName){
+
+	printf("%s = \n  [",varName);
+	for(int i=0;i<n-1;i++){
+		printf("%li ",a[i]);
+	}
+	printf("%li]\n",a[n-1]);
+
+}
+
 /******************************************************************************
  * TIMING FUNCTIONS
  *****************************************************************************/
 
- static void tFormat(char *str, int len, const TimeSpec *time){
+static void tFormat(char *str, int len, const TimeSpec *time){
 
- 	long int sec = time->tv_sec;
- 	long int nsec = time->tv_nsec;
+	long int sec = time->tv_sec;
+	long int nsec = time->tv_nsec;
 
- 	if(sec>=1){
- 		snprintf(str,len,"%6.2fs ",(double)sec+(double)nsec/1000000000);
- 	} else if(nsec>1000000) {
- 		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
- 	} else if(nsec>1000) {
- 		snprintf(str,len,"%6.2fus",(double)nsec/1000);
- 	} else {
- 		snprintf(str,len,"%6.2fns",(double)nsec);
- 	}
- }
+	if(sec>=1){
+		snprintf(str,len,"%6.2fs ",(double)sec+(double)nsec/1000000000);
+	} else if(nsec>1000000) {
+		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
+	} else if(nsec>1000) {
+		snprintf(str,len,"%6.2fus",(double)nsec/1000);
+	} else {
+		snprintf(str,len,"%6.2fns",(double)nsec);
+	}
+}
 
 void tMsg(Timer *timer, const char *restrict format, ...){
 
@@ -161,7 +320,7 @@ void tMsg(Timer *timer, const char *restrict format, ...){
 	}
 }
 
-Timer *allocTimer(int rank){
+Timer *tAlloc(int rank){
 
 	// Get rank of this MPI node
 	int thisRank;
@@ -179,7 +338,7 @@ Timer *allocTimer(int rank){
 	return timer;
 }
 
-void freeTimer(Timer *timer){
+void tFree(Timer *timer){
 	free(timer);
 }
 

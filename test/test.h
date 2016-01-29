@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include "iniparser.h"
+#include "pinc.h"
 
 /**
  * @brief Tests an assertion.
@@ -110,6 +111,7 @@ void testAux();
  * This prevents many small global test functions.
  */
 void testGrid();
+Grid *loadGrid543(int nValues);
 
 /**
  * @brief	Performs all tests in population.test.c
