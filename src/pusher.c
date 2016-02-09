@@ -9,6 +9,7 @@
  */
 
 #include "pinc.h"
+#include "pusher.h"
 #include <math.h>
 
 /******************************************************************************
@@ -205,6 +206,7 @@ void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
 	}
 
 }
+
 void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -360,22 +362,117 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 	}
 }
 
+inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
-inline exchangeNMigrants(MpiInfo *mpiInfo){
-	// Exchange number of migrants
+	int nSpecies = mpiInfo->nSpecies;
+	int nNeighbors = mpiInfo->nNeighbors;
+	MPI_Request *send = mpiInfo->send;
+	MPI_Request *recv = mpiInfo->recv;
+
+	// Send number of emigrants and receive number of immigrants.
+	// Order of reception is not necessarily as determined by the for-loop since
+	// we're using non-blocking send/receive.
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
-
-
-
+			int rank = puNeighborToRank(mpiInfo,ne);
+			int reciprocal = puNeighborToReciprocal(ne,mpiInfo->nDims);
+			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
+			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
+			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
+			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne        ,MPI_COMM_WORLD,&recv[ne]);
 		}
 	}
+
+	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
+	MPI_Waitall(nNeighbors,recv,MPI_STATUS_IGNORE);
+
 }
 
-void puMigrate(Population *pop, MpiInfo *mpiInfo){
-	int nNeighbors = mpiInfo->nNeighbors;
+inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 
-	echangeNMigrants(mpiInfo);
+	double *immigrants = mpiInfo->immigrants;
+	int nSpecies = mpiInfo->nSpecies;
+	long int nImmigrantsTotal = alSum(&mpiInfo->nImmigrants[ne*nSpecies],nSpecies);
+	int nDims = mpiInfo->nDims;
+
+	for(int d=0;d<nDims;d++){
+		int n = ne%3-1;
+		ne /=3;
+
+		double shift = n*grid->trueSize[d+1];
+		for(int i=0;i<nImmigrantsTotal;i++){
+			immigrants[d+2*nDims*i] += shift;
+		}
+
+	}
+
+}
+
+inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
+
+	int nDims = pop->nDims;
+	long int *iStop = pop->iStop;
+
+	for(int s=0;s<nSpecies;s++){
+
+		double *pos = &pop->pos[nDims*iStop[s]];
+		double *vel = &pop->vel[nDims*iStop[s]];
+
+		for(int i=0;i<nParticles[s];i++){
+			for(int d=0;d<nDims;d++) *(pos++) = *(particles++);
+			for(int d=0;d<nDims;d++) *(vel++) = *(particles++);
+		}
+
+		iStop[s] += nParticles[s];
+	}
+
+}
+
+inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
+
+	int nSpecies = mpiInfo->nSpecies;
+	int nNeighbors = mpiInfo->nNeighbors;
+	long int nImmigrantsAlloc = mpiInfo->nImmigrantsAlloc;
+	int nDims = mpiInfo->nDims;
+	double **emigrants = mpiInfo->emigrants;
+	double *immigrants = mpiInfo->immigrants;
+	long int *nImmigrants = mpiInfo->nImmigrants;
+	MPI_Request *send = mpiInfo->send;
+
+	for(int ne=0;ne<nNeighbors;ne++){
+		if(ne!=mpiInfo->neighborhoodCenter){
+			int rank = puNeighborToRank(mpiInfo,ne);
+			int reciprocal = puNeighborToReciprocal(ne,nDims);
+			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
+			long int length = alSum(nEmigrants,nSpecies)*2*nDims;
+			MPI_Isend(emigrants[ne],length,MPI_DOUBLE,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
+		}
+	}
+
+	// Since "immigrants" is reused for every receive operation MPI_Irecv cannot
+	// be used. However, in order to receive and process whichever comes first
+	// MPI_ANY_SOURCE is used.
+	for(int a=0;a<nNeighbors-1;a++){
+
+		MPI_Status status;
+		MPI_Recv(immigrants,nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
+
+		// adPrint(mpiInfo->immigrants,6);
+		shiftImmigrants(mpiInfo,grid,ne);
+		// adPrint(mpiInfo->immigrants,6);
+		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies);
+
+	}
+
+	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
+
+}
+
+void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
+
+	exchangeNMigrants(mpiInfo);
+	exchangeMigrants(pop,mpiInfo,grid);
 
 }
 // inline void puDistr3D2();
@@ -426,6 +523,19 @@ static inline void puInterp3D1(double *result, const double *pos, const double *
 // static inline double puInterpND0();
 // static inline double puInterpND1();
 // static inline double puInterpND2();
+
+int puNeighborToReciprocal(int neighbor, int nDims){
+
+	int reciprocal = 0;
+
+	for(int d=0;d<nDims;d++){
+		reciprocal += (2-(neighbor % 3))*pow(3,d);
+		neighbor /= 3;
+	}
+
+	return reciprocal;
+
+}
 
 int puNeighborToRank(MpiInfo *mpiInfo, int neighbor){
 

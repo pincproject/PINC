@@ -43,10 +43,10 @@ static int testGAlloc(){
 	double expectedStepSize[] = {1,1,1,1};
 
 	utAssert(grid->rank==4,"wrong rank assigned by gAlloc");
-	utAssert(aEq((char*)size        ,(char*)expectedSize        ,4*sizeof(*size)        ),"wrong size assigned by gAlloc");
-	utAssert(aEq((char*)sizeProd    ,(char*)expectedSizeProd    ,5*sizeof(*sizeProd)    ),"wrong sizeProd assigned by gAlloc");
-	utAssert(aEq((char*)nGhostLayers,(char*)expectedNGhostLayers,6*sizeof(*nGhostLayers)),"wrong nGhostLayers assigned by gAlloc");
-	utAssert(aEq((char*)stepSize    ,(char*)expectedStepSize    ,4*sizeof(*stepSize)    ),"wrong stepSize assigned by gAlloc");
+	utAssert(aiEq(size        ,expectedSize        ,4),"wrong size assigned by gAlloc");
+	utAssert(alEq(sizeProd    ,expectedSizeProd    ,5),"wrong sizeProd assigned by gAlloc");
+	utAssert(aiEq(nGhostLayers,expectedNGhostLayers,6),"wrong nGhostLayers assigned by gAlloc");
+	utAssert(adEq(stepSize    ,expectedStepSize    ,4,0),"wrong stepSize assigned by gAlloc");
 
 	return 0;
 
@@ -66,8 +66,7 @@ static int testGCreateNeighborhood(){
 
 	aiSet(mpiInfo->nSubdomains,3,5,4,3);
 	aiSet(mpiInfo->subdomain,3,3,1,1);
-	free(mpiInfo->nSubdomainsProd);
-	mpiInfo->nSubdomainsProd = aiCumProd(mpiInfo->nSubdomains,3);
+	aiCumProd(mpiInfo->nSubdomains,mpiInfo->nSubdomainsProd,3);
 
 	mpiInfo->mpiRank = aiDotProd(mpiInfo->subdomain,mpiInfo->nSubdomainsProd,3);
 	mpiInfo->mpiSize = mpiInfo->nSubdomainsProd[mpiInfo->nDims];

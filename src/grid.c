@@ -365,7 +365,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	free(nGhostLayersTemp);
 
 	//Cumulative products
-	long int *sizeProd = ailCumProd(size,rank);
+	long int *sizeProd = malloc((rank+1)*sizeof(*sizeProd));
+	ailCumProd(size,sizeProd,rank);
 
 	//Number of elements in slice
 	long int nSliceMax = 0;
@@ -411,7 +412,8 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	int nSpecies = iniGetNElements(ini, "population:nParticles");
 	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
 	int *trueSize = iniGetIntArr(ini, "grid:trueSize", &nDims);
-	int *nSubdomainsProd = aiCumProd(nSubdomains,nDims);
+	int *nSubdomainsProd = malloc((nDims+1)*sizeof(*nSubdomainsProd));
+	aiCumProd(nSubdomains,nSubdomainsProd,nDims);
 
 	//Position of the subdomain in the total domain
 	int *subdomain = getSubdomain(ini);
@@ -541,17 +543,30 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 
 	//long int *nMigrants = malloc(nNeighbors*nSpecies*sizeof(*nMigrants));
 	long int *nEmigrants = malloc(nNeighbors*nSpecies*sizeof(*nEmigrants));
+	long int *nImmigrants = malloc(nNeighbors*nSpecies*sizeof(*nImmigrants));
 
-	long int immigrantSize = 2*nDims*alMax(nEmigrantsAlloc,nNeighbors);
-	double *immigrants = malloc(immigrantSize*sizeof(*immigrants));
+	long int nImmigrantsAlloc = 2*nDims*alMax(nEmigrantsAlloc,nNeighbors);
+	double *immigrants = malloc(nImmigrantsAlloc*sizeof(*immigrants));
 
+	MPI_Request *send = malloc(nNeighbors*sizeof(*send));
+	MPI_Request *recv = malloc(nNeighbors*sizeof(*recv));
+	for(int ne=0;ne<nNeighbors;ne++){
+		send[ne] = MPI_REQUEST_NULL;
+		recv[ne] = MPI_REQUEST_NULL;
+	}
+
+
+	mpiInfo->send = send;
+	mpiInfo->recv = recv;
 	mpiInfo->nNeighbors = nNeighbors;
 	mpiInfo->migrants = migrants;
 	mpiInfo->migrantsDummy = migrantsDummy;
 	mpiInfo->emigrants = emigrants;
 	mpiInfo->emigrantsDummy = emigrantsDummy;
 	mpiInfo->nEmigrants = nEmigrants;
+	mpiInfo->nImmigrants = nImmigrants;
 	mpiInfo->nEmigrantsAlloc = nEmigrantsAlloc;
+	mpiInfo->nImmigrantsAlloc = nImmigrantsAlloc;
 	mpiInfo->thresholds = thresholds;
 	mpiInfo->immigrants = immigrants;
 	mpiInfo->neighborhoodCenter = neighborhoodCenter;
@@ -576,6 +591,9 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo){
 	free(mpiInfo->nEmigrantsAlloc);
 	free(mpiInfo->thresholds);
 	free(mpiInfo->immigrants);
+	free(mpiInfo->nImmigrants);
+	free(mpiInfo->send);
+	free(mpiInfo->recv);
 }
 
 void gValDebug(Grid *grid, const MpiInfo *mpiInfo){

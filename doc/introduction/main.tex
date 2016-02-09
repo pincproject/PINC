@@ -54,31 +54,11 @@
 \newpage
 
 \section{Introduction}
-The \mnfysrppic{} Git repository holds the official Particle-In-Cell (PIC) code belonging to the 4Dspace project and the Plasma and Space Physics group at the Physics Department of UiO. In order to keep the PIC code and their different versions clean and manageable and to avoid conflicts during cooperation it is of utmost importance that all users obey the rules of the repository. Each user is therefore responsible of making himself/herself familiar with the rules stated herein. Failure to do so may result in reduced privileges in the repository.
+The \mnfysrppic{} Git repository holds the Particle-In-Cell (PIC) code PINC (Particle-IN-Cell) belonging to the 4Dspace project and the Plasma and Space Physics group at the Physics Department of UiO. In order to keep the code and its different versions clean and manageable and to avoid conflicts during cooperation it is of utmost importance that all users obey the rules of the repository. Each user is therefore responsible of making himself/herself familiar with the rules stated herein before contributing with any code, or before committing to the repository. Repeated failure to do so may result in reduced privileges or exclusion from the repository. To get access it is sufficient to read \refsec{access}, but it is expected that the developer is familiar with the rest before committing.
 
-\section{Workflow}
-The \mnfysrppic{} repository utilizes what's called a Feature Branch Workflow\footnote{See more about various Git workflows here: https://www.atlassian.com/git/tutorials/comparing-workflows .} as illustrated in \reffig{featurebranch}. The reason for this is to allow several users to develop functions for the code independently with a minimum of conflicts. It also assures that a fully functioning version of the code is always accessible. Using Git also means that all previous revisions of the code are retrievable. This, along with information on which revision was used to generate a set of results, make the experiments reproducible. 
 
-To briefly explain the Feature Branch Workflow, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1 in the figure) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
 
-Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and its feature branch is merged back onto the master branch before being deleted. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the new solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.8\textwidth]{featurebranch.png}
-	\caption{Illustration of Feature Branch Workflow}
-	\label{fig:featurebranch}
-\end{figure}
-
-Feature branches normally only exist locally. If desirable, they can be pushed to the central repository (the origin) to make them accessible from several computers (for instance for collaboration). The origin should be kept clean, however, meaning that someone must be responsible to delete the branches after merging ensuring that only a few branches exist centrally. Only the repository administrator has the privilege to delete branches and cleaning the origin so other users should ask for permission before pushing new branches to the origin. Moreover, the branches pushed to origin should have globally understandable names.
-
-Finally, some revisions can be tagged with a version number, making it easier in publications to refer to a specific revision of the code. This should only be done with revisions on the master branch.
-
-As a summary: feature branches can have many revisions allowing the developer to go back in case of mistakes, for backup, and for sharing code with other developers. The master branch is holy and only fully functional features should be merged into it.
-
-If this section is unclear and more advice on Git is needed please refer to \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
-
-\section{Setting up a Local Copy}
+\section{Getting Access}\label{sec:access}
 To access the repository and be able to make changes you need to set up a local copy. To get access you need an SSH key-pair (public and private keys). Unless you already have that you can run the following command\footnote{http://www.uio.no/tjenester/it/maskin/filer/versjonskontroll/git.html .}:
 
 \begin{verbatim}
@@ -109,6 +89,31 @@ A new folder with the name \verb$mn-fysrp-pic$ will be created. This is your loc
 
 If you want access from another computer (e.g.\ supercomputer) you have to copy your private key to \verb$~/.ssh/id_rsa$ on that computer, and run the configuration and cloning steps there as well. 
 
+\section{Workflow}
+The \mnfysrppic{} repository utilizes what's called a Feature Branch Workflow\footnote{See more about various Git workflows here: https://www.atlassian.com/git/tutorials/comparing-workflows .} as illustrated in \reffig{featurebranch}. The reason for this is to allow several users to develop functions for the code independently with a minimum of conflicts. It also assures that a fully functioning version of the code is always accessible. Using Git also means that all previous revisions of the code are retrievable. This, along with information on which revision was used to generate a set of results, make the experiments reproducible. 
+
+To briefly explain the Feature Branch Workflow, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1 in the figure) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
+
+Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and its feature branch is merged back onto the master branch before being deleted. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the new solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{featurebranch.png}
+	\caption{Illustration of Feature Branch Workflow}
+	\label{fig:featurebranch}
+\end{figure}
+
+Feature branches normally only exist locally. If desirable, they can be pushed to the central repository (the origin) to make them accessible from several computers (for instance for collaboration). The origin should be kept clean, however, meaning that someone must be responsible to delete the branches after merging ensuring that only a few branches exist centrally. Only the repository administrator has the privilege to delete branches and cleaning the origin so other users should ask for permission before pushing new branches to the origin. Moreover, the branches pushed to origin should have globally understandable names.
+
+As a summary: feature branches can have many revisions allowing the developer to go back in case of mistakes, for backup, and for sharing code with other developers. The master branch is holy and only fully functional features should be merged into it.
+
+If this section is unclear and more advice on Git is needed please refer to \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
+
+\section{Reproducibility}
+It is currently a long term plan to release PINC as an open source project. Some revisions of PINC can then be tagged in Git with a version number, and authors of scientific publications can specify which version was used, thereby making the results truly reproducible by others, as is the spirit of science. Version tags should only be put on revisions on the master branch.
+
+Moreover, it is a not-yet-implemented feature of PINC that an auxiliary file is output which states which version and revision of PINC was used to generate the results, which versions was used of third party libraries, and which hardware was used. This feature is supposed to fetch the version tag and the revision number automatically from Git.
+
 \section{Repository Structure}
 
 \subsection{Folder Structure}
@@ -123,19 +128,21 @@ The \mnfysrppic{} repository has the following folder structure (unimportant det
 			\item \verb$html/$ (gitignored)
 			\item \verb$introduction/$
 			\item \verb$latex/$ (gitignored)
-			\item \verb$introduction.pdf$
+			\item \verb$introduction.pdf$ (this file)
 		\end{itemize}
 		\item \verb$lib/$
-		\item \verb$old/$
 		\item \verb$proof of concept/$
+		\item \verb$script/$
 		\item \verb$src/$
 %		\begin{itemize}[label={}]
 %			\item \verb$main.c$
 %			\item \verb$pinc.h$
 %		\end{itemize}
 %		\item \verb$check.sh$
+		\item \verb$test/$
 		\item \verb$input.ini$
 		\item \verb$makefile$
+		\item \verb$mpinc.sh$
 		\item \verb$pinc$ (gitignored)
 	\end{itemize}
 \end{itemize}
@@ -146,7 +153,9 @@ Small non-standard third party libraries are shipped with the code for convenien
 
 The source code is located at \verb$src$ and it is the primary task of the repository is to act as a Version Control System (VCS) for the code (.c-files and .h-files) within this folder. The repository should not track object (.o) files, compiled and linked executables, binaries or similar (also true for third party libraries). VCSs like Git only needs to keep track of the lines changed in text files which makes them very efficient. Other files such as executables and object files carry no real information to the programmer and must be re-stored in entirety every time it changes (after each compilation). Many such files can make the repository heavy. It also clutters the repository with unnecessary changes each time someone recompiles the whole program, causing unnecessary Git conflicts. For this reason these file types are added to \verb$.gitignore$ which means that they will not be committed to the repository.
 
-The folder \verb$proof of concept$ may be used to test smaller pieces of code, for instance to check the fastest way to implement something. If, for instance, it was found that one way of implementing something is faster than the other, it might be desirable to keep this experiment for future evidence. This folder is \emph{not} intended to store lots of old rubbish, it should exclusively be something that is clean enough to re-open and and (with little effort) refer to. The folder \verb$old$ may \emph{temporarily} hold old files which are to be deleted once a replacement is developed.
+The folder \verb$proof of concept$ may be used to test smaller pieces of code, for instance to check the fastest way to implement something. If, for instance, it was found that one way of implementing something is faster than the other, it might be desirable to keep this experiment for future evidence. This folder is \emph{not} intended to store lots of old rubbish, it should exclusively be something that is clean enough to re-open and and (with little effort) refer to. \verb$old$ folders may \emph{temporarily} hold old files which are to be deleted once a replacement is developed.
+
+\verb$test$ is the unit testing source files, to be more thoroughly documented at a later point, while \verb$script$ is a folder of Python scripts which are/can be used to visualize and interpret data. These are both useful for testing the code and for later starting points when doing simulations. Python scripts may also be used to do parameter sweeps by running PINC with several input parameters.
 
 Finally, simulation .h5-files should not be part of the repository. They are incredibly large and there is also no reason to have version control on them; once a simulation is successfully run, and maybe even used in publications, it should be considered static. Simulations and their input files are also not, strictly speaking, part of the program.
 
@@ -176,7 +185,7 @@ The PINC source files can be thought to belong to one of three categories as ill
 	\label{tab:files}
 \end{table}
 
-\verb$main.c$ is the main-routine, whereas \verb$pinc.h$ is the main header file declaring a framework for all PINC modules (pedantically it's not a framework but is thought of as such). It declares datatypes and functions for handling particles and grid quantities along with functions to manipulate them and other building block functions ensuring a coherent code. The definitions are stored in the accompanying .c-files. Modules, for instance a multigrid solver, is implemented in a .h-file and one or more .c-files starting with the name of the module. The framework files should not depend on the modules.
+\verb$main.c$ is the main-routine, whereas \verb$pinc.h$ is the main header file declaring a framework for all PINC modules (pedantically it's not a framework but is thought of as such). It declares datatypes and functions for handling particles and grid quantities along with functions to manipulate them and other building block functions ensuring a coherent code. The definitions are stored in the accompanying .c-files. Modules, for instance a multigrid solver, act upon these standardized data structures, and is implemented in one .h-file and one or more .c-files starting with the name of the module. The framework files should \emph{not} depend on the modules.
 
 %\section{Folder Structure (Deprecated)}
 %For working with the PIC code, your home folder should have the following sub-folders (unimportant details omitted):
@@ -291,290 +300,53 @@ The makefile installs the libraries in \verb$lib$ as well as generating Doxygen 
 \begin{verbatim}
 	./pinc input.ini
 \end{verbatim}
-or for more than one processes (2 in this example):
+where \verb$input.ini$ tells PINC which settings to use. More than one process can be run in the normal way using \verb$mpirun$ as illustrated below (for two processes):
 
 \begin{verbatim}
 	mpirun -np 2 pinc input.ini
 \end{verbatim}
-\verb$input.ini$ is a template input file for PINC. To erase all build files run
+however, the number of subdomains to use in the domain decomposition must correspond to the number of processes. If, for instance, you have $4\times 4\times 4$ subdomains specified in \verb$input.ini$, the number of processes must be 64. This command can be run more simply as:
 
+\begin{verbatim}
+	./mpinc.sh input.ini
+\end{verbatim}
+which extracts the number of processes required by PINC and automatically sets the \verb$np$ parameter of \verb$mpirun$.
+
+PINC is more kind of a numerical ``engine'' than a tool for diagnostics, parameter sweeps and so on. To facilitate parameter sweeps performed by external (Python) scripts, parameters in the input file can be overridden through additional command line arguments to PINC, following the following syntax:
+\begin{verbatim}
+	./mpinc.sh input.ini <section>:<key>=<value> <section>:<key>=<value> ...
+\end{verbatim}
+For instance, the number of subdomains to use is specified as the parameter \verb$nSubdomains$ under the section \verb$grid$ in \verb$input.ini$. To override the input file and specify $4\times 4\times 4$ subdomains, call the following command:
+
+\begin{verbatim}
+	./mpinc.sh input.ini grid:nSubdomains=4,4,4
+\end{verbatim}
+Unfortunately, a value for \verb$nSubdomains$ must already be set in \verb$input.ini$ to be able to override it through the command line (this is due to a limitation of the third party library).
+
+Finally, to erase all build files run
 \begin{verbatim}
 	make clean
 \end{verbatim}
 
-\section{Coding Practices}
-
-\subsection{Naming Conventions}
-We use the camelCase-convention rather than underscore. E.g:
-\begin{lstlisting}
-int myVariable = 0;
-void myFunction();
-\end{lstlisting}
-Names should be intuitive rather than short. On the other hand, too long names are bothersome too. Obvious abbreviations are okay. Common abbreviations and names are okay too even if hard to read simply because their commonness makes them more likely to be understood than easier but unfamiliar names. Examples:
-	\begin{itemize}
-		\item \lstinline$knErg$ is a worse name than \lstinline$kineticEnergy$ which is a worse name than \lstinline$energy$ (if kinetic energy is the only kind of energy that makes sense).
-		\item \lstinline$wij1k1$ is a horrible name.
-		\item \lstinline$temp$ is a perfectly understandable name for a temporary variable inside a sufficiently short scope. No need to call it \lstinline$kineticEnergyFromPreviousTimeStep$. \lstinline$temp2$ however is usually a sign that you need to clean up.
-		\item \lstinline$i$ and \lstinline$j$ are perfect names for a loop counters. No need to call it \lstinline$loopCounter$. Make sure to avoid confusion with common uses of \lstinline$i$ and \lstinline$j$ in PINC, though.
-		\item \lstinline$argc$ and \lstinline$argv$ are okay since they are understood by any C programmer.
-		\item \lstinline$pos$ is okay since it's obviously a contraction of ``position''.
-	\end{itemize}
-Generally speaking, the larger the scope a variable or function has the more important is its proper naming.
-\subsubsection{Grammar}
-Moreover we have the following grammar conventions:
-		\begin{itemize}
-			\item \lstinline$nElements$. ``n'' in the beginning of a variable name like this is read like ``the number of''. The word(s) that come after ``n'' should be plural. You don't say ``the number of element''.
-			\item In many cases it is a good idea that arrays have plural names. Consider this example:
-\begin{lstlisting}
-int numbers[100];
-for(int i=0;i<100;i++){
-	int number = numbers[i];
-	// Do something with "number"
-}
-\end{lstlisting}
-			\item Because of the above point, datatypes (and structs) should have singular names. Consider these examples
-\begin{lstlisting}
-// CORRECT (if the struct contains only one particle)
-Particle particles[100];
-
-// WRONG: This is just confusing.
-Particles particless[100];
-
-// CORRECT. Each element is a population of particles.
-Population pops[100];
-\end{lstlisting}
-		\end{itemize}
-
-\subsubsection{Structs}
-Structs are named with a capital first letter to indicate that it is a struct:
-
-\begin{lstlisting}
-typedef struct{
-	...
-} MyStruct;
-\end{lstlisting}
-More precisely, we actually do \emph{not} give the struct a name, but rather name its datatype using \lstinline$typedef$. Naming the struct would look something like this:
-
-\begin{lstlisting}
-// WRONG
-typedef struct MyStruct{
-	...
-} MyStruct;
-\end{lstlisting}
-or:
-\begin{lstlisting}
-// WRONG
-struct MyStruct{
-	...
-};
-typedef struct MyStruct MyStruct;
-\end{lstlisting}
-Naming \emph{both} the struct and the datatype means that the same variable could be declared using two notations and we strive for consistency:
-
-\begin{lstlisting}
-MyStruct newInstance;		// CORRECT
-struct MyStruct newInstance;	// WRONG
-\end{lstlisting}
-The only exception I can think of when naming the struct itself is necessary is when using opaque datatypes, if that will ever be relevant.
-
-\subsubsection{Indices}
-In numerical codes there are often many indices. As an effort to avoid confusion one should not use one variable name for loop counter of particles one place and for grid another place. \reftab{suggested_names} shows names which are to be used for loops through grids or particles along with comparisons to how they could be written mathematically.
-
-\begin{table}
-	\centering
-	\caption{Suggested names in PINC}
-	\begin{tabular}{|l|c|c|}
-		\hline
-										& C 							& Math			\\
-		\hline \hline
-		time step						& \lstinline$n$				& $n$			\\
-		number of time steps				& \lstinline$nTimeSteps$		& $N_t$			\\
-		\hline
-		dimension						& \lstinline$d$				& $d$			\\
-		number of dimensions				& \lstinline$nDims$			& $N_d$			\\
-		\hline
-		specie							& \lstinline$s$				& $s$			\\
-		number of species				& \lstinline$nSpecies$		& $N_s$			\\
-		\hline
-		particle index					& \lstinline$i$				& $i$			\\
-		number of particles				& 							& $N_p$			\\
-		\hline
-		node index within local MPI subdomain	& \lstinline$p=func(j,k,l)$			& $p=f(j,k,l)$		\\
-		MPI node index					& \lstinline$P=func(J,K,L)$			& $P=f(J,K,L)$ 		\\
-		node index in global grid		& \lstinline$gp=func(gj,gk,gl)$		& $p'=f(j',k',l')$	\\
-		\hline
-	\end{tabular}
-	\label{tab:suggested_names}
-\end{table}
-
-Consider for instance iterating through all species:
-\begin{lstlisting}
-	for(int s=0;s<nSpecies;s++){
-		// do something
-	}
-\end{lstlisting}
-
-The grid quantities are stored in a flat manner in one-dimensional arrays. Thus a conversion between three-dimensional indices (e.g.\ $(j,k,l)$) and a flat index (e.g.\ $p$) is required. The table lists both flat and three-dimensional indices. If nested loops need to iterate across the same index simply use a double letter for the inner loop (e.g. \lstinline$ii$ for particles or \lstinline$gjj$ for global grid).
-
-In functions not dealing with particle or grid quantities it is perfectly valid to use e.g. \lstinline$i$ or \lstinline$j$ as loop counters for generic purposes. Please also see the documentation of the \lstinline$Grid$ and \lstinline$Population$ structs to get a better understanding of naming conventions.
-
-
-
-\subsection{Program Structure}
-
-\begin{itemize}
-	\item No global variables allowed.
-	\item Globally available functions of course must be declared in .h-file. Functions which are only used locally wihtin one translation unit (one .c-file) should be declared in the top of that file before any function definitions (mind the difference between declaration and definition). Local functions should also be defined \lstinline$static$. \lstinline$inline$ can be used the way it is intended but should not be exaggerated and only works on local functions!
-	\item Do not copy large chunks of data unnecessarily, i.e. by passing structs to functions. The preferred way is to initialize data at one
-	place and rather pass along the address (either through call-by-reference or through pointers).
-	\item Brackets do not get separate lines. Correct:
-\begin{lstlisting}
-void function(){
-	if(a){
-		...
-	} else {
-		...
-	}
-}
-\end{lstlisting}
-	Wrong:
-\begin{lstlisting}
-void function()
-{
-	if(a)
-	{
-		...
-	}
-	else
-	{
-		...
-	}
-}
-\end{lstlisting}
-	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.	
-	\item Whenever a function takes in a pointer to a variable that is not to be modified (e.g.\ a string) it should be declared const:
-	\begin{lstlisting}
-void function(const char *str);
-	\end{lstlisting}
-	This serves two purposes: (1) it prevents accidentally changing the content of the variable inside the function. (2) It tells other developers that this function will not change the content of this variable. If a local copy is to be made inside the function it needs to be recast to allow editing:
-	\begin{lstlisting}
-char *temp = (char*) str;
-	\end{lstlisting}
-	\item Many numerical codes output way too much information to terminal. Computed auxiliary values generally should not be output to terminal but to file. Only messages on progression status, warnings and errors belong to the terminal. Use the PINC-specific command \lstinline$msg()$ to do this rather than \lstinline$printf()$ in order to ensure a consistent output behaviour. Auxiliary variables and more extensive messages can be printed to file using \lstinline$fMsg()$. See documentation of \lstinline$msg()$ and \lstinline$fMsg()$.
-	\item Do not make new datatypes hiding pointers. Counter-example:
-	\begin{lstlisting}
-typedef double* doubleArr;	// WRONG
-	\end{lstlisting}
-	This hides what is actually going on and therefore makes it more difficult for other programmers to understand. C-programmers need to be confident about their pointers. The only permitted exception is opaque datatypes (if that is ever needed).
-\end{itemize}
-
-%\subsection{Naming}
-%
-%\begin{itemize}
-%	\item I have not yet determined whether to use \lstinline$underscore_names$ or \lstinline$camelCaseNames$. I always used underscore before, but have become fan of camelCase the last couple of years. Most common in C, however, is underscore. We'll see.
-%	\item Variable and function names should be intuitive rather than short (e.g.\ \lstinline$kinetic_energy$ rather then \lstinline$knerg$). However, sometimes it is reasonable to use short names. Examples:
-%		\begin{itemize}
-%			\item \lstinline$temp$ is a perfectly understandable name for a temporary variable inside a sufficiently short scope.
-%			\item \lstinline$i$ is a perfect name for a loop counter.
-%			\item Established C conventions such as \lstinline$argc$ and \lstinline$argv$.
-%			\item Variables with a mathematical origin that are commonly understood within the context of PIC codes. See below. Such variables should be used a lot (or within a short scope) to justify it having a short name.
-%		\end{itemize}
-%\end{itemize}
-%
-%Indices are used for many things in numerical simulations, especially so in particle-mesh codes. This is an attempt to get consistent use of indices both within the code and within mathematical expressions:
-%
-%\begin{itemize}
-%	\item Time step is denoted $n$ (\lstinline$n$). The number of time steps is $N_t$ (\lstinline$Nt$).
-%	\item Particles are counted using $i$ (\lstinline$i$). The number of particles is $N_p$ (\lstinline$Np$).
-%	\item Particle species are counted using $s$ (\lstinline$s$). The number of species is $N_s$ (\lstinline$Ns$). The number of particles within each specie is denoted $N_{ps}$ (\lstinline$Nps$) such that $N_p=\sum_sN_{ps}$.
-%	\item Particle position is given in small case, e.g\ $x_i$ (\lstinline$x[i]$) (considering 1D for this example. For 3D $(x_i,y_i,z_i)$ will likely be stored in one variable).
-%	\item Dimension is denoted $d$ (\lstinline$d$) and $N_d$ (\lstinline$Nd$) is the number of dimensions.
-%	\item Nodes in the grid are labelled $(j,k,l)$ or \lstinline$j$, \lstinline$k$ and \lstinline$l$ in C. $i$ is not used to avoid confusion with particle count. The number of grid points are denoted is $N_{gx}$, $N_{gy}$, $N_{gz}$ and $N_g=N_{gx}N_{gy}N_{gz}$, or alternatively, $N_{gd}$ such that $N_g=\prod_dN_{gd}$ and correspondingly in C.
-%	\item The position of grid nodes is denoted by capital letters to distinguish them from particle positions (e.g.\ $X_j$ or \lstinline$X[j]$).
-%	\item Grid quantities are indexed using a single index $p$ such that $p=j(N_{gy}N_{gz})+kN_{gz}+l$.
-%\end{itemize}
-%
-%Inside scopes not dealing explicitly with particles it is of course completely valid to use $i, j$ to count other stuff.
-
- 
-
-
-\subsection{Comments and Documentation}
-
-\begin{itemize}
-	\item Multi-line comments should be written the following way:
-	\begin{lstlisting}
-/*
- * This is my comment.
- * This is also my comment.
- */
-	\end{lstlisting}
-	\newpage
-	\item If desirable, the document can be organized using sections and titles. Sections and titles look like this:
-	\begin{lstlisting}
-/*************************************************
- * THIS IS A SECTION
- ************************************************/
-
-void main(int argc, char *argv[]){
-
-	/*
-	 * THIS IS A TITLE
-	 */
-
-	int a = function();
-
-	\end{lstlisting}
-	The last character on the section comment should be on column 80.
-	
-	
-	 \item Doxygen is used to auto-generate documentation of the code. Doxygen comments are written the following way (note the extra * on the first line):
-	 \begin{lstlisting}
-/**
- * Doxygen interpretable comment
- */
-	 \end{lstlisting}
-	 Each file starts with a Doxygen-comment looking something like this:
-	 \begin{lstlisting}
-/**
- * @file		main.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright		University of Oslo, Norway
- * @brief		PINC main routine.
- * @date		11.10.15
- *
- * More extensive description
- */	 	
-	 \end{lstlisting}
-	 All functions are documented by a Doxygen-comment looking something like this just in front of the function declaration. Example: 
-	 \begin{lstlisting}
-/**
- * @brief Brief one-line description of function
- * @param	in	Integer in.
- * @param[out]	out	Result is stored in this variable.
- * @return	void
- *
- * More extensive description.
- */
-void function(int in, int *out);
-	\end{lstlisting}
-	\item As a rule of thumb: Comment what functions does, not how. If ``how'' needs exhaustive explanation probably the function should be rewritten. ``What'' should be documented in the Doxygen comment.
-\end{itemize}
-
-\subsection{Formatting and language}
-
-\begin{itemize}
-	\item English is the working language.
-	\item Use tab for indentation, not spaces. One tab should be set equal to 4 spaces.
-	\item Output printed to terminal should be no more than 80 columns/characters as this is the default terminal width.
-	\item Lines in source files should be no longer than 132 columns/characters, although doxygen comments should stop at column 80.
-	\item Whenever a date is to be written, for instance in a Doxygen comment, it is written dd.mm.yy.
-	\item Try to avoid incomplete sentences and poor language in comments, especially in Doxygen comments. End sentences with period.
-\end{itemize}
-
 \section{Tools}
+This section describes tools that can be useful for developers.
+
+\subsection{Editor}
+Use whichever editor you want (I use Atom) but do not clutter the repository with editor files. Also, make sure the editor settings obey the coding conventions with respect to spaces, tab sizes, etc.
+
+\subsection{Doxygen}
+As already mentioned, the code is documented using Doxygen. Build PINC and the documentation will be at \verb$mn-fysrp-pinc/doc/html/index.html$.
+
+\subsection{Unit Testing}
+To run unit tests, execute the following command:
+
+\begin{verbatim}
+	make test
+\end{verbatim}
+which will build a unit test executable \verb$ut$ and execute it. How to develop unit tests is briefly described in Doxygen.
+
 \subsection{Valgrind}
-To ensure that dynamically allocated memory is freed use Valgrind. Since OpenMPI generates a lot of false positives these false positives are suppressed by using the PINC wrapper script \verb$valgrind.sh$ for running Valgrind instead of just \verb$valgrind$\footnote{Since OpenMPI is usually not compiled with \texttt{--enable-memchecker} Valgrind will not be able to detect errors in shared memory space. I guess most (all?) mistakes will be eliminated using the PINC Valgrind wrapper, however.}. First, make sure valgrind is installed on your system. Then, consider the following example:
+To ensure that dynamically allocated memory is freed use Valgrind. Since OpenMPI generates a lot of false positives these false positives are suppressed by using the PINC wrapper script \verb$valgrind.sh$ for running Valgrind instead of just \verb$valgrind$\footnote{Since OpenMPI is usually not compiled with \texttt{--enable-memchecker} Valgrind will not be able to detect errors in shared memory space. I guess most (all?) mistakes will be eliminated using the PINC Valgrind wrapper, however.}. First, make sure Valgrind is installed on your system. Then, consider the following example:
 
 \begin{lstlisting}
 void test(){
@@ -734,7 +506,7 @@ TIMER (0): [tot=619.69ms, diff=286.83ms] Modulus method
 \end{verbatim}
 \verb$tot$ shows the time since program start-up whereas \verb$diff$ shows time since previous invocation of \lstinline$tMsg()$. \lstinline$tMsg(timer,NULL)$ can be called simply to reset the timer without printing any message.
 
-In this case, we see that both methods perform equally well at approximately 290~ms. The difference is insignificant. It is interesting though, to re-run the experiments with optimizations turned off (``\verb$make CADD=-pg COPT=$''):
+In this case, we see that both methods perform equally well at approximately 290~ms. The difference is insignificant. It is interesting though, to re-run the experiments with optimizations turned off (``\verb$make COPT=$''):
 
 \begin{verbatim}
 TIMER (0): [tot=397.32ms, diff=359.46ms] Nested loops method
@@ -744,7 +516,7 @@ It is now evident that the intuitive nested loops method by itself is faster but
 
 Whereas this example was well optimized by the compiler, this may not always be the case. It is therefore highly advised to think through your programming techniques, and when uncertain as to what will perform well, measure it.
 
-As a final note, although the PINC Timer has a very high resolution the accuracy is more influenced by random variations and overhead when measuring short times. A remedy to this is to put the operations to be measured in a loop to get the timer up to the the millisecond/second range. To get an idea of the resolution, the overhead and the accuracy of \lstinline$tMsg()$ try measuring \lstinline$tMsg()$ itself by running it in a loop\footnote{Technically the timer is measured at the beginning of \lstinline$tMsg()$ and reset at the end of \lstinline$tMsg()$ such that \texttt{diff} actually shows the time between, but not including, calls to \lstinline$tMsg()$. This gives more accurate readings of what comes in between. On my computer \lstinline$tMsg()$ executes in approximately $5 \mu s$ but the overhead of the measurements is only approximately 200~ns. The discrepancy is largely due the fact that printing to the terminal takes time.}.
+As a final note, although the PINC Timer has a very high resolution the accuracy is more influenced by random variations and overhead when measuring short times. A remedy to this is to put the operations to be measured in a loop to get the timer up to the the millisecond range. To get an idea of the resolution, the overhead and the accuracy of \lstinline$tMsg()$ try measuring \lstinline$tMsg()$ itself by running it in a loop\footnote{Technically the timer is measured at the beginning of \lstinline$tMsg()$ and reset at the end of \lstinline$tMsg()$ such that \texttt{diff} actually shows the time between, but not including, calls to \lstinline$tMsg()$. This gives more accurate readings of what comes in between. On my computer \lstinline$tMsg()$ executes in approximately $5 \mu s$ but the overhead of the measurements is only approximately 200~ns. The discrepancy is largely due the fact that printing to the terminal takes time.}.
 
 \subsection{GNU Debugger (GDB)}
 GDB may be useful if for instance you want to step through your code, inspecting what's happening to variables as the program run. To be able to use GDB the program must be compiled with the additional \verb$-g$ flag as follows:
@@ -755,5 +527,281 @@ GDB may be useful if for instance you want to step through your code, inspecting
 	gdb pinc
 \end{verbatim}
 from which point you can use GDB. GDB is well documented online. Beware that sometimes things may look strange due to optimizations, for instance the value of a variable may not exist and show up as ``<optimized out>'', either because it simply is not needed, or because it is not needed at this point. As usual, you can turn off optimization for debugging purposes by running \verb$make CADD=-g COPT=$.
+
+\section{Coding Practices}
+Herein is described the coding conventions to be used within the project.
+
+\subsection{Naming Conventions}
+We use the camelCase-convention rather than underscore. E.g:
+\begin{lstlisting}
+int myVariable = 0;
+void myFunction();
+\end{lstlisting}
+Names should be intuitive rather than short. On the other hand, too long names are bothersome too. Obvious abbreviations are okay. Common abbreviations and names are okay too even if hard to read simply because their commonness makes them more likely to be understood than easier but unfamiliar names. Examples:
+	\begin{itemize}
+		\item \lstinline$knErg$ is a worse name than \lstinline$kineticEnergy$ which is a worse name than \lstinline$energy$ (if kinetic energy is the only kind of energy that makes sense).
+		\item \lstinline$wij1k1$ is a horrible name.
+		\item \lstinline$temp$ is a perfectly understandable name for a temporary variable inside a sufficiently short scope. No need to call it \lstinline$kineticEnergyFromPreviousTimeStep$. \lstinline$temp2$ however is usually a sign that you need to clean up.
+		\item \lstinline$i$ and \lstinline$j$ are perfect names for a loop counters. No need to call it \lstinline$loopCounter$. Make sure to avoid confusion with common uses of \lstinline$i$ and \lstinline$j$ in PINC, though.
+		\item \lstinline$argc$ and \lstinline$argv$ are okay since they are understood by any C programmer.
+		\item \lstinline$pos$ is okay since it's obviously a contraction of ``position''.
+	\end{itemize}
+Generally speaking, the larger the scope a variable or function has the more important is its proper naming.
+\subsubsection{Grammar}
+Moreover we have the following grammar conventions:
+		\begin{itemize}
+			\item \lstinline$nElements$. ``n'' in the beginning of a variable name like this is read like ``the number of''. The word(s) that come after ``n'' should be plural. You don't say ``the number of element''.
+			\item In many cases it is a good idea that arrays have plural names. Consider this example:
+\begin{lstlisting}
+int numbers[100];
+for(int i=0;i<100;i++){
+	int number = numbers[i];
+	// Do something with "number"
+}
+\end{lstlisting}
+			\item Because of the above point, datatypes (and structs) should have singular names. Consider these examples
+\begin{lstlisting}
+// CORRECT (if the struct contains only one particle)
+Particle particles[100];
+
+// WRONG: This is just confusing.
+Particles particless[100];
+
+// CORRECT. Each element is a population of particles.
+Population pops[100];
+\end{lstlisting}
+		\end{itemize}
+
+\subsubsection{Structs}
+Structs are named with a capital first letter to indicate that it is a struct:
+
+\begin{lstlisting}
+typedef struct{
+	...
+} MyStruct;
+\end{lstlisting}
+More precisely, we actually do \emph{not} give the struct a name, but rather name its datatype using \lstinline$typedef$. Naming the struct would look something like this:
+
+\begin{lstlisting}
+// WRONG
+typedef struct MyStruct{
+	...
+} MyStruct;
+\end{lstlisting}
+or:
+\begin{lstlisting}
+// WRONG
+struct MyStruct{
+	...
+};
+typedef struct MyStruct MyStruct;
+\end{lstlisting}
+Naming \emph{both} the struct and the datatype means that the same variable could be declared using two notations and we strive for consistency:
+
+\begin{lstlisting}
+MyStruct newInstance;		// CORRECT
+struct MyStruct newInstance;	// WRONG
+\end{lstlisting}
+The only exception I can think of when naming the struct itself is necessary is when using opaque datatypes, if that will ever be relevant.
+
+\subsubsection{Indices}
+In numerical codes there are often many indices. As an effort to avoid confusion one should not use one variable name for loop counter of particles one place and for grid another place. \reftab{suggested_names} shows names which are to be used for loops through grids or particles along with comparisons to how they could be written mathematically.
+
+\begin{table}
+	\centering
+	\caption{Suggested names in PINC}
+	\begin{tabular}{|l|c|c|}
+		\hline
+										& C 							& Math			\\
+		\hline \hline
+		time step						& \lstinline$n$				& $n$			\\
+		number of time steps				& \lstinline$nTimeSteps$		& $N_t$			\\
+		\hline
+		dimension						& \lstinline$d$				& $d$			\\
+		number of dimensions				& \lstinline$nDims$			& $N_d$			\\
+		\hline
+		specie							& \lstinline$s$				& $s$			\\
+		number of species				& \lstinline$nSpecies$		& $N_s$			\\
+		\hline
+		particle index					& \lstinline$i$				& $i$			\\
+		number of particles				& 							& $N_p$			\\
+		\hline
+		node index within local MPI subdomain	& \lstinline$p=func(j,k,l)$			& $p=f(j,k,l)$		\\
+		MPI node index					& \lstinline$P=func(J,K,L)$			& $P=f(J,K,L)$ 		\\
+		node index in global grid		& \lstinline$gp=func(gj,gk,gl)$		& $p'=f(j',k',l')$	\\
+		\hline
+	\end{tabular}
+	\label{tab:suggested_names}
+\end{table}
+
+Consider for instance iterating through all species:
+\begin{lstlisting}
+	for(int s=0;s<nSpecies;s++){
+		// do something
+	}
+\end{lstlisting}
+
+The grid quantities are stored in a flat manner in one-dimensional arrays. Thus a conversion between three-dimensional indices (e.g.\ $(j,k,l)$) and a flat index (e.g.\ $p$) is required. The table lists both flat and three-dimensional indices. If nested loops need to iterate across the same index simply use a double letter for the inner loop (e.g. \lstinline$ii$ for particles or \lstinline$gjj$ for global grid).
+
+In functions not dealing with particle or grid quantities it is perfectly valid to use e.g. \lstinline$i$ or \lstinline$j$ as loop counters for generic purposes. Please also see the documentation of the \lstinline$Grid$ and \lstinline$Population$ structs to get a better understanding of naming conventions.
+
+
+
+\subsection{Program Structure}
+
+\begin{itemize}
+	\item No global variables allowed.
+	\item Globally available functions of course must be declared in .h-file. Functions which are only used locally wihtin one translation unit (one .c-file) should be declared in the top of that file before any function definitions (mind the difference between declaration and definition). Local functions should also be defined \lstinline$static$. \lstinline$inline$ can be used the way it is intended but should not be exaggerated and only works on local functions!
+	\item Do not copy large chunks of data unnecessarily, i.e. by passing structs to functions. The preferred way is to initialize data at one
+	place and rather pass along the address.
+	\item Brackets do not get separate lines. Correct:
+\begin{lstlisting}
+void function(){
+	if(a){
+		...
+	} else {
+		...
+	}
+}
+\end{lstlisting}
+	Wrong:
+\begin{lstlisting}
+void function()
+{
+	if(a)
+	{
+		...
+	}
+	else
+	{
+		...
+	}
+}
+\end{lstlisting}
+	\item The code should compile without any errors or warnings. Tweaking compiler options in makefile just to achieve this is not permitted.	
+	\item Whenever a function takes in a pointer to a variable that is not to be modified (e.g.\ a string) it should be declared const:
+	\begin{lstlisting}
+void function(const char *str);
+	\end{lstlisting}
+	This serves two purposes: (1) it prevents accidentally changing the content of the variable inside the function. (2) It tells other developers that this function will not change the content of this variable. If a local copy is to be made inside the function it needs to be recast to allow editing:
+	\begin{lstlisting}
+char *temp = (char*) str;
+	\end{lstlisting}
+	\item Many numerical codes output way too much information to terminal. Computed auxiliary values generally should not be output to terminal but to file. Only messages on progression status, warnings and errors belong to the terminal. Use the PINC-specific command \lstinline$msg()$ to do this rather than \lstinline$printf()$ in order to ensure a consistent output behaviour. Auxiliary variables and more extensive messages can be printed to file using \lstinline$fMsg()$. See documentation of \lstinline$msg()$ and \lstinline$fMsg()$.
+	\item Do not make new datatypes hiding pointers. Counter-example:
+	\begin{lstlisting}
+typedef double* doubleArr;	// WRONG
+	\end{lstlisting}
+	This hides what is actually going on and therefore makes it more difficult for other programmers to understand. C-programmers need to be confident about their pointers. The only permitted exception is opaque datatypes (if that is ever needed).
+	\item Strive to follow previous coding style to make the code consistent (or suggest improvements).
+	\item Try to make functions work in an atomic way, i.e. that one function does one thing and does it well.
+\end{itemize}
+
+%\subsection{Naming}
+%
+%\begin{itemize}
+%	\item I have not yet determined whether to use \lstinline$underscore_names$ or \lstinline$camelCaseNames$. I always used underscore before, but have become fan of camelCase the last couple of years. Most common in C, however, is underscore. We'll see.
+%	\item Variable and function names should be intuitive rather than short (e.g.\ \lstinline$kinetic_energy$ rather then \lstinline$knerg$). However, sometimes it is reasonable to use short names. Examples:
+%		\begin{itemize}
+%			\item \lstinline$temp$ is a perfectly understandable name for a temporary variable inside a sufficiently short scope.
+%			\item \lstinline$i$ is a perfect name for a loop counter.
+%			\item Established C conventions such as \lstinline$argc$ and \lstinline$argv$.
+%			\item Variables with a mathematical origin that are commonly understood within the context of PIC codes. See below. Such variables should be used a lot (or within a short scope) to justify it having a short name.
+%		\end{itemize}
+%\end{itemize}
+%
+%Indices are used for many things in numerical simulations, especially so in particle-mesh codes. This is an attempt to get consistent use of indices both within the code and within mathematical expressions:
+%
+%\begin{itemize}
+%	\item Time step is denoted $n$ (\lstinline$n$). The number of time steps is $N_t$ (\lstinline$Nt$).
+%	\item Particles are counted using $i$ (\lstinline$i$). The number of particles is $N_p$ (\lstinline$Np$).
+%	\item Particle species are counted using $s$ (\lstinline$s$). The number of species is $N_s$ (\lstinline$Ns$). The number of particles within each specie is denoted $N_{ps}$ (\lstinline$Nps$) such that $N_p=\sum_sN_{ps}$.
+%	\item Particle position is given in small case, e.g\ $x_i$ (\lstinline$x[i]$) (considering 1D for this example. For 3D $(x_i,y_i,z_i)$ will likely be stored in one variable).
+%	\item Dimension is denoted $d$ (\lstinline$d$) and $N_d$ (\lstinline$Nd$) is the number of dimensions.
+%	\item Nodes in the grid are labelled $(j,k,l)$ or \lstinline$j$, \lstinline$k$ and \lstinline$l$ in C. $i$ is not used to avoid confusion with particle count. The number of grid points are denoted is $N_{gx}$, $N_{gy}$, $N_{gz}$ and $N_g=N_{gx}N_{gy}N_{gz}$, or alternatively, $N_{gd}$ such that $N_g=\prod_dN_{gd}$ and correspondingly in C.
+%	\item The position of grid nodes is denoted by capital letters to distinguish them from particle positions (e.g.\ $X_j$ or \lstinline$X[j]$).
+%	\item Grid quantities are indexed using a single index $p$ such that $p=j(N_{gy}N_{gz})+kN_{gz}+l$.
+%\end{itemize}
+%
+%Inside scopes not dealing explicitly with particles it is of course completely valid to use $i, j$ to count other stuff.
+
+ 
+
+
+\subsection{Comments and Documentation}
+
+\begin{itemize}
+	\item Multi-line comments should be written the following way:
+	\begin{lstlisting}
+/*
+ * This is my comment.
+ * This is also my comment.
+ */
+	\end{lstlisting}
+	\newpage
+	\item If desirable, the document can be organized using sections and titles. Sections and titles look like this:
+	\begin{lstlisting}
+/*************************************************
+ * THIS IS A SECTION
+ ************************************************/
+
+void main(int argc, char *argv[]){
+
+	/*
+	 * THIS IS A TITLE
+	 */
+
+	int a = function();
+
+	\end{lstlisting}
+	The last character on the section comment should be on column 80. Mind the alignment of the characters. Sections and titles are written in uppercase, normal comments in normal capitalization.
+	
+	
+	 \item Doxygen is used to auto-generate documentation of the code. Doxygen comments are written the following way (note the extra * on the first line):
+	 \begin{lstlisting}
+/**
+ * Doxygen interpretable comment
+ */
+	 \end{lstlisting}
+	 Each file starts with a Doxygen-comment looking something like this:
+	 \begin{lstlisting}
+/**
+ * @file		main.c
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+ * @copyright		University of Oslo, Norway
+ * @brief		PINC main routine.
+ * @date		11.10.15
+ *
+ * More extensive description
+ */	 	
+	 \end{lstlisting}
+	 All functions are documented by a Doxygen-comment looking something like this just in front of the function declaration. Example: 
+	 \begin{lstlisting}
+/**
+ * @brief Brief one-line description of function
+ * @param	in	Integer in.
+ * @param[out]	out	Result is stored in this variable.
+ * @return	void
+ *
+ * More extensive description.
+ */
+void function(int in, int *out);
+	\end{lstlisting}
+	\item As a rule of thumb: Comment what functions does, not how. If ``how'' needs exhaustive explanation perhaps the function should be rewritten? ``What'' should be documented in the Doxygen comment.
+\end{itemize}
+
+\subsection{Formatting and language}
+
+\begin{itemize}
+	\item English is the working language.
+	\item Use tab for indentation, not spaces. One tab should be set equal to 4 spaces.
+	\item Try to make output printed to terminal no more than 80 columns/characters as this is the default terminal width.
+	\item Too long lines in source code can obviously be a mess. On the other hand, breaking up long function calls across multiple lines
+	is a mess too. We strive for a compromise. Text block comments should be no more than 80 columns, as should most of the code. Many
+	function calls (e.g. MPI calls) will easily extend beyond 80 columns, and breaking them up only makes the code messier, so don't. The
+	makefile will emit a warning for lines longer than 132 columns.
+	\item Whenever a date is to be written, for instance in a Doxygen comment, it is written dd.mm.yy.
+	\item Try to avoid incomplete sentences and poor language in comments, especially in Doxygen comments. End sentences with period.
+\end{itemize}
 
 \end{document}

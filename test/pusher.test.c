@@ -595,6 +595,9 @@ static int testPuRankNeighbor(){
 	utAssert(puRankToNeighbor(mpiInfo,23)==12,"puRankToNeighbor malfunctioning (without wrap-around)");
 	utAssert(puRankToNeighbor(mpiInfo,15)==2,"puRankToNeighbor malfunctioning (with wrap-around)");
 
+	utAssert(puNeighborToReciprocal(12,3)==14,"puNeighborToReciprocal malfunctioning");
+	utAssert(puNeighborToReciprocal(0,3)==26,"puNeighborToReciprocal malfunctioning");
+
 	return 0;
 
 }

@@ -24,7 +24,6 @@
 
 int main(int argc, char *argv[]){
 
-
 	/*
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
@@ -35,7 +34,6 @@ int main(int argc, char *argv[]){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-
 	dictionary *ini = iniOpen(argc,argv);
 	Population *pop = pAlloc(ini);
 	Grid *grid = gAlloc(ini,2);

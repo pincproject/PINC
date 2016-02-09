@@ -27,6 +27,7 @@ THDIR	= test
 HEAD_	= pinc.h pusher.h #multigrid.h
 SRC_	= io.c aux.c population.c grid.c pusher.c #multigrid.c
 OBJ_	= $(SRC_:.c=.o)
+DOC_	= main.dox
 
 TESTOBJ_= test.o $(SRC_:.c=.test.o)
 #TESTOBJ_ = test.o aux.test.o
@@ -84,9 +85,9 @@ $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
 	@cd $(LDIR)/iniparser && $(MAKE) > /dev/null 2>&1
 
-$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TDIR)/test.c
-	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TDIR) ../../$(THDIR)	> $(DDIR)/doxygen/doxyfile.inc
-	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) test.h test.c >> $(DDIR)/doxygen/doxyfile.inc
+$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TDIR)/test.c $(DDIR)/doxygen/$(DOC_)
+	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
+	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) $(DOC_) test.h test.c  >> $(DDIR)/doxygen/doxyfile.inc
 
 doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
 	@echo "Making documentation (run \"make pdf\" to get pdf)"

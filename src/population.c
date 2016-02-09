@@ -22,30 +22,6 @@
  *****************************************************************************/
 
 /**
- * @brief Transforms particles to local reference frame
- * @param	pop			Population of particles
- * @param	mpiInfo		MPI information about the reference frames
- * @return	void
- * @see toGlobalFrame()
- */
-void toLocalFrame(Population *pop, const MpiInfo *mpiInfo);
-
-/**
- * @brief Transforms particles to global reference frame
- * @param	pop			Population of particles
- * @param	mpiInfo		MPI information about the reference frames
- * @return	void
- * @see toLocalFrame()
- *
- * For parallelization by means of configuration space decomposition, the
- * the particles' positions are usually specified with respect to a local
- * reference frame to that subdomain in order to ease computation. Some
- * operations may require the position in global reference frame (e.g. when
- * storing to file) for which purpose it can be transformed using this function.
- */
-void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
-
-/**
  * @brief Computes specie-specific re-normalization factors for the E-field
  * @param 	q			Charge [elementary charges] as given in input file
  * @param	m			Mass [electron masses] as given in input file
@@ -232,7 +208,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 	}
 
-	toLocalFrame(pop,mpiInfo);
+	pToLocalFrame(pop,mpiInfo);
 
 	free(L);
 	free(nParticles);
@@ -444,7 +420,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 	int mpiSize = mpiInfo->mpiSize;
 	int nSpecies = pop->nSpecies;
 
-	toGlobalFrame(pop,mpiInfo);
+	pToGlobalFrame(pop,mpiInfo);
 
 	/*
  	 * HDF5 HYPERSLAB DEFINITION
@@ -513,7 +489,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 	}
  	free(offsetAllSubdomains);
 
-	toLocalFrame(pop,mpiInfo);
+	pToLocalFrame(pop,mpiInfo);
 }
 
 void pCloseH5(Population *pop){
@@ -524,7 +500,7 @@ void pCloseH5(Population *pop){
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
 
-void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){
+void pToLocalFrame(Population *pop, const MpiInfo *mpiInfo){
 
 	int *offset = mpiInfo->offset;
 	int nSpecies = pop->nSpecies;
@@ -543,7 +519,7 @@ void toLocalFrame(Population *pop, const MpiInfo *mpiInfo){
 	}
 }
 
-void toGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
+void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 
 	int *offset = mpiInfo->offset;
 	int nSpecies = pop->nSpecies;

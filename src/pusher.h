@@ -94,4 +94,12 @@ void puIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
 void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo);
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo);
 
+void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid);
+
+int puRankToNeighbor(MpiInfo *mpiInfo, int rank);
+int puNeighborToRank(MpiInfo *mpiInfo, int neighbor);
+int puNeighborToReciprocal(int neighbor, int nDims);
+void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
+void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
+
 #endif // PUSHER_H

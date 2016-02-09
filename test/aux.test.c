@@ -24,17 +24,12 @@ static int testAEq(){
 
 	utAssert(aiEq(a,b,5),"aiEq is broken");
 	utAssert(alEq(al,bl,5),"alEq is broken");
-	utAssert(aEq((char*)a,(char*)b,5*sizeof(*a)),"aEq is broken 1");
-	utAssert(aEq((char*)al,(char*)bl,5*sizeof(*al)),"aEq is broken 2");
 
 	b[4] = 3;
 	bl[4] = 3;
 
 	utAssert(!aiEq(a,b,5),"aiEq is broken");
 	utAssert(!alEq(al,bl,5),"alEq is broken");
-	utAssert(!aEq((char*)a,(char*)b,5*sizeof(*a)),"aEq is broken 3");
-	utAssert(!aEq((char*)al,(char*)bl,5*sizeof(*al)),"aEq is broken 4");
-
 
 	return 0;
 }
