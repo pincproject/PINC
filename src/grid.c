@@ -322,7 +322,7 @@ void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){
 	for(int g = 0; g < sizeProd[rank]; g++){
 		resultVal[g] = -4.*objectVal[g];
 		resultVal[g] += objectVal[gj] + objectVal[gjj]
-					+objectVal[gk] + objectVal[gkk];
+						+objectVal[gk] + objectVal[gkk];
 
 		//Increment indexes
 		gj++;
@@ -358,8 +358,8 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 	for(int q = 0; q < sizeProd[rank]; q++){
 		resultVal[g] = -6.*objectVal[g];
 		resultVal[g] += objectVal[gj] + objectVal[gjj]
-					+objectVal[gk] + objectVal[gkk]
-					+objectVal[gl] + objectVal[gll];
+						+objectVal[gk] + objectVal[gkk]
+						+objectVal[gl] + objectVal[gll];
 
 		//Increment indexes
 		g++;
@@ -830,7 +830,7 @@ static void gPeriodic(){
 	return;
 }
 
-void gDirichlet(Grid *grid, const int boundary, int side, double constant,  const  MpiInfo *mpiInfo){
+void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo *mpiInfo){
 
 	// msg(STATUS, "Hello from Dirichlet");
 
@@ -838,39 +838,46 @@ void gDirichlet(Grid *grid, const int boundary, int side, double constant,  cons
 	int rank = grid->rank;
 	int *size = grid->size;
 	double *slice = grid->slice;
-	int d = boundary%rank;
 
+	//Compute dimensions and size of slice
+	int d = boundary%rank;
+	int offset = 1+(boundary>rank)*(size[d]-3);
 	int nSlicePoints = 1;
 
-
 	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+
 	nSlicePoints *= 1./size[d];
 
 	for(int s = 0; s < nSlicePoints; s++) slice[s] = constant;
 
-	setSlice(slice, grid, d, side*(size[d]-1));
+	setSlice(slice, grid, d, offset);
 
 	return;
 
 }
 
-void gNeumann(Grid *grid, const int boundary,int side, double constant, const MpiInfo *mpiInfo){
+void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mpiInfo){
 
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
 	double *slice = grid->slice;
+
+	//Compute dimensions and slicesize
 	int d = boundary%rank;
+	int offset = (boundary>rank)*(size[d]-1);
 
 	int nSlicePoints = 1;
 	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
 	nSlicePoints *= 1./size[d];
 
-	getSlice(slice, grid, d, side*(size[d]-1)+1);
+	//Compute d/dx u(x) = u(x_2) - 2A
+	constant *=-2;
+	getSlice(slice, grid, d, offset + 2 - 4*(boundary>rank));
 
 	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant;
 
-	setSlice(slice, grid, d, side*(size[d]-1));
+	setSlice(slice, grid, d, offset);
 
 	return;
 }
@@ -882,31 +889,23 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 
+	//Lower edge
 	for(int d = 1; d < rank; d++){
-		if(subdomain[d-1] == 0 || subdomain[d-1]==nSubdomains[d-1]-1){
+		if(subdomain[d-1] == 0){
 			if(bnd[d] == PERIODIC)	gPeriodic();
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d + (size[d]-1), 0, 10., mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 0, 5., mpiInfo);
-			else msg(ERROR, "No boundary conditions found for edge %d", d);
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 5., mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
 		}
 	}
 
-	// //Lower edge
-	// for (int d = 1; d < rank; d++){
-	// 	if(bnd[d] == PERIODIC)	gPeriodic();
-	// 	else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0, 0., mpiInfo);
-	// 	else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 0, 5., mpiInfo);
-	// 	else msg(ERROR, "No boundary conditions found for edge %d", d);
-	// }
-	//
-	// //Upper edge
-	// for (int d = rank+1; d < 2*rank; d++){
-	// 	if(bnd[d] == PERIODIC)	gPeriodic();
-	// 	else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 1, 0., mpiInfo);
-	// 	else if(bnd[d] == NEUMANN)	gNeumann(grid, d, 1, 5., mpiInfo);
-	// 	else msg(ERROR, "No boundary conditions found for edge %d", d);
-	// }
-
+	//Higher edge
+	for(int d = rank+1; d < 2*rank; d++){
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == PERIODIC)	gPeriodic();
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 5., mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
+		}
+	}
 
 	return;
 }

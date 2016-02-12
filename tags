@@ -110,7 +110,7 @@ D_COND	src/old/const.h	54;"	d
 D_COND	src/old/triang/const.h	54;"	d
 D_INSU	src/old/const.h	53;"	d
 D_INSU	src/old/triang/const.h	53;"	d
-Detailed Description	doc/latex/multigrid_8h.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Bilinear interpolation, 3\\+D. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
+Detailed Description	doc/latex/multigrid_8h.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Computes residual. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/pusher_8h.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Accelerates particles using 1st order interpolation. Fixed to 3\\+D. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structGrid.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Array storing boundary conditions. \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
 Detailed Description	doc/latex/structMpiInfo.tex	/^\\begin{DoxyCompactList}\\small\\item\\em Factor for converting position to subdomain (n\\+Dims elements) \\end{DoxyCompactList}\\end{DoxyCompactItemize}$/;"	u
@@ -825,8 +825,8 @@ debugFillCst	src/main.local.c	/^void debugFillCst(Grid *grid, double constant){$
 debugFillExponential	src/main.local.c	/^void debugFillExponential(Grid *grid){$/;"	f
 debugFillHeaviside	src/main.local.c	/^void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo){$/;"	f
 debugFillPolynomial	src/main.local.c	/^void debugFillPolynomial(Grid *grid){$/;"	f
-debugFillSin	src/main.local.c	/^void debugFillSin(Grid *grid){$/;"	f
-debugFillSpike	src/main.local.c	/^void debugFillSpike(Grid *grid){$/;"	f
+debugFillSin	src/main.local.c	/^void debugFillSin(Grid *grid, MpiInfo *mpiInfo){$/;"	f
+debugFillSpike	src/main.local.c	/^void debugFillSpike(Grid *grid, double value, MpiInfo *mpiInfo){$/;"	f
 debugGSRB	src/main.local.c	/^void debugGSRB(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugProlongator	src/main.local.c	/^void debugProlongator(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
 debugRestrictor	src/main.local.c	/^void debugRestrictor(dictionary *ini, MpiInfo *mpiInfo){$/;"	f
@@ -1163,7 +1163,10 @@ factorial	proof of concept/get slice/main.s	/^factorial:$/;"	l
 factorial	proof of concept/tail call recursion/main.c	/^long int factorial(long int n){$/;"	f
 factorial	proof of concept/tail call recursion/main.s	/^factorial:$/;"	l
 file	script/distribution.py	/^file = h5py.File('..\/test_pop.pop.h5','r')$/;"	v
+filePhi	script/3D_grid_contourf.py	/^filePhi = h5py.File('..\/test_phi.grid.h5', 'r')$/;"	v
 filePhi	script/grid_plots.py	/^filePhi = h5py.File('..\/test_phi.grid.h5','r')$/;"	v
+fileRes	script/3D_grid_contourf.py	/^fileRes = h5py.File('..\/test_res.grid.h5', 'r')$/;"	v
+fileRho	script/3D_grid_contourf.py	/^fileRho = h5py.File('..\/test_rho.grid.h5','r')$/;"	v
 fileRho	script/grid_plots.py	/^fileRho = h5py.File('..\/test_rho.grid.h5','r')$/;"	v
 files	doc/html/dir_13e138d54eb8818da29c3992edef070a.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="files"><\/a>$/;"	a
 files	doc/html/dir_68267d1309a1af8e8297ef4c3efbcdba.html	/^<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="files"><\/a>$/;"	a
@@ -1246,14 +1249,14 @@ gAllocMpi	src/grid.c	/^MpiInfo *gAllocMpi(const dictionary *ini){$/;"	f
 gBnd	src/grid.c	/^void gBnd(Grid *grid, const MpiInfo *mpiInfo){$/;"	f
 gCloseH5	src/grid.c	/^void gCloseH5(Grid *grid){$/;"	f
 gCreateH5	src/grid.c	/^void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,$/;"	f
-gDirichlet	src/grid.c	/^void gDirichlet(Grid *grid, const int boundary, int side, double constant,  const  MpiInfo *mpiInfo){$/;"	f
+gDirichlet	src/grid.c	/^void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo *mpiInfo){$/;"	f
 gFinDiff1st	src/grid.c	/^void gFinDiff1st(const Grid *scalar, Grid *field){$/;"	f
 gFinDiff2nd2D	src/grid.c	/^void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){$/;"	f
 gFinDiff2nd3D	src/grid.c	/^void gFinDiff2nd3D(Grid *result, const  Grid *object){$/;"	f
 gFree	src/grid.c	/^void gFree(Grid *grid){$/;"	f
 gFreeMpi	src/grid.c	/^void gFreeMpi(MpiInfo *mpiInfo){$/;"	f
 gMulDouble	src/grid.c	/^void gMulDouble(Grid *grid, double num){$/;"	f
-gNeumann	src/grid.c	/^void gNeumann(Grid *grid, const int boundary,int side, double constant, const MpiInfo *mpiInfo){$/;"	f
+gNeumann	src/grid.c	/^void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mpiInfo){$/;"	f
 gNormalizeE	src/grid.c	/^void gNormalizeE(const dictionary *ini, Grid *E){$/;"	f
 gPeriodic	src/grid.c	/^static void gPeriodic(){$/;"	f	file:
 gSet	src/grid.c	/^void gSet(Grid *grid, const double *value){$/;"	f
@@ -1264,10 +1267,10 @@ gWriteH5	src/grid.c	/^void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, do
 gZero	src/grid.c	/^void gZero(Grid *grid){$/;"	f
 gauss Seidel2 D Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{gauss\\+Seidel2\\+D@{gauss\\+Seidel2\\+D}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
 gauss Seidel3 D Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{gauss\\+Seidel3\\+D@{gauss\\+Seidel3\\+D}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
-gauss Seidel3 D Standard Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{gauss\\+Seidel3\\+D\\+Standard@{gauss\\+Seidel3\\+D\\+Standard}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
+gauss Seidel3 D New Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{gauss\\+Seidel3\\+D\\+New@{gauss\\+Seidel3\\+D\\+New}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
 gaussSeidel2D	src/multigrid.c	/^void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
 gaussSeidel3D	src/multigrid.c	/^void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
-gaussSeidel3DStandard	src/multigrid.c	/^void gaussSeidel3DStandard(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
+gaussSeidel3DNew	src/multigrid.c	/^void gaussSeidel3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){$/;"	f
 gaussian	script/distribution.py	/^gaussian   = ((1\/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2\/vth)**2)$/;"	v
 gen_bgnd	src/old/generate.c	/^void gen_bgnd(void)$/;"	f
 gen_bgnd	src/old/generate_bug.c	/^void gen_bgnd(void)$/;"	f
@@ -1368,8 +1371,11 @@ ike	src/old/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_t
 ike	src/old/triang/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
 ike_time	src/old/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
 ike_time	src/old/triang/const.h	/^FILE *epe,*eke,*ipe,*ike, *pe, *pe_time, *eke_time, *ike_time, *epe_time, *ipe_time; \/\/NEW2D$/;"	v
+im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(phi),$/;"	v
+im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(res),$/;"	v
+im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(rho),$/;"	v
 im	script/grid_plots.py	/^im = ax.contourf(X,Y,rho)$/;"	v
-im	script/grid_plots.py	/^im = ax[0,0].contourf(X,Y,phi0, levels = levels)$/;"	v
+im	script/grid_plots.py	/^im = ax[0,0].contourf(X,Y,phi0, 50)$/;"	v
 imatrix	src/old/fmg/nrutil.c	/^int **imatrix(long nrl, long nrh, long ncl, long nch)$/;"	f
 imatrix	src/old/fmg/nrutil.c	/^int **imatrix(nrl,nrh,ncl,nch)$/;"	f
 imaxarg1	src/old/fmg/nrutil.h	/^static int imaxarg1,imaxarg2;$/;"	v
@@ -1636,7 +1642,7 @@ l00089	doc/html/test_8h_source.html	/^<div class="line"><a name="l00089"><\/a><s
 l00090	doc/html/test_8h_source.html	/^<div class="line"><a name="l00090"><\/a><span class="lineno">   90<\/span>&#160;dictionary *iniSetDummy(<span class="keywordtype">int<\/span> argc,<span class="keywordtype">char<\/span> **argv);<\/div>$/;"	a
 l00091	doc/html/test_8h_source.html	/^<div class="line"><a name="l00091"><\/a><span class="lineno">   91<\/span>&#160;<\/div>$/;"	a
 l00096	doc/html/test_8h_source.html	/^<div class="line"><a name="l00096"><\/a><span class="lineno">   96<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a4b3df40b09652e06bf63fc905210591d">utSummary<\/a>();<\/div>$/;"	a
-l00097	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00097"><\/a><span class="lineno">   97<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a0d980d3cf52e6f32f6c891006f41fbed">linearMGSolv<\/a>(dictionary *ini, <a class="code" href="structMultigrid.html">Multigrid<\/a> *mgRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *mgPhi, <a class="code" href="structMultigrid.html">Multigrid<\/a> *mgRes, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00097	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00097"><\/a><span class="lineno">   97<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#afa1bf32884549e545437e0d050b82c7c">linearMGSolv<\/a>(<a class="code" href="structMultigrid.html">Multigrid<\/a> *mgRho, <a class="code" href="structMultigrid.html">Multigrid<\/a> *mgPhi, <a class="code" href="structMultigrid.html">Multigrid<\/a> *mgRes, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00097	doc/html/test_8h_source.html	/^<div class="line"><a name="l00097"><\/a><span class="lineno">   97<\/span>&#160;<\/div>$/;"	a
 l00098	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00098"><\/a><span class="lineno">   98<\/span>&#160;<\/div>$/;"	a
 l00104	doc/html/test_8h_source.html	/^<div class="line"><a name="l00104"><\/a><span class="lineno">  104<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#af212e79c078b864cf6a637b65082111a">testAux<\/a>();<\/div>$/;"	a
@@ -1646,7 +1652,7 @@ l00106	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00106"><\/a><s
 l00107	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00107"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">  107<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a0a6e677d0cb480a76402a0aeaeb9de4f">mpiSize<\/a>;                <\/div>$/;"	a
 l00108	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00108"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a1240db78bb0d89fb81e071eeeebbf9d6">  108<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structMpiInfo.html#a1240db78bb0d89fb81e071eeeebbf9d6">nDims<\/a>;                  <\/div>$/;"	a
 l00109	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00109"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">  109<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#ab7b9e38d64a255011652330f50aff565">subdomain<\/a>;             <\/div>$/;"	a
-l00110	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00110"><\/a><span class="lineno">  110<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#aec3eacec98f3c6f7447ef55398338fcd">gaussSeidel3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00110	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00110"><\/a><span class="lineno">  110<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a00468774a808d0f2d6332ebaab96f9a3">gaussSeidel3DNew<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00110	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00110"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">  110<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#a430a2929906b211198114047c9ef8f87">nSubdomains<\/a>;           <\/div>$/;"	a
 l00111	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00111"><\/a><span class="lineno">  111<\/span>&#160;<\/div>$/;"	a
 l00111	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00111"><\/a><span class="lineno"><a class="line" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">  111<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> *<a class="code" href="structMpiInfo.html#af5359faa687cca51c04d4b899f20099f">nSubdomainsProd<\/a>;       <\/div>$/;"	a
@@ -1662,7 +1668,7 @@ l00121	doc/html/test_8h_source.html	/^<div class="line"><a name="l00121"><\/a><s
 l00122	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00122"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ae4379d044711537d9ce3b3b58c575c58">  122<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ae4379d044711537d9ce3b3b58c575c58">PERIODIC<\/a> = 0x01,        <\/div>$/;"	a
 l00123	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00123"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92a1c2adefa6a3b7015b29913c49ee050c7">  123<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92a1c2adefa6a3b7015b29913c49ee050c7">DIRICHLET<\/a> = 0x02,       <\/div>$/;"	a
 l00124	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00124"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ae58d114453737f3084aa5c645eba3412">  124<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ae58d114453737f3084aa5c645eba3412">NEUMANN<\/a> = 0x03,         <\/div>$/;"	a
-l00125	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00125"><\/a><span class="lineno">  125<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a22d9ed0067f9525b37c2e3fe21bfd3f7">gaussSeidel3DStandard<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00125	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00125"><\/a><span class="lineno">  125<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#aec3eacec98f3c6f7447ef55398338fcd">gaussSeidel3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00125	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00125"><\/a><span class="lineno"><a class="line" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ac157bdf0b85a40d2619cbc8bc1ae5fe2">  125<\/a><\/span>&#160;    <a class="code" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92ac157bdf0b85a40d2619cbc8bc1ae5fe2">NONE<\/a> = 0x10             <\/div>$/;"	a
 l00126	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00126"><\/a><span class="lineno">  126<\/span>&#160;<\/div>$/;"	a
 l00126	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00126"><\/a><span class="lineno">  126<\/span>&#160;} <a class="code" href="pinc_8h.html#aea87e0210c26e51a4591758edde35e92">bndType<\/a>;<\/div>$/;"	a
@@ -1689,8 +1695,10 @@ l00194	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00194"><\
 l00195	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00195"><\/a><span class="lineno">  195<\/span>&#160;<\/div>$/;"	a
 l00207	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00207"><\/a><span class="lineno">  207<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a39dd7684dd0d71d15d36b97b1eb69a01">bilinearProlong3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00208	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00208"><\/a><span class="lineno">  208<\/span>&#160;<\/div>$/;"	a
-l00209	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00209"><\/a><span class="lineno">  209<\/span>&#160;<\/div>$/;"	a
-l00210	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00210"><\/a><span class="lineno">  210<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
+l00222	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00222"><\/a><span class="lineno">  222<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad92fdc06fccb6cf58d3dd85add3d75a5">mgResidual<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *res, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00223	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00223"><\/a><span class="lineno">  223<\/span>&#160;<\/div>$/;"	a
+l00224	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00224"><\/a><span class="lineno">  224<\/span>&#160;<\/div>$/;"	a
+l00225	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00225"><\/a><span class="lineno">  225<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
 l00242	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00242"><\/a><span class="lineno"><a class="line" href="structGrid.html">  242<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
 l00243	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00243"><\/a><span class="lineno"><a class="line" href="structGrid.html#a6678a9b7b4826c591329ab61ced8e834">  243<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGrid.html#a6678a9b7b4826c591329ab61ced8e834">val<\/a>;                <\/div>$/;"	a
 l00244	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00244"><\/a><span class="lineno"><a class="line" href="structGrid.html#a71c7f28f3712291ebcde86fed2e65382">  244<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGrid.html#a71c7f28f3712291ebcde86fed2e65382">rank<\/a>;                   <\/div>$/;"	a
@@ -1852,8 +1860,8 @@ letter_P	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="le
 letter_T	doc/html/classes.html	/^<\/td><td valign="top"><a class="el" href="structMultigrid.html">Multigrid<\/a>&#160;&#160;&#160;<\/td><td rowspan="2" valign="bottom"><a name="letter_T"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;T&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 levels	script/grid_plots.py	/^levels=np.arange(vmin,vmax, np.abs(vmax - vmin)\/50.)$/;"	v
 line_status	lib/iniparser/src/iniparser.c	/^} line_status ;$/;"	t	typeref:enum:_line_status_	file:
-linear M G Solv dictionary $ ast$ini Multigrid $ ast$mg Rho Multigrid $ ast$mg Phi Multigrid $ ast$mg Res const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{linear\\+M\\+G\\+Solv@{linear\\+M\\+G\\+Solv}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
-linearMGSolv	src/multigrid.c	/^void linearMGSolv(dictionary *ini, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){$/;"	f
+linear M G Solv Multigrid $ ast$mg Rho Multigrid $ ast$mg Phi Multigrid $ ast$mg Res const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{linear\\+M\\+G\\+Solv@{linear\\+M\\+G\\+Solv}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
+linearMGSolv	src/multigrid.c	/^void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){$/;"	f
 listGetNElements	src/io.c	/^static int listGetNElements(const char* list){$/;"	f	file:
 listToStrArr	src/io.c	/^static char** listToStrArr(const char* restrict list){$/;"	f	file:
 llb	src/old/const.h	/^double llb[S], lzet[S], lv0[S]; \/\/lower bound, partition funct, initial velocity$/;"	v
@@ -1958,8 +1966,8 @@ mgAlloc	src/multigrid.c	/^Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 mgAllocSubGrids	src/multigrid.c	/^Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,$/;"	f
 mgFree	src/multigrid.c	/^void mgFree(Multigrid *multigrid){$/;"	f
 mgResidual	src/multigrid.c	/^void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){$/;"	f
-mgVRecursive	src/multigrid.c	/^void inline static mgVRecursive(dictionary *ini, int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f	file:
-mgVRegular	src/multigrid.c	/^void mgVRegular(int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f
+mgVRecursive	src/multigrid.c	/^void inline static mgVRecursive(int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f	file:
+mgVRegular	src/multigrid.c	/^void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,$/;"	f
 mglin	src/old/fmg/fmg.c	/^void mglin(double *u, int ncycle)$/;"	f
 mglin_destroy	src/old/fmg/fmg.c	/^void mglin_destroy()$/;"	f
 mglin_init	src/old/fmg/fmg.c	/^void mglin_init(int nx, int ny, int nz)$/;"	f
@@ -2147,6 +2155,7 @@ ph_xmax	src/old/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_
 ph_xmax	src/old/triang/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
 ph_xmin	src/old/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
 ph_xmin	src/old/triang/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_length, ph_a;$/;"	v
+phi	script/3D_grid_contourf.py	/^phi = phi[:,:,:,0]$/;"	v
 phi	src/old/const.h	/^double *phi;$/;"	v
 phi	src/old/triang/const.h	/^double *phi;$/;"	v
 phi0	script/grid_plots.py	/^phi0 = phi0[:,:,0]$/;"	v
@@ -2163,6 +2172,7 @@ phi8	script/grid_plots.py	/^phi8 = phi8[:,:,0]$/;"	v
 phi9	script/grid_plots.py	/^phi9 = phi9[:,:,0]$/;"	v
 phiMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 phiMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
+phiSlice	script/3D_grid_contourf.py	/^phiSlice = mlab.figure()$/;"	v
 phi_nodust	src/old/const.h	/^double *phi_nodust;$/;"	v
 phi_nodust	src/old/triang/const.h	/^double *phi_nodust;$/;"	v
 phiav	src/old/const.h	/^double *phiav;$/;"	v
@@ -2177,6 +2187,8 @@ photons	src/old/const.h	/^int photons;$/;"	v
 photons	src/old/triang/const.h	/^int photons;$/;"	v
 pi	src/old/const.h	/^double pi;$/;"	v
 pi	src/old/triang/const.h	/^double pi;$/;"	v
+plane_orientation	script/3D_grid_contourf.py	/^                            plane_orientation='x_axes',$/;"	v
+plane_orientation	script/3D_grid_contourf.py	/^                            plane_orientation='y_axes',$/;"	v
 point_t	src/old/triang/triangulate.h	/^} point_t, vector_t;$/;"	t	typeref:struct:__anon8
 points	proof of concept/get boundary/scrabble.c	/^int *points = &grid->nGPoints[nDims-1];$/;"	v
 points_on_sphere	src/old/spherical.c	/^void points_on_sphere(int dustnumber, int numberofpoints)$/;"	f
@@ -2343,8 +2355,10 @@ redistribute	src/old/triang/dustg.c	/^void redistribute(void)$/;"	f
 relax	src/old/fmg/fmg.c	/^void relax(double ***u, double ***rhs, int nx, int ny, int nz)$/;"	f
 renormE	src/pinc.h	/^	double *renormE;	\/\/\/< Re-normalization factors for E (nSpecies elements)$/;"	m	struct:__anon1
 renormRho	src/pinc.h	/^	double *renormRho;	\/\/\/< Re-normalization factors for rho (nSpecies elements)$/;"	m	struct:__anon1
+res	script/3D_grid_contourf.py	/^res = res[:,:,:,0]$/;"	v
 resid	src/old/fmg/fmg.c	/^void resid(double ***res, double ***u, double ***rhs, int nx, int ny, int nz)$/;"	f
 restrictor	src/multigrid.h	/^	void (*restrictor)(const Grid *fine, Grid *coarse);	\/\/\/< Function pointer to restrictor$/;"	m	struct:__anon7
+rho	script/3D_grid_contourf.py	/^rho = rho[:,:,:,0]$/;"	v
 rho	script/grid_plots.py	/^rho = rho[:,:,0]$/;"	v
 rho	src/old/const.h	/^  double rho;$/;"	m	struct:d_rho
 rho	src/old/const.h	/^double *rho; \/*array for charge density and collected charge on the dust*\/ $/;"	v
@@ -2354,6 +2368,7 @@ rhoMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, P
 rhoMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 rhoMAXhalf	src/old/const.h	/^int FsEy, rhoMAXhalf, pdens_off, KE_off, FsEz, PEMAXhalf;$/;"	v
 rhoMAXhalf	src/old/triang/const.h	/^int FsEy, rhoMAXhalf, pdens_off, KE_off, FsEz, PEMAXhalf;$/;"	v
+rhoSlice	script/3D_grid_contourf.py	/^rhoSlice = mlab.figure()$/;"	v
 rho_av	src/old/const.h	/^  double rho_av;$/;"	m	struct:d_rho
 rho_av	src/old/triang/const.h	/^  double rho_av;$/;"	m	struct:d_rho
 right	src/old/triang/triangulate.h	/^  int left, right;		\/* children *\/$/;"	m	struct:__anon11
@@ -2403,6 +2418,12 @@ size	lib/iniparser/src/dictionary.h	/^    int             size ;  \/** Storage s
 size	src/pinc.h	/^	int *size;					\/\/\/< Size of array (including ghosts) (rank elements)$/;"	m	struct:__anon4
 sizeProd	src/pinc.h	/^	long int *sizeProd;			\/\/\/< Cumulative product of size (rank+1 elements)$/;"	m	struct:__anon4
 slice	src/pinc.h	/^	double *slice;				\/\/\/< Slice buffer of the grid sent to other subdomains$/;"	m	struct:__anon4
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=phi.shape[0]\/2,$/;"	v
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=phi.shape[1]\/2,$/;"	v
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=res.shape[0]\/2,$/;"	v
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=res.shape[1]\/2,$/;"	v
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=rho.shape[0]\/2,$/;"	v
+slice_index	script/3D_grid_contourf.py	/^                            slice_index=rho.shape[1]\/2,$/;"	v
 slvsml	src/old/fmg/fmg.c	/^void slvsml(double ***u, double ***rhs)$/;"	f
 slvsml2	src/old/fmg/fmg.c	/^void slvsml2(double ***u, double ***rhs, int nx, int ny, int nz)$/;"	f
 smaller_same_sign	src/old/dustg.c	/^inline double smaller_same_sign(double a, double b) $/;"	f
@@ -2569,11 +2590,11 @@ virtpart	src/old/dustg.c	/^void virtpart(void)$/;"	f
 virtpart	src/old/triang/dustg.c	/^void virtpart(void)$/;"	f
 visited	src/old/triang/monotone.c	/^static int visited[TRSIZE];$/;"	v	file:
 vmax	proof of concept/stool/stool.c	/^double vmax(double *v, int N){$/;"	f
-vmax	script/grid_plots.py	/^vmax = 4$/;"	v
+vmax	script/grid_plots.py	/^vmax = np.max(phi11)+1$/;"	v
 vmean	src/old/const.h	/^double vmean[S];\/*mean velocity*\/$/;"	v
 vmean	src/old/triang/const.h	/^double vmean[S];\/*mean velocity*\/$/;"	v
 vmin	proof of concept/stool/stool.c	/^double vmin(double *v, int N){$/;"	f
-vmin	script/grid_plots.py	/^vmin = -1$/;"	v
+vmin	script/grid_plots.py	/^vmin = np.min(phi11)-1$/;"	v
 vmul	proof of concept/stool/stool.c	/^void vmul(double *v, int N, double value){$/;"	f
 vnext	src/old/triang/triangulate.h	/^  int vnext[4];			\/* next vertices for the 4 chains *\/$/;"	m	struct:__anon13
 vnum	src/old/triang/triangulate.h	/^  int vnum;$/;"	m	struct:__anon12

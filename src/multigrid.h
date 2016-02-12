@@ -94,7 +94,7 @@ void mgFree(Multigrid *multigrid);
  *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
  */
 
-void linearMGSolv(dictionary *ini, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -107,7 +107,7 @@ void linearMGSolv(dictionary *ini, Multigrid *mgRho, Multigrid *mgPhi, Multigrid
  *	grid trying to simplify the iteration through the grid.
  *
  */
-void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void gaussSeidel3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -122,7 +122,7 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo 
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void gaussSeidel3DStandard(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 2D
@@ -205,6 +205,21 @@ void bilinearProlong2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  *
  */
 void bilinearProlong3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+
+/**
+ * @brief Computes residual
+ * @param	res		Residual grid
+ * @param	phi		Phi	grid
+ * @param	rho		Rho grid
+ * @param	mpiInfo	Subdomain information
+ * @return	res
+ *
+ *	Computes the residual on a grid level.
+ *	\f[
+ *		d_l = \nabla^2_l\phi_l - \rho_l
+ *	\f]
+ */
+void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo);
 
 
  #endif // MULTIGRID_H

@@ -65,7 +65,6 @@ static int testRestrictor(){
 	 * Set up a predefined fine grid, then checks the restrictor against a
 	 * precalculated results
 	 */
-	//TBF(inished)
 
 	dictionary *ini = iniGetDummy();
 

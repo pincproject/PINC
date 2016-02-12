@@ -42,12 +42,12 @@ y = np.arange(rho.shape[0])
 X,Y = np.meshgrid(x,y)
 
 
-# vmin = np.min(phi11)
-# vmax = np.max(phi11)
+vmin = np.min(phi11)-1
+vmax = np.max(phi11)+1
 # vmin = -100
 # vmax = 200
-vmin = -1
-vmax = 4
+# vmin = -1
+# vmax = 4
 
 levels=np.arange(vmin,vmax, np.abs(vmax - vmin)/50.)
 
@@ -60,18 +60,32 @@ fig.colorbar(im, cax=cbar_ax, orientation = "horizontal")
 
 
 fig, ax = plt.subplots(4,3, sharex= True , sharey = True)
-im = ax[0,0].contourf(X,Y,phi0, levels = levels)
-ax[0,1].contourf(X,Y,phi1, levels = levels)
-ax[0,2].contourf(X,Y,phi2, levels = levels)
-ax[1,0].contourf(X,Y,phi3, levels = levels)
-ax[1,1].contourf(X,Y,phi4, levels = levels)
-ax[1,2].contourf(X,Y,phi5, levels = levels)
-ax[2,0].contourf(X,Y,phi6, levels = levels)
-ax[2,1].contourf(X,Y,phi7, levels = levels)
-ax[2,2].contourf(X,Y,phi8, levels = levels)
-ax[3,0].contourf(X,Y,phi9, levels = levels)
-ax[3,1].contourf(X,Y,phi10, levels = levels)
-ax[3,2].contourf(X,Y,phi11, levels = levels)
+# im = ax[0,0].contourf(X,Y,phi0, levels = levels)
+# ax[0,1].contourf(X,Y,phi1, levels = levels)
+# ax[0,2].contourf(X,Y,phi2, levels = levels)
+# ax[1,0].contourf(X,Y,phi3, levels = levels)
+# ax[1,1].contourf(X,Y,phi4, levels = levels)
+# ax[1,2].contourf(X,Y,phi5, levels = levels)
+# ax[2,0].contourf(X,Y,phi6, levels = levels)
+# ax[2,1].contourf(X,Y,phi7, levels = levels)
+# ax[2,2].contourf(X,Y,phi8, levels = levels)
+# ax[3,0].contourf(X,Y,phi9, levels = levels)
+# ax[3,1].contourf(X,Y,phi10, levels = levels)
+# ax[3,2].contourf(X,Y,phi11, levels = levels)
+
+im = ax[0,0].contourf(X,Y,phi0, 50)
+ax[0,1].contourf(X,Y,phi1, 50)
+ax[0,2].contourf(X,Y,phi2, 50)
+ax[1,0].contourf(X,Y,phi3, 50)
+ax[1,1].contourf(X,Y,phi4, 50)
+ax[1,2].contourf(X,Y,phi5, 50)
+ax[2,0].contourf(X,Y,phi6, 50)
+ax[2,1].contourf(X,Y,phi7, 50)
+ax[2,2].contourf(X,Y,phi8, 50)
+ax[3,0].contourf(X,Y,phi9, 50)
+ax[3,1].contourf(X,Y,phi10, 50)
+ax[3,2].contourf(X,Y,phi11, 50)
+
 
 fig.subplots_adjust(bottom = 0.25)
 
