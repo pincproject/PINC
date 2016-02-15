@@ -1,7 +1,7 @@
 /**
  * @file		pinc.h
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- 				Gullik Vetvik Killie <gullikvk@gys.uio.no>
+ 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  * @copyright	University of Oslo, Norway
  * @brief		PINC main header.
  * @date		11.10.15
@@ -111,6 +111,23 @@ typedef struct{
 	int *nSubdomainsProd;		///< Cumulative product of nSubdomains (nDims+1 elements)
 	int *offset;				///< Offset from global reference frame (nDims elements)
 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+
+	int nSpecies;				///< Number of species
+	int nNeighbors;				///< Number of neighbors (3^nDims-1) TBD: Omit if it's faster to recompute each time
+	int neighborhoodCenter;		///< Index of center/self in neighborhood
+	long int **migrants;		///< nMigrants (DEPRECATED)
+	long int **migrantsDummy;	///< Useful in computations (DEPRECATED)
+	long int *nEmigrants;		///< Number of migrants of each specie to each neighbor (nSpecies*nNeighbor elements)
+	long int *nEmigrantsAlloc;	///< Number of migrants allocated for to each neighbor (nNeighbor elements)
+	long int *nImmigrants;		///< Number of immigrants of each specie from each neighbour (nSpecies*nNeighbor elements)
+	long int nImmigrantsAlloc;
+	double **emigrants;			///< Buffer to house emigrants
+	double **emigrantsDummy;	///< YAY
+	double *immigrants;			///< Buffer to house immigrants
+	double *thresholds;			///< Threshold for migration (2*nDims elements)
+
+	MPI_Request *send;
+	MPI_Request *recv;
 } MpiInfo;
 
 /**
@@ -271,6 +288,10 @@ typedef struct{
 /******************************************************************************
  * DEFINED IN POPULATION.C
  *****************************************************************************/
+/**
+ * @name Population functions (population.c)
+ */
+///@{
 
 /**
  * @brief	Allocates memory for Population according to ini-file
@@ -368,10 +389,39 @@ void pVelSet(Population *pop, const double *vel);
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
 
 /**
+ * @brief	Add new particle to population
+ * @param[in,out]	pop		Population
+ * @param			s		Specie of new particle
+ * @param			pos		Position of new particle (nDims elements)
+ * @param			vel		Velocity of new particle (nDims elements)
+ * @return			void
+ */
+void pNew(Population *pop, int s, const double *pos, const double *vel);
+
+/**
+ * @brief	Cut a particle from a population
+ * @param[in,out]	pop		Population
+ * @param			s		Which specie the particle belongs to
+ * @param			p		Which index p the particle starts at
+ * @param[out]		pos		The particle's position
+ * @param[out]		vel		The particle's velocity
+ * @return					void
+ *
+ * Note that the particle to fetch is adressed by the array index p. Thus,
+ * if the third particle in the population is to be fetched p=2*nDims. In
+ * addition, the specie it belongs to, s, must be specified. This rather odd
+ * way of specifying which particle to fetch is because p and s of the particle
+ * in quest is often already known and calculating p and s from for instance the
+ * particle number i is then unnecessary amount of operations. Failure to
+ * provide valid values of p and s results in unpredictable behaviour, with
+ * the likely consequence of corrupting the whole population.
+ */
+void pCut(Population *pop, int s, long int p, double *pos, double *vel);
+
+/**
  * @brief	Creates .pop.h5-file to store population in
  * @param	ini				Dictionary to input file
  * @param	pop[in,out]		Population
- * @param	mpiInfo			MpiInfo
  * @param	fName			Filename
  * @return	void
  * @see pWriteH5(), pCloseH5()
@@ -406,7 +456,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  * dimensionalizing factor converts the axes to meters. Likewise for the
  * velocity factors.
  */
-void pCreateH5(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const char *fName);
+void pCreateH5(const dictionary *ini, Population *pop, const char *fName);
 
 /**
  * @brief	Stores particles in Population in .pop.h5-file
@@ -435,9 +485,40 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
  */
 void pCloseH5(Population *pop);
 
+/**
+ * @brief Transforms particles to local reference frame
+ * @param	pop			Population of particles
+ * @param	mpiInfo		MPI information about the reference frames
+ * @return	void
+ * @see toGlobalFrame()
+ */
+void pToLocalFrame(Population *pop, const MpiInfo *mpiInfo);
+
+/**
+ * @brief Transforms particles to global reference frame
+ * @param	pop			Population of particles
+ * @param	mpiInfo		MPI information about the reference frames
+ * @return	void
+ * @see toLocalFrame()
+ *
+ * For parallelization by means of configuration space decomposition, the
+ * the particles' positions are usually specified with respect to a local
+ * reference frame to that subdomain in order to ease computation. Some
+ * operations may require the position in global reference frame (e.g. when
+ * storing to file) for which purpose it can be transformed using this function.
+ */
+void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
+
+///@}
+
 /******************************************************************************
  * DEFINED IN GRID.C
  *****************************************************************************/
+
+ /**
+  * @name Grid functions (grid.c)
+  */
+ ///@{
 
 /**
  * @brief Allocates a Grid object as specified in the input file
@@ -526,12 +607,12 @@ void gZero(Grid *grid);
 void gSet(Grid *grid, const double *value);
 
 /**
- * @brief Multiply all values in grid by a double
+ * @brief Multiply all values in grid by a number
  * @param	grid	Grid
- * @param	num		Double to multiply by
+ * @param	num		Number to multiply by
  * @return			void
  */
-void gMulDouble(Grid *grid, double num);
+void gMul(Grid *grid, double num);
 
 /**
  * @brief Performs a central space finite difference on a grid
@@ -550,6 +631,13 @@ void gFinDiff1st(const Grid *scalar, Grid *field);
  */
 void gFinDiff2nd3D(Grid *phi,const Grid *rho);
 
+/**
+ * @brief Performs a 2nd order central space finite difference on a grid
+ * @param 	rho 	Value to do the finite differencing on
+ * @return	phi		Field returned after derivating
+ *
+ *
+ */
 void gFinDiff2nd2D(Grid *phi,const Grid *rho,const  MpiInfo *mpiInfo);
 
  /**
@@ -571,7 +659,6 @@ void gNormalizeE(const dictionary *ini, Grid *E);
 *	Adds one grid to another. result = result + addition
 *
 */
-
 void gAddTo(Grid *result, Grid *addition);
 
 /**
@@ -583,8 +670,112 @@ void gAddTo(Grid *result, Grid *addition);
  *
  * Applies boundary conditions
  */
-
 void gBnd(Grid *grid, const MpiInfo *mpiInfo);
+
+/**
+ * @brief	Assign particles artificial positions suitable for debugging
+ * @param			ini				Input file dictionary
+ * @param[in,out]	grid			Grid
+ *
+ * A quantity will be artificially assigned values depending on the position of
+ * the grid points. For scalar valued quantities, node j will have value j,
+ * node (j,k) will have value j+k*10 and so on for higher dimensions. For
+ * instance at node (j,k,l)=(4,5,6) the value will be 456.
+ *
+ * For vector valued quantities the integer part of all values at a given point
+ * are the same (unless there is 10 values or more), but the decimal part
+ * increments by 0.1 for each value.
+ *
+ * In addition, 1000*mpiRank is added to all values. For instance the third
+ * value (z-component) at grid point (j,k,l)=(4,5,6) of the subdomain with MPI
+ * rank 3 will be 3654.3.
+ */
+void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
+
+/**
+ * @brief	Creates .grid.h5-file to store population in
+ * @param	ini				Dictionary to input file
+ * @param	grid			Grid
+ * @param	mpiInfo			MpiInfo
+ * @param	denorm			Quantity denormalization factors
+ * @param	dimen			Quantity dimensionalizing factors
+ * @param	fName			Filename
+ * @return	void
+ * @see gWriteH5(), gCloseH5()
+ *
+ * An output file is created whose filename is as explained in createH5File().
+ * Remember to call gCloseH5().
+ *
+ * The file will have one dataset in the root group for each time-step a grid
+ * quantity is stored, named "n=<timestep>" where <timestep> is signified with
+ * one decimal allowing for interleaved quantities.
+ *
+ * In PINC it is made an distinction between _non-dimensionalizing_ and
+ * _normalizing_. Input quantities are non-dimensionalized by specifying them
+ * in terms of Debye lengths, plasma frequency, elementary charges and so on
+ * rather than using SI-units. Further on, the program normalizes them with
+ * respect to for instance cell size in order to make computations as fast as
+ * possible. The data stored in .grid.h5 is non-dimensionalized _and_ normalized
+ * as it is often much cheaper to just rescale the axis in the visualization
+ * tool rather than re-scaling all quantities in PINC.
+ *
+ * The file will have four attributes of size nDims attached to the root group
+ * ("/") which is useful for interpreting the data. These are:
+ *	- Axis denormalization factor
+ *	- Axis dimensionalizing factor
+ *	- Quantity denormalization factor
+ *	- Quantity dimensionalizing factor
+ *
+ * The axis denormalization factor can be multiplied to the integer axis to
+ * convert it to be in terms of Debye lengths. Another multiplication by axis
+ * dimensionalizing factor converts the axes to meters. Likewise for the
+ * quantity factors. However, since the quantity factors depend on which
+ * quantity it is (e.g. charge density or electric field), it must be specified
+ * in the inputs denorm and dimen in this function. They are expected to be of
+ * length nDims.
+ */
+void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
+
+/**
+ * @brief	Stores quantity in gridQuantity in .grid.h5-file
+ * @param	grid			Grid
+ * @param	mpiInfo			MpiInfo
+ * @param	n				Timestep of quantity to be stored
+ * @return	void
+ * @see gCreateH5()
+ *
+ * The position and velocity of all particles are stored, referred to global
+ * reference frame. The function takes care of merging the particles from all
+ * MPI nodes to one file.
+ *
+ */
+void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
+
+/**
+ * @brief	Closes .grid.h5-file
+ * @param	grid		Grid
+ * @return	void
+ */
+void gCloseH5(Grid *grid);
+
+/**
+ * @brief Creates a neighborhood in MpiInfo
+ * @param			ini		Dictionary to input file
+ * @param[in,out]	mpiInfo	MpiInfo
+ * @param			grid	Some grid
+ *
+ * Prior to creating a neighborhood with this function domain decomposition
+ * functions for particles (particle migration) will not work.
+ */
+void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid);
+
+/**
+ * @brief Destroys a neighborhood
+ * @param	mpiInfo	MpiInfo
+ */
+void gDestroyNeighborhood(MpiInfo *mpiInfo);
+
+///@}
 
 /******************************************************************************
  * DEFINED IN IO.C
@@ -636,6 +827,11 @@ void msg(msgKind kind, const char* restrict format,...);
  * frequent invocations (for instance per particle) should be avoided.
  */
 void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...);
+
+/**
+ * @name ini-functions
+ */
+///@{
 
 /**
  * @brief	Opens PINC input ini-file specified in PINC's arguments.
@@ -741,6 +937,8 @@ double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
  */
 int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
 
+///@}
+
 /**
  * @brief Frees dynamically allocated NULL-terminated array of strings
  * @param	strArr	Pointer to array of strings
@@ -790,69 +988,9 @@ void freeStrArr(char** strArr);
  */
 hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt);
 
-/**
- * @brief	Assign particles artificial positions suitable for debugging
- * @param			ini				Input file dictionary
- * @param[in,out]	grid			Grid
- *
- * A quantity will be artificially assigned values depending on the position of
- * the grid points. For scalar valued quantities, node j will have value j,
- * node (j,k) will have value j+k*10 and so on for higher dimensions. For
- * instance at node (j,k,l)=(4,5,6) the value will be 456.
- *
- * For vector valued quantities the integer part of all values at a given point
- * are the same (unless there is 10 values or more), but the decimal part
- * increments by 0.1 for each value.
- *
- * In addition, 1000*mpiRank is added to all values. For instance the third
- * value (z-component) at grid point (j,k,l)=(4,5,6) of the subdomain with MPI
- * rank 3 will be 3654.3.
- */
-void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
-
-/**
- * @brief	Creates .grid.h5-file to store population in
- * @param	ini				Dictionary to input file
- * @param	grid			Grid
- * @param	mpiInfo			MpiInfo
- * @param	denorm			Quantity denormalization factors
- * @param	dimen			Quantity dimensionalizing factors
- * @param	fName			Filename
- * @return	void
- * @see gWriteH5(), gCloseH5()
- *
- * An output file is created whose filename is as explained in createH5File().
- * Remember to call gCloseH5().
- *
- * The file will have one dataset in the root group for each time-step a grid
- * quantity is stored, named "n=<timestep>" where <timestep> is signified with
- * one decimal allowing for interleaved quantities.
- *
- * In PINC it is made an distinction between _non-dimensionalizing_ and
- * _normalizing_. Input quantities are non-dimensionalized by specifying them
- * in terms of Debye lengths, plasma frequency, elementary charges and so on
- * rather than using SI-units. Further on, the program normalizes them with
- * respect to for instance cell size in order to make computations as fast as
- * possible. The data stored in .grid.h5 is non-dimensionalized _and_ normalized
- * as it is often much cheaper to just rescale the axis in the visualization
- * tool rather than re-scaling all quantities in PINC.
- *
- * The file will have four attributes of size nDims attached to the root group
- * ("/") which is useful for interpreting the data. These are:
- *	- Axis denormalization factor
- *	- Axis dimensionalizing factor
- *	- Quantity denormalization factor
- *	- Quantity dimensionalizing factor
- *
- * The axis denormalization factor can be multiplied to the integer axis to
- * convert it to be in terms of Debye lengths. Another multiplication by axis
- * dimensionalizing factor converts the axes to meters. Likewise for the
- * quantity factors. However, since the quantity factors depend on which
- * quantity it is (e.g. charge density or electric field), it must be specified
- * in the inputs denorm and dimen in this function. They are expected to be of
- * length nDims.
- */
-void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
+/******************************************************************************
+ * DEFINED IN AUX.C
+ *****************************************************************************/
 
 /**
  * @brief	Stores quantity in Grid in .grid.h5-file
@@ -870,15 +1008,9 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const 
 void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
- * @brief	Closes .grid.h5-file
- * @param	grid		Grid
- * @return	void
+ * @name Timer functions
  */
-void gCloseH5(Grid *grid);
-
-/******************************************************************************
- * DEFINED IN AUX.C
- *****************************************************************************/
+///@{
 
 /**
  * @brief	Allocates a Timer struct
@@ -888,14 +1020,14 @@ void gCloseH5(Grid *grid);
  *
  * Remember to free using freeTimer().
  */
-Timer *allocTimer(int rank);
+Timer *tAlloc(int rank);
 
 /**
  * @brief	Frees a Timer struct allocated with allocTimer()
  * @param	timer 	Pointer to Timer struct
  * @see		Timer, allocTimer()
  */
-void freeTimer(Timer *timer);
+void tFree(Timer *timer);
 
 /**
  * @brief	Prints a message along with timing information
@@ -916,62 +1048,7 @@ void freeTimer(Timer *timer);
  */
 void tMsg(Timer *timer, const char *restrict format, ...);
 
-/**
- * @brief Returns the product of all elements in an integer array
- * @param	a			Pointer to array
- * @param	nElements	Number of elements in array
- * @return	Product
- */
-int intArrProd(const int *a, int nElements);
-
-/**
- * @brief Returns the product of all elements in a double array
- * @param	a			Pointer to array
- * @param	nElements	Number of elements in array
- * @return	Product
- */
-double doubleArrProd(const double *a, int nElements);
-
-/**
- * @brief Returns the cumulative product of the elements in an integer array
- * @param	a			pointer to array
- * @param	nElements	Number of elements in array
- * @return	Pointer to allocated array of size nElements+1
- *
- * The result will be given by:
- * @code
- *	result[0] = 1;
- *	result[1] = a[0];
- *	result[2] = a[0]*a[1];
- *	...
- * @endcode
- */
-int *intArrCumProd(const int *a, int nElements);
-
-/**
- * @brief Returns the cumulative product of the elements in an long integer array
- * @param	a			pointer to array
- * @param	nElements	Number of elements in array
- * @return	Pointer to allocated array of size nElements+1
- *
- * The result will be given by:
- * @code
- *	result[0] = 1;
- *	result[1] = a[0];
- *	result[2] = a[0]*a[1];
- *	...
- * @endcode
- */
-long int *longIntArrCumProd(const int *a, int nElements);
-
-/**
- * @brief Returns the product of all elements in an integer array
- * @param	a			pointer to array
- * @param	b			pointer to array
- * @param	nElements	Number of elements in arrays
- * @return	Pointer to allocated array of size nElements
- */
-int *intArrMul(const int *a, const int *b, int nElements);
+///@}
 
 /**
  * @brief Concatenates strings
@@ -983,7 +1060,187 @@ int *intArrMul(const int *a, const int *b, int nElements);
  * Contrary to strcat() this function allocates a new string of suitable length.
  * Make sure to call free().
  */
-char *strAllocCat(int n,...);
+char *strCatAlloc(int n,...);
+
+/** @name Array functions
+ * This group of functions perform simple and common array/vector operations on
+ * one array/vector 'a' (unary operations) or two arrays/vectors 'a' and 'b'
+ * (binary operations). Some operations may have scalar-valued results, in which
+ * case the return value of the function is used, while others have
+ * vector-valued results, in which case a variable 'res' must be pre-allocated
+ * to hold the result. Example:
+ *
+ * @code
+ *	int n = 5;
+ *	int a[] = {1,2,3,4,5};
+ *	int b[] = {2,3,4,5,6};
+ *	int *res = malloc(n*sizeof(*res));
+ *	int s = aiSum(a,n);	// The sum of all elements in a (the scalar 15)
+ *	aiAdd(a,b,res,n);		// The sum of a and b (the vector {3,5,7,9,11})
+ * @endcode
+ *
+ * All functions starts with the prefix 'a' (for array) and a second letter
+ * signifying the datatype of the arrays:
+ *
+ *  prefix  | datatype
+ *	--------|----------
+ *	ad      | double
+ *	ai      | int
+ *	al      | long int
+ *
+ * The (scalar-valued) return values of certain 'ai'-functions may still be long
+ * int since, for instance, the product of many int's may end up in the long int
+ * range. If the result is stored in a plain int the result will be
+ * automatically cast to int without emitting a warning. Likewise, the number
+ * of elements of the arrays (n) is always of type long int to support large
+ * arrays, but using a plain int should cast nicely (strictly speaking, int and
+ * long int is the same on most modern architectures).
+ *
+ * In-place operations are supported, i.e. the 'res' array may very well be the
+ * same as one or both of the input array. Example:
+ *
+ * @code
+ *	int n = 3;
+ *	int a[] = {1,2,3}
+ *	aiMul(a,a,a,n);		// a now equals {1,4,9}
+ * @endcode
+ *
+ * Finally notice that pointer arithmetics along with adjusted values of 'n' may
+ * be utilized to affect only parts of an array. Example:
+ *
+ * @code
+ *	int n = 5;
+ *	int a[] = {1,1,1,1,1};
+ *	aiSetAll(a,n,2);		// a now equals {2,2,2,2,2}
+ *	aiSetAll(a+1,3,5);		// a now equals {2,5,5,5,2}
+ *	aiSetAll(&a[1],3,7);	// a now equals {2,7,7,7,2}
+ * @endcode
+ *
+ * @param		a		Input array/vector (unary operations)
+ * @param		b		Input array/vector (unary and binary operations)
+ * @param[out]	res		Resulting array/vector (if result is vector-valued)
+ * @param		n		Number of elements in a (and b and typically res)
+ * @param		value	Input scalar value to use in operation (if any)
+ * @return				Resulting scalar (if result is scalar-valued)
+ */
+///@{
+///@brief Adds two arrays
+void adAdd(const double *a, const double *b, double *res, long int n);
+///@brief Adds two arrays
+void aiAdd(const int *a, const int *b, int *res, long int n);
+///@brief Adds two arrays
+void alAdd(const long int *a, const long int *b, long int *res, long int n);
+///@brief Multiplies two arrays element-wise (Hadamard).
+void adMul(const double *a, const double *b, double *res, long int n);
+///@brief Multiplies two arrays element-wise (Hadamard).
+void aiMul(const int *a, const int *b, int *res, long int n);
+///@brief Multiplies two arrays element-wise (Hadamard).
+void alMul(const long int *a, const long int *b, long int *res, long int n);
+///@brief Shifts an array by a constant value
+void adShift(double *a, long int n, double value);
+///@brief Shifts an array by a constant value
+void aiShift(int *a, long int n, int value);
+///@brief Shifts an array by a constant value
+void alShift(long int *a, long int n, long int value);
+///@brief Returns maximum value in an array
+double adMax(const double *a, long int n);
+///@brief Returns maximum value in an array
+int aiMax(const int *a, long int n);
+///@brief Returns maximum value in an array
+long int alMax(const long int *a, long int n);
+///@brief Returns minimum value in an array
+double adMin(const double *a, long int n);
+///@brief Returns minimum value in an array
+int aiMin(const int *a, long int n);
+///@brief Returns minimum value in an array
+long int alMin(const long int *a, long int n);
+///@brief Returns most significant extremum (maximum or minimum) of an array.
+/// For instance, if -6 is the minimum and 5 is the maximum the return value is
+/// -6.
+double adExt(const double *a, long int n);
+///@brief Returns most significant extremum (maximum or minimum) of an array.
+/// For instance, if -6 is the minimum and 5 is the maximum the return value is
+/// -6.
+int aiExt(const int *a, long int n);
+///@brief Returns most significant extremum (maximum or minimum) of an array.
+/// For instance, if -6 is the minimum and 5 is the maximum the return value is
+/// -6.
+long int alExt(const long int *a, long int n);
+///@brief Returns sum of all elements
+double adSum(const double *a, long int n);
+///@brief Returns sum of all elements
+long int aiSum(const int *a, long int n);
+///@brief Returns sum of all elements
+long int alSum(const long int *a, long int n);
+///@brief Returns average of all elements
+double adAvg(const double *a, long int n);
+///@brief Returns average of all elements
+double aiAvg(const int *a, long int n);
+///@brief Returns average of all elements
+double alAvg(const long int *a, long int n);
+///@brief Returns product of all elements
+double adProd(const double *a, long int n);
+///@brief Returns product of all elements
+long int aiProd(const int *a, long int n);
+///@brief Returns product of all elements
+long int alProd(const int *a, long int n);
+///@brief Returns dot product of vectors
+int adDotProd(const double *a, const double *b, long int n);
+///@brief Returns dot product of vectors
+int aiDotProd(const int *a, const int *b, long int n);
+///@brief Returns dot product of vectors
+int alDotProd(const long int *a, const long int *b, long int n);
+///@brief Returns 1 if arrays are equal, 0 otherwise. Every element must be
+/// at maximum 'tol' apart to be considered equal (max-norm).
+int adEq(const double *a, const double *b, long int n, double tol);
+///@brief Returns 1 if arrays are equal, 0 otherwise
+int aiEq(const int *a, const int *b, long int n);
+///@brief Returns 1 if arrays are equal, 0 otherwise
+int alEq(const long int *a, const long int *b, long int n);
+///@brief Determine cumulative product of elements in 'a' starting at 1.
+/// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
+/// result is of lenght n+1 in this case.
+void adCumProd(const double *a, double *res, long int n);
+///@brief Determine cumulative product of elements in 'a' starting at 1.
+/// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
+/// result is of lenght n+1 in this case.
+void aiCumProd(const int *a, int *res, long int n);
+///@brief Determine cumulative product of elements in 'a' starting at 1.
+/// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
+/// result is of lenght n+1 in this case. Notice that this function is of mixed
+/// datatype: input is int while output is long int to facilitate the possibly
+/// larger values of the output. Pointers to arrays of different types do not
+/// cast nicely since data may be mis-aligned upon casting.
+void ailCumProd(const int *a, long int *res, long int n);
+///@brief Determine cumulative product of elements in 'a' starting at 1.
+/// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
+/// result is of lenght n+1 in this case.
+void alCumProd(const long int *a, long int *res, long int n);
+///@brief Sets all elements in array to 'value'
+void adSetAll(double *a, long int n, double value);
+///@brief Sets all elements in array to 'value'
+void aiSetAll(int *a, long int n, int value);
+///@brief Sets all elements in array to 'value'
+void alSetAll(long int *a, long int n, long int value);
+///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
+void adSet(double *a, long int n, ...);
+///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
+void aiSet(int *a, long int n, ...);
+///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
+void alSet(long int *a, long int n, ...);
+///@brief See adPrint(). varName is the name to output for the variable.
+void adPrintInner(double *a, long int n, char *varName);
+///@brief See aiPrint(). varName is the name to output for the variable.
+void aiPrintInner(int *a, long int n, char *varName);
+///@brief See alPrint(). varName is the name to output for the variable.
+void alPrintInner(long int *a, long int n, char *varName);
+///@brief Prints an array in a nice format (for debugging only).
+#define adPrint(a,n) do { adPrintInner(a,n,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define aiPrint(a,n) do { aiPrintInner(a,n,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define alPrint(a,n) do { alPrintInner(a,n,#a); } while (0)
+///@}
 
 /**
  * @brief Writes grid structs to a parsefile

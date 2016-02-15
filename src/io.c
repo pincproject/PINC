@@ -16,12 +16,16 @@
  * of those modules in case they are to be replaced in the future.
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
 #include <mpi.h>
 #include <hdf5.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "iniparser.h"
 #include "pinc.h"
 
@@ -30,6 +34,18 @@
 /******************************************************************************
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
+
+ /**
+  * @brief Makes a directory
+  * @param	dir		Directory name
+  * @return	0 for success, 1 for failure
+  *
+  * dir can be a path but ancestors must exist. Directory will have permissions
+  * 0775. Used in makePath().
+  *
+  * @see makePath().
+  */
+ static int makeDir(const char *dir);
 
  /**
   * @brief Makes all parent directories of URL path
@@ -45,7 +61,7 @@
   * Already existing folders are left as-is. This function can be used to ensure
   * that the parent directories of its path exists.
   */
- int makeParentPath(const char *path);
+ int makePath(const char *path);
 
 /**
  * @brief	Splits a comma-separated list-string to an array of strings.
@@ -81,12 +97,28 @@ static int listGetNElements(const char* list);
 dictionary* iniOpen(int argc, char *argv[]){
 
 	// Sanity check on input arguments
-	if(argc!=2)
-		msg(ERROR,"exactly one argument expected (the input file).");
+	if(argc<2)
+		msg(ERROR,"at least one argument expected (the input file).");
 
 	// Open ini-file
 	dictionary *ini = iniparser_load(argv[1]);
 	if(ini==NULL) msg(ERROR,"Failed to open %s.",argv[1]);
+
+	for(int i=2;i<argc;i++){
+		if(!strcmp(argv[i],"getnp")){	// Just returning number of processes
+			int nDims;
+			int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+			int np = aiProd(nSubdomains,nDims);
+			printf("%i\n",np);
+			free(nSubdomains);
+			exit(0);
+		} else {
+			char *value = strstr(argv[i],"=");
+			*value = '\0';
+			value++;
+			iniparser_set(ini,argv[i],value);
+		}
+	}
 
 	// Start new fmsg()-files (iterate through all files in [msgfiles] section)
 	int nKeys = iniparser_getsecnkeys(ini,"msgfiles");
@@ -101,7 +133,7 @@ dictionary* iniOpen(int argc, char *argv[]){
 			msg(WARNING|ONCE,"%s not specified. Using stdout.",keys[i]);
 		} else if(strcmp(fName,"stdout")!=0 && strcmp(fName,"stderr")!=0) {
 
-			if(makeParentPath(fName))
+			if(makePath(fName))
 				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
 
 			// check whether file exists
@@ -301,7 +333,7 @@ hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt
 	if(strcmp(fPrefix,".")==0) sep[0]='/';
 	else if(lastchar!='/') sep[0]='_';
 
-	char *fTotName = strAllocCat(6,fPrefix,sep,fName,".",fSubExt,".h5");
+	char *fTotName = strCatAlloc(6,fPrefix,sep,fName,".",fSubExt,".h5");
 
 	// Create file with MPI-I/O access
 	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
@@ -309,7 +341,7 @@ hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt
 
 
 	// Make sure parent folder exist
-	if(makeParentPath(fName))
+	if(makePath(fName))
 		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fTotName);
 
 	// check whether file exists
@@ -614,3 +646,38 @@ void ini_complete_grid(dictionary *ini){
 
 }
 */
+
+static int makeDir(const char *dir){
+    struct stat st;
+    int status = 0;
+
+    if(stat(dir, &st) != 0){
+        if (mkdir(dir, 0775) != 0 && errno != EEXIST) status = -1;
+    } else if(!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        status = -1;
+    }
+
+    return(status);
+}
+
+int makePath(const char *path){
+    char *pp;
+    char *sp;
+    int status;
+    char *copy = strdup(path);
+
+    status = 0;
+    pp = copy;
+    while (status == 0 && (sp = strchr(pp, '/')) != 0){
+        if (sp != pp){
+            *sp = '\0';
+            status = makeDir(copy);
+            *sp = '/';
+        }
+        pp = sp + 1;
+    }
+
+    free(copy);
+    return(status);
+}

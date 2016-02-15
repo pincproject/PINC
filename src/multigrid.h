@@ -221,5 +221,19 @@ void bilinearProlong3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  */
 void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo);
 
+/**
+ * @brief Returns mass of a grid
+ * @param	grid		Grid struct
+ * @param	ini			Dictionary
+ *
+ *	Computes a mass of a grid:
+ *	\f[
+ *		M = \frac{1}{N} \sum_N d^2_N
+ *	\f]
+ *
+ * NB! Not written for efficiency
+ */
+ double mgResMass3D(Grid *grid);
+
 
  #endif // MULTIGRID_H

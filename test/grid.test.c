@@ -10,55 +10,53 @@
 #include "pinc.h"
 #include "test.h"
 #include "iniparser.h"
+#include <math.h>
 
+// Loads the 5x4x3 grid which is used as example several places, and sets
+// elements equal to linear index p
+Grid *loadGrid543(int nValues){
 
-int testGValDebug(){
+	dictionary *ini = iniGetDummy();
+	iniparser_set(ini,"grid:trueSize","5,4,3");
+	iniparser_set(ini,"grid:stepSize","1,1,1");
+	iniparser_set(ini,"grid:nGhostLayers","0,0,0,0,0,0");
 
-	// dictionary *ini = iniOpenDummy();
-	// dictionary *ini = iniGetDummy();
+	Grid *grid = gAlloc(ini,nValues);
+	long int nElements = grid->sizeProd[grid->rank];
+	for(int p=0;p<nElements;p++) grid->val[p] = p;
 
-	// double debye = iniparser_getdouble(ini,"grid:debye",0);
-	// printf("debye=%f\n",debye);
+	iniparser_freedict(ini);
+	return grid;
+
+}
+
+static int testGAlloc(){
+
+	Grid *grid = loadGrid543(2);
+	int *size = grid->size;
+	long int *sizeProd = grid->sizeProd;
+	int *nGhostLayers = grid->nGhostLayers;
+	double *stepSize = grid->stepSize;
+
+	int expectedSize[] = {2,5,4,3};
+	long int expectedSizeProd[] = {1,2,10,40,120};
+	int expectedNGhostLayers[] = {0,0,0,0,0,0};
+	double expectedStepSize[] = {1,1,1,1};
+
+	utAssert(grid->rank==4,"wrong rank assigned by gAlloc");
+	utAssert(aiEq(size        ,expectedSize        ,4),"wrong size assigned by gAlloc");
+	utAssert(alEq(sizeProd    ,expectedSizeProd    ,5),"wrong sizeProd assigned by gAlloc");
+	utAssert(aiEq(nGhostLayers,expectedNGhostLayers,6),"wrong nGhostLayers assigned by gAlloc");
+	utAssert(adEq(stepSize    ,expectedStepSize    ,4,0),"wrong stepSize assigned by gAlloc");
 
 	return 0;
-	// Grid *grid = gAlloc(ini,3);
-	// MpiInfo *mpiInfo = gAllocMpi(ini);
-	// free(ini);
-	//
-	// gValDebug(grid,mpiInfo);
-	//
-	// // double *val = grid->val;
-	//
-	// for(int i=0;i<60;i++){
-	// 	// printf("%f\n",val[i]);
-	// }
-	//
-	// return 0;
 
 }
 
 static int testSwapHalo(){
-	//Not written because several comp nodes are not run in test mode
-	//
-	// dictionary *ini = iniGetDummy();
-	//
-	// iniparser_set(ini, "grid:trueSize", "6,6");
-	// iniparser_set(ini, "grid:stepSize", "1,1");
-	// iniparser_set(ini, "grid:nGhostLayers", "1,1,1,1");
-	//
-	// Grid *grid = gAlloc(ini, 1);
-	//
-	// //Load
-	// int *size = val->size;
-	// int *trueSize = val->trueSize;
-	// long int *sizeProd = val->sizeProd;
-	// int *nGhostLayers = val->nGhostLayers;
-	//
-	// //Fill grid
-	// for(int q = 0; q < sizeProd[rank]; q++) val[q] = 0.0;
-	//
-	// //Fill boundary layers
-	//
+	//Not written because several comp nodes are not run in test mode,
+	//instead done in main.local.c
+
 
 	return 0;
 }
@@ -262,15 +260,68 @@ static int testgFinDiff2nd3D(){
 	gFree(rho);
 	gFree(phi);
 
+	return;
+}
+
+static int testGCreateNeighborhood(){
+
+	dictionary *ini = iniGetDummy();
+
+	iniparser_set(ini,"grid:trueSize","10,11,12");
+	iniparser_set(ini,"grid:nGhostLayers","0,0,0,0,0,0");
+	iniparser_set(ini,"grid:thresholds","1.5,1.5,1.0,-1.5,-1.5,-1.0");
+	iniparser_set(ini,"grid:nEmigrantsAlloc","1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27");
+
+	Grid *grid = gAlloc(ini,1);
+	MpiInfo *mpiInfo = gAllocMpi(ini);
+
+	aiSet(mpiInfo->nSubdomains,3,5,4,3);
+	aiSet(mpiInfo->subdomain,3,3,1,1);
+	aiCumProd(mpiInfo->nSubdomains,mpiInfo->nSubdomainsProd,3);
+
+	mpiInfo->mpiRank = aiDotProd(mpiInfo->subdomain,mpiInfo->nSubdomainsProd,3);
+	mpiInfo->mpiSize = mpiInfo->nSubdomainsProd[mpiInfo->nDims];
+
+	gCreateNeighborhood(ini,mpiInfo,grid);
+
+	utAssert(mpiInfo->nNeighbors==27, "Wrong number of neighbours: %i",mpiInfo->nNeighbors);
+	utAssert(mpiInfo->neighborhoodCenter==13, "Wrong center of tha hood computed: %i",mpiInfo->neighborhoodCenter);
+
+	double *result = malloc(6*sizeof(*result));
+	adSet(result,6,1.5,1.5,1.0,8.5,9.5,11.0);
+	utAssert(adEq(mpiInfo->thresholds,result,6,pow(10,-15)), "Wrong thresholds assigned (using negative values)");
+
+	long int *resultl = malloc(27*sizeof(*resultl));
+	alSet(resultl,27,1,2,3,4,5,6,7,8,9,10,11,12,13,0,15,16,17,18,19,20,21,22,23,24,25,26,27);
+	utAssert(alEq(mpiInfo->nEmigrantsAlloc,resultl,27), "Wrong number of migrants allocated for (full specification)");
+
+	gDestroyNeighborhood(mpiInfo);
+	iniparser_set(ini,"grid:nEmigrantsAlloc","1,2,3");
+	gCreateNeighborhood(ini,mpiInfo,grid);
+
+	alSet(resultl,27,1,2,1,2,3,2,1,2,1,2,3,2,3,0,3,2,3,2,1,2,1,2,3,2,1,2,1);
+	utAssert(alEq(mpiInfo->nEmigrantsAlloc,resultl,27), "Wrong number of migrants allocated for (smart specification)");
+
+	gDestroyNeighborhood(mpiInfo);
+	iniparser_set(ini,"grid:nEmigrantsAlloc","4");
+	gCreateNeighborhood(ini,mpiInfo,grid);
+
+	alSetAll(resultl,27,4);
+	resultl[13]=0;
+	utAssert(alEq(mpiInfo->nEmigrantsAlloc,resultl,27), "Wrong number of migrants allocated for (all equal specification)");
+
 	return 0;
 }
 
 // All tests for grid.c is contained in this function
 void testGrid(){
+
 	utRun(&testGValDebug);
 	utRun(&testSwapHalo);
 	utRun(&testFinDiff1st);
 	utRun(&testFinDiff2nd2D);
 	utRun(&testgFinDiff2nd3D);
+	utRun(&testGAlloc);
+	utRun(&testGCreateNeighborhood);
 
 }

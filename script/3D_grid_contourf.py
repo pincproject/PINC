@@ -42,6 +42,7 @@ mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(rho),
                             plane_orientation='y_axes',
                             slice_index=rho.shape[1]/2,
                         )
+mlab.title("rho")
 mlab.colorbar(im)
 mlab.axes()
 
@@ -56,6 +57,7 @@ mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(phi),
                             plane_orientation='y_axes',
                             slice_index=phi.shape[1]/2,
                         )
+mlab.title("phi")
 mlab.colorbar(im)
 mlab.axes()
 
@@ -70,6 +72,7 @@ mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(res),
                             plane_orientation='y_axes',
                             slice_index=res.shape[1]/2,
                         )
+mlab.title("res")
 mlab.colorbar(im)
 mlab.axes()
 
