@@ -1431,6 +1431,7 @@ im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipel
 im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(res),$/;"	v
 im	script/3D_grid_contourf.py	/^im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(rho),$/;"	v
 im	script/grid_plots.py	/^im = ax.contourf(X,Y,rho, 50)$/;"	v
+im	script/grid_plots.py	/^im = ax[0,0].contourf(X,Y,phi0, 50)$/;"	v
 imatrix	src/old/fmg/nrutil.c	/^int **imatrix(long nrl, long nrh, long ncl, long nch)$/;"	f
 imatrix	src/old/fmg/nrutil.c	/^int **imatrix(nrl,nrh,ncl,nch)$/;"	f
 imaxarg1	src/old/fmg/nrutil.h	/^static int imaxarg1,imaxarg2;$/;"	v
@@ -1560,8 +1561,9 @@ ivxphs	src/old/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ivxphs	src/old/triang/const.h	/^FILE *evxphs, *ivxphs;$/;"	v
 ix	src/old/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
 ix	src/old/triang/shortcuts.c	/^inline int ix(int off, int i, int j, int k)$/;"	f
-jacobian	src/multigrid.c	/^void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){$/;"	f
-jacobian Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{jacobian@{jacobian}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
+jacobian2 D Grid $ ast$phi const Grid $ ast$rho const int n Cycles const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{jacobian2\\+D@{jacobian2\\+D}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
+jacobian2D	src/multigrid.c	/^void jacobian2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){$/;"	f
+jacobian3D	src/multigrid.c	/^void jacobian3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){$/;"	f
 kenergy	src/old/const.h	/^  double kenergy;$/;"	m	struct:particle
 kenergy	src/old/triang/const.h	/^  double kenergy;$/;"	m	struct:particle
 key	lib/iniparser/src/dictionary.h	/^    char        **  key ;   \/** List of string keys *\/$/;"	m	struct:_dictionary_
@@ -1778,24 +1780,25 @@ l00145	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00145"><\/a><s
 l00146	doc/html/test_8h_source.html	/^<div class="line"><a name="l00146"><\/a><span class="lineno">  146<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="test_8h.html#a4e62cd57eba7b6515935315570db0b2e">testMultigrid<\/a>();<\/div>$/;"	a
 l00147	doc/html/test_8h_source.html	/^<div class="line"><a name="l00147"><\/a><span class="lineno">  147<\/span>&#160;<\/div>$/;"	a
 l00148	doc/html/test_8h_source.html	/^<div class="line"><a name="l00148"><\/a><span class="lineno">  148<\/span>&#160;<span class="preprocessor">#endif \/\/ TEST_H<\/span><\/div>$/;"	a
-l00152	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00152"><\/a><span class="lineno">  152<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad2e15b39c53450cffe993fc30f083421">jacobian<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00153	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00153"><\/a><span class="lineno">  153<\/span>&#160;<\/div>$/;"	a
+l00152	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00152"><\/a><span class="lineno">  152<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a07e44a2ce2349bad4b9ba0b497eb2f22">jacobian2D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00153	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00153"><\/a><span class="lineno">  153<\/span>&#160;<span class="keywordtype">void<\/span> jacobian3D(<a class="code" href="structGrid.html">Grid<\/a> *phi, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <span class="keywordtype">int<\/span> nCycles, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
 l00154	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00154"><\/a><span class="lineno">  154<\/span>&#160;<\/div>$/;"	a
-l00167	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00167"><\/a><span class="lineno">  167<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#aaaf16e3dc38081713171a426b332cf79">halfWeightRestrict2D<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
-l00168	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00168"><\/a><span class="lineno">  168<\/span>&#160;<\/div>$/;"	a
+l00155	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00155"><\/a><span class="lineno">  155<\/span>&#160;<\/div>$/;"	a
+l00168	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00168"><\/a><span class="lineno">  168<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#aaaf16e3dc38081713171a426b332cf79">halfWeightRestrict2D<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
 l00169	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00169"><\/a><span class="lineno">  169<\/span>&#160;<\/div>$/;"	a
-l00180	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00180"><\/a><span class="lineno">  180<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a9a38de690808ad9c3bd99374c7650153">halfWeightRestrict3D<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
-l00181	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00181"><\/a><span class="lineno">  181<\/span>&#160;<\/div>$/;"	a
-l00194	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00194"><\/a><span class="lineno">  194<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad2f9d04adc4bae602795b4cb28e05bac">bilinearProlong2D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00195	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00195"><\/a><span class="lineno">  195<\/span>&#160;<\/div>$/;"	a
-l00207	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00207"><\/a><span class="lineno">  207<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a39dd7684dd0d71d15d36b97b1eb69a01">bilinearProlong3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00208	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00208"><\/a><span class="lineno">  208<\/span>&#160;<\/div>$/;"	a
-l00222	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00222"><\/a><span class="lineno">  222<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad92fdc06fccb6cf58d3dd85add3d75a5">mgResidual<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *res, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
-l00223	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00223"><\/a><span class="lineno">  223<\/span>&#160;<\/div>$/;"	a
-l00236	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00236"><\/a><span class="lineno">  236<\/span>&#160; <span class="keywordtype">double<\/span> <a class="code" href="multigrid_8h.html#abe6ff5a27f56691d1a6f8e8e47d71500">mgResMass3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid);<\/div>$/;"	a
-l00237	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00237"><\/a><span class="lineno">  237<\/span>&#160;<\/div>$/;"	a
+l00170	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00170"><\/a><span class="lineno">  170<\/span>&#160;<\/div>$/;"	a
+l00181	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00181"><\/a><span class="lineno">  181<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a9a38de690808ad9c3bd99374c7650153">halfWeightRestrict3D<\/a>(<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *fine, <a class="code" href="structGrid.html">Grid<\/a> *coarse);<\/div>$/;"	a
+l00182	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00182"><\/a><span class="lineno">  182<\/span>&#160;<\/div>$/;"	a
+l00195	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00195"><\/a><span class="lineno">  195<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad2f9d04adc4bae602795b4cb28e05bac">bilinearProlong2D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00196	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00196"><\/a><span class="lineno">  196<\/span>&#160;<\/div>$/;"	a
+l00208	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00208"><\/a><span class="lineno">  208<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#a39dd7684dd0d71d15d36b97b1eb69a01">bilinearProlong3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *fine,<span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *coarse, <span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00209	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00209"><\/a><span class="lineno">  209<\/span>&#160;<\/div>$/;"	a
+l00223	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00223"><\/a><span class="lineno">  223<\/span>&#160;<span class="keywordtype">void<\/span> <a class="code" href="multigrid_8h.html#ad92fdc06fccb6cf58d3dd85add3d75a5">mgResidual<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *res, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *rho, <span class="keyword">const<\/span> <a class="code" href="structGrid.html">Grid<\/a> *phi,<span class="keyword">const<\/span> <a class="code" href="structMpiInfo.html">MpiInfo<\/a> *mpiInfo);<\/div>$/;"	a
+l00224	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00224"><\/a><span class="lineno">  224<\/span>&#160;<\/div>$/;"	a
+l00237	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00237"><\/a><span class="lineno">  237<\/span>&#160; <span class="keywordtype">double<\/span> <a class="code" href="multigrid_8h.html#abe6ff5a27f56691d1a6f8e8e47d71500">mgResMass3D<\/a>(<a class="code" href="structGrid.html">Grid<\/a> *grid);<\/div>$/;"	a
 l00238	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00238"><\/a><span class="lineno">  238<\/span>&#160;<\/div>$/;"	a
-l00239	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00239"><\/a><span class="lineno">  239<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
+l00239	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00239"><\/a><span class="lineno">  239<\/span>&#160;<\/div>$/;"	a
+l00240	doc/html/multigrid_8h_source.html	/^<div class="line"><a name="l00240"><\/a><span class="lineno">  240<\/span>&#160;<span class="preprocessor"> #endif \/\/ MULTIGRID_H<\/span><\/div>$/;"	a
 l00259	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00259"><\/a><span class="lineno"><a class="line" href="structGrid.html">  259<\/a><\/span>&#160;<span class="keyword">typedef<\/span> <span class="keyword">struct<\/span>{<\/div>$/;"	a
 l00260	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00260"><\/a><span class="lineno"><a class="line" href="structGrid.html#a6678a9b7b4826c591329ab61ced8e834">  260<\/a><\/span>&#160;    <span class="keywordtype">double<\/span> *<a class="code" href="structGrid.html#a6678a9b7b4826c591329ab61ced8e834">val<\/a>;                <\/div>$/;"	a
 l00261	doc/html/pinc_8h_source.html	/^<div class="line"><a name="l00261"><\/a><span class="lineno"><a class="line" href="structGrid.html#a71c7f28f3712291ebcde86fed2e65382">  261<\/a><\/span>&#160;    <span class="keywordtype">int<\/span> <a class="code" href="structGrid.html#a71c7f28f3712291ebcde86fed2e65382">rank<\/a>;                   <\/div>$/;"	a
@@ -2016,6 +2019,7 @@ letter_G	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="le
 letter_M	doc/html/classes.html	/^<\/td><td rowspan="2" valign="bottom"><a name="letter_M"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;M&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 letter_P	doc/html/classes.html	/^<tr><td rowspan="2" valign="bottom"><a name="letter_P"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;P&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
 letter_T	doc/html/classes.html	/^<\/td><td valign="top"><a class="el" href="structMultigrid.html">Multigrid<\/a>&#160;&#160;&#160;<\/td><td rowspan="2" valign="bottom"><a name="letter_T"><\/a><table border="0" cellspacing="0" cellpadding="0"><tr><td><div class="ah">&#160;&#160;T&#160;&#160;<\/div><\/td><\/tr><\/table>$/;"	a
+levels	script/grid_plots.py	/^levels=np.arange(vmin,vmax, np.abs(vmax)\/50.)$/;"	v
 line_status	lib/iniparser/src/iniparser.c	/^} line_status ;$/;"	t	typeref:enum:_line_status_	file:
 linear M G Solv Multigrid $ ast$mg Rho Multigrid $ ast$mg Phi Multigrid $ ast$mg Res const Mpi Info $ ast$mpi Info	doc/latex/multigrid_8h.tex	/^\\index{linear\\+M\\+G\\+Solv@{linear\\+M\\+G\\+Solv}!multigrid.\\+h@{multigrid.\\+h}}$/;"	b
 linearMGSolv	src/multigrid.c	/^void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){$/;"	f
@@ -2330,6 +2334,10 @@ ph_xmin	src/old/triang/const.h	/^double ph_bmin,ph_bmax,ph_xmin,ph_xmax, ph_leng
 phi	script/3D_grid_contourf.py	/^phi = phi[:,:,:,0]$/;"	v
 phi	src/old/const.h	/^double *phi;$/;"	v
 phi	src/old/triang/const.h	/^double *phi;$/;"	v
+phi0	script/grid_plots.py	/^phi0 = phi0[0,:,:,0]$/;"	v
+phi1	script/grid_plots.py	/^phi1 = phi1[0,:,:,0]$/;"	v
+phi2	script/grid_plots.py	/^phi2 = phi2[0,:,:,0]$/;"	v
+phi3	script/grid_plots.py	/^phi3 = phi3[0,:,:,0]$/;"	v
 phiMAX	src/old/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 phiMAX	src/old/triang/const.h	/^int FsMAX, rhoMAX, pdensMAX, KEMAX, phiMAX, phiavMAX, PEMAX, qdensMAX, potconvMAX, PEtotalMAX; \/*array dimensions*\/ $/;"	v
 phiSlice	script/3D_grid_contourf.py	/^phiSlice = mlab.figure()$/;"	v
@@ -2772,9 +2780,11 @@ virtpart	src/old/dustg.c	/^void virtpart(void)$/;"	f
 virtpart	src/old/triang/dustg.c	/^void virtpart(void)$/;"	f
 visited	src/old/triang/monotone.c	/^static int visited[TRSIZE];$/;"	v	file:
 vmax	proof of concept/stool/stool.c	/^double vmax(double *v, int N){$/;"	f
+vmax	script/grid_plots.py	/^vmax = np.max(phi3)+1$/;"	v
 vmean	src/old/const.h	/^double vmean[S];\/*mean velocity*\/$/;"	v
 vmean	src/old/triang/const.h	/^double vmean[S];\/*mean velocity*\/$/;"	v
 vmin	proof of concept/stool/stool.c	/^double vmin(double *v, int N){$/;"	f
+vmin	script/grid_plots.py	/^vmin = np.min(phi3)-1$/;"	v
 vmul	proof of concept/stool/stool.c	/^void vmul(double *v, int N, double value){$/;"	f
 vnext	src/old/triang/triangulate.h	/^  int vnext[4];			\/* next vertices for the 4 chains *\/$/;"	m	struct:__anon13
 vnum	src/old/triang/triangulate.h	/^  int vnum;$/;"	m	struct:__anon12

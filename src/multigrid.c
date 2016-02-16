@@ -36,8 +36,8 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
 		if(nDims == 2)	multigrid->preSmooth = &gaussSeidel2D;
 		else if(nDims == 3) multigrid->preSmooth = &gaussSeidel3D;
 		else msg(ERROR, "No Presmoothing algorithm set for dimensions %d", nDims);
-    } else if (!strcmp(preSmoothName, "jacobian")){
-		multigrid->preSmooth = &jacobian;
+    } else if (!strcmp(preSmoothName, "jacobian2D")){
+		multigrid->preSmooth = &jacobian2D;
  	} else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
@@ -46,8 +46,8 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
 		if(nDims == 2)	multigrid->postSmooth = &gaussSeidel2D;
 		else if(nDims == 3) multigrid->postSmooth = &gaussSeidel3D;
 		else msg(ERROR, "No postsmoothing algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(postSmoothName, "jacobian")){
-		multigrid->postSmooth = &jacobian;
+	} else if (!strcmp(postSmoothName, "jacobian2D")){
+		multigrid->postSmooth = &jacobian2D;
  	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
@@ -56,8 +56,8 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
 		if(nDims == 2)	multigrid->coarseSolv = &gaussSeidel2D;
 		else if(nDims == 3) multigrid->coarseSolv = &gaussSeidel3D;
 		else msg(ERROR, "No coarsesolver algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(coarseSolverName, "jacobian")){
-		multigrid->coarseSolv = &jacobian;
+	} else if (!strcmp(coarseSolverName, "jacobian2D")){
+		multigrid->coarseSolv = &jacobian2D;
  	} else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
@@ -328,7 +328,7 @@ void mgFree(Multigrid *multigrid){
  *****************************************************/
 
 
-void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+void jacobian2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
 
 	//Common variables
 	int rank = phi->rank;
@@ -340,9 +340,6 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 
 	//Temporary value
 	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
-
-	// long int normalize = 3*sizeProd[1] + 3*sizeProd[2];
-
 
 	for(int c = 0; c < nCycles; c++){
 		// Index of neighboring nodes
@@ -363,21 +360,59 @@ void jacobian(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiI
 
 		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
 
-		// phiVal[normalize] = 0.;
-
 		for(int d = 1; d < rank; d++) gSwapHaloDim(phi, mpiInfo, d);
-
-		//X lower
-		// for(int q = sizeProd[2]; q < sizeProd[2]+trueSize[1]; q++) phiVal[q] = 0.;
-		// for(int q = sizeProd[2]*trueSize[2]; q < sizeProd[2]*trueSize[2]+size[1]; q++) phiVal[q] = 0.;
-		//
-		// for(int q = sizeProd[1]; q < sizeProd[1] + trueSize[2]*sizeProd[2]; q+=sizeProd[2]) phiVal[q] = 0.;
-		// for(int q = sizeProd[1]*trueSize[1]; q < sizeProd[1]*trueSize[1] + trueSize[2]*sizeProd[2]; q+=sizeProd[2]) phiVal[q] = 0.;
 
 	}
 
 	return;
 }
+
+void jacobian3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+
+	//Common variables
+	int rank = phi->rank;
+	long int *sizeProd = phi->sizeProd;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	//Temporary value
+	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
+	double coeff = 1./6;
+
+	for(int c = 0; c < nCycles; c++){
+		// Index of neighboring nodes
+		int gj = sizeProd[1];
+		int gjj= -sizeProd[1];
+		int gk = sizeProd[2];
+		int gkk= -sizeProd[2];
+		int gl = sizeProd[3];
+		int gll= -sizeProd[3];
+
+		for(long int g = 0; g < sizeProd[rank]; g++){
+			tempVal[g] = coeff*(phiVal[gj] + phiVal[gjj] +
+								phiVal[gk] + phiVal[gkk] +
+								phiVal[gl] + phiVal[gll] +
+								- rhoVal[g]);
+
+			gj++;
+			gjj++;
+			gk++;
+			gkk++;
+			gl++;
+			gll++;
+		}
+
+		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
+
+		for(int d = 1; d < rank; d++) gSwapHaloDim(phi, mpiInfo, d);
+
+	}
+
+	return;
+}
+
 
 
 void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
@@ -461,6 +496,8 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 	int gk = sizeProd[2];
 	int gl = sizeProd[3];
 
+	double coeff = 1./6.;
+
 
 	for(int c = 0; c < nCycles; c++){
 
@@ -471,7 +508,7 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 		for(int l = 0; l < trueSize[3];l++){
 			for(int k = 0; k < size[2]; k++){
 				for(int j = 0; j < size[1]; j+=2){
-					phiVal[g] = 0.125*(	phiVal[g+gj] + phiVal[g-gj] +
+					phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 										phiVal[g+gk] + phiVal[g-gk] +
 										phiVal[g+gl] + phiVal[g-gl] - rhoVal[g]);
 					g	+=2;
@@ -499,7 +536,7 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 		 for(int l = 0; l < trueSize[3];l++){
 		 	for(int k = 0; k < size[2]; k++){
 		 		for(int j = 0; j < size[1]; j+=2){
-		 			phiVal[g] = 0.125*(	phiVal[g+gj] + phiVal[g-gj] +
+		 			phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 		 								phiVal[g+gk] + phiVal[g-gk] +
 		 								phiVal[g+gl] + phiVal[g-gl] - rhoVal[g]);
 

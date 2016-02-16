@@ -145,11 +145,12 @@ void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo 
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- * Non-optimized implementation of a jacobian algorithm to solve poissons equation.
+ * Non-optimized implementation of a jacobian2D algorithm to solve poissons equation.
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void jacobian(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void jacobian2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void jacobian3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 
 /**
