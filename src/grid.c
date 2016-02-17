@@ -228,7 +228,7 @@ inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 	// msg(STATUS|ONCE, "HEllo");
 	getSlice(slice, grid, d, offsetTake);
 	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, receiver, mpiRank, MPI_COMM_WORLD, &sendRequest);
-	MPI_Wait(&sendRequest, &status);
+	// MPI_Wait(&sendRequest, &status);
 
 
 	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, &recvRequest);
@@ -376,7 +376,6 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
 void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo){
 
-
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++) gSwapHaloDim(grid, mpiInfo, d);
 
@@ -394,18 +393,15 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 	//Load
 	int rank = grid->rank;
 	int *size = grid->size;
-
+	long int *sizeProd = grid->sizeProd;
 
 	//Local temporary variables
 	int receiver, sender;
-	int nSlicePoints = 1;
+	int nSlicePoints;
 	int offsetTake, offsetPlace;
-	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
-	nSlicePoints *= 1./size[d];
-
 
 	int dSubDomain = d - 1;
-
+	nSlicePoints = sizeProd[rank]/size[d];
 
 	/*****************************************************
 	 *			Sending and recieving upper
