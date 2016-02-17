@@ -408,9 +408,10 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Load data from ini
-	int nDims;
+	int nDims, temp;
 	int nSpecies = iniGetNElements(ini, "population:nParticles");
 	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
+	int *nGhostLayers = iniGetIntArr(ini, "grid:nGhostLayers", &temp);
 	int *trueSize = iniGetIntArr(ini, "grid:trueSize", &nDims);
 	int *nSubdomainsProd = malloc((nDims+1)*sizeof(*nSubdomainsProd));
 	aiCumProd(nSubdomains,nSubdomainsProd,nDims);
@@ -421,7 +422,8 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	double *posToSubdomain = malloc(nDims*sizeof(*posToSubdomain));
 
 	for(int d = 0; d < nDims; d++){
-		offset[d] = subdomain[d]*trueSize[d];
+		// offset[d] = subdomain[d]*trueSize[d];
+		offset[d] = subdomain[d]*trueSize[d]-nGhostLayers[d];
 		posToSubdomain[d] = (double)1/trueSize[d];
 	}
 

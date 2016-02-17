@@ -334,6 +334,14 @@ This section describes tools that can be useful for developers.
 \subsection{Editor}
 Use whichever editor you want (I use Atom) but do not clutter the repository with editor files. Also, make sure the editor settings obey the coding conventions with respect to spaces, tab sizes, etc.
 
+\subsection{Local Scribble Area}
+As the program evolves and \verb$main.c$ becomes fully functional, we try to avoid doing small test in that file. However, to have an area to scribble and test on while developing, one can make a local main-file \verb$main.local.c$ to mess around with. To compile using this file rather than the official \verb$main.c$ file run:
+
+\begin{verbatim}
+	make local
+\end{verbatim}
+\verb$main.local.c$ is gitignored.
+
 \subsection{Doxygen}
 As already mentioned, the code is documented using Doxygen. Build PINC and the documentation will be at \verb$mn-fysrp-pinc/doc/html/index.html$.
 
@@ -793,7 +801,7 @@ void function(int in, int *out);
 \subsection{Formatting and language}
 
 \begin{itemize}
-	\item English is the working language.
+	\item American English is the working language.
 	\item Use tab for indentation, not spaces. One tab should be set equal to 4 spaces.
 	\item Try to make output printed to terminal no more than 80 columns/characters as this is the default terminal width.
 	\item Too long lines in source code can obviously be a mess. On the other hand, breaking up long function calls across multiple lines

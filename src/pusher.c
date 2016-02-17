@@ -160,6 +160,7 @@ void puDistr3D1(const Population *pop, Grid *rho){
 
 }
 
+// DEPRECATED (ID-technique doesn't work)
 void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -207,6 +208,7 @@ void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 }
 
+// DEPRECATED (ID-technique doesn't work)
 void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -249,6 +251,8 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 	}
 }
 
+// Works
+// TODO: Add fault-handling in case of too small "emigrants" buffer
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -312,6 +316,9 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	}
 
 }
+
+// Works
+// TODO: Add fault-handling in case of too small "emigrants" buffer
 void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -362,6 +369,8 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 	}
 }
 
+// Works
+// TODO: Add fault-handling in case of too small Population struct
 inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	int nSpecies = mpiInfo->nSpecies;
@@ -388,6 +397,7 @@ inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 }
 
+// Works
 inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 
 	double *immigrants = mpiInfo->immigrants;
@@ -408,6 +418,7 @@ inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 
 }
 
+// Works
 inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
 
 	int nDims = pop->nDims;
@@ -428,6 +439,7 @@ inline void importParticles(Population *pop, double *particles, long int *nParti
 
 }
 
+// Works
 inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 	int nSpecies = mpiInfo->nSpecies;
@@ -469,12 +481,20 @@ inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 }
 
+// Works
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 	exchangeNMigrants(mpiInfo);
 	exchangeMigrants(pop,mpiInfo,grid);
 
 }
+
+void puReflect(){
+
+
+
+}
+
 // inline void puDistr3D2();
 // inline void puDistrND0();
 // inline void puDistrND1();
