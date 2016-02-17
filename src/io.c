@@ -243,6 +243,7 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
 
 	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free this
 	char **strArr = listToStrArr(list);
+
 	*nElements = listGetNElements(list);
 
 	return strArr;

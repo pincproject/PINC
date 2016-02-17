@@ -9,7 +9,7 @@ parsedump.txt
 **.sublime*
 **.h5
 gmon.out
-**gullik.ini
+**local.ini
 src/main.local.c
 ut
 tags

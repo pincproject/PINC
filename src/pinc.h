@@ -131,6 +131,19 @@ typedef struct{
 } MpiInfo;
 
 /**
+ * @brief Defines different types of boundary conditons
+ * @see gAlloc
+ * @see gBnd
+ */
+typedef enum{
+	PERIODIC = 0x01,		///< Periodic boundary conditions.
+	DIRICHLET = 0x02,		///< Dirichlet boundary condtions.
+	NEUMANN = 0x03,			///< Neumann boundary conditons.
+	NONE = 0x10				///< For nValues
+} bndType;
+
+
+/**
  * @brief A grid-valued quantity, for instance charge density or E-field.
  *
  * This datatype can represent both scalar fields and vector fields on an N-
@@ -256,6 +269,9 @@ typedef struct{
 	hid_t h5;					///< HDF5 file handler
 	hid_t h5MemSpace;			///< HDF5 memory space description
 	hid_t h5FileSpace;			///< HDF5 file space description
+
+	bndType *bnd;				///< Array storing boundary conditions
+
 } Grid;
 
 typedef struct timespec TimeSpec;
@@ -268,6 +284,17 @@ typedef struct{
 	TimeSpec previous;			///< Time of previous call
 	int rank;					///< Rank of node or negative to turn off timer
 } Timer;
+
+/**
+ * @brief Defines different types of messages
+ * @see msg()
+ */
+typedef enum{
+	STATUS = 0x00,		///< Normal status output about the progress of execution.
+	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
+	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
+	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
+} msgKind;
 
 /******************************************************************************
  * DEFINED IN POPULATION.C
@@ -543,7 +570,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
  * @param ini			dictionary
- * @param *gridQuantity	GridQuantity struct
+ * @param *Grid	Grid struct
  * @param *mpiInfo		MpiInfo struct
  * @param d				Along which dimension it should exhange ghost cells
  *
@@ -554,9 +581,24 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * the dimension it recieves as an input parameter.
  *
  * NB! Only works with 1 ghost layer.
- * @see getSendRecvSetSlice
+ * @see gExchangeSlice
  */
-//void swapHalo(dictionary *ini, GridQuantity *gridQuantity, MpiInfo *mpiInfo, int d);
+void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d);
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param ini			dictionary
+ * @param *Grid	Grid struct
+ * @param *mpiInfo		MpiInfo struct
+ *
+ * Swaps the whole halo surrounding the true grid point with the surrounding sub domains.
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see gExchangeSlice
+ * @see gSwapHaloDim
+ */
+void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo);
+
 
 /**
  * @brief Set all values in grid to zero
@@ -584,6 +626,32 @@ void gSet(Grid *grid, const double *value);
 void gMul(Grid *grid, double num);
 
 /**
+ * @brief Performs a central space finite difference on a grid
+ * @param 	scalar 	Value to do the finite differencing on
+ * @return	field	Field returned after derivating
+ */
+
+void gFinDiff1st(const Grid *scalar, Grid *field);
+
+/**
+ * @brief Performs a 2nd order central space finite difference on a grid
+ * @param 	rho 	Value to do the finite differencing on
+ * @return	phi		Field returned after derivating
+ *
+ *
+ */
+void gFinDiff2nd3D(Grid *phi,const Grid *rho);
+
+/**
+ * @brief Performs a 2nd order central space finite difference on a grid
+ * @param 	rho 	Value to do the finite differencing on
+ * @return	phi		Field returned after derivating
+ *
+ *
+ */
+void gFinDiff2nd2D(Grid *phi,const Grid *rho,const  MpiInfo *mpiInfo);
+
+ /**
  * @brief Normalize E-field
  * @param	ini		Input file dictionary
  * @param	E		E-field
@@ -592,6 +660,28 @@ void gMul(Grid *grid, double num);
  * object according to step-size, time step and mass and charge of specie 0.
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
+
+
+/**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+*	Adds one grid to another. result = result + addition
+*
+*/
+void gAddTo(Grid *result, Grid *addition);
+
+/**
+ * @brief Applies boundary conditions to edge
+ * @param 	grid		Grid to apply boundary conditions to
+ * @param	mpiInfo		Info about subdomain
+ *
+ * @return 	grid		Returns grid with changed boundary
+ *
+ * Applies boundary conditions
+ */
+void gBnd(Grid *grid, const MpiInfo *mpiInfo);
 
 /**
  * @brief	Assign particles artificial positions suitable for debugging
@@ -701,17 +791,6 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo);
 /******************************************************************************
  * DEFINED IN IO.C
  *****************************************************************************/
-
-/**
- * @brief Defines different types of messages
- * @see msg()
- */
-typedef enum{
-	STATUS = 0x00,		///< Normal status output about the progress of execution.
-	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
-	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
-	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
-} msgKind;
 
 /**
  * @brief	The PINC equivalent of printf().
@@ -913,6 +992,20 @@ hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt
  * DEFINED IN AUX.C
  *****************************************************************************/
 
+/**
+ * @brief	Stores quantity in Grid in .grid.h5-file
+ * @param	grid			Grid
+ * @param	mpiInfo			MpiInfo
+ * @param	n				Timestep of quantity to be stored
+ * @return	void
+ * @see gCreateH5()
+ *
+ * The position and velocity of all particles are stored, referred to global
+ * reference frame. The function takes care of merging the particles from all
+ * MPI nodes to one file.
+ *
+ */
+void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
  * @name Timer functions
@@ -1148,5 +1241,17 @@ void alPrintInner(long int *a, long int n, char *varName);
 ///@brief Prints an array in a nice format (for debugging only).
 #define alPrint(a,n) do { alPrintInner(a,n,#a); } while (0)
 ///@}
+
+/**
+ * @brief Writes grid structs to a parsefile
+ * @param ini 		dictionary of the input file
+ * @param grid 		grid struct
+ *
+ * Debug help
+ */
+
+void dumpWholeGrid(dictionary *ini, Grid *grid);
+
+void dumpTrueGrid(dictionary *ini, Grid *grid);
 
 #endif // PINC_H
