@@ -130,7 +130,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  * @see setSlice
  * @see gSwapHaloDim
  */
-void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
+inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int receiver,
 					const int sender, const int mpiRank, Grid *grid);
 
@@ -216,7 +216,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
 }
 
-void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
+inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int receiver,
 					const int sender, const int mpiRank, Grid *grid){
 
@@ -228,12 +228,12 @@ void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,
 	// msg(STATUS|ONCE, "HEllo");
 	getSlice(slice, grid, d, offsetTake);
 	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, receiver, mpiRank, MPI_COMM_WORLD, &sendRequest);
+	MPI_Wait(&sendRequest, &status);
+
 
 	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, &recvRequest);
-
 	MPI_Wait(&recvRequest, &status);
 	setSlice(slice, grid, d, offsetPlace);
-
 
 	return;
 }
@@ -395,6 +395,7 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 	int rank = grid->rank;
 	int *size = grid->size;
 
+
 	//Local temporary variables
 	int receiver, sender;
 	int nSlicePoints = 1;
@@ -426,7 +427,7 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 	}
 
 
-	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
+	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
 					sender, mpiRank, grid);
 
 	/*****************************************************
@@ -446,7 +447,7 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 		if(subdomain[dSubDomain] == 0) receiver += 2*nSubdomainsProd[dSubDomain];
 	}
 
-	getSendRecvSetSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
+	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
 					sender, mpiRank, grid);
 
 

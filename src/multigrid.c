@@ -1037,6 +1037,7 @@ void inline static mgVRecursive(int level, int targetLvl, Multigrid *mgRho, Mult
 	mgResidual(res, rho, phi, mpiInfo);
 
 	gSwapHalo(res, mpiInfo);
+	gBnd(res, mpiInfo);
 	mgRho->restrictor(res, mgRho->grids[level + 1]);
 
 	//Go coarser and solve
@@ -1073,12 +1074,15 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 
 		gSwapHalo(phi,mpiInfo);
 		gBnd(phi,mpiInfo);
+
 		mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
 		mgResidual(res, rho, phi, mpiInfo);
 		mgRho->restrictor(res, mgRho->grids[level + 1]);
 	}
 
 	//Solve at coarsest
+	gSwapHalo(mgRho->grids[targetLvl], mpiInfo);
+	gBnd(mgRho->grids[targetLvl],mpiInfo);
 	mgRho->coarseSolv(mgPhi->grids[targetLvl], mgRho->grids[targetLvl], nCoarseSolv, mpiInfo);
 	mgRho->prolongator(mgRes->grids[targetLvl-1], mgPhi->grids[targetLvl], mpiInfo);
 
@@ -1091,6 +1095,8 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 
 		//Prepare to go up
 		gAddTo( phi, res );
+		gSwapHalo(phi,mpiInfo);
+		gBnd(phi,mpiInfo);
 		mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
 		if(level > 0)	mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
 	}

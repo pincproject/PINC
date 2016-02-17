@@ -1306,6 +1306,7 @@ gCreateH5	src/grid.c	/^void gCreateH5(const dictionary *ini, Grid *grid, const M
 gCreateNeighborhood	src/grid.c	/^void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){$/;"	f
 gDestroyNeighborhood	src/grid.c	/^void gDestroyNeighborhood(MpiInfo *mpiInfo){$/;"	f
 gDirichlet	src/grid.c	/^void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo *mpiInfo){$/;"	f
+gExchangeSlice	src/grid.c	/^inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,$/;"	f
 gFinDiff1st	src/grid.c	/^void gFinDiff1st(const Grid *scalar, Grid *field){$/;"	f
 gFinDiff2nd2D	src/grid.c	/^void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){$/;"	f
 gFinDiff2nd3D	src/grid.c	/^void gFinDiff2nd3D(Grid *result, const  Grid *object){$/;"	f
@@ -1363,7 +1364,6 @@ getIncGrayMask	proof of concept/interpolate/main.c	/^inline int getIncGrayMask(i
 getIncGrayMask2	proof of concept/interpolate/main.c	/^inline int getIncGrayMask2(int *x, int i){$/;"	f
 getIndHalo	proof of concept/get boundary/main.c	/^int getIndHalo(double *halo, double *val, long int *indices, int nExt){$/;"	f
 getIndHalo	proof of concept/get slice/main.old.c	/^int getIndHalo(double *halo, double *val, long int *indices, int nExt){$/;"	f
-getSendRecvSetSlice	src/grid.c	/^void getSendRecvSetSlice(const int nSlicePoints, const int offsetTake,$/;"	f
 getSlice	proof of concept/get boundary/challenge/halo.c	/^double *getSlice(double *nextGhost, const double **valp, const long int *mul, const int *points){$/;"	f
 getSlice	proof of concept/get boundary/challenge/halo.s	/^getSlice:$/;"	l
 getSlice	proof of concept/get boundary/main.c	/^double *getSlice(double *nextGhost, const double **valp, const long int *mul, const int *points){$/;"	f

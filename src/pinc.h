@@ -285,6 +285,17 @@ typedef struct{
 	int rank;					///< Rank of node or negative to turn off timer
 } Timer;
 
+/**
+ * @brief Defines different types of messages
+ * @see msg()
+ */
+typedef enum{
+	STATUS = 0x00,		///< Normal status output about the progress of execution.
+	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
+	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
+	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
+} msgKind;
+
 /******************************************************************************
  * DEFINED IN POPULATION.C
  *****************************************************************************/
@@ -570,7 +581,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * the dimension it recieves as an input parameter.
  *
  * NB! Only works with 1 ghost layer.
- * @see getSendRecvSetSlice
+ * @see gExchangeSlice
  */
 void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d);
 
@@ -583,7 +594,7 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d);
  * Swaps the whole halo surrounding the true grid point with the surrounding sub domains.
  *
  * NB! Only works with 1 ghost layer.
- * @see getSendRecvSetSlice
+ * @see gExchangeSlice
  * @see gSwapHaloDim
  */
 void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo);
@@ -780,17 +791,6 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo);
 /******************************************************************************
  * DEFINED IN IO.C
  *****************************************************************************/
-
-/**
- * @brief Defines different types of messages
- * @see msg()
- */
-typedef enum{
-	STATUS = 0x00,		///< Normal status output about the progress of execution.
-	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
-	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
-	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
-} msgKind;
 
 /**
  * @brief	The PINC equivalent of printf().
