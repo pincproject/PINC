@@ -412,22 +412,7 @@ static int testExtractEmigrantsXD(){
 
 	// 3D
 
-
-	Timer *t = tAlloc(0);
 	puExtractEmigrants3D(pop,mpiInfo);
-	tMsg(t,"3D");
-
-	//
-	// int ne=14;
-	// alPrint(&mpiInfo->nEmigrants[3*ne],3);
-	// adPrint(mpiInfo->emigrants[ne],6);
-	// adPrint(mpiInfo->emigrants[ne]+6,6);
-	// adPrint(mpiInfo->emigrants[ne]+12,6);
-	// adPrint(mpiInfo->emigrants[ne]+18,6);
-	// adPrint(mpiInfo->emigrants[ne]+24,6);
-	// adPrint(mpiInfo->emigrants[ne]+30,6);
-	// adPrint(mpiInfo->emigrants[ne]+36,6);
-	// adPrint(mpiInfo->emigrants[ne]+42,6);
 
 	utAssert(alEq(nEmigrants,nEmigrantsResult,81),"Wrong count of particles migrated to each domain (3D-method)");
 
@@ -509,20 +494,7 @@ static int testExtractEmigrantsXD(){
 
 	// ND
 
-	tMsg(t,NULL);
 	puExtractEmigrantsND(pop,mpiInfo);
-	tMsg(t,"ND");
-	//
-	// int ne=14;
-	// alPrint(&mpiInfo->nEmigrants[3*ne],3);
-	// adPrint(mpiInfo->emigrants[ne],6);
-	// adPrint(mpiInfo->emigrants[ne]+6,6);
-	// adPrint(mpiInfo->emigrants[ne]+12,6);
-	// adPrint(mpiInfo->emigrants[ne]+18,6);
-	// adPrint(mpiInfo->emigrants[ne]+24,6);
-	// adPrint(mpiInfo->emigrants[ne]+30,6);
-	// adPrint(mpiInfo->emigrants[ne]+36,6);
-	// adPrint(mpiInfo->emigrants[ne]+42,6);
 
 	utAssert(alEq(nEmigrants,nEmigrantsResult,81),"Wrong count of particles migrated to each domain (ND-method)");
 

@@ -13,3 +13,4 @@ gmon.out
 src/main.local.c
 ut
 tags
+**.vtk
