@@ -260,7 +260,6 @@ CURVILINEAR TRANSFORMS
 	difficult to implement directly in PINC. See cPic.
 															Sigvald Marholm
 															17.02.16
-
 PHOTOELECTRON EMISSION
 
 	Sounds cool!
