@@ -1,0 +1,115 @@
+# File:			Valgrind suppression file for PINC
+# Author:		Sigvald Marholm
+# Copyright:	University of Oslo, Norway
+# Brief:		Suppresses irrelevant MPI errors
+# Date:			09.11.15
+
+# BASIC MPI INIT FINALIZE SUPPRESSIONS
+{
+   <Calls to MPI_*, Leak>
+   Memcheck:Leak
+   ...
+   fun:PMPI_*
+   ...
+}
+
+{
+   <Calls to MPI_*, Param>
+   Memcheck:Param
+   writev(vector[...])
+   ...
+   fun:PMPI_*
+   ...
+}
+
+{
+   <Calls to ompi_*, Leak>
+   Memcheck:Leak
+   ...
+   fun:ompi_*
+}
+
+{
+   <Calls to mca_*, Leak>
+   Memcheck:Leak
+   ...
+   fun:mca_*
+}
+
+{
+   <Calls to opal_*, Leak>
+   Memcheck:Leak
+   ...
+   fun:opal_*
+   ...
+}
+
+{
+   <Calls to dlopen@@GLIBC_*, Leak>
+   Memcheck:Leak
+   ...
+   fun:dlopen@@GLIBC_*
+   ...
+}
+
+{
+   <Calls to dlopen@@GLIBC_*, Addr4>
+   Memcheck:Addr4
+   ...
+   fun:dlopen@@GLIBC_*
+   ...
+}
+
+# REACHABLE MPI INIT FINALIZE SUPPRESSIONS
+
+{
+   <Use of libhwloc.so.*, Leak (reachable)>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libhwloc.so.*
+   ...
+}
+
+{
+   <Call to _dl_catch_error, Leak (reachable)>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_dl_catch_error
+}
+
+# REACHABLE MPI INIT FINALIZE WITH MPIRUN SUPPRESSIONS
+
+{
+   <Call to xmlParse*, Leak (reachable)>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*libxml2.so.*
+   ...
+   fun:xmlParse*
+   ...
+}
+
+# MORE MPIRUN OCCURRED ON 25.11.15
+# NB: This is only if ./valgrind.sh is run in front of mpirun which it shouldnt.
+# It should be like this: mpirun -np 4 ./valgrind.sh ./pinc input.ini
+
+#{
+#   <insert_a_suppression_name_here>
+#   Memcheck:Leak
+#   ...
+#   fun:orte_*
+#   ...
+#}
+
+#{
+#   <insert_a_suppression_name_here>
+#   Memcheck:Leak
+#   fun:malloc
+#   ...
+#   obj:/usr/bin/orterun
+#   obj:/usr/bin/orterun
+#   fun:(below main)
+#}

@@ -1,0 +1,117 @@
+##
+## @file		makefile
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+## @copyright	University of Oslo, Norway
+## @brief		PINC makefile.
+## @date		10.10.15
+##
+
+EXEC	= pinc
+CC		= mpicc
+CADD	= # Additional CFLAGS accessible from CLI
+COPT	= -O3 # Optimization
+CFLAGS	=	-std=c11 -Wall\
+			-Ilib/iniparser/src\
+			-lm -lgsl -lblas -lhdf5 $(COPT) $(CADD)
+
+SDIR	= src
+ODIR	= src/obj
+HDIR	= src
+LDIR	= lib
+DDIR	= doc
+TDIR	= test
+TODIR	= test/obj
+THDIR	= test
+
+
+
+HEAD_	= pinc.h pusher.h multigrid.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
+OBJ_	= $(SRC_:.c=.o)
+DOC_	= main.dox
+
+TESTOBJ_= test.o $(SRC_:.c=.test.o)
+#TESTOBJ_ = test.o aux.test.o
+TESTHEAD_ = test.h
+
+HEAD	= $(patsubst %,$(HDIR)/%,$(HEAD_))
+SRC		= $(patsubst %,$(SDIR)/%,$(SRC_))
+OBJ		= $(patsubst %,$(ODIR)/%,$(OBJ_))
+TESTOBJ	= $(patsubst %,$(TODIR)/%,$(TESTOBJ_))
+TESTHEAD= $(patsubst %,$(THDIR)/%,$(TESTHEAD_))
+
+
+
+LIBOBJ_	= iniparser/libiniparser.a
+LIBHEAD_= iniparser/src/iniparser.h
+
+LIBOBJ = $(patsubst %,$(LDIR)/%,$(LIBOBJ_))
+LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
+
+all: $(EXEC) cleantestdata doc
+
+local: $(EXEC).local cleantestdata doc
+
+test: $(EXEC).test cleantestdata doc
+	@echo "Running Unit Tests"
+	@./ut input.ini
+
+$(EXEC).test: $(TODIR)/main.test.o $(OBJ) $(TESTOBJ) $(LIBOBJ)
+	@echo "Linking Unit Tests"
+	@$(CC) $^ -o ut $(CFLAGS)
+	@echo "PINC is built"
+
+$(EXEC).local: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
+	@echo "Linking PINC (using main.local.c)"
+	@$(CC) $^ -o $(EXEC) $(CFLAGS)
+	@echo "PINC is built"
+
+$(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
+	@echo "Linking PINC"
+	@$(CC) $^ -o $@ $(CFLAGS)
+	@echo "PINC is built"
+
+$(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
+	@echo "Compiling $<"
+	@./check.sh $<
+	@$(CC) -c $< -o $@ $(CFLAGS)
+
+$(TODIR)/%.o: $(TDIR)/%.c $(HEAD) $(TESTHEAD)
+	@echo "Compiling $<"
+	@./check.sh $<
+	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
+
+
+$(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
+	@echo "Building iniparser"
+	@cd $(LDIR)/iniparser && $(MAKE) > /dev/null 2>&1
+
+$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TDIR)/test.c $(DDIR)/doxygen/$(DOC_)
+	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
+	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) $(DOC_) test.h test.c  >> $(DDIR)/doxygen/doxyfile.inc
+
+doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
+	@echo "Making documentation (run \"make pdf\" to get pdf)"
+	@cd $(DDIR)/doxygen && doxygen doxyfile.mk > /dev/null 2>&1
+
+pdf: doc
+	@echo "Making PDF"
+	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
+
+cleandoc:
+	@echo "Cleaning documentation"
+	@rm -f $(DDIR)/doxygen/doxyfile.inc
+	@rm -fr $(DDIR)/html $(DDIR)/latex
+
+cleantestdata:
+	@echo "Cleaning test data"
+	@rm -f test_*.h5 parsedump.txt
+
+clean: cleandoc cleantestdata
+	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
+	@rm -f *~ $(TODIR)/*.o $(ODIR)/*.o $(SDIR)/*.o $(SDIR)/*~ gmon.out ut
+
+veryclean: clean
+	@echo "Cleaning executable and iniparser"
+	@rm -f $(EXEC)
+	@cd $(LDIR)/iniparser && $(MAKE) veryclean > /dev/null 2>&1

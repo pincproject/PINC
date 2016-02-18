@@ -1,0 +1,16 @@
+**.o
+**~
+**.a
+**.so.*
+**.lo
+**.la
+pinc
+parsedump.txt
+**.sublime*
+**.h5
+gmon.out
+**local.ini
+src/main.local.c
+ut
+tags
+**.vtk
