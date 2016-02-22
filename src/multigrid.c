@@ -146,7 +146,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 		//Alloc slice and val
 		double *val = malloc(subSizeProd[rank]*sizeof(*val));
-		double *slice = malloc(nSliceMax*sizeof(*slice));
+		double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
+		double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 
 		//Ghost layer vector
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
@@ -166,7 +167,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		grid->bnd = subBnd;
 		grid->trueSize = subTrueSize;
 		grid->val = val;
-		grid->slice = slice;
+		grid->sendSlice = sendSlice;
+		grid->recvSlice = recvSlice;
 		grid->h5 = 0;
 		grids[q] = grid;
 	}

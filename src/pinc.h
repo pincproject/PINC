@@ -265,7 +265,8 @@ typedef struct{
 	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
 	double *stepSize;			///< Step-sizes in Debye lengths (rank elements)
 
-	double *slice;				///< Slice buffer of the grid sent to other subdomains
+	double *sendSlice;			///< Slice buffer of the grid sent to other 
+	double *recvSlice;			///< Slice buffer of the grid sent to other
 	hid_t h5;					///< HDF5 file handler
 	hid_t h5MemSpace;			///< HDF5 memory space description
 	hid_t h5FileSpace;			///< HDF5 file space description

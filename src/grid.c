@@ -220,20 +220,21 @@ inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int sendTo,
 					const int recvFrom, const int mpiRank, Grid *grid){
 
-	double *slice = grid->slice;
+	double *sendSlice = grid->sendSlice;
+	double *recvSlice = grid->recvSlice;
 
 	MPI_Request		sendRequest,recvRequest;
 	MPI_Status 		status;
 
 	// msg(STATUS|ONCE, "HEllo");
-	getSlice(slice, grid, d, offsetTake);
-	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
+	getSlice(sendSlice, grid, d, offsetTake);
+	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
 	// MPI_Wait(&sendRequest, &status);
 
 
-	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
+	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
-	setSlice(slice, grid, d, offsetPlace);
+	setSlice(recvSlice, grid, d, offsetPlace);
 
 	return;
 }
@@ -504,7 +505,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 
 	//Memory for values and a slice
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
-	double *slice = malloc(nSliceMax*sizeof(*slice));
+	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
+	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 
 	//Set boundary conditions, should be cleaned up
 	int inc = 1;
@@ -546,7 +548,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->stepSize = stepSize;
 	grid->val = val;
 	grid->h5 = 0;	// Must be activated separately
-	grid->slice = slice;
+	grid->sendSlice = sendSlice;
+	grid->recvSlice = recvSlice;
 	grid->bnd = bnd;
 
 	return grid;
@@ -617,7 +620,8 @@ void gFree(Grid *grid){
 	free(grid->nGhostLayers);
 	free(grid->stepSize);
 	free(grid->val);
-	free(grid->slice);
+	free(grid->sendSlice);
+	free(grid->recvSlice);
 	free(grid->bnd);
 	free(grid);
 
@@ -968,7 +972,7 @@ void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
-	double *slice = grid->slice;
+	double *slice = grid->sendSlice;
 
 	//Compute dimensions and size of slice
 	int d = boundary%rank;
@@ -992,7 +996,7 @@ void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mp
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
-	double *slice = grid->slice;
+	double *slice = grid->sendSlice;
 
 	//Compute dimensions and slicesize
 	int d = boundary%rank;
