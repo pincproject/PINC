@@ -115,8 +115,8 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  * @param offsetTake 		Offset of slice to get
  * @param offsetSet 		Offset of where to set slice
  * @param d					Dimension
- * @param receiver 			mpiRank of subdomain to recieve slice
- * @param sender 			mpiRank of subdomain,
+ * @param sendTo 			mpiRank of subdomain to recieve slice
+ * @param recvFrom 			mpiRank of subdomain,
 							this node is to recieve from
  * @param mpiRank 			mpiRank of this node
  * @param *gridQuantity
@@ -131,8 +131,8 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  * @see gSwapHaloDim
  */
 inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int receiver,
-					const int sender, const int mpiRank, Grid *grid);
+					const int offsetPlace, const int d, const int sendTo,
+					const int recvFrom, const int mpiRank, Grid *grid);
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
@@ -217,8 +217,8 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 }
 
 inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int receiver,
-					const int sender, const int mpiRank, Grid *grid){
+					const int offsetPlace, const int d, const int sendTo,
+					const int recvFrom, const int mpiRank, Grid *grid){
 
 	double *slice = grid->slice;
 
@@ -227,11 +227,11 @@ inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 
 	// msg(STATUS|ONCE, "HEllo");
 	getSlice(slice, grid, d, offsetTake);
-	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, receiver, mpiRank, MPI_COMM_WORLD, &sendRequest);
+	MPI_Isend(slice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
 	// MPI_Wait(&sendRequest, &status);
 
 
-	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, sender, sender, MPI_COMM_WORLD, &recvRequest);
+	MPI_Irecv(slice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
 	setSlice(slice, grid, d, offsetPlace);
 
@@ -392,15 +392,17 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load
 	int rank = grid->rank;
+	// int nDims = rank-1;
 	int *size = grid->size;
 	long int *sizeProd = grid->sizeProd;
 
 	//Local temporary variables
-	int receiver, sender;
+	int sendTo, recvFrom;
 	int nSlicePoints;
 	int offsetTake, offsetPlace;
 
-	int dSubDomain = d - 1;
+	//Dimension used for subdomains, 1 less entry than grid dimensions
+	int dd = d - 1;
 	nSlicePoints = sizeProd[rank]/size[d];
 
 	/*****************************************************
@@ -408,43 +410,26 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 	******************************************************/
 	offsetTake = size[d]-2;
 	offsetPlace = 0;
-	receiver = (mpiRank + nSubdomainsProd[dSubDomain]);
-	sender = (mpiRank - nSubdomainsProd[dSubDomain]);
 
-	//Edge subdomains
-	if(nSubdomains[dSubDomain] == 1){
-		receiver -= nSubdomainsProd[dSubDomain];
-		sender += nSubdomainsProd[dSubDomain];
-	} else {
-		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1)
-			receiver -= 2*nSubdomainsProd[dSubDomain];
-		if(subdomain[dSubDomain] == 0)
-			sender += 2*nSubdomainsProd[dSubDomain];
-	}
+	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
+
+	sendTo = firstElem
+ 				+ (subdomain[dd] + 1)%nSubdomains[dd]*nSubdomainsProd[dd];
+	recvFrom = firstElem
+				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
 
 
-	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
-					sender, mpiRank, grid);
-
-	/*****************************************************
-	 *			Sending and recieving lower
-	******************************************************/
+	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, sendTo,
+					recvFrom, mpiRank, grid);
+	//
+	// /*****************************************************
+	//  *			Sending and recieving lower
+	// ******************************************************/
 	offsetTake = 1;
 	offsetPlace = size[d]-1;
-	receiver = (mpiRank - nSubdomainsProd[dSubDomain]);
-	sender = (mpiRank + nSubdomainsProd[dSubDomain]);
 
-	//Boundary
-	if(nSubdomains[dSubDomain] == 1){
-		receiver += nSubdomainsProd[dSubDomain];
-		sender -= nSubdomainsProd[dSubDomain];
-	} else {
-		if(subdomain[dSubDomain] == nSubdomains[dSubDomain] - 1) sender -= 2*nSubdomainsProd[dSubDomain];
-		if(subdomain[dSubDomain] == 0) receiver += 2*nSubdomainsProd[dSubDomain];
-	}
-
-	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, receiver,
-					sender, mpiRank, grid);
+	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
+					sendTo, mpiRank, grid);
 
 
 	return;
