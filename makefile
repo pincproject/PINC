@@ -84,7 +84,7 @@ $(TODIR)/%.o: $(TDIR)/%.c $(HEAD) $(TESTHEAD)
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
-	@cd $(LDIR)/iniparser && $(MAKE) > /dev/null 2>&1
+	@cd $(LDIR)/iniparser && $(MAKE) libiniparser.a > /dev/null 2>&1
 
 $(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TDIR)/test.c $(DDIR)/doxygen/$(DOC_)
 	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
