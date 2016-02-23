@@ -36,6 +36,7 @@ TEST SIMULATIONS
 		- Two heavily charged particles oscillationg in a potential well.
 		- Consider thermalization of particles of non-thermal particles.
 		- Langmuir oscillations while observing energy conservation.
+		- Two-stream instability
 
 															Sigvald Marholm
 															17.02.16

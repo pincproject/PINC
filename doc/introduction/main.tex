@@ -54,7 +54,7 @@
 \newpage
 
 \section{Introduction}
-The \mnfysrppic{} Git repository holds the Particle-In-Cell (PIC) code PINC (Particle-IN-Cell) belonging to the 4Dspace project and the Plasma and Space Physics group at the Physics Department of UiO. In order to keep the code and its different versions clean and manageable and to avoid conflicts during cooperation it is of utmost importance that all users obey the rules of the repository. Each user is therefore responsible of making himself/herself familiar with the rules stated herein before contributing with any code, or before committing to the repository. Repeated failure to do so may result in reduced privileges or exclusion from the repository. To get access it is sufficient to read \refsec{access}, but it is expected that the developer is familiar with the rest before committing.
+The \mnfysrppic{} Git repository holds the Particle-In-Cell (PIC) code PINC (Particle-IN-Cell) belonging to the 4Dspace project and the Plasma and Space Physics group at the Physics Department of UiO. In order to keep the code and its different versions clean and manageable and to avoid conflicts during cooperation it is of utmost importance that all users obey the rules of the repository. Each user is therefore responsible of making himself/herself familiar with the rules stated herein before contributing with any code, or before committing to the repository. Repeated failure to do so may result in reduced privileges or exclusion from the repository. To get access it is sufficient to read \refsec{access}, but it is expected that the developer is familiar with the rest before starting to develop.
 
 
 
@@ -74,7 +74,7 @@ The private key is private (hence the name) and should under no circumstance be 
 
 Rename a copy of your public key to \verb$<username>.pub$ where \verb$<username>$ is your UiO username, and mail it to the repository administrator (sigvaldm@fys.uio.no) and wait for approval.
 
-Next, configure your local git user using these commands:
+Next, configure your local Git user using these commands:
 
 \begin{verbatim}
 	git config --global user.name '<username>'
@@ -85,29 +85,155 @@ Go to the folder where you'd like your local copy (typically your home directory
 \begin{verbatim}
 	git clone gitolite@git.uio.no:mn-fysrp-pic
 \end{verbatim}
-A new folder with the name \verb$mn-fysrp-pic$ will be created. This is your local working copy.
+A new folder with the name \verb$mn-fysrp-pic$ will be created. This is your local working copy. By default it shows the files in the master branch. Typically, the most recent work is in the develop branch. See \refsec{workflow}.
 
-If you want access from another computer (e.g.\ supercomputer) you have to copy your private key to \verb$~/.ssh/id_rsa$ on that computer, and run the configuration and cloning steps there as well. 
+If you want access from another computer you have to copy your private key to \verb$~/.ssh/id_rsa$ on that computer, and run the configuration and cloning steps there as well. 
 
-\section{Workflow}
-The \mnfysrppic{} repository utilizes what's called a Feature Branch Workflow\footnote{See more about various Git workflows here: https://www.atlassian.com/git/tutorials/comparing-workflows .} as illustrated in \reffig{featurebranch}. The reason for this is to allow several users to develop functions for the code independently with a minimum of conflicts. It also assures that a fully functioning version of the code is always accessible. Using Git also means that all previous revisions of the code are retrievable. This, along with information on which revision was used to generate a set of results, make the experiments reproducible. 
+\section{Workflow}\label{sec:workflow}
+The \mnfysrppic{} repository utilizes the Git version control system (VCS) and a workflow, or model of how to work with the Git repository, called Gitflow. There are many benefits of Git and Gitflow. When using Git (or VCS's in general), many developers can work on the code simultaneously and thus benefit from each others work almost immediately, while keeping the change history of the code. Gitflow adds to this a guarantee that developers won't inhibit each others work by creating malfunctioning code thereby preventing other users to run the code. With Gitflow, each user ``isolates'' a copy of the code and work on that part until it is fully functional before merging it back into the main code without overwriting the work of co-developers.
 
-To briefly explain the Feature Branch Workflow, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1 in the figure) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
+It is near impossible in a modern and active developing environment with multiple programmers to have a well maintained code without a VCS and a decent workflow that everyone follows. If you fail to follow the workflow, someone else will have to struggle with, and clean up your mess. Or more likely, the repository administrator will reject your code and revert the repository to the last sane revision and tell you to fix your errors before merging.
 
-Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and its feature branch is merged back onto the master branch before being deleted. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the new solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
-
+In Git, there are two main branches that exists indefinitely; master and develop. See \reffig{gitflow}. The develop branch is where you and your co-developers adds new features. This will hold all the latest functionality. The master branch is reserved for versions that we considered a ``finished product'' or versions we may refer to in publications. It is rarely updated, and you shouldn't change it unless you've agreed to with the repository administrator. It is holy. Therefore, you probably don't need to worry about the hotfix and release branches depicted at this point either.
 \begin{figure}
 	\centering
-	\includegraphics[width=0.8\textwidth]{featurebranch.png}
-	\caption{Illustration of Feature Branch Workflow}
-	\label{fig:featurebranch}
+	\includegraphics[width=\textwidth]{git-model.png}
+	\caption{The Gitflow model. Illustration made by Vincent Driessen under Creative Commons BY-SA license, http://nvie.com/posts/a-succesful-git-branching-model.}
+	\label{fig:gitflow}
 \end{figure}
 
-Feature branches normally only exist locally. If desirable, they can be pushed to the central repository (the origin) to make them accessible from several computers (for instance for collaboration). The origin should be kept clean, however, meaning that someone must be responsible to delete the branches after merging ensuring that only a few branches exist centrally. Only the repository administrator has the privilege to delete branches and cleaning the origin so other users should ask for permission before pushing new branches to the origin. Moreover, the branches pushed to origin should have globally understandable names.
+\subsection{Starting a New Feature}
+In your everyday work with PINC, what you'll be using is the develop branch, and a bunch of feature branches. Thus when you start working with the repository, you may want to switch directly to the develop branch, as that's where the code we're currently working together on is:
 
-As a summary: feature branches can have many revisions allowing the developer to go back in case of mistakes, for backup, and for sharing code with other developers. The master branch is holy and only fully functional features should be merged into it.
+\begin{verbatim}
+	git checkout develop
+\end{verbatim}
+You may check which branch you're currently in by 
 
-If this section is unclear and more advice on Git is needed please refer to \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
+\begin{verbatim}
+	git branch
+\end{verbatim}
+
+When you're going to implement a new feature, you make a branch off of the develop branch. You may first want to make sure you have the most recent version of the develop branch by pulling it from the central server (called the origin). While you are in the develop branch, run:
+
+\begin{verbatim}
+	git pull
+\end{verbatim}
+Then, to create the branch run (while still in the develop branch):
+
+\begin{verbatim}
+	git checkout -b myfeature
+\end{verbatim}
+where ``myfeature'' is the name of your new feature. This should be a short and descriptive name for the feature you are about to implement. Now you implement your feature. A feature branch represents one small task only. You should not develop distinct functionality within the same feature branch. If you're working simultaneously with distinct tasks, you should create distinct branches off of develop, one for each feature. Feature branches should also represent small tasks and should be short-lived, typically a day to a month. The longer a feature branch lives, the more your code will diverge from everyone else's work and you will eventually have to spend a lot of time on manual merging. For short lived feature branches, Git will typically be able to automatically merge your branches.
+
+\subsection{Committing Your Work}
+The changes applied to the code in your working folder is not magically incorporated into the repository. You need to commit your work to the repository to store it. At any later point you can go back to the state of the code at any previous commit. First, you may want to inspect which changes are done. You do this by:
+
+\begin{verbatim}
+	git status
+\end{verbatim}
+You will get a list of files that are changed since the last revision (labelled ``Changes not staged for commit'') and a list of files that are totally new (labelled ``Untracked files''). Initially, no files are labelled as ``Changes to be committed'', meaning that committing at this point will add no changes to the repository. You will have to tell Git which files are to be committed by the following command:
+
+\begin{verbatim}
+	git add <list of files>
+\end{verbatim}
+This is called to ``stage changes for commit''. Running \verb$git status$ again will now show the staged files as ``to be committed'', and you can commit your working folder to the repository by
+
+\begin{verbatim}
+	git commit -m '<message>'
+\end{verbatim}
+The argument after \verb$-m$ is a message for the commit log. This will be useful if you or someone else wants to go back to a previous state. Note that you may have as many commits as you like. It is a good idea to try to let each commit represent one thing, and write that in the message, rather than just thinking ``now I want to make a backup''.
+
+If you want to stage and commit all files at once, you can simply run
+
+\begin{verbatim}
+	git commit -am '<message>'
+\end{verbatim}
+However, this makes it easy to by mistake commit files that should not go into the repository. For instance files created by your text editor. Therefore, you should \emph{always} run \verb$git status$ before committing. Further on, it is a good habit to properly clean up the \verb$git status$ before committing, such that only files ``to be committed'' shows up (unless you actually want to commit only part of your changes). There will often be files that should be deleted. Then delete them. If there are files which you need locally but does not belong to the repository, such as text editor files, add them to a \verb$.gitignore$ such that Git ignores them.
+
+Notice that when you commit something in Git, you do not immediately store it to a central server. You only commit it to your local clone of the repository (as represented by .git folders), and you may push it later. More about that later.
+
+You may inspect the commit log simply by the use of \verb$git log$. Several arguments exist for it, for instance, try:
+
+\begin{verbatim}
+	git log --oneline --graph --decorate
+\end{verbatim}
+
+Finally, if you move or remove a file that is previously known by Git (committed), use \verb$git mv$ or \verb$git rm$ rather than just \verb$mv$ or \verb$rm$. Otherwise Git will not understand what's going on and you will have to clean up.
+
+\subsection{Finishing Your Feature}
+When your feature is implemented and tested and compiles \emph{without} errors or warnings (others will use your code), you can merge it back to the develop branch and finish the feature branch by deleting it:
+
+\begin{verbatim}
+	git checkout develop        # Switch back to develop
+	git pull                    # Get most recent develop from origin
+	git merge --no-ff myfeature # Merge myfeature into develop
+	git branch -d myfeature     # Finish/delete myfeature
+\end{verbatim}
+On the second line, your feature will be merged into the code base along with new features that others have merged while you were developing your feature. When Git are unable to automatically merge your feature, you will have to resolve merge conflicts by manually going through the code. Git will mark the regions of conflict in the source code for you to find. After resolving conflicts you have to commit again.
+
+Since you're using \verb$-d$ rather than \verb$-D$ on the last line your branch will not be deleted unless all changes are successfully merged to develop.
+
+Next, all the changes you've done up till now has been committed to your local repository only. To share them with others you need to push the develop branch to the origin:
+
+\begin{verbatim}
+	git push	   # Do this while in the develop branch
+\end{verbatim}
+And that's basically the whole cycle, which you repeat for every feature.
+
+\subsection{Pushing Feature Branches}
+Using the workflow as described so far, the feature branches (unlike develop) will only exist locally, on your computer. You may, if you want to, push feature branches to the origin. Then you can work on them from several computers, and you will have a backup on the server. The caveat is that there's slightly more details to pay attention to.
+
+If you have a feature branch, say ``myfeature'', you can push it to the origin by
+
+\begin{verbatim}
+	git push -u origin myfeature
+\end{verbatim}
+The \verb$-u$ switch is not strictly necessary, but it makes the branch trackable, i.e.\ it establishes a connection between ``myfeature'' on your computer and ``myfeature'' on the origin. Thence, the next time you need to push/pull changes of this branch to/from the origin, you just do:
+
+\begin{verbatim}
+	git checkout myfeature # Making this the current branch
+	git push               # or git pull
+\end{verbatim}
+When your feature is finished, you merge it back into the latest revision of the develop branch just as previously described. However, you should make sure that the latest existing feature branch exist on origin prior to merging and deleting the feature branch. The whole finishing procedure may look something like this:
+
+\begin{verbatim}
+	git checkout myfeature
+	git push                    # Push the latest myfeature to origin
+	git checkout develop
+	git pull                    # Get most recent develop from origin
+	git merge --no-ff myfeature # Merge myfeature into develop
+	git push                    # Push the new develop branch
+	git branch -d myfeature     # Finish/delete myfeature
+\end{verbatim}
+The last line will only delete the feature branch locally, and you now need to tell the repository administrator that you want to delete the feature branch on origin (for safety, you don't have privileges to this). Since you pushed the latest feature branch to origin the repository administrator can verify that no data is lost by deleting it.
+
+\subsection{Further Reading}
+You are expected to follow Gitflow. If anything is unclear you can read more about it here:
+\begin{verbatim}
+	http://nvie.com/posts/a-successful-git-branching-model/
+	https://www.atlassian.com/git/tutorials/comparing-workflows
+\end{verbatim}
+or contact the repository administrator.
+
+%The \mnfysrppic{} repository utilizes what's called a Feature Branch Workflow\footnote{See more about various Git workflows here: https://www.atlassian.com/git/tutorials/comparing-workflows .} as illustrated in \reffig{featurebranch}. The reason for this is to allow several users to develop functions for the code independently with a minimum of conflicts. It also assures that a fully functioning version of the code is always accessible. Using Git also means that all previous revisions of the code are retrievable. This, along with information on which revision was used to generate a set of results, make the experiments reproducible. 
+%
+%To briefly explain the Feature Branch Workflow, the master branch should always represent a fully functional version of the PIC code. Whenever a new feature is to be developed a new feature branch (e.g. Feature 1 in the figure) is created and the user works on that branch until the feature is finished. Then, it is merged back onto the master branch. The user verifies that the master branch executes and is fully functioning before pushing the changes to the central repository (the origin). Ruining the central master branch causes trouble for other users who expect it to be up and running. 
+%
+%Let's consider an example: One user starts implementing a new input settings system for the PIC code (Feature 2). At the same time another user starts revising the field solver (Feature 3). Each user can make as many commits as desirable within their feature branch for the sake of backup. The input system is finished first and its feature branch is merged back onto the master branch before being deleted. It doesn't matter that another user has edited parts of the field solver because that's in another branch. The master branch is now a fully functional PIC code with new input system but with the old solver left intact. Once the new solver is finished, it is merged back to the master. But the master has changed since the revision Feature 3 is built upon. These changes, however, most likely affect other files and Git will be able to seamlessly merge only the appropriate lines changed during Feature 3 development. If uncertainties occur, Git will ask the Feature 3 developer to do some manual work to properly merge Feature 3 with the master branch. Feature 2 will not be overwritten.
+%
+%\begin{figure}
+%	\centering
+%	\includegraphics[width=0.8\textwidth]{featurebranch.png}
+%	\caption{Illustration of Feature Branch Workflow}
+%	\label{fig:featurebranch}
+%\end{figure}
+%
+%Feature branches normally only exist locally. If desirable, they can be pushed to the central repository (the origin) to make them accessible from several computers (for instance for collaboration). The origin should be kept clean, however, meaning that someone must be responsible to delete the branches after merging ensuring that only a few branches exist centrally. Only the repository administrator has the privilege to delete branches and cleaning the origin so other users should ask for permission before pushing new branches to the origin. Moreover, the branches pushed to origin should have globally understandable names.
+%
+%As a summary: feature branches can have many revisions allowing the developer to go back in case of mistakes, for backup, and for sharing code with other developers. The master branch is holy and only fully functional features should be merged into it.
+%
+%If this section is unclear and more advice on Git is needed please refer to \texttt{mn-fysrp-pic/docs/git.pdf} before making any changes to the repository.
 
 \section{Reproducibility}
 It is currently a long term plan to release PINC as an open source project. Some revisions of PINC can then be tagged in Git with a version number, and authors of scientific publications can specify which version was used, thereby making the results truly reproducible by others, as is the spirit of science. Version tags should only be put on revisions on the master branch.
