@@ -162,19 +162,18 @@ void msg(msgKind kind, const char* restrict format,...){
 
 	// Set prefix and determine which output to use
 	char prefix[8];
-	FILE *stream;
+	FILE *stream = stdout;
 	switch(kind&0x0F){
 		case STATUS:
 			strcpy(prefix,"STATUS");
-			stream=stdout;
 			break;
 		case WARNING:
 			strcpy(prefix,"WARNING");
-			stream=stderr;
+			stream = stderr;
 			break;
 		case ERROR:
 			strcpy(prefix,"ERROR");
-			stream=stderr;
+			stream = stderr;
 			break;
 	}
 
