@@ -26,88 +26,7 @@
  */
 static int *getSubdomain(const dictionary *ini);
 
-/**
- * @brief Extracts a (dim-1) dimensional slice of grid values.
- * @param	slice 		Return array
- * @param	grid		Grid
- * @param	d			Perpendicular direction to slice
- * @param	offset 		Offset of slice
- * @return				Void
- *
- * This function gets extracts a slice from a N dimensional grid. The integer d
- * decides in which direction the slice is perpendicular to, and the offset decides
- * which which slice it picks out. It needs a preallocated slice array where
- * the extracted slice will be stored.
- *
- * 2D example: Here we have a 5x4 grid and we want to extract a slice corresponding
- * to the second row, where x (d=0) is a constant 1.
- *
- * @code
- * 15   16   17   18   19
- *
- * 10   11   12   13   14
- *
- *  5    6    7    8    9
 
- *  0    1    2    3    4
- * @endcode
- *
- * @code
-	 getSlice(slice, grid, 0, 1);
- * @endcode
- * After running this the slice array consists of
- * slice = \f( [1, 6, 11, 16] \f)
- *
- * @see setSlice
- * @see gSwapHaloDim
- **/
-
-void getSlice(double *slice, const Grid *grid, int d, int offset);
-
-/**
- * @brief places a (dim-1) dimensional slice onto a selected slice on the grid.
- * @param	slice		Slice containing a layer of values
- * @param	grid		Grid
- * @param	d 			Perpendicular direction to slice
- * @param	offset 		Offset of slice
- * @return				Void
- *
- * This function places a a slice on a grid. If we have a slice and want to
- * insert it onto a grid this function is used.
- *
- * Example: We have a 1D slice consisting of 6 2s and want to insert it onto
- * the third row, from the bottom.
- * @code
- *	111111
- *	111111
- *	111111
- *	111111
- *
- *	setSlice(slice, grid, 0, 2);
- *
- *	111111
- *	222222
- *	111111
- *	111111
- * @endcode
- *
- * @see setSlice
- * @see gSwapHaloDim
- */
-void setSlice(const double *slice, Grid *grid, int d, int offset);
-
-/**
- * @brief Adds a slice to a slice in a Grid
- * @param	slice		Slice of values to add into grid
- * @param	grid		Grid
- * @param	d			Perpendicular direction to slice grid
- * @param	offset		Offset of slice in grid
- * @return				void
- *
- * Similar to setSlice() but adds slice to existing values rather than replacing
- * them.
- */
-void addSlice(const double *slice, Grid *grid, int d, int offset);
 
 /**
  * @brief Gets, sends, recieves and sets a slice, using MPI
@@ -128,9 +47,11 @@ void addSlice(const double *slice, Grid *grid, int d, int offset);
  *
  * @see getSlice
  * @see setSlice
- * @see gSwapHaloDim
+ * @see gInteractHaloDim
  */
-inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
+
+inline void gInteractSlice(SliceOpPointer sliceOp,
+					const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int sendTo,
 					const int recvFrom, const int mpiRank, Grid *grid);
 
@@ -216,7 +137,8 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
 }
 
-inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
+inline void gInteractSlice(SliceOpPointer sliceOp,
+					const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int sendTo,
 					const int recvFrom, const int mpiRank, Grid *grid){
 
@@ -226,15 +148,13 @@ inline void gExchangeSlice(const int nSlicePoints, const int offsetTake,
 	MPI_Request		sendRequest,recvRequest;
 	MPI_Status 		status;
 
-	// msg(STATUS|ONCE, "HEllo");
 	getSlice(sendSlice, grid, d, offsetTake);
 	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
-	// MPI_Wait(&sendRequest, &status);
 
 
 	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
-	setSlice(recvSlice, grid, d, offsetPlace);
+	sliceOp(recvSlice, grid, d, offsetPlace);
 
 	return;
 }
@@ -304,7 +224,7 @@ void gFinDiff1st(const Grid *scalar, Grid *field){
 	return;
 }
 
-void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){
+void gFinDiff2nd2D(Grid *result, const Grid *object){
 
 	//Load
 	int rank = object->rank;
@@ -331,13 +251,41 @@ void gFinDiff2nd2D(Grid *result, const Grid *object, const MpiInfo *mpiInfo){
 		gk++;
 		gkk++;
 	}
+	//
+	// //Load
+	// long int *sizeProd = object->sizeProd;
+	// int *trueSize = object->trueSize;
+	// // int *nGhostLayers = object->nGhostLayers;
+	//
+	// double *resultVal = result->val;
+	// double *objectVal = object->val;
+	//
+	// //Indexes
+	// long int g;
+	// int gj = sizeProd[1];
+	// int gk = sizeProd[2];
+	//
+	// //Debug stuff
+	// int cutOff = 5;
+	//
+	// // double h = 1./(256);
+	// // double h2i = 1./(h*h);
+	// // msg(STATUS, "HEllo h2 = %d", d)
+	//
+	// for(int k = cutOff; k < trueSize[2]-cutOff; k++){
+	// 	for(int j = cutOff; j < trueSize[1]-cutOff; j++){
+	// 		g = j*sizeProd[1] + k*sizeProd[2];
+	//
+	// 		resultVal[g] = -4*objectVal[g] ;
+	// 		resultVal[g] += objectVal[g + gj] + objectVal[g - gj]
+	// 						+objectVal[g + gk] + objectVal[g - gk];
+	// 	}
+	// }
 
 	return;
 }
 
 void gFinDiff2nd3D(Grid *result, const  Grid *object){
-	//TBD
-	//Not optimized (temporary 2D and 3D case, instead of nD recursive case)
 
 	//Load
 	int rank = object->rank;
@@ -357,6 +305,8 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
 	//Laplacian
 	for(int q = 0; q < sizeProd[rank]; q++){
+		// resultVal[g] = 0.;
+
 		resultVal[g] = -6.*objectVal[g];
 		resultVal[g] += objectVal[gj] + objectVal[gjj]
 						+objectVal[gk] + objectVal[gkk]
@@ -372,24 +322,72 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 		gll++;
 	}
 
+	/**************************
+	 *	Debug
+	 *************************/
+	// //Load
+	// int rank = object->rank;
+	// long int *sizeProd = object->sizeProd;
+	// int *trueSize = object->trueSize;
+	// int *nGhostLayers = object->nGhostLayers;
+	//
+	// double *resultVal = result->val;
+	// double *objectVal = object->val;
+	//
+	// //Indexes
+	// long int g = nGhostLayers[1]*sizeProd[1] + nGhostLayers[2]*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+	// int gj = sizeProd[1];
+	// int gk = sizeProd[2];
+	// int gl = sizeProd[3];
+	//
+	// //Edgecases
+	// long int kEdgeInc = (nGhostLayers[1]+nGhostLayers[rank+1])*sizeProd[1];
+	// long int lEdgeInc = (nGhostLayers[2]+nGhostLayers[rank+2])*sizeProd[2];
+	//
+	// //Debug stuff
+	// int cutOff = 5;
+	// double h = 1./(trueSize[1]+3);
+	// double h2i = 1./(h);
+	//
+	//
+	// for(int l = cutOff; l < trueSize[3]-cutOff;l++){
+	// 	for(int k = cutOff; k < trueSize[2]-cutOff; k++){
+	// 		for(int j = cutOff; j < trueSize[1]-cutOff; j++){
+	// 			g = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+	// 			//
+	// 			resultVal[g] = -6.*objectVal[g];
+	// 			resultVal[g] += objectVal[g + gj] + objectVal[g - gj]
+	// 							+objectVal[g + gk] + objectVal[g - gk]
+	// 							+objectVal[g + gl] + objectVal[g - gl];
+	// 			// resultVal[g] *= h2i;
+	//
+	// 			g ++;
+	// 		}
+	// 		g += kEdgeInc;
+	// 	}
+	// 	g+= lEdgeInc;
+	// }
+
+
 	return;
 }
 
-void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo){
+void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
-	for(int d = 1; d < rank; d++) gSwapHaloDim(grid, mpiInfo, d);
+	for(int d = 1; d < rank; d++) gInteractHaloDim(sliceOp, grid, mpiInfo, d);
 
 	return;
 }
 
-void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
+void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
+
 
 	//Load
 	int rank = grid->rank;
@@ -420,16 +418,16 @@ void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d){
 				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
 
 
-	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, sendTo,
+	gInteractSlice(setSlice, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
 					recvFrom, mpiRank, grid);
-	//
-	// /*****************************************************
-	//  *			Sending and recieving lower
-	// ******************************************************/
+
+	/*****************************************************
+	 *			Sending and recieving lower
+	******************************************************/
 	offsetTake = 1;
 	offsetPlace = size[d]-1;
 
-	gExchangeSlice(nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
+	gInteractSlice(setSlice, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
 					sendTo, mpiRank, grid);
 
 

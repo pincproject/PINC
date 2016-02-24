@@ -16,7 +16,6 @@ rho = rho[:,:,:,0]
 phi = phi[:,:,:,0]
 res = res[:,:,:,0]
 
-print rho.min()
 
 #Plotting
 #
@@ -30,9 +29,9 @@ print rho.min()
 # phiGrid = mlab.pipeline.scalar_field(phi)
 # phiPlot = mlab.pipeline.volume(phiGrid)
 # mlab.axes()
-
-rhoSlice = mlab.figure()
-
+#
+# rhoSlice = mlab.figure()
+#
 im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(rho),
                             plane_orientation='x_axes',
                             slice_index=rho.shape[0]/2,
@@ -75,11 +74,6 @@ mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(res),
 mlab.title("res")
 mlab.colorbar(im)
 mlab.axes()
-
-
-
-
-
 
 
 

@@ -265,7 +265,7 @@ typedef struct{
 	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
 	double *stepSize;			///< Step-sizes in Debye lengths (rank elements)
 
-	double *sendSlice;			///< Slice buffer of the grid sent to other 
+	double *sendSlice;			///< Slice buffer of the grid sent to other
 	double *recvSlice;			///< Slice buffer of the grid sent to other
 	hid_t h5;					///< HDF5 file handler
 	hid_t h5MemSpace;			///< HDF5 memory space description
@@ -296,6 +296,13 @@ typedef enum{
 	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
 	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
 } msgKind;
+
+/**
+ * @brief	Function pointers for the different slice operations
+ * @see gInteractHalo
+ */
+typedef void (*SliceOpPointer)(const double *slice, Grid *grid, int d, int offset);
+
 
 /******************************************************************************
  * DEFINED IN POPULATION.C
@@ -570,35 +577,159 @@ void gFreeMpi(MpiInfo *mpiInfo);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param ini			dictionary
+ * @param sliceOp			SliceOpPointer
  * @param *Grid	Grid struct
  * @param *mpiInfo		MpiInfo struct
  * @param d				Along which dimension it should exhange ghost cells
  *
- * This function gets the ghost layers for the subdomains, by extracting the
- * outer layer of the true grid (total grid - ghost layer), and then sending it
- * to the neighboring subdomains. Then the subdomain places the ghost layers it
- * recieves in it's outer layer. It exhanges the ghost layer perpendicular to
- * the dimension it recieves as an input parameter.
+ *
+ * Since each true subdomain is surrounded by ghost layers, both to implement boundary conditions
+ * and to facility communication between different processes each taking care of a spesified subdomain,
+ * this function fills the ghost layers with the values from the surrounding subdomains. When called
+ * it has the option to either set the ghost layer as neighboring subdomain, or add to the existing
+ * ghost layers. This is specified by the first argument which can either be setSlice or addSlice.
+ *
+ *
+ * Example with 2 subdomains and a 2D 2x2 true grid:
+ * @code
+  	1	1	1	1			2	2	2	2
+ 	1	1	1	1			2	2	2	2
+ 	1	1	1	1			2	2	2	2
+ 	1	1	1	1			2	2	2	2
+ * @endcode
+ *
+ *	If we then want to the ghost layers in the subdomains with the values from the surrounding subdomain
+ *	we use the following syntax.
+ * @code
+	gInteractHaloDim(setSlice, grid, mpiInfo, 1)
+ * @endcode
+ * The result should look like:
+ *
+ * @code
+  	2	1	1	2			1	2	2	1
+ 	2	1	1	2			1	2	2	1
+ 	2	1	1	2			1	2	2	1
+ 	2	1	1	2			1	2	2	1
+ * @endcode
+ *
+ *	If we go back to the original grids and we instead want to add to the ghostlayer
+ *	we can use addSlice instead.
+ * @code
+	gInteractHaloDim(addSlice, grid, mpiInfo, 1)
+ * @endcode
+ * This should produce:
+ * @code
+  	3	1	1	3			3	2	2	3
+ 	3	1	1	3			3	2	2	3
+ 	3	1	1	3			3	2	2	3
+ 	3	1	1	3			3	2	2	3
+ * @endcode
+ *
+ *	If needed it should be quick to facilitate for more slice operations, in addition to set and add.
  *
  * NB! Only works with 1 ghost layer.
- * @see gExchangeSlice
+ * @see gInteractHalo
  */
-void gSwapHaloDim(Grid *grid, const MpiInfo *mpiInfo, int d);
+void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param ini			dictionary
- * @param *Grid	Grid struct
- * @param *mpiInfo		MpiInfo struct
+ * @param sliceOp			SliceOpPointer
+ * @param *grid				Grid struct
+ * @param *mpiInfo			MpiInfo struct
  *
- * Swaps the whole halo surrounding the true grid point with the surrounding sub domains.
+ * A wrapper to the gInteractHaloDim function, that is used when the user wants the interaction in
+ * all the dimensions.
  *
  * NB! Only works with 1 ghost layer.
  * @see gExchangeSlice
- * @see gSwapHaloDim
+ * @see gInteractHaloDim
+ * @see SliceOpPointer
  */
-void gSwapHalo(Grid *grid, const MpiInfo *mpiInfo);
+void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo);
+
+/**
+ * @brief Extracts a (dim-1) dimensional slice of grid values.
+ * @param	slice 		Return array
+ * @param	grid		Grid
+ * @param	d			Perpendicular direction to slice
+ * @param	offset 		Offset of slice
+ * @return				Void
+ *
+ * This function gets extracts a slice from a N dimensional grid. The integer d
+ * decides in which direction the slice is perpendicular to, and the offset decides
+ * which which slice it picks out. It needs a preallocated slice array where
+ * the extracted slice will be stored.
+ *
+ * 2D example: Here we have a 5x4 grid and we want to extract a slice corresponding
+ * to the second row, where x (d=0) is a constant 1.
+ *
+ * @code
+ * 15   16   17   18   19
+ *
+ * 10   11   12   13   14
+ *
+ *  5    6    7    8    9
+
+ *  0    1    2    3    4
+ * @endcode
+ *
+ * @code
+	 getSlice(slice, grid, 0, 1);
+ * @endcode
+ * After running this the slice array consists of
+ * slice = \f( [1, 6, 11, 16] \f)
+ *
+ * @see setSlice
+ * @see gInteractHaloDim
+ **/
+
+void getSlice(double *slice, const Grid *grid, int d, int offset);
+
+/**
+ * @brief places a (dim-1) dimensional slice onto a selected slice on the grid.
+ * @param	slice		Slice containing a layer of values
+ * @param	grid		Grid
+ * @param	d 			Perpendicular direction to slice
+ * @param	offset 		Offset of slice
+ * @return				Void
+ *
+ * This function places a a slice on a grid. If we have a slice and want to
+ * insert it onto a grid this function is used.
+ *
+ * Example: We have a 1D slice consisting of 6 2s and want to insert it onto
+ * the third row, from the bottom.
+ * @code
+ *	111111
+ *	111111
+ *	111111
+ *	111111
+ *
+ *	setSlice(slice, grid, 0, 2);
+ *
+ *	111111
+ *	222222
+ *	111111
+ *	111111
+ * @endcode
+ *
+ * @see setSlice
+ * @see gInteractHaloDim
+ */
+void setSlice(const double *slice, Grid *grid, int d, int offset);
+
+/**
+ * @brief Adds a slice to a slice in a Grid
+ * @param	slice		Slice of values to add into grid
+ * @param	grid		Grid
+ * @param	d			Perpendicular direction to slice grid
+ * @param	offset		Offset of slice in grid
+ * @return				void
+ *
+ * Similar to setSlice() but adds slice to existing values rather than replacing
+ * them.
+ */
+void addSlice(const double *slice, Grid *grid, int d, int offset);
 
 
 /**
@@ -650,7 +781,7 @@ void gFinDiff2nd3D(Grid *phi,const Grid *rho);
  *
  *
  */
-void gFinDiff2nd2D(Grid *phi,const Grid *rho,const  MpiInfo *mpiInfo);
+void gFinDiff2nd2D(Grid *phi,const Grid *rho);
 
  /**
  * @brief Normalize E-field
