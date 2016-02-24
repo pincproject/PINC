@@ -25,9 +25,9 @@
 
 void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "modules:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "modules:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "modules:coarseSolv", "\0");
+	char *preSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:preSmooth", "\0");
+    char *postSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:postSmooth", "\0");
+    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "multigrid:coarseSolv", "\0");
 
 	int nDims = multigrid->grids[0]->rank-1;
 
@@ -506,13 +506,9 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 
 	double coeff = 1./6.;
 
-	double normalize = 0.;
-	long int index = 3*sizeProd[1] + 3*sizeProd[2] + 3*sizeProd[3];
 
 	for(int c = 0; c < nCycles; c++){
 
-		//Reference potential
-		// phiVal[index] = normalize;
 
 		/*********************
 		 *	Red Pass
@@ -541,10 +537,6 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 		}
 
 		gInteractHalo(setSlice, phi, mpiInfo);
-
-		//Reference potential
-		// phiVal[index] = normalize;
-
 
 		/*********************
 		 *	Black pass
