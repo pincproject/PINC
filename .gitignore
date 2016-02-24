@@ -14,3 +14,4 @@ src/main.local.c
 ut
 tags
 **.vtk
+local.mk

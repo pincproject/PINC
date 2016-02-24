@@ -6,13 +6,15 @@
 ## @date		10.10.15
 ##
 
+-include local.mk
+
 EXEC	= pinc
 CC		= mpicc
 CADD	= # Additional CFLAGS accessible from CLI
 COPT	= -O3 # Optimization
 CFLAGS	=	-std=c11 -Wall\
 			-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 $(COPT) $(CADD)
+			-lm -lgsl -lblas -lhdf5 $(COPT) $(CADD) $(INC) $(LIB)
 
 SDIR	= src
 ODIR	= src/obj
@@ -54,11 +56,12 @@ local: $(EXEC).local cleantestdata doc
 
 test: $(EXEC).test cleantestdata doc
 	@echo "Running Unit Tests"
-	@./ut input.ini
+	@echo $(TEST)
+	@./$(EXEC) input.ini
 
 $(EXEC).test: $(TODIR)/main.test.o $(OBJ) $(TESTOBJ) $(LIBOBJ)
 	@echo "Linking Unit Tests"
-	@$(CC) $^ -o ut $(CFLAGS)
+	@$(CC) $^ -o $(EXEC) $(CFLAGS)
 	@echo "PINC is built"
 
 $(EXEC).local: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
