@@ -134,6 +134,15 @@ CLEANING UP OUR GIT WORKFLOW
 															Sigvald Marholm
 															17.02.16
 
+MG OPTIMAL SETTINGS
+	
+	Making a routine that runs with several different MG cycle settings, and finds
+	the optimal settings
+
+Gullik Vetvik Killie
+
+25.02.16
+
 ===============================================================================
 	WISH-list
 -------------------------------------------------------------------------------
@@ -280,3 +289,5 @@ MAKING A BUILD SERVER
 
 															Sigvald Marholm
 															17.02.16
+
+
