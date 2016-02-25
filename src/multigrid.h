@@ -23,7 +23,7 @@
   * The finest grid, grid 0, links to the grid used in the rest of the program, the other grids
   * in the grid array is coarser grids used in the
   * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for now the only
-  * options are Gauss-Seidel Red-Black (gaussSeidel). More TBD.
+  * options are Gauss-Seidel Red-Black (mgGS). More TBD.
   */
  typedef struct {
     Grid **grids;   ///< Array of Grid structs of decreasing coarseness
@@ -107,7 +107,7 @@ void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInf
  *	grid trying to simplify the iteration through the grid.
  *
  */
-void gaussSeidel3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -122,7 +122,7 @@ void gaussSeidel3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiIn
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 2D
@@ -136,21 +136,21 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo 
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void gaussSeidel2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 /**
- * @brief Jacobian method
+ * @brief mgJacob method
  * @param	rho		Source term
  * @param	phi		Solution term
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- * Non-optimized implementation of a jacobian2D algorithm to solve poissons equation.
+ * Non-optimized implementation of a mgJacob2D algorithm to solve poissons equation.
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void jacobian2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
-void jacobian3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgJacob2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 
 /**

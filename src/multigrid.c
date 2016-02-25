@@ -23,7 +23,7 @@
  * 				Local functions
  *****************************************************************************/
 
-void setSolvers(const dictionary *ini, Multigrid *multigrid){
+void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
 	char *preSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:preSmooth", "\0");
     char *postSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:postSmooth", "\0");
@@ -31,36 +31,36 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
 	int nDims = multigrid->grids[0]->rank-1;
 
-	if(!strcmp(preSmoothName,"gaussSeidel")){
-		if(nDims == 2)	multigrid->preSmooth = &gaussSeidel2D;
-		else if(nDims == 3) multigrid->preSmooth = &gaussSeidel3D;
+	if(!strcmp(preSmoothName,"mgGS")){
+		if(nDims == 2)	multigrid->preSmooth = &mgGS2D;
+		else if(nDims == 3) multigrid->preSmooth = &mgGS3D;
 		else msg(ERROR, "No Presmoothing algorithm set for dimensions %d", nDims);
-    } else if (!strcmp(preSmoothName, "jacobian")){
-		if(nDims == 2) multigrid->preSmooth = &jacobian2D;
-		else if(nDims == 3) multigrid->preSmooth = &jacobian3D;
+    } else if (!strcmp(preSmoothName, "mgJacob")){
+		if(nDims == 2) multigrid->preSmooth = &mgJacob2D;
+		else if(nDims == 3) multigrid->preSmooth = &mgJacob3D;
 		else msg(ERROR, "No Presmoothing algorithm set for dimensions %d", nDims);
  	} else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"gaussSeidel")){
-		if(nDims == 2)	multigrid->postSmooth = &gaussSeidel2D;
-		else if(nDims == 3) multigrid->postSmooth = &gaussSeidel3D;
+    if(!strcmp(postSmoothName,"mgGS")){
+		if(nDims == 2)	multigrid->postSmooth = &mgGS2D;
+		else if(nDims == 3) multigrid->postSmooth = &mgGS3D;
 		else msg(ERROR, "No postsmoothing algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(postSmoothName, "jacobian")){
-		if(nDims == 2) multigrid->postSmooth = &jacobian2D;
-		else if(nDims == 3) multigrid->postSmooth = &jacobian3D;
+	} else if (!strcmp(postSmoothName, "mgJacob")){
+		if(nDims == 2) multigrid->postSmooth = &mgJacob2D;
+		else if(nDims == 3) multigrid->postSmooth = &mgJacob3D;
 	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"gaussSeidel")){
-		if(nDims == 2)	multigrid->coarseSolv = &gaussSeidel2D;
-		else if(nDims == 3) multigrid->coarseSolv = &gaussSeidel3D;
+    if(!strcmp(coarseSolverName,"mgGS")){
+		if(nDims == 2)	multigrid->coarseSolv = &mgGS2D;
+		else if(nDims == 3) multigrid->coarseSolv = &mgGS3D;
 		else msg(ERROR, "No coarsesolver algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(coarseSolverName, "jacobian")){
-		if(nDims == 2) multigrid->coarseSolv = &jacobian2D;
-		else if(nDims == 3) multigrid->coarseSolv = &jacobian3D;
+	} else if (!strcmp(coarseSolverName, "mgJacob")){
+		if(nDims == 2) multigrid->coarseSolv = &mgJacob2D;
+		else if(nDims == 3) multigrid->coarseSolv = &mgJacob3D;
  	} else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
@@ -75,7 +75,7 @@ void setSolvers(const dictionary *ini, Multigrid *multigrid){
 	return;
 }
 
-void setRestrictProlong(const dictionary *ini,Multigrid *multigrid){
+void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	char *restrictor = iniparser_getstring((dictionary*)ini, "multigrid:restrictor", "\0");
 	char *prolongator = iniparser_getstring((dictionary*)ini, "multigrid:prolongator", "\0");
 
@@ -307,8 +307,8 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
     multigrid->grids = grids;
 
     //Setting the algorithms to be used, pointer functions
-	setSolvers(ini, multigrid);
-	setRestrictProlong(ini, multigrid);
+	mgSetSolver(ini, multigrid);
+	mgsetRestrictProlong(ini, multigrid);
 
   	return multigrid;
 
@@ -333,7 +333,7 @@ void mgFree(Multigrid *multigrid){
  *****************************************************/
 
 
-void jacobian2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+void mgJacob2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
 
 	msg(STATUS, "Hello");
 	//Common variables
@@ -373,7 +373,7 @@ void jacobian2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mp
 	return;
 }
 
-void jacobian3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
 
 	// msg(STATUS, "Hello");
 
@@ -423,7 +423,7 @@ void jacobian3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mp
 
 
 
-void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+void mgGS2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 	//Common variables
 	int *trueSize = phi->trueSize;
@@ -486,7 +486,7 @@ void gaussSeidel2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 }
 
 
-void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 	//Common variables
 	int *trueSize = phi->trueSize;
@@ -572,7 +572,7 @@ void gaussSeidel3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiIn
 
 
 
-void gaussSeidel3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 	//Common variables
 	int *trueSize = phi->trueSize;

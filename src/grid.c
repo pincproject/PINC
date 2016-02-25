@@ -192,185 +192,116 @@ static int *getSubdomain(const dictionary *ini){
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-void gFinDiff1st(const Grid *scalar, Grid *field){
+ /******************************************************************************
+  *	FINITE DIFFERENCE
+  *****************************************************************************/
 
-	//Performs first order centered finite difference on scalar and returns a field
+ void gFinDiff1st(const Grid *scalar, Grid *field){
 
-	int rank =scalar->rank;
-	long int *sizeProd = scalar->sizeProd;
-	long int *fieldSizeProd = field->sizeProd;
+ 	//Performs first order centered finite difference on scalar and returns a field
 
-	double *scalarVal = scalar->val;
-	double *fieldVal = field->val;
+ 	int rank =scalar->rank;
+ 	long int *sizeProd = scalar->sizeProd;
+ 	long int *fieldSizeProd = field->sizeProd;
 
-	//Scalar indexes
-	long int sNext, sPrev;
-	long int f;
-	int fNext = fieldSizeProd[1];
+ 	double *scalarVal = scalar->val;
+ 	double *fieldVal = field->val;
 
-	//Centered Finite difference
-	for(int d = 1; d < rank; d++){
-		sNext = sizeProd[d];
-		sPrev = -sizeProd[d];
-		f = d-1;
-		for(int g = 0; g < sizeProd[rank]; g++){
-			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
-			sNext++;
-			sPrev++;
-			f += fNext;
-		}
-	}
+ 	//Scalar indexes
+ 	long int sNext, sPrev;
+ 	long int f;
+ 	int fNext = fieldSizeProd[1];
 
-	return;
-}
+ 	//Centered Finite difference
+ 	for(int d = 1; d < rank; d++){
+ 		sNext = sizeProd[d];
+ 		sPrev = -sizeProd[d];
+ 		f = d-1;
+ 		for(int g = 0; g < sizeProd[rank]; g++){
+ 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
+ 			sNext++;
+ 			sPrev++;
+ 			f += fNext;
+ 		}
+ 	}
 
-void gFinDiff2nd2D(Grid *result, const Grid *object){
+ 	return;
+ }
 
-	//Load
-	int rank = object->rank;
-	long int *sizeProd = object->sizeProd;
+ void gFinDiff2nd2D(Grid *result, const Grid *object){
 
-	double *resultVal = result->val;
-	double *objectVal = object->val;
+ 	//Load
+ 	int rank = object->rank;
+ 	long int *sizeProd = object->sizeProd;
 
-	// Index of neighboring nodes
-	int gj = sizeProd[1];
-	int gjj= -sizeProd[1];
-	int gk = sizeProd[2];
-	int gkk= -sizeProd[2];
+ 	double *resultVal = result->val;
+ 	double *objectVal = object->val;
 
-	//Laplacian
-	for(int g = 0; g < sizeProd[rank]; g++){
-		resultVal[g] = -4.*objectVal[g];
-		resultVal[g] += objectVal[gj] + objectVal[gjj]
-						+objectVal[gk] + objectVal[gkk];
+ 	// Index of neighboring nodes
+ 	int gj = sizeProd[1];
+ 	int gjj= -sizeProd[1];
+ 	int gk = sizeProd[2];
+ 	int gkk= -sizeProd[2];
 
-		//Increment indexes
-		gj++;
-		gjj++;
-		gk++;
-		gkk++;
-	}
-	//
-	// //Load
-	// long int *sizeProd = object->sizeProd;
-	// int *trueSize = object->trueSize;
-	// // int *nGhostLayers = object->nGhostLayers;
-	//
-	// double *resultVal = result->val;
-	// double *objectVal = object->val;
-	//
-	// //Indexes
-	// long int g;
-	// int gj = sizeProd[1];
-	// int gk = sizeProd[2];
-	//
-	// //Debug stuff
-	// int cutOff = 5;
-	//
-	// // double h = 1./(256);
-	// // double h2i = 1./(h*h);
-	// // msg(STATUS, "HEllo h2 = %d", d)
-	//
-	// for(int k = cutOff; k < trueSize[2]-cutOff; k++){
-	// 	for(int j = cutOff; j < trueSize[1]-cutOff; j++){
-	// 		g = j*sizeProd[1] + k*sizeProd[2];
-	//
-	// 		resultVal[g] = -4*objectVal[g] ;
-	// 		resultVal[g] += objectVal[g + gj] + objectVal[g - gj]
-	// 						+objectVal[g + gk] + objectVal[g - gk];
-	// 	}
-	// }
+ 	//Laplacian
+ 	for(int g = 0; g < sizeProd[rank]; g++){
+ 		resultVal[g] = -4.*objectVal[g];
+ 		resultVal[g] += objectVal[gj] + objectVal[gjj]
+ 						+objectVal[gk] + objectVal[gkk];
 
-	return;
-}
+ 		//Increment indexes
+ 		gj++;
+ 		gjj++;
+ 		gk++;
+ 		gkk++;
+ 	}
 
-void gFinDiff2nd3D(Grid *result, const  Grid *object){
+ 	return;
+ }
 
-	//Load
-	int rank = object->rank;
-	long int *sizeProd = object->sizeProd;
+ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
-	double *resultVal = result->val;
-	double *objectVal = object->val;
+ 	//Load
+ 	int rank = object->rank;
+ 	long int *sizeProd = object->sizeProd;
 
-	// Index of neighboring nodes
-	int g = 0;
-	int gj = g + sizeProd[1];
-	int gjj= g - sizeProd[1];
-	int gk = g + sizeProd[2];
-	int gkk= g - sizeProd[2];
-	int gl = g + sizeProd[3];
-	int gll= g - sizeProd[3];
+ 	double *resultVal = result->val;
+ 	double *objectVal = object->val;
 
-	//Laplacian
-	for(int q = 0; q < sizeProd[rank]; q++){
-		// resultVal[g] = 0.;
+ 	// Index of neighboring nodes
+ 	int g = 0;
+ 	int gj = g + sizeProd[1];
+ 	int gjj= g - sizeProd[1];
+ 	int gk = g + sizeProd[2];
+ 	int gkk= g - sizeProd[2];
+ 	int gl = g + sizeProd[3];
+ 	int gll= g - sizeProd[3];
 
-		resultVal[g] = -6.*objectVal[g];
-		resultVal[g] += objectVal[gj] + objectVal[gjj]
-						+objectVal[gk] + objectVal[gkk]
-						+objectVal[gl] + objectVal[gll];
+ 	//Laplacian
+ 	for(int q = 0; q < sizeProd[rank]; q++){
+ 		// resultVal[g] = 0.;
 
-		//Increment indexes
-		g++;
-		gj++;
-		gjj++;
-		gk++;
-		gkk++;
-		gl++;
-		gll++;
-	}
+ 		resultVal[g] = -6.*objectVal[g];
+ 		resultVal[g] += objectVal[gj] + objectVal[gjj]
+ 						+objectVal[gk] + objectVal[gkk]
+ 						+objectVal[gl] + objectVal[gll];
 
-	/**************************
-	 *	Debug
-	 *************************/
-	// //Load
-	// int rank = object->rank;
-	// long int *sizeProd = object->sizeProd;
-	// int *trueSize = object->trueSize;
-	// int *nGhostLayers = object->nGhostLayers;
-	//
-	// double *resultVal = result->val;
-	// double *objectVal = object->val;
-	//
-	// //Indexes
-	// long int g = nGhostLayers[1]*sizeProd[1] + nGhostLayers[2]*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
-	// int gj = sizeProd[1];
-	// int gk = sizeProd[2];
-	// int gl = sizeProd[3];
-	//
-	// //Edgecases
-	// long int kEdgeInc = (nGhostLayers[1]+nGhostLayers[rank+1])*sizeProd[1];
-	// long int lEdgeInc = (nGhostLayers[2]+nGhostLayers[rank+2])*sizeProd[2];
-	//
-	// //Debug stuff
-	// int cutOff = 5;
-	// double h = 1./(trueSize[1]+3);
-	// double h2i = 1./(h);
-	//
-	//
-	// for(int l = cutOff; l < trueSize[3]-cutOff;l++){
-	// 	for(int k = cutOff; k < trueSize[2]-cutOff; k++){
-	// 		for(int j = cutOff; j < trueSize[1]-cutOff; j++){
-	// 			g = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-	// 			//
-	// 			resultVal[g] = -6.*objectVal[g];
-	// 			resultVal[g] += objectVal[g + gj] + objectVal[g - gj]
-	// 							+objectVal[g + gk] + objectVal[g - gk]
-	// 							+objectVal[g + gl] + objectVal[g - gl];
-	// 			// resultVal[g] *= h2i;
-	//
-	// 			g ++;
-	// 		}
-	// 		g += kEdgeInc;
-	// 	}
-	// 	g+= lEdgeInc;
-	// }
+ 		//Increment indexes
+ 		g++;
+ 		gj++;
+ 		gjj++;
+ 		gk++;
+ 		gkk++;
+ 		gl++;
+ 		gll++;
+ 	}
 
+ 	return;
+ }
 
-	return;
-}
+/******************************************************************************
+ *	HALO FUNCTIONS
+ *****************************************************************************/
 
 void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
 
@@ -433,6 +364,10 @@ void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo
 
 	return;
 }
+
+/*****************************************************************************
+ *		ALLOC/DESTRUCTORS
+ ****************************************************************************/
 
 
 Grid *gAlloc(const dictionary *ini, int nValues){
@@ -627,283 +562,11 @@ void gFree(Grid *grid){
 
 }
 
-void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
-
-	// RETRIEVE NECESSARY VARIABLES
-
-	int nDims = mpiInfo->nDims;
-	int nSpecies = mpiInfo->nSpecies;
-	int *size = grid->size;
-
-	// COMPUTE SIMPLE VARIABLES
-
-	int nNeighbors = pow(3,nDims);
-	int neighborhoodCenter = 0;
-	for(int i=0;i<nDims;i++) neighborhoodCenter += pow(3,i);
-
-	// ALLOCATE FOR MIGRANTS AND FIND NUMBER TO ALLOCATE FOR
-
-	int nTest;
-	long int *nEmigrantsAllocTemp = iniGetLongIntArr(ini,"grid:nEmigrantsAlloc",&nTest);
-	if(nTest!=nNeighbors && nTest!=1 && nTest!=nDims){
-		msg(ERROR|ONCE,"grid:nEmigrantsAlloc must consist of 1, nDims=%i or 3^nDims=%i elements",nDims,nNeighbors);
-	}
-	long int *nEmigrantsAlloc = malloc(nNeighbors*sizeof(*nEmigrantsAlloc));
-
-	// Set all migrant-buffers to the same size
-	if(nTest==1){
-		alSetAll(nEmigrantsAlloc,nNeighbors,nEmigrantsAllocTemp[0]);
-		nEmigrantsAlloc[neighborhoodCenter] = 0;
-	}
-
-	// User has manually specified each buffer in lexicographical order
-	if(nTest==nNeighbors){
-		memcpy(nEmigrantsAlloc,nEmigrantsAllocTemp,nNeighbors*sizeof(*nEmigrantsAlloc));
-		nEmigrantsAlloc[neighborhoodCenter] = 0;
-	}
-
-	// User has specified the buffers according to how many dimensions the
-	// interface to the neighbour is (e.g. 0 for corners, 1 for edges, 2 for
-	// faces) in increasing order
-	if(nTest==nDims){
-		for(int neigh=0;neigh<nNeighbors;neigh++){
-			if(neigh==neighborhoodCenter) nEmigrantsAlloc[neigh] = 0;
-			else {
-				int temp = neigh;
-				int interfaceDims = nDims;
-				for(int d=nDims-1;d>=0;d--){
-					int power = pow(3,d);
-					if(temp/power!=1) interfaceDims--;
-					temp %= power;
-				}
-				nEmigrantsAlloc[neigh] = nEmigrantsAllocTemp[interfaceDims];
-			}
-		}
-	}
-
-	long int **migrants = malloc(nNeighbors*sizeof(**migrants));
-	long int **migrantsDummy = malloc(nNeighbors*sizeof(**migrantsDummy));
-	double **emigrants = malloc(nNeighbors*sizeof(**emigrants));
-	double **emigrantsDummy = malloc(nNeighbors*sizeof(**emigrantsDummy));
-	for(int i=0;i<nNeighbors;i++)
-		if(i!=neighborhoodCenter){
-			migrants[i] = malloc(nEmigrantsAlloc[i]*sizeof(*migrants));
-			emigrants[i] = malloc(2*nDims*nEmigrantsAlloc[i]*sizeof(*emigrants));
-		}
-
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",&nTest);
-	if(nTest!=2*nDims){
-		msg(ERROR|ONCE,"grid:threshold must be 2*nDims=%i elements", 2*nDims);
-	}
-	for(int i=0;i<2*nDims;i++){
-		if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
-	}
-
-	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT
-
-	//long int *nMigrants = malloc(nNeighbors*nSpecies*sizeof(*nMigrants));
-	long int *nEmigrants = malloc(nNeighbors*nSpecies*sizeof(*nEmigrants));
-	long int *nImmigrants = malloc(nNeighbors*nSpecies*sizeof(*nImmigrants));
-
-	long int nImmigrantsAlloc = 2*nDims*alMax(nEmigrantsAlloc,nNeighbors);
-	double *immigrants = malloc(nImmigrantsAlloc*sizeof(*immigrants));
-
-	MPI_Request *send = malloc(nNeighbors*sizeof(*send));
-	MPI_Request *recv = malloc(nNeighbors*sizeof(*recv));
-	for(int ne=0;ne<nNeighbors;ne++){
-		send[ne] = MPI_REQUEST_NULL;
-		recv[ne] = MPI_REQUEST_NULL;
-	}
 
 
-	mpiInfo->send = send;
-	mpiInfo->recv = recv;
-	mpiInfo->nNeighbors = nNeighbors;
-	mpiInfo->migrants = migrants;
-	mpiInfo->migrantsDummy = migrantsDummy;
-	mpiInfo->emigrants = emigrants;
-	mpiInfo->emigrantsDummy = emigrantsDummy;
-	mpiInfo->nEmigrants = nEmigrants;
-	mpiInfo->nImmigrants = nImmigrants;
-	mpiInfo->nEmigrantsAlloc = nEmigrantsAlloc;
-	mpiInfo->nImmigrantsAlloc = nImmigrantsAlloc;
-	mpiInfo->thresholds = thresholds;
-	mpiInfo->immigrants = immigrants;
-	mpiInfo->neighborhoodCenter = neighborhoodCenter;
-
-}
-
-void gDestroyNeighborhood(MpiInfo *mpiInfo){
-
-	long int **migrants = mpiInfo->migrants;
-	double **emigrants = mpiInfo->emigrants;
-	for(int neigh=0;neigh<mpiInfo->nNeighbors;neigh++){
-		if(neigh!=mpiInfo->neighborhoodCenter){
-			free(migrants[neigh]);
-			free(emigrants[neigh]);
-		}
-	}
-	free(migrants);
-	free(emigrants);
-	free(mpiInfo->migrantsDummy);
-	free(mpiInfo->emigrantsDummy);
-	mpiInfo->nNeighbors = 0;
-	free(mpiInfo->nEmigrantsAlloc);
-	free(mpiInfo->thresholds);
-	free(mpiInfo->immigrants);
-	free(mpiInfo->nImmigrants);
-	free(mpiInfo->send);
-	free(mpiInfo->recv);
-}
-
-void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
-
-	int mpiRank = mpiInfo->mpiRank;
-	int rank = grid->rank;
-	int *size = grid->size;
-	long int *sizeProd = grid->sizeProd;
-	double *v = grid->val;
-
-	for(long int p=0;p<sizeProd[rank];p++){
-		v[p] = 0;
-		long int temp = p;
-
-		for(int d=0;d<rank;d++){
-			v[p] += (temp%size[d])*pow(10,d-1) + mpiRank*1000;
-			temp/=size[d];
-		}
-	}
-}
-
-void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
-
-	hid_t fileSpace = grid->h5FileSpace;
-	hid_t memSpace = grid->h5MemSpace;
-	hid_t file = grid->h5;
-	double *val = grid->val;
-
-	/*
-	 * STORE DATA COLLECTIVELY
-	 */
-	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
-
-	char name[64];
-	sprintf(name,"/n=%.1f",n);
-
-	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-
-	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
-
-	H5Dclose(dataset);
-
-	H5Pclose(pList);
-}
-
-void gCloseH5(Grid *grid){
-	H5Sclose(grid->h5MemSpace);
-	H5Sclose(grid->h5FileSpace);
-	H5Fclose(grid->h5);
-}
-
-void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
-						  const double *denorm, const double *dimen, const char *fName){
-
-	int rank = grid->rank;
-	int nDims = rank-1;
-	int *size = grid->size;
-	int *trueSize = grid->trueSize;
-	int	*nGhostLayers = grid->nGhostLayers;
-	int *nSubdomains = mpiInfo->nSubdomains;
-	int *subdomain = mpiInfo->subdomain;
-
-	/*
-	 * CREATE FILE
-	 */
-
-	hid_t file = createH5File(ini,fName,"grid");
-
-	/*
-	 * CREATE ATTRIBUTES
-	 */
-
-	double *debye = malloc(nDims*sizeof(*debye));
-	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
-	for(int d=1;d<nDims;d++) debye[d]=debye[0];
-
-	hsize_t attrSize;
-    hid_t attrSpace;
-    hid_t attribute;
-
-
-	attrSize = (hsize_t)nDims;
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-
-
-	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->stepSize);
-    H5Aclose(attribute);
-
-
-
-	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
-    H5Aclose(attribute);
-
-    H5Sclose(attrSpace);
-	free(debye);
-
-	attrSize = (hsize_t)size[0];
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Quantity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, denorm);
-	H5Aclose(attribute);
-
-	attribute = H5Acreate(file, "Quantity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dimen);
-	H5Aclose(attribute);
-
-	H5Sclose(attrSpace);
-
-	/*
-	 * HDF5 HYPERSLAB DEFINITION
-	 */
-
-	hsize_t *fileDims 	= malloc(rank*sizeof(*fileDims));
-	hsize_t *memDims 	= malloc(rank*sizeof(*memDims));
-	hsize_t *memOffset 	= malloc(rank*sizeof(*memOffset));
-	hsize_t *fileOffset = malloc(rank*sizeof(*fileOffset));
-
-	for(int d=0;d<rank;d++){
-		// HDF5 indices needs to be reversed compared to ours due to non-C ordering.
-		memDims[d]		= (hsize_t)size[rank-d-1];
-		memOffset[d]	= (hsize_t)nGhostLayers[rank-d-1];
-		fileDims[d]		= (hsize_t)trueSize[rank-d-1]*nSubdomains[rank-d-2];
-		fileOffset[d]	= (hsize_t)trueSize[rank-d-1]*subdomain[rank-d-2];
-	}
-
-	fileDims[rank-1] = (hsize_t)trueSize[0];
-	fileOffset[rank-1] = (hsize_t)0.;
-
-	hid_t memSpace = H5Screate_simple(rank,memDims,NULL);
-	for(int d=0;d<nDims;d++) memDims[d] = trueSize[rank-d-1];
-	H5Sselect_hyperslab(memSpace,H5S_SELECT_SET,memOffset,NULL,memDims,NULL);
-
-	hid_t fileSpace = H5Screate_simple(rank,fileDims,NULL);
-	H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,fileOffset,NULL,memDims,NULL);
-
-	free(fileDims);
-	free(memDims);
-	free(memOffset);
-	free(fileOffset);
-
-	grid->h5 = file;
-	grid->h5MemSpace = memSpace;
-	grid->h5FileSpace = fileSpace;
-
-}
+/****************************************************************************
+ *	CONVENIENCE GRID OPERATIONS
+ ***************************************************************************/
 
 void gMul(Grid *grid, double num){
 
@@ -1043,4 +706,292 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	}
 
 	return;
+}
+
+/*****************************************************************************
+ *		NEIGHBORHOOD
+ ****************************************************************************/
+
+void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
+
+	// RETRIEVE NECESSARY VARIABLES
+
+	int nDims = mpiInfo->nDims;
+	int nSpecies = mpiInfo->nSpecies;
+	int *size = grid->size;
+
+	// COMPUTE SIMPLE VARIABLES
+
+	int nNeighbors = pow(3,nDims);
+	int neighborhoodCenter = 0;
+	for(int i=0;i<nDims;i++) neighborhoodCenter += pow(3,i);
+
+	// ALLOCATE FOR MIGRANTS AND FIND NUMBER TO ALLOCATE FOR
+
+	int nTest;
+	long int *nEmigrantsAllocTemp = iniGetLongIntArr(ini,"grid:nEmigrantsAlloc",&nTest);
+	if(nTest!=nNeighbors && nTest!=1 && nTest!=nDims){
+		msg(ERROR|ONCE,"grid:nEmigrantsAlloc must consist of 1, nDims=%i or 3^nDims=%i elements",nDims,nNeighbors);
+	}
+	long int *nEmigrantsAlloc = malloc(nNeighbors*sizeof(*nEmigrantsAlloc));
+
+	// Set all migrant-buffers to the same size
+	if(nTest==1){
+		alSetAll(nEmigrantsAlloc,nNeighbors,nEmigrantsAllocTemp[0]);
+		nEmigrantsAlloc[neighborhoodCenter] = 0;
+	}
+
+	// User has manually specified each buffer in lexicographical order
+	if(nTest==nNeighbors){
+		memcpy(nEmigrantsAlloc,nEmigrantsAllocTemp,nNeighbors*sizeof(*nEmigrantsAlloc));
+		nEmigrantsAlloc[neighborhoodCenter] = 0;
+	}
+
+	// User has specified the buffers according to how many dimensions the
+	// interface to the neighbour is (e.g. 0 for corners, 1 for edges, 2 for
+	// faces) in increasing order
+	if(nTest==nDims){
+		for(int neigh=0;neigh<nNeighbors;neigh++){
+			if(neigh==neighborhoodCenter) nEmigrantsAlloc[neigh] = 0;
+			else {
+				int temp = neigh;
+				int interfaceDims = nDims;
+				for(int d=nDims-1;d>=0;d--){
+					int power = pow(3,d);
+					if(temp/power!=1) interfaceDims--;
+					temp %= power;
+				}
+				nEmigrantsAlloc[neigh] = nEmigrantsAllocTemp[interfaceDims];
+			}
+		}
+	}
+
+	long int **migrants = malloc(nNeighbors*sizeof(**migrants));
+	long int **migrantsDummy = malloc(nNeighbors*sizeof(**migrantsDummy));
+	double **emigrants = malloc(nNeighbors*sizeof(**emigrants));
+	double **emigrantsDummy = malloc(nNeighbors*sizeof(**emigrantsDummy));
+	for(int i=0;i<nNeighbors;i++)
+		if(i!=neighborhoodCenter){
+			migrants[i] = malloc(nEmigrantsAlloc[i]*sizeof(*migrants));
+			emigrants[i] = malloc(2*nDims*nEmigrantsAlloc[i]*sizeof(*emigrants));
+		}
+
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",&nTest);
+	if(nTest!=2*nDims){
+		msg(ERROR|ONCE,"grid:threshold must be 2*nDims=%i elements", 2*nDims);
+	}
+	for(int i=0;i<2*nDims;i++){
+		if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
+	}
+
+	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT
+
+	//long int *nMigrants = malloc(nNeighbors*nSpecies*sizeof(*nMigrants));
+	long int *nEmigrants = malloc(nNeighbors*nSpecies*sizeof(*nEmigrants));
+	long int *nImmigrants = malloc(nNeighbors*nSpecies*sizeof(*nImmigrants));
+
+	long int nImmigrantsAlloc = 2*nDims*alMax(nEmigrantsAlloc,nNeighbors);
+	double *immigrants = malloc(nImmigrantsAlloc*sizeof(*immigrants));
+
+	MPI_Request *send = malloc(nNeighbors*sizeof(*send));
+	MPI_Request *recv = malloc(nNeighbors*sizeof(*recv));
+	for(int ne=0;ne<nNeighbors;ne++){
+		send[ne] = MPI_REQUEST_NULL;
+		recv[ne] = MPI_REQUEST_NULL;
+	}
+
+
+	mpiInfo->send = send;
+	mpiInfo->recv = recv;
+	mpiInfo->nNeighbors = nNeighbors;
+	mpiInfo->migrants = migrants;
+	mpiInfo->migrantsDummy = migrantsDummy;
+	mpiInfo->emigrants = emigrants;
+	mpiInfo->emigrantsDummy = emigrantsDummy;
+	mpiInfo->nEmigrants = nEmigrants;
+	mpiInfo->nImmigrants = nImmigrants;
+	mpiInfo->nEmigrantsAlloc = nEmigrantsAlloc;
+	mpiInfo->nImmigrantsAlloc = nImmigrantsAlloc;
+	mpiInfo->thresholds = thresholds;
+	mpiInfo->immigrants = immigrants;
+	mpiInfo->neighborhoodCenter = neighborhoodCenter;
+
+}
+
+void gDestroyNeighborhood(MpiInfo *mpiInfo){
+
+	long int **migrants = mpiInfo->migrants;
+	double **emigrants = mpiInfo->emigrants;
+	for(int neigh=0;neigh<mpiInfo->nNeighbors;neigh++){
+		if(neigh!=mpiInfo->neighborhoodCenter){
+			free(migrants[neigh]);
+			free(emigrants[neigh]);
+		}
+	}
+	free(migrants);
+	free(emigrants);
+	free(mpiInfo->migrantsDummy);
+	free(mpiInfo->emigrantsDummy);
+	mpiInfo->nNeighbors = 0;
+	free(mpiInfo->nEmigrantsAlloc);
+	free(mpiInfo->thresholds);
+	free(mpiInfo->immigrants);
+	free(mpiInfo->nImmigrants);
+	free(mpiInfo->send);
+	free(mpiInfo->recv);
+}
+
+/***************************************************************************
+ *		H5 FUNCTIONS
+ **************************************************************************/
+
+void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
+
+	hid_t fileSpace = grid->h5FileSpace;
+	hid_t memSpace = grid->h5MemSpace;
+	hid_t file = grid->h5;
+	double *val = grid->val;
+
+	/*
+	 * STORE DATA COLLECTIVELY
+	 */
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+
+	char name[64];
+	sprintf(name,"/n=%.1f",n);
+
+	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+
+	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+
+	H5Dclose(dataset);
+
+	H5Pclose(pList);
+}
+
+void gCloseH5(Grid *grid){
+	H5Sclose(grid->h5MemSpace);
+	H5Sclose(grid->h5FileSpace);
+	H5Fclose(grid->h5);
+}
+
+void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
+						  const double *denorm, const double *dimen, const char *fName){
+
+	int rank = grid->rank;
+	int nDims = rank-1;
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+	int	*nGhostLayers = grid->nGhostLayers;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int *subdomain = mpiInfo->subdomain;
+
+	/*
+	 * CREATE FILE
+	 */
+
+	hid_t file = createH5File(ini,fName,"grid");
+
+	/*
+	 * CREATE ATTRIBUTES
+	 */
+
+	double *debye = malloc(nDims*sizeof(*debye));
+	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	for(int d=1;d<nDims;d++) debye[d]=debye[0];
+
+	hsize_t attrSize;
+    hid_t attrSpace;
+    hid_t attribute;
+
+
+	attrSize = (hsize_t)nDims;
+	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->stepSize);
+    H5Aclose(attribute);
+
+
+
+	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
+    H5Aclose(attribute);
+
+    H5Sclose(attrSpace);
+	free(debye);
+
+	attrSize = (hsize_t)size[0];
+	attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	attribute = H5Acreate(file, "Quantity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, denorm);
+	H5Aclose(attribute);
+
+	attribute = H5Acreate(file, "Quantity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dimen);
+	H5Aclose(attribute);
+
+	H5Sclose(attrSpace);
+
+	/*
+	 * HDF5 HYPERSLAB DEFINITION
+	 */
+
+	hsize_t *fileDims 	= malloc(rank*sizeof(*fileDims));
+	hsize_t *memDims 	= malloc(rank*sizeof(*memDims));
+	hsize_t *memOffset 	= malloc(rank*sizeof(*memOffset));
+	hsize_t *fileOffset = malloc(rank*sizeof(*fileOffset));
+
+	for(int d=0;d<rank;d++){
+		// HDF5 indices needs to be reversed compared to ours due to non-C ordering.
+		memDims[d]		= (hsize_t)size[rank-d-1];
+		memOffset[d]	= (hsize_t)nGhostLayers[rank-d-1];
+		fileDims[d]		= (hsize_t)trueSize[rank-d-1]*nSubdomains[rank-d-2];
+		fileOffset[d]	= (hsize_t)trueSize[rank-d-1]*subdomain[rank-d-2];
+	}
+
+	fileDims[rank-1] = (hsize_t)trueSize[0];
+	fileOffset[rank-1] = (hsize_t)0.;
+
+	hid_t memSpace = H5Screate_simple(rank,memDims,NULL);
+	for(int d=0;d<nDims;d++) memDims[d] = trueSize[rank-d-1];
+	H5Sselect_hyperslab(memSpace,H5S_SELECT_SET,memOffset,NULL,memDims,NULL);
+
+	hid_t fileSpace = H5Screate_simple(rank,fileDims,NULL);
+	H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,fileOffset,NULL,memDims,NULL);
+
+	free(fileDims);
+	free(memDims);
+	free(memOffset);
+	free(fileOffset);
+
+	grid->h5 = file;
+	grid->h5MemSpace = memSpace;
+	grid->h5FileSpace = fileSpace;
+
+}
+
+/*****************************************************************************
+ *		MISC
+ ****************************************************************************/
+
+void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
+
+	int mpiRank = mpiInfo->mpiRank;
+	int rank = grid->rank;
+	int *size = grid->size;
+	long int *sizeProd = grid->sizeProd;
+	double *v = grid->val;
+
+	for(long int p=0;p<sizeProd[rank];p++){
+		v[p] = 0;
+		long int temp = p;
+
+		for(int d=0;d<rank;d++){
+			v[p] += (temp%size[d])*pow(10,d-1) + mpiRank*1000;
+			temp/=size[d];
+		}
+	}
 }
