@@ -55,7 +55,7 @@ static int testStructs(){
 	return 0;
 }
 
-static int testGaussSeidel(){
+static int testmgGS(){
 
 	return 0;
 }
@@ -112,6 +112,6 @@ static int testGaussSeidel(){
 // All tests for grid.c is contained in this function
 void testMultigrid(){
 	utRun(&testStructs);
-	utRun(&testGaussSeidel);
+	utRun(&testmgGS);
 	// utRun(&testRestrictor);
 }
