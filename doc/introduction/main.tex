@@ -103,7 +103,12 @@ In Git, there are two main branches that exists indefinitely; master and develop
 \end{figure}
 
 \subsection{Starting a New Feature}
-In your everyday work with PINC, what you'll be using is the develop branch, and a bunch of feature branches. Thus when you start working with the repository, you may want to switch directly to the develop branch, as that's where the code we're currently working together on is:
+In your everyday work with PINC, what you'll be using is the develop branch, and a bunch of feature branches. Thus when you start working with the repository, you may want to switch (checkout) directly to the develop branch, as that's where the code we're currently working together on is. The first time you do this, the develop branch doesn't even exist locally, and you need to get it from the central server (called the origin):
+
+\begin{verbatim}
+	git checkout -b develop origin/develop
+\end{verbatim}
+The next time, you can just switch as follows:
 
 \begin{verbatim}
 	git checkout develop
@@ -114,7 +119,7 @@ You may check which branch you're currently in by
 	git branch
 \end{verbatim}
 
-When you're going to implement a new feature, you make a branch off of the develop branch. You may first want to make sure you have the most recent version of the develop branch by pulling it from the central server (called the origin). While you are in the develop branch, run:
+When you're going to implement a new feature, you make a branch off of the develop branch. You may first want to make sure you have the most recent version of the develop branch by pulling it from origin. While you are in the develop branch, run:
 
 \begin{verbatim}
 	git pull
