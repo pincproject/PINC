@@ -40,6 +40,12 @@
 	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
 } Multigrid;
 
+/**
+ * @brief	Function pointers for the different slice operations
+ * @see gInteractHalo
+ */
+typedef void (*MgAlgo)(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+									Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
  * @brief Allocates multigrid struct
@@ -83,6 +89,11 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
+void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+ 									Multigrid *mgRes, const MpiInfo *mpiInfo);
+//
+// void inline static mgVRecursive(int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+//  									Multigrid *mgRes, const MpiInfo *mpiInfo);
 /**
  * @brief Solves Poissons equation for electric potential, with multigrid V cycles
  * @param	mrRho	Source term
@@ -94,7 +105,7 @@ void mgFree(Multigrid *multigrid);
  *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
  */
 
-void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D

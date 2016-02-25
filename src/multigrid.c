@@ -1057,39 +1057,36 @@ void inline static mgVRecursive(int level, int targetLvl, Multigrid *mgRho, Mult
 		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
 		return;
 	}
-	// msg(STATUS, "rank = %d, lvl = %d, targetlvl = %d", mpiInfo->mpiRank, level, targetLvl);
-
 
 	//Gathering info
 	int nPreSmooth = mgRho->nPreSmooth;
 	int nPostSmooth= mgRho->nPostSmooth;
+
 	Grid *phi = mgPhi->grids[level];
 	Grid *rho = mgRho->grids[level];
 	Grid *res = mgRes->grids[level];
 
-	// msg(STATUS, "Got here");
-	//Prepare to go down
+	//Boundary
 	gInteractHalo(setSlice, rho, mpiInfo);
 	gBnd(rho,mpiInfo);
+
+	//Prepare to go down
 	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
-	// msg(STATUS, "Passed bnd?");
-
 	mgResidual(res, rho, phi, mpiInfo);
-
 	gInteractHalo(setSlice, res, mpiInfo);
 	gBnd(res, mpiInfo);
-	mgRho->restrictor(res, mgRho->grids[level + 1]);
 
-	//Go coarser and solve
+	//Go down
+	mgRho->restrictor(res, mgRho->grids[level + 1]);
 	mgVRecursive(level + 1, targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
 
 	//Prepare to go up
 	gAddTo( phi, res );
-
 	gInteractHalo(setSlice, phi,mpiInfo);
 	gBnd(phi,mpiInfo);
 	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
 
+	//Go up
 	if(level > 0){
 		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
 	}
@@ -1112,6 +1109,7 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 		Grid *rho = mgRho->grids[level];
 		Grid *res = mgRes->grids[level];
 
+		//Boundary
 		gInteractHalo(setSlice, phi,mpiInfo);
 		gBnd(phi,mpiInfo);
 
@@ -1128,9 +1126,10 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 
 	//Up to finest
 	for(int level = targetLvl-1; level >-1; level --){
+		//Load grids
 		Grid *phi = mgPhi->grids[level];
 		Grid *rho = mgRho->grids[level];
-		Grid *res = mgRho->grids[level];
+		Grid *res = mgRes->grids[level];
 
 
 		//Prepare to go up
@@ -1146,7 +1145,7 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 }
 
 
-void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
+void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int targetLvl = mgRho->nLevels-1;
@@ -1154,7 +1153,8 @@ void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInf
 	// gZero(mgPhi->grids[0]);
 	for(int c = 0; c < nMGCycles; c++){
 		// mgVRecursive(0,targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
-		mgVRegular(0, targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
+		mgVRegular(0,targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
+		// mgAlgo(0, targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
 	}
 
 	return;
