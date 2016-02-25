@@ -25,9 +25,9 @@
 
 void setSolvers(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "modules:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "modules:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "modules:coarseSolv", "\0");
+	char *preSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:preSmooth", "\0");
+    char *postSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:postSmooth", "\0");
+    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "multigrid:coarseSolv", "\0");
 
 	int nDims = multigrid->grids[0]->rank-1;
 
@@ -82,15 +82,15 @@ void setRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	int rank = multigrid->grids[0]->rank;
 
 	if(!strcmp(restrictor, "halfWeight")){
-		if(rank == 3)	multigrid->restrictor = &halfWeightRestrict2D;
-		else if(rank == 4) multigrid->restrictor = &halfWeightRestrict3D;
+		if(rank == 3)	multigrid->restrictor = &mgHalfRestrict2D;
+		else if(rank == 4) multigrid->restrictor = &mgHalfRestrict3D;
 		else msg(ERROR, "No restricting algorithm for D%d", rank-1);
 	} else {
 		msg(ERROR, "No restrict stencil specified");
 	}
 	if(!strcmp(prolongator, "bilinear")){
-		if(rank == 3)	multigrid->prolongator = &bilinearProlong2D;
-		else if(rank==4)	multigrid->prolongator = &bilinearProlong3D;
+		if(rank == 3)	multigrid->prolongator = &mgBilinProl2D;
+		else if(rank==4)	multigrid->prolongator = &mgBilinProl3D;
 		else msg(ERROR, "No restricting algorithm for D%d", rank-1);
 	} else {
 		msg(ERROR, "No prolongation stencil specified");
@@ -667,7 +667,7 @@ void gaussSeidel3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mp
  *			RESTRICTORS/PROLONGATORS
  **********************************************************/
 
-void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
+void mgHalfRestrict3D(const Grid *fine, Grid *coarse){
 
 	//Load fine grid
 	double *fVal = fine->val;
@@ -736,7 +736,7 @@ void halfWeightRestrict3D(const Grid *fine, Grid *coarse){
 	return;
 }
 
-void halfWeightRestrict2D(const Grid *fine, Grid *coarse){
+void mgHalfRestrict2D(const Grid *fine, Grid *coarse){
 
 	//Load fine grid
 	double *fVal = fine->val;
@@ -784,7 +784,7 @@ void halfWeightRestrict2D(const Grid *fine, Grid *coarse){
 	return;
 }
 
-void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
+void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 
 	//Load fine grid
 	double *fVal = fine->val;
@@ -898,7 +898,7 @@ void bilinearProlong3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 }
 
 
-void bilinearProlong2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
+void mgBilinProl2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 
 	//Load fine grid
 	double *fVal = fine->val;
@@ -998,7 +998,11 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 }
 
 
-double mgResMass3D(Grid *grid){
+double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
+
+	//Load MPI
+	int mpiRank = mpiInfo->mpiRank;
+	int mpiSize = mpiInfo->mpiSize;
 
 	//Load
 	int rank = grid->rank;
@@ -1007,17 +1011,40 @@ double mgResMass3D(Grid *grid){
 	int *nGhostLayers = grid->nGhostLayers;
 	double *val = grid->val;
 
-	long int ind;
 	double mass = 0;
+	double massRecv;
 
+	//Cycle start and edge jumps
+	long int g = nGhostLayers[1]*sizeProd[1] + nGhostLayers[2]*sizeProd[2] + nGhostLayers[3]*sizeProd[3];
+	int kEdgeInc = (nGhostLayers[1]+nGhostLayers[1+rank])*sizeProd[1];
+	int lEdgeInc = (nGhostLayers[2]+nGhostLayers[2+rank])*sizeProd[2];
+
+	//Cycle through true grid
 	for(int l = nGhostLayers[3]; l < size[3]-nGhostLayers[rank+3]; l++){
 		for(int k = nGhostLayers[2]; k < size[2]-nGhostLayers[rank+2]; k++){
 			for(int j = nGhostLayers[1]; j < size[1]-nGhostLayers[rank+1]; j++){
-				ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				mass += val[ind]*val[ind];
+
+				mass += val[g]*val[g];
+				g++;
 			}
+			g+=kEdgeInc;
+		}
+		g+=lEdgeInc;
+	}
+
+	// for(int r = 0; r < mpiSize; r++){
+	// 	if(r == mpiRank)	msg(STATUS, "%f", mass);
+	// }
+
+	if(mpiRank != 0) MPI_Send(&mass, 1, MPI_DOUBLE, 0, mpiRank, MPI_COMM_WORLD);
+	if(mpiRank == 0){
+		for(int r = 1; r < mpiSize; r++){
+			MPI_Recv(&massRecv, 1, MPI_DOUBLE, r, r, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			mass += massRecv;
 		}
 	}
+	// msg(STATUS|ONCE, "mass = %f", mass);
+
 
 
 
@@ -1127,12 +1154,12 @@ void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
 }
 
 
-void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
+void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int targetLvl = mgRho->nLevels-1;
 
-	gZero(mgPhi->grids[0]);
+	// gZero(mgPhi->grids[0]);
 	for(int c = 0; c < nMGCycles; c++){
 		// mgVRecursive(0,targetLvl, mgRho, mgPhi, mgRes, mpiInfo);
 		mgVRegular(0, targetLvl, mgRho, mgPhi, mgRes, mpiInfo);

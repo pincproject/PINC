@@ -94,7 +94,7 @@ void mgFree(Multigrid *multigrid);
  *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
  */
 
-void linearMGSolv(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgSolver(Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -165,7 +165,7 @@ void jacobian3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mp
  *
  */
 
-void halfWeightRestrict2D(const Grid *fine, Grid *coarse);
+void mgHalfRestrict2D(const Grid *fine, Grid *coarse);
 
 
 /**
@@ -178,7 +178,7 @@ void halfWeightRestrict2D(const Grid *fine, Grid *coarse);
  *	down to the coarser grid.
  *
  */
-void halfWeightRestrict3D(const Grid *fine, Grid *coarse);
+void mgHalfRestrict3D(const Grid *fine, Grid *coarse);
 
 /**
  * @brief Bilinear interpolation, 2D
@@ -192,7 +192,7 @@ void halfWeightRestrict3D(const Grid *fine, Grid *coarse);
  *
  */
 
-void bilinearProlong2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+void mgBilinProl2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
 
 /**
  * @brief Bilinear interpolation, 3D
@@ -205,7 +205,7 @@ void bilinearProlong2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  *	grid onto the fine grid.
  *
  */
-void bilinearProlong3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+void mgBilinProl3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
 
 /**
  * @brief Computes residual
@@ -234,7 +234,7 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
  *
  * NB! Not written for efficiency
  */
- double mgResMass3D(Grid *grid);
+ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo);
 
 
  #endif // MULTIGRID_H
