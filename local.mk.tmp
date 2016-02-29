@@ -6,10 +6,28 @@
 ## @date		23.02.16
 ##
 ## Local adjustments to the makefile can be stored in a file local.mk for which
-## this file (local.tmp) is a template.
+## this file (local.mk.tmp) is a template. Supported local adjustments are
+## indicated below
 ##
-## The variables LIB and INC can be used to specify the path of libraries (-L)
-## and header include files (-I) not installed to the system's default path.
 
-LIB =
-INC =
+# Which command/program to use to compile and link source code.
+# If you do not set this it defaults to 'mpicc'.
+#
+# CC = mycomplier
+
+# Which optimization flag(s) to use for your compiler. Default is '-O3'.
+#
+# COPT = -myflag
+
+# Local flags to add to the compiler. Especially useful if you have libraries
+# installed in non-standard manners. For instance, you can add -I to add path
+# with header files, -L for paths containing libraries, and -l to specify
+# library files to use, although for the libraries in use the -l parameters
+# are most likely already correctly set in the makefile. For instance, if you
+# have a library with header files in /usr/mylib/include/ and the library
+# files in /usr/mylib/lib/ then you may want to do like this:
+#
+# CLOCAL =	-I/usr/mylib/include/	\
+#			-L/usr/mylib/lib/		\
+#			-I/usr/mylib2/include	\
+#			-L/usr/mylib2/lib/

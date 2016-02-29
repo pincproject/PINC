@@ -6,15 +6,16 @@
 ## @date		10.10.15
 ##
 
+CC		= mpicc
+COPT	= -O3
+
 -include local.mk
 
 EXEC	= pinc
-CC		= mpicc
 CADD	= # Additional CFLAGS accessible from CLI
-COPT	= -O3 # Optimization
-CFLAGS	=	-std=c11 -Wall\
+CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT)\
 			-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 $(COPT) $(CADD) $(INC) $(LIB)
+			-lm -lgsl -lblas -lhdf5 $(CADD)
 
 SDIR	= src
 ODIR	= src/obj
@@ -24,8 +25,6 @@ DDIR	= doc
 TDIR	= test
 TODIR	= test/obj
 THDIR	= test
-
-
 
 HEAD_	= pinc.h pusher.h multigrid.h
 SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
@@ -76,14 +75,15 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
+	@mkdir -p $(ODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 $(TODIR)/%.o: $(TDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo "Compiling $<"
+	@mkdir -p $(TODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
-
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
