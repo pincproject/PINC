@@ -44,7 +44,7 @@
  * @brief	Function pointers for the different slice operations
  * @see gInteractHalo
  */
-typedef void (*MgAlgo)(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 									Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
@@ -89,10 +89,10 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
-void mgVRegular(int level,int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo);
 //
-// void inline static mgVRecursive(int level, int targetLvl, Multigrid *mgRho, Multigrid *mgPhi,
+// void inline static mgVRecursive(int level, int bottom, Multigrid *mgRho, Multigrid *mgPhi,
 //  									Multigrid *mgRes, const MpiInfo *mpiInfo);
 /**
  * @brief Solves Poissons equation for electric potential, with multigrid V cycles
