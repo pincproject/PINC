@@ -143,6 +143,16 @@ Gullik Vetvik Killie
 
 25.02.16
 
+MG CYCLES
+
+	Build additional MG cycles, for example FMG and W cycles. This can be done with the 
+	building using different V cycles that starts and end at different levels.
+	They should be setable from the input file.
+
+Gullik Vetvik Killie
+
+26.02.16
+
 ===============================================================================
 	WISH-list
 -------------------------------------------------------------------------------
