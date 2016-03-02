@@ -161,7 +161,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 	// Read from ini
 	int nSpecies, nDims;
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
-	int *nTGPoints = iniGetIntArr(ini,"grid:nTGPoints",&nDims);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
@@ -170,7 +170,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 	// Compute normalized length of global reference frame
 	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*nTGPoints[d]-1;
+	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -212,7 +212,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 	free(L);
 	free(nParticles);
-	free(nTGPoints);
+	free(trueSize);
 
 }
 
