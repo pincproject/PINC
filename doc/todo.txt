@@ -139,9 +139,16 @@ MG OPTIMAL SETTINGS
 	Making a routine that runs with several different MG cycle settings, and finds
 	the optimal settings
 
-Gullik Vetvik Killie
+															Gullik Vetvik Killie
+															25.02.16
 
-25.02.16
+INIPARSER SAFETY
+
+	Iniparser doesn't give a warning for empty inputs, but rather an invalid value
+	(often set to zero). Change this so we get an ERROR for invalid input key.
+
+															Sigvald Marholm
+															02.03.16
 
 MG CYCLES
 
