@@ -559,6 +559,8 @@ double *computeRenormRho(const double *q, const double *m, int nSpecies, double 
 		qBar[s] = factor*(pow(timeStep,2)/cellVolume)*(q[0]/m[0])*q[s];
 	}
 
+
+
 	for(int s=0;s<nSpecies-1;s++){
 		renormRho[s] = qBar[s]/qBar[s+1];
 	}
