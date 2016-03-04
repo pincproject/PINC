@@ -506,7 +506,6 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 	double coeff = 1./6.;
 
-
 	for(int c = 0; c < nCycles; c++){
 
 
@@ -566,6 +565,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 
 		gInteractHalo(setSlice, phi, mpiInfo);
 	}
+
 
 	return;
 }
@@ -1113,7 +1113,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		gBnd(phi,mpiInfo);
 
 		mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
-
+		//
 		mgResidual(res, rho, phi, mpiInfo);
 
 		gInteractHalo(setSlice, res, mpiInfo);
@@ -1155,8 +1155,8 @@ void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRe
 	// gZero(mgPhi->grids[0]);
 	for(int c = 0; c < nMGCycles; c++){
 		// mgVRecursive(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		// mgAlgo(0, bottom, mgRho, mgPhi, mgRes, mpiInfo);
+		// mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+		mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 	}
 
 	return;

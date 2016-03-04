@@ -27,8 +27,125 @@ int main(int argc, char *argv[]){
 	 * INITIALIZE THIRD PARTY LIBRARIES
 	 */
 	MPI_Init(&argc,&argv);
+	dictionary *ini = iniOpen(argc,argv);
 	msg(STATUS|ONCE,"PINC started.");
 	MPI_Barrier(MPI_COMM_WORLD);
+
+	//Random number seeds
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+
+	/*
+	 * INITIALIZE PINC VARIABLES
+	 */
+
+	//MPI struct
+	 MpiInfo *mpiInfo = gAllocMpi(ini);
+
+	 //Setting up particles.
+ 	Population *pop = pAlloc(ini);
+
+ 	//Allocating grids
+ 	Grid *E = gAlloc(ini, 3);
+ 	Grid *rho = gAlloc(ini, 1);
+ 	Grid *res = gAlloc(ini, 1);
+ 	Grid *phi = gAlloc(ini, 1);
+
+ 	//Alloc multigrids
+ 	Multigrid *mgRho = mgAlloc(ini, rho);
+ 	Multigrid *mgRes = mgAlloc(ini, res);
+ 	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+	//Alloc h5 files
+	int rank = phi->rank;
+	double *denorm = malloc((rank-1)*sizeof(*denorm));
+	double *dimen = malloc((rank-1)*sizeof(*dimen));
+
+	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+	pCreateH5(ini, pop, "pop");
+	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gCreateH5(ini, E, mpiInfo, denorm, dimen, "E");
+
+	free(denorm);
+	free(dimen);
+
+
+	/***************************************************************
+	 *		ACTUAL simulation stuff
+	 **************************************************************/
+
+	 //Inital conditions
+	 pPosUniform(ini, pop, mpiInfo, rng);
+
+
+	 //Get initial E-field
+	 puDistr3D1(pop, rho);
+	 mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	 gFinDiff1st(phi, E);
+
+	 //Time loop
+ 	for(int t = 0; t < 3; t++){
+
+ 		//Move particles
+ 		puMove(pop);
+ 		puBndPeriodic(pop, E);
+
+ 		//Compute E field
+ 		puDistr3D1(pop, rho);
+ 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+ 		gFinDiff1st(phi, E);
+ 		gInteractHalo(setSlice, E, mpiInfo);
+
+ 		//Accelerate
+ 		puAcc3D1(pop, E);		// Including total kinetic energy for step n
+
+ 		//Write h5 files
+ 		pWriteH5(pop, mpiInfo, (double) t, (double) t);
+ 		// gWriteH5(E,mpiInfo, 1.0);
+
+ 	}
+
+
+	 /*
+ 	 * FINALIZE PINC VARIABLES
+ 	 */
+	 gFreeMpi(mpiInfo);
+
+	 //Close h5 files
+ 	pCloseH5(pop);
+ 	gCloseH5(rho);
+ 	gCloseH5(phi);
+ 	gCloseH5(E);
+
+ 	//Free memory
+ 	mgFree(mgRho);
+ 	mgFree(mgPhi);
+ 	mgFree(mgRes);
+ 	gFree(rho);
+ 	gFree(phi);
+ 	gFree(res);
+ 	gFree(E);
+ 	pFree(pop);
+
+
+	 /*
+	  * FINALIZE THIRD PARTY LIBRARIES
+	  */
+	// iniClose(ini); 	//No iniClose??
+	gsl_rng_free(rng);
+
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
+	MPI_Finalize();
+
+
+	/*****************************************************************
+	 *			Blueprint
+	 ****************************************************************/
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -92,9 +209,7 @@ int main(int argc, char *argv[]){
 	 * FINALIZE THIRD PARTY LIBRARIES
 	 */
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
-	MPI_Finalize();
+
 
 	return 0;
 }
