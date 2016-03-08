@@ -156,9 +156,17 @@ MG CYCLES
 	building using different V cycles that starts and end at different levels.
 	They should be setable from the input file.
 
-Gullik Vetvik Killie
+															Gullik Vetvik Killie
 
-26.02.16
+															26.02.16
+
+MEMORY LEAKS
+	
+	Go through and locate a memory leak probably found in the interactHalo functions.
+
+															Gullik Vetvik Killie
+
+															26.02.16
 
 ===============================================================================
 	WISH-list
