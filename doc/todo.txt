@@ -89,14 +89,7 @@ SEPARATE MPIINFO
 	not equal to the MPI rank.
 															Sigvald Marholm
 															17.02.16
-COMPLETE MAIN ROUTINE
 
-	Write a complete main routine which is actually able to call the correct
-	sequence of the functions we already have, and run a complete simulation.
-	We need to think about how the main file selects which functions and
-	modules to run based on the information in the ini-file.
-															Sigvald Marholm
-															17.02.16
 UPDATE INTRODUCTION FILE
 
 	Update introduction file, more thourough discussion of how to use Git.
@@ -314,5 +307,21 @@ MAKING A BUILD SERVER
 
 															Sigvald Marholm
 															17.02.16
+
+===============================================================================
+	DONE-list
+-------------------------------------------------------------------------------
+
+COMPLETE MAIN ROUTINE	
+
+	Write a complete main routine which is actually able to call the correct
+	sequence of the functions we already have, and run a complete simulation.
+	We need to think about how the main file selects which functions and
+	modules to run based on the information in the ini-file.
+															Sigvald Marholm
+															17.02.16
+Done by:	Gullik Killie
+		07.03.16
+
 
 

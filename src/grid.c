@@ -47,10 +47,10 @@ static int *getSubdomain(const dictionary *ini);
  *
  * @see getSlice
  * @see setSlice
- * @see gInteractHaloDim
+ * @see gHaloOpDim
  */
 
-inline void gInteractSlice(SliceOpPointer sliceOp,
+static inline void gSliceOp(SliceOpPointer sliceOp,
 					const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int sendTo,
 					const int recvFrom, const int mpiRank, Grid *grid);
@@ -137,7 +137,7 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
 }
 
-inline void gInteractSlice(SliceOpPointer sliceOp,
+static inline void gSliceOp(SliceOpPointer sliceOp,
 					const int nSlicePoints, const int offsetTake,
 					const int offsetPlace, const int d, const int sendTo,
 					const int recvFrom, const int mpiRank, Grid *grid){
@@ -148,10 +148,12 @@ inline void gInteractSlice(SliceOpPointer sliceOp,
 	MPI_Request		sendRequest,recvRequest;
 	MPI_Status 		status;
 
+	//Send
 	getSlice(sendSlice, grid, d, offsetTake);
 	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
+	MPI_Wait(&sendRequest, &status);
 
-
+	//Recieve
 	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
 	sliceOp(recvSlice, grid, d, offsetPlace);
@@ -303,15 +305,15 @@ static int *getSubdomain(const dictionary *ini){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
-	for(int d = 1; d < rank; d++) gInteractHaloDim(sliceOp, grid, mpiInfo, d);
+	for(int d = 1; d < rank; d++) gHaloOpDim(sliceOp, grid, mpiInfo, d);
 
 	return;
 }
 
-void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -349,7 +351,7 @@ void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo
 				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
 
 
-	gInteractSlice(setSlice, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
+	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
 					recvFrom, mpiRank, grid);
 
 	/*****************************************************
@@ -358,7 +360,7 @@ void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo
 	offsetTake = 1;
 	offsetPlace = size[d]-1;
 
-	gInteractSlice(setSlice, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
+	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
 					sendTo, mpiRank, grid);
 
 
