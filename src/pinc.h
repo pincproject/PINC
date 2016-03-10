@@ -272,7 +272,6 @@ typedef struct{
 	hid_t h5FileSpace;			///< HDF5 file space description
 
 	bndType *bnd;				///< Array storing boundary conditions
-
 } Grid;
 
 typedef struct timespec TimeSpec;
@@ -299,7 +298,7 @@ typedef enum{
 
 /**
  * @brief	Function pointers for the different slice operations
- * @see gInteractHalo
+ * @see gHaloOp
  */
 typedef void (*SliceOpPointer)(const double *slice, Grid *grid, int d, int offset);
 
@@ -601,7 +600,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  *	If we then want to the ghost layers in the subdomains with the values from the surrounding subdomain
  *	we use the following syntax.
  * @code
-	gInteractHaloDim(setSlice, grid, mpiInfo, 1)
+	gHaloOpDim(setSlice, grid, mpiInfo, 1)
  * @endcode
  * The result should look like:
  *
@@ -615,7 +614,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  *	If we go back to the original grids and we instead want to add to the ghostlayer
  *	we can use addSlice instead.
  * @code
-	gInteractHaloDim(addSlice, grid, mpiInfo, 1)
+	gHaloOpDim(addSlice, grid, mpiInfo, 1)
  * @endcode
  * This should produce:
  * @code
@@ -628,9 +627,9 @@ void gFreeMpi(MpiInfo *mpiInfo);
  *	If needed it should be quick to facilitate for more slice operations, in addition to set and add.
  *
  * NB! Only works with 1 ghost layer.
- * @see gInteractHalo
+ * @see gHaloOp
  */
-void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d);
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
@@ -638,15 +637,15 @@ void gInteractHaloDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo
  * @param *grid				Grid struct
  * @param *mpiInfo			MpiInfo struct
  *
- * A wrapper to the gInteractHaloDim function, that is used when the user wants the interaction in
+ * A wrapper to the gHaloOpDim function, that is used when the user wants the interaction in
  * all the dimensions.
  *
  * NB! Only works with 1 ghost layer.
  * @see gExchangeSlice
- * @see gInteractHaloDim
+ * @see gHaloOpDim
  * @see SliceOpPointer
  */
-void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo);
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
@@ -681,7 +680,7 @@ void gInteractHalo(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo);
  * slice = \f( [1, 6, 11, 16] \f)
  *
  * @see setSlice
- * @see gInteractHaloDim
+ * @see gHaloOpDim
  **/
 
 void getSlice(double *slice, const Grid *grid, int d, int offset);
@@ -714,7 +713,7 @@ void getSlice(double *slice, const Grid *grid, int d, int offset);
  * @endcode
  *
  * @see setSlice
- * @see gInteractHaloDim
+ * @see gHaloOpDim
  */
 void setSlice(const double *slice, Grid *grid, int d, int offset);
 

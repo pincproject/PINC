@@ -105,7 +105,7 @@
 // 		}
 // 	}
 //
-// 	gInteractHaloDim(ini, gridQuantity, mpiInfo, 1);
+// 	gHaloOpDim(ini, gridQuantity, mpiInfo, 1);
 //
 // 	if(mpiRank == 0) fMsg(ini, "parsedump", "\n\nSwapping halos\n\n");
 //
@@ -165,7 +165,7 @@
 // 	}
 // 	dumpWholeGrid(ini, gridQuantity);
 //
-// 	// gInteractHaloDim(ini, gridQuantity);
+// 	// gHaloOpDim(ini, gridQuantity);
 //
 // 	dumpWholeGrid(ini, gridQuantity);
 // }

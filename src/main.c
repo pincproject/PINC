@@ -76,35 +76,44 @@ int main(int argc, char *argv[]){
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
 
-	 //Inital conditions
-	 pPosUniform(ini, pop, mpiInfo, rng);
+	//Inital conditions
+	pPosUniform(ini, pop, mpiInfo, rng);
 
 
-	 //Get initial E-field
-	 puDistr3D1(pop, rho);
-	 mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-	 gFinDiff1st(phi, E);
+	//Get initial E-field
+	puDistr3D1(pop, rho);
+
+	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	gFinDiff1st(phi, E);
+
+	//Half step
+	gMul(E, 0.5);
+	puAcc3D1(pop, E);
+	gMul(E, 2.0);
+
 
 	 //Time loop
- 	for(int t = 0; t < 3; t++){
+ 	for(int t = 0; t < 1000; t++){
 
- 		//Move particles
- 		puMove(pop);
- 		puBndPeriodic(pop, E);
-
- 		//Compute E field
+ 	// 	//Move particles
+ 	// 	puMove(pop);
+		// puMigrate(pop, mpiInfo, E);
+		//
+ 	// 	//Compute E field
  		puDistr3D1(pop, rho);
+		gHaloOp(addSlice, rho, mpiInfo);
  		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
  		gFinDiff1st(phi, E);
- 		gInteractHalo(setSlice, E, mpiInfo);
+ 		gHaloOp(setSlice, E, mpiInfo);
+
+		//Apply external E
+		// gAddTo(Ext);
 
  		//Accelerate
  		puAcc3D1(pop, E);		// Including total kinetic energy for step n
 
  		//Write h5 files
  		pWriteH5(pop, mpiInfo, (double) t, (double) t);
- 		// gWriteH5(E,mpiInfo, 1.0);
-
  	}
 
 
@@ -113,7 +122,7 @@ int main(int argc, char *argv[]){
  	 */
 	 gFreeMpi(mpiInfo);
 
-	 //Close h5 files
+	//  //Close h5 files
  	pCloseH5(pop);
  	gCloseH5(rho);
  	gCloseH5(phi);
