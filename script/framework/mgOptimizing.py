@@ -13,28 +13,13 @@
 #	performance of parts of the program with different settings.
 #
 
+
+
+from pincClass import *
 import subprocess
 
+pinc = PINC()
 
-class PINC:
-	def __init__(self, pincPath = "../../mpinc.sh", iniPath = "../../input.ini"):
-		self.nTimeSteps = 100
-		self.pincPath = pincPath
-		self.iniPath = iniPath
-		self.preCycles = 1
-		self.postCycles = 1
-		self.coarseCycles = 1
-		self.mgLevels = 4
-		self.mgCycles = 3
+pinc.clean()
 
-
-	def runCommand(self, cmd):
-		subprocess.call(cmd,shell=True)
-
-	def clean(self):
-		self.runCommand("rm *.h5")
-
-	def runMGConfig(self):
-		cmd = self.pincPath + " " + self.iniPath
-		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
-		self.runCommand(cmd)
+pinc.runMGConfig()

@@ -132,7 +132,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		for(int d = 1 ; d < rank ; d ++){
 			subSize[d] = subTrueSize[d] + nGhostLayers[d] + nGhostLayers[rank + d];
 		}
-
 		//Slice elements
 		long int nSliceMax = 0;
 		for(int d=0;d<rank;d++){

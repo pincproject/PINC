@@ -21,15 +21,7 @@
 #include "pusher.h"
 #include "multigrid.h"
 
-int main(int argc, char *argv[]){
-
-	/*
-	 * INITIALIZE THIRD PARTY LIBRARIES
-	 */
-	MPI_Init(&argc,&argv);
-	dictionary *ini = iniOpen(argc,argv);
-	msg(STATUS|ONCE,"PINC started.");
-	MPI_Barrier(MPI_COMM_WORLD);
+void regularRoutine(dictionary *ini){
 
 	//Random number seeds
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
@@ -39,21 +31,21 @@ int main(int argc, char *argv[]){
 	 */
 
 	//MPI struct
-	 MpiInfo *mpiInfo = gAllocMpi(ini);
+	MpiInfo *mpiInfo = gAllocMpi(ini);
 
 	 //Setting up particles.
- 	Population *pop = pAlloc(ini);
+	Population *pop = pAlloc(ini);
 
- 	//Allocating grids
- 	Grid *E = gAlloc(ini, 3);
- 	Grid *rho = gAlloc(ini, 1);
- 	Grid *res = gAlloc(ini, 1);
- 	Grid *phi = gAlloc(ini, 1);
+	//Allocating grids
+	Grid *E = gAlloc(ini, 3);
+	Grid *rho = gAlloc(ini, 1);
+	Grid *res = gAlloc(ini, 1);
+	Grid *phi = gAlloc(ini, 1);
 
- 	//Alloc multigrids
- 	Multigrid *mgRho = mgAlloc(ini, rho);
- 	Multigrid *mgRes = mgAlloc(ini, res);
- 	Multigrid *mgPhi = mgAlloc(ini, phi);
+	//Alloc multigrids
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi);
 
 	//Alloc h5 files
 	int rank = phi->rank;
@@ -77,10 +69,10 @@ int main(int argc, char *argv[]){
 	 **************************************************************/
 	int nTimesteps = iniparser_getint(ini, "time:nTimesteps", 0);
 
-	msg(STATUS, "nTimesteps = %d", nTimesteps);
-
 	//Inital conditions
 	pPosUniform(ini, pop, mpiInfo, rng);
+
+
 
 	//Get initial E-field
 	puDistr3D1(pop, rho);
@@ -94,58 +86,139 @@ int main(int argc, char *argv[]){
 	gMul(E, 2.0);
 
 	 //Time loop
- 	for(int t = 0; t < nTimesteps; t++){
+	for(int t = 0; t < nTimesteps; t++){
 
- 		//Move particles
- 		puMove(pop);
+		//Move particles
+		puMove(pop);
 		puMigrate(pop, mpiInfo, E);
 		//
- 	// 	//Compute E field
- 		puDistr3D1(pop, rho);
+	// 	//Compute E field
+		puDistr3D1(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo);
- 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
- 		gFinDiff1st(phi, E);
- 		gHaloOp(setSlice, E, mpiInfo);
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		gFinDiff1st(phi, E);
+		gHaloOp(setSlice, E, mpiInfo);
 
 		//Apply external E
 		// gAddTo(Ext);
 
- 		//Accelerate
- 		puAcc3D1(pop, E);		// Including total kinetic energy for step n
+		//Accelerate
+		puAcc3D1(pop, E);		// Including total kinetic energy for step n
 
- 		//Write h5 files
- 		pWriteH5(pop, mpiInfo, (double) t, (double) t);
- 	}
+		//Write h5 files
+		pWriteH5(pop, mpiInfo, (double) t, (double) t);
+	}
 
 
 	 /*
- 	 * FINALIZE PINC VARIABLES
- 	 */
+	 * FINALIZE PINC VARIABLES
+	 */
 	 gFreeMpi(mpiInfo);
 
 	//  //Close h5 files
- 	pCloseH5(pop);
- 	gCloseH5(rho);
- 	gCloseH5(phi);
- 	gCloseH5(E);
+	pCloseH5(pop);
+	gCloseH5(rho);
+	gCloseH5(phi);
+	gCloseH5(E);
 
- 	//Free memory
- 	mgFree(mgRho);
- 	mgFree(mgPhi);
- 	mgFree(mgRes);
- 	gFree(rho);
- 	gFree(phi);
- 	gFree(res);
- 	gFree(E);
- 	pFree(pop);
+	//Free memory
+	mgFree(mgRho);
+	mgFree(mgPhi);
+	mgFree(mgRes);
+	gFree(rho);
+	gFree(phi);
+	gFree(res);
+	gFree(E);
+	pFree(pop);
 
 
 	 /*
-	  * FINALIZE THIRD PARTY LIBRARIES
-	  */
+		* FINALIZE THIRD PARTY LIBRARIES
+		*/
 	// iniClose(ini); 	//No iniClose??
 	gsl_rng_free(rng);
 
+	return;
+}
+
+void mgRoutine(dictionary *ini){
+
+	//Mpi
+	MpiInfo *mpiInfo = gAllocMpi(ini);
+
+	//Grids
+	Grid *phi = gAlloc(ini, 1);
+	Grid *rho = gAlloc(ini, 1);
+	Grid *res= gAlloc(ini, 1);
+
+	//Multilevel grids
+	Multigrid *mgPhi = mgAlloc(ini, phi);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+
+	//Fill rho with lazy heaviside
+	int *subdomain = mpiInfo->subdomain;
+	int rank = rho->rank;
+	long int *sizeProd = rho->sizeProd;
+	double *val = rho->val;
+
+	double charge = (double) (subdomain[0]>0); // -1 + 2*(subdomain[0]>0);
+	for(int g = 0; g < sizeProd[rank]; g++) val[g] = charge;
+
+	//Prep to store grids
+	double *denorm = malloc((rank-1)*sizeof(*denorm));
+	double *dimen = malloc((rank-1)*sizeof(*dimen));
+
+	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+
+	free(denorm);
+	free(dimen);
+
+	//Run solver
+	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+
+	//Compute residual and mass
+	mgResidual(res,rho, phi, mpiInfo);
+	double mass = mgResMass3D(res,mpiInfo);
+	if(mpiInfo->mpiRank == 0)	msg(STATUS, "The residual mass is %f ",mass);
+
+	gWriteH5(rho,mpiInfo,0.);
+	gWriteH5(phi,mpiInfo,0.);
+	gWriteH5(res,mpiInfo,0.);
+
+	gCloseH5(phi);
+	gCloseH5(rho);
+	gCloseH5(res);
+
+
+
+
+
+
+	return;
+}
+
+
+int main(int argc, char *argv[]){
+
+
+	/*
+	 * INITIALIZE THIRD PARTY LIBRARIES
+	 */
+	MPI_Init(&argc,&argv);
+	dictionary *ini = iniOpen(argc,argv);
+	msg(STATUS|ONCE,"PINC started.");
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	//Choose routine from ini file
+	char *routine = iniparser_getstring(ini, "main:routine", "\0");
+
+	if(!strcmp(routine, "regular"))				regularRoutine(ini);
+	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
 
 
 	MPI_Barrier(MPI_COMM_WORLD);
