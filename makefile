@@ -15,7 +15,7 @@ EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
 CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT)\
 			-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 $(CADD)
+			-lm -lgsl -lhdf5 $(CADD)
 
 SDIR	= src
 ODIR	= src/obj

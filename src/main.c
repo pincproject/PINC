@@ -87,6 +87,7 @@ void regularRoutine(dictionary *ini){
 
 	 //Time loop
 	for(int t = 0; t < nTimesteps; t++){
+//		msg(STATUS|ONCE, "Hello Kitty");
 
 		//Move particles
 		puMove(pop);
@@ -188,11 +189,9 @@ void mgRoutine(dictionary *ini){
 
 	gWriteH5(rho,mpiInfo,0.);
 	gWriteH5(phi,mpiInfo,0.);
-	gWriteH5(res,mpiInfo,0.);
 
 	gCloseH5(phi);
 	gCloseH5(rho);
-	gCloseH5(res);
 
 
 
