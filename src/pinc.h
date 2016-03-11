@@ -68,11 +68,14 @@
 typedef struct{
 	double *pos;		///< Position
 	double *vel;		///< Velocity
-	double *energy;		///< Kinetic energy
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
 	double *renormRho;	///< Re-normalization factors for rho (nSpecies elements)
 	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
+	double *charge;		///< Normalized charge (q-bar)
+	double *mass;		///< Normalize mass (m-bar)
+	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements, last is sum over all species)
+	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
