@@ -91,8 +91,8 @@ void regularRoutine(dictionary *ini){
 		//Move particles
 		puMove(pop);
 		puMigrate(pop, mpiInfo, E);
-		//
-	// 	//Compute E field
+
+		//Compute E field
 		puDistr3D1(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);

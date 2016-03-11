@@ -151,11 +151,12 @@ static inline void gSliceOp(SliceOpPointer sliceOp,
 	//Send
 	getSlice(sendSlice, grid, d, offsetTake);
 	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
-	MPI_Wait(&sendRequest, &status);
 
 	//Recieve
 	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
+	MPI_Wait(&sendRequest, &status);
+
 	sliceOp(recvSlice, grid, d, offsetPlace);
 
 	return;
