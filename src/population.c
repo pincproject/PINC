@@ -93,7 +93,7 @@ double *computeRenormRho(const double *q, const double *m, int nSpecies, double 
 Population *pAlloc(const dictionary *ini){
 
 	// Sanity check
-	iniAssertEqualNElements(ini,4,"population:nParticles","population:nAlloc","population:q","population:m");
+	iniAssertEqualNElements(ini,4,"population:nParticles","population:nAlloc","population:charge","population:mass");
 
 	// Get MPI info
 	int size, rank;
@@ -398,7 +398,7 @@ void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
 	H5Aclose(attribute);
 
 	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
-	double *m = iniGetDoubleArr(ini,"population:m",&nDims);
+	double *m = iniGetDoubleArr(ini,"population:mass",&nDims);
 	double vThermal = sqrt(BOLTZMANN*T[0]/(m[0]*ELECTRON_MASS));
 	for(int d=0;d<nDims;d++) attrData[d] = vThermal;
 	attribute = H5Acreate(file, "Velocity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
@@ -574,8 +574,8 @@ double *computeRenormRho(const double *q, const double *m, int nSpecies, double 
 void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor){
 
 	int nSpecies, nDims;
-	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
+	double *q = iniGetDoubleArr(ini,"population:charge",&nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:mass",&nSpecies);
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
 	double cellVolume = adProd(stepSize,nDims);
