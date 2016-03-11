@@ -14,10 +14,16 @@
 # which is why it is better to fetch them from PINC itself.
 #
 
-NP=`./pinc "$@" getnp`
+# Path of caller (this script's folder)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Get number of processes from PINC
+NP=`$DIR/pinc "$@" getnp`
+
+# Run
 if [ "$NP" -eq 1 ]
 then
-	./pinc "$@"
+	$DIR/pinc "$@"
 else
-	mpirun -np "$NP" ./pinc "$@"
+	mpirun -np "$NP" $DIR/pinc "$@"
 fi
