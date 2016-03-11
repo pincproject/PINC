@@ -42,7 +42,7 @@
 
 /**
  * @brief	Function pointers for the different slice operations
- * @see gInteractHalo
+ * @see gHaloOp
  */
 typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 									Multigrid *mgRes, const MpiInfo *mpiInfo);

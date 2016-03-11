@@ -371,7 +371,7 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 // Works
 // TODO: Add fault-handling in case of too small Population struct
-inline void exchangeNMigrants(MpiInfo *mpiInfo){
+static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	int nSpecies = mpiInfo->nSpecies;
 	int nNeighbors = mpiInfo->nNeighbors;
@@ -398,7 +398,7 @@ inline void exchangeNMigrants(MpiInfo *mpiInfo){
 }
 
 // Works
-inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
+static inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 
 	double *immigrants = mpiInfo->immigrants;
 	int nSpecies = mpiInfo->nSpecies;
@@ -419,7 +419,7 @@ inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 }
 
 // Works
-inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
+static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
 
 	int nDims = pop->nDims;
 	long int *iStop = pop->iStop;
@@ -440,7 +440,7 @@ inline void importParticles(Population *pop, double *particles, long int *nParti
 }
 
 // Works
-inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
+static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 	int nSpecies = mpiInfo->nSpecies;
 	int nNeighbors = mpiInfo->nNeighbors;
