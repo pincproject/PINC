@@ -75,14 +75,16 @@ int main(int argc, char *argv[]){
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
+	int nTimesteps = iniparser_getint(ini, "time:nTimesteps", 0);
+
+	msg(STATUS, "nTimesteps = %d", nTimesteps);
 
 	//Inital conditions
 	pPosUniform(ini, pop, mpiInfo, rng);
 
-
 	//Get initial E-field
 	puDistr3D1(pop, rho);
-
+	gHaloOp(setSlice, rho, mpiInfo);
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 
@@ -91,13 +93,12 @@ int main(int argc, char *argv[]){
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
-
 	 //Time loop
- 	for(int t = 0; t < 1000; t++){
+ 	for(int t = 0; t < nTimesteps; t++){
 
- 	// 	//Move particles
- 	// 	puMove(pop);
-		// puMigrate(pop, mpiInfo, E);
+ 		//Move particles
+ 		puMove(pop);
+		puMigrate(pop, mpiInfo, E);
 		//
  	// 	//Compute E field
  		puDistr3D1(pop, rho);
@@ -151,74 +152,71 @@ int main(int argc, char *argv[]){
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
-
-	/*****************************************************************
-	 *			Blueprint
-	 ****************************************************************/
-
-	/*
-	 * INITIALIZE PINC VARIABLES
-	 */
-
-	// -2. Sanitize
-
-	// -1. Allocate all datatypes
-
-	// 0. Specify all function pointers from ini
-
-	// 1. Specify phase space distribution
-	// 2. rho: puDistr3D1(); (distribute)
-	// 3. phi: linearMG();
-	// 4. E: gFinDiff1rd();
-
-	// Accelerate half-step
-	// gMul(E,0.5);
-	// puAcc3D1(pop,E); // (accelerate)
-	// gMul(E,2);
-
-	/*
-	 *	TEST AREA
-	 */
-
-	// for(long int n=1;n<=N;n++){
-	//
-	// 	// Everything in here is function pointers
-	//
-	// 	// Move
-	// 	move();
-	// 	migrate();			// Including boundaries and safety testing
-	//
-	// 	// Weighting
-	// 	distribute();
-	// 	interactAdd();		// Fix boundaries for rho
-	//
-	// 	// Field solver
-	// 	solver();			// Including boundaries
-	// 	finDiff();
-	// 	swapHalo();
-	//
-	// 	imposeExternal();	// To add external field
-	// 	potentialEnergy();	// Calculate potential energy for step n
-	//
-	// 	// Accelerate
-	// 	accelerate();		// Including total kinetic energy for step n
-	//
-	// 	// Diagnostics
-	// 	if(n%a==0) savePop();
-	// 	if(n%b==0) saveGrid();
-	// 	if(n%c==0) saveVelocityDistr();
-	//
-	// }
-
-	/*
-	 * FINALIZE PINC VARIABLES
-	 */
-
-	/*
-	 * FINALIZE THIRD PARTY LIBRARIES
-	 */
-
-
-
 	return 0;
 }
+
+/*****************************************************************
+ *			Blueprint
+ ****************************************************************/
+
+/*
+ * INITIALIZE PINC VARIABLES
+ */
+
+// -2. Sanitize
+
+// -1. Allocate all datatypes
+
+// 0. Specify all function pointers from ini
+
+// 1. Specify phase space distribution
+// 2. rho: puDistr3D1(); (distribute)
+// 3. phi: linearMG();
+// 4. E: gFinDiff1rd();
+
+// Accelerate half-step
+// gMul(E,0.5);
+// puAcc3D1(pop,E); // (accelerate)
+// gMul(E,2);
+
+/*
+ *	TEST AREA
+ */
+
+// for(long int n=1;n<=N;n++){
+//
+// 	// Everything in here is function pointers
+//
+// 	// Move
+// 	move();
+// 	migrate();			// Including boundaries and safety testing
+//
+// 	// Weighting
+// 	distribute();
+// 	interactAdd();		// Fix boundaries for rho
+//
+// 	// Field solver
+// 	solver();			// Including boundaries
+// 	finDiff();
+// 	swapHalo();
+//
+// 	imposeExternal();	// To add external field
+// 	potentialEnergy();	// Calculate potential energy for step n
+//
+// 	// Accelerate
+// 	accelerate();		// Including total kinetic energy for step n
+//
+// 	// Diagnostics
+// 	if(n%a==0) savePop();
+// 	if(n%b==0) saveGrid();
+// 	if(n%c==0) saveVelocityDistr();
+//
+// }
+
+/*
+ * FINALIZE PINC VARIABLES
+ */
+
+/*
+ * FINALIZE THIRD PARTY LIBRARIES
+ */
