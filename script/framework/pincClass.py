@@ -27,14 +27,13 @@ class PINC:
 		self.mgLevels = 4
 		self.mgCycles = 3
 
-
 	def runCommand(self, cmd):
 		subprocess.call(cmd,shell=True)
 
 	def clean(self):
 		self.runCommand("rm *.h5")
 
-	def runMGConfig(self):
+	def runMG(self):
 		cmd = self.pincPath + " " + self.iniPath
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
 		self.runCommand(cmd)

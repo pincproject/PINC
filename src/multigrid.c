@@ -1007,10 +1007,6 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 		g+=lEdgeInc;
 	}
 
-	// for(int r = 0; r < mpiSize; r++){
-	// 	if(r == mpiRank)	msg(STATUS, "%f", mass);
-	// }
-
 	if(mpiRank != 0) MPI_Send(&mass, 1, MPI_DOUBLE, 0, mpiRank, MPI_COMM_WORLD);
 	if(mpiRank == 0){
 		for(int r = 1; r < mpiSize; r++){
@@ -1018,13 +1014,17 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 			mass += massRecv;
 		}
 	}
-	// msg(STATUS|ONCE, "mass = %f", mass);
-
-
-
 
 	return mass;
 }
+
+void parseMGOptim(dictionary *ini, Multigrid *multigrid){
+
+	
+	return;
+}
+
+
 
 /*****************************************************
  *			MG CYCLES

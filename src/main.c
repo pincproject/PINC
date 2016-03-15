@@ -157,6 +157,7 @@ void mgRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
+
 	//Fill rho with lazy heaviside
 	int *subdomain = mpiInfo->subdomain;
 	int rank = rho->rank;
@@ -179,13 +180,25 @@ void mgRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-	//Run solver
-	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	Timer *t = tAlloc(rank);
 
-	//Compute residual and mass
-	mgResidual(res,rho, phi, mpiInfo);
-	double mass = mgResMass3D(res,mpiInfo);
-	if(mpiInfo->mpiRank == 0)	msg(STATUS, "The residual mass is %f ",mass);
+	double tol = 10000;
+	double err = 10001;
+
+	while(err>tol){
+		//Run solver
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		msg(STATUS|ONCE, "The residual mass is %f ",err);
+
+		//Compute residual and mass
+		mgResidual(res,rho, phi, mpiInfo);
+		err = mgResMass3D(res,mpiInfo);
+		msg(STATUS|ONCE, "The residual mass is %f ",err);
+
+	}
+
+	tMsg(t, "Time to run");
+
 
 	gWriteH5(rho,mpiInfo,0.);
 	gWriteH5(phi,mpiInfo,0.);

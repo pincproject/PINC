@@ -22,4 +22,6 @@ pinc = PINC()
 
 pinc.clean()
 
-pinc.runMGConfig()
+pinc.mgLevels = 6
+
+pinc.runMG()

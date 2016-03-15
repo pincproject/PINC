@@ -248,4 +248,15 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
  double mgResMass3D(Grid *grid, MpiInfo *mpiInfo);
 
 
+ /**
+  * @brief Writes out information about the MG cycles, used when optimizing the number of cycles
+  * @param ini 					dictionary of the input file
+  * @param multigrid 		multigrid struct
+  *
+  * Debug help
+  */
+ void parseMGOptim(dictionary *ini, Multigrid *multigrid);
+
+
+
  #endif // MULTIGRID_H
