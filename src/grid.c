@@ -975,6 +975,53 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 
 }
 
+// Assumes rho and phi of same kind of grid
+void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop){
+
+	double *rhoVal = rho->value;
+	double *phiVal = phi->value;
+	double *sizeProd = rho->sizeProd;
+	double *trueSize = rho->trueSize;
+	double *nGhostLayers = rho->nGhostLayers;
+	int rank = rho->rank;
+
+	double energy = gPotEnergyInner(&rhoVal,&phiVal,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+	int nSpecies = pop->nSpecies;
+	pop->potEnergy[nSpecies] = energy;
+
+}
+
+static double *gPotEnergyInner(double **rhoVal, const double **phiVal, const int *nGhostLayersBefore, const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd){
+
+	double energy = 0;
+
+	if(*sizeProd==1){
+
+		*rhoVal += *sizeProd**nGhostLayersBefore;
+		*phiVal += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			energy += (*(*rhoVal)++)*(*(*phiVal)++);
+
+		*rhoVal += *sizeProd**nGhostLayersAfter;
+		*phiVal += *sizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*rhoVal += *sizeProd**nGhostLayersBefore;
+		*phiVal += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			energy += gPotEnergyInner(rhoVal,phiVal,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+
+		*rhoVal += *sizeProd**nGhostLayersAfter;
+		*phiVal += *sizeProd**nGhostLayersAfter;
+	}
+
+	return energy;
+}
+
 /*****************************************************************************
  *		MISC
  ****************************************************************************/

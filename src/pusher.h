@@ -87,6 +87,7 @@ void puDistr3D1(const Population *pop, Grid *rho);
  * NB: Only works on 3D
  */
 void puAcc3D1(Population *pop, Grid *E);
+void puAcc3D1KE(Population *pop, Grid *E);
 
 void puIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
 void puIdMigrantsND(Population *pop, MpiInfo *mpiInfo);

@@ -335,22 +335,6 @@ Population *pAlloc(const dictionary *ini);
 void pFree(Population *pop);
 
 /**
- * @brief	Sets specie-specific normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- * @param	timeStepMul		What multiple time step is to be used
- * @param	factor			Which multiplicative factor is used for rho
- *
- * timeStepMul=1 for whole time steps and 0.5 for half and so on.
- * This function makes use of computeRenormE() and computeRenormPhi(). See those
- * for more in-depth explanation.
- *
- * timeStepMul and factor both defaults to 1 during allocation of Population.
- * Calling this function is only necessary for other values.
- */
-void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor);
-
-/**
  * @brief	Assign particles uniformly distributed positions
  * @param			ini		Dictionary to input file
  * @param[in,out]	pop		Population of particles

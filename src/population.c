@@ -22,69 +22,15 @@
  *****************************************************************************/
 
 /**
- * @brief Computes specie-specific re-normalization factors for the E-field
- * @param 	charge			Charge [elementary charges] as given in input file
- * @param	m			Mass [electron masses] as given in input file
- * @param	nSpecies	Number of species (elements in q and m)
- * @return 				Pointer to allocated array of factors
+ * @brief	Sets normalization parameters in Population
+ * @param	ini				Dictionary to input file
+ * @param	pop[in,out]		Population
  *
- * The E-field is normally normalized using the charge and mass of specie 0,
- * such that it becomes the discretized equivalent of acceleration of that
- * specie. Henceforth, adding the electric field to the velocity without any
- * form of multiplication readily yields the accelerated velocity. Multiplying
- * the E-field by renormE[0], where renormE is the return value of this
- * function, re-normalizes the E-field such that it represents the discretized
- * acceleration for specie 1. Subsequent multiplication by renormE[1] (such that
- * it has been multiplied by renormE[0]*renormE[1]) re-normalizes the E-field
- * for specie 2 and so on. The last multiplicative factor, renormass[nSpecies-1],
- * renormalizes it back to the original value, as normalized with respect to
- * specie 0.
+ * Normalizes charge and mass and sets specie-specific renormalization
+ * parameters in Population.
  *
- * E is normalized as follows:
- * \f[
- *	\bar{E_x} = K_1\frac{(\Delta t)^2}{\Delta x}\frac{q_0}{m_0}E_x
- * \f]
- * and similarly for the other components. \f$K_1\f$ is a factor which may be
- * set unequal to 1 to speed up certain calculations.
- *
- * Remember to free the return value using free().
  */
-double *computeRenormE(const double *charge, const double *mass, int nSpecies);
-
-/**
- * @brief Computes specie-specific re-normalization factors for the charge density
- * @param 	charge			Charge [elementary charges] as given in input file
- * @param	m			Mass [electron masses] as given in input file
- * @param	nSpecies	Number of species (elements in q and m)
- * @param	cellVolume	The volume of a cell in the mesh (product of 'stepSize')
- * @param	timeStep	The time step
- * @param	factor		Multiplicative factor used in normalizing rho
- * @return 				Pointer to allocated array of factors
- *
- * When distributing charges onto the grid to compute the charge density rho,
- * rather than having to multiply each contribution by the charge of the
- * particle, rho can temporarily have a specie-specific normalization allowing
- * the contribution simply to be added without having to multiply the weighting
- * coefficient by any charge.
- *
- * Starting with a grid value rho equal to zero this can be assumed to be
- * normalized for specie 0 and all the contributions for that specie can be
- * added. Multiplying the whole grid by renormRho[0] the re-normalizes it for
- * specie 1 such that it can be added. Doing this for all species, and
- * mulitplying by renormRho[nSpecies-1] at the end, results in a comletely
- * assembled charge density. The charge density in PINC is normalized
- * using the charge and mass of specie 0 as is other quantities.
- *
- * Rho is normalized as follows:
- * \f[
- *	\bar{\rho} = K_1K_2(\Delta t)^2\left(\frac{q_0}{m_0}\right)\rho
- * \f]
- * where \f$K_1K_2\f$ is a multiplicative factor which can be set un-equal to 1
- * to speed up certain calculations.
- *
- * Remember to free the return value using free().
- */
-double *computeRenormRho(const double *charge, const double *mass, int nSpecies, double cellVolume, double timeStep, double factor);
+static void pSetNormParams(const dictionary *ini, Population *pop);
 
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
@@ -138,7 +84,7 @@ Population *pAlloc(const dictionary *ini){
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 
 	// Default normalization factors
-	pSetSpecieNorm(ini,pop,1,1);
+	pSetNormParams(ini,pop);
 
 	return pop;
 
@@ -542,40 +488,7 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 	}
 }
 
-double *computeRenormE(const double *charge, const double *mass, int nSpecies){
-
-	double *renormE = malloc(nSpecies*sizeof(*renormE));
-
-	for(int s=0;s<nSpecies-1;s++){
-		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
-	}
-	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
-
-	return renormE;
-}
-
-double *computeRenormRho(const double *charge, const double *mass, int nSpecies, double cellVolume, double timeStep, double factor){
-
-	double *chargeBar = malloc(nSpecies*sizeof(*chargeBar));
-	double *renormRho = malloc(nSpecies*sizeof(*renormRho));
-
-	for(int s=0;s<nSpecies;s++){
-		chargeBar[s] = factor*(pow(timeStep,2)/cellVolume)*(charge[0]/mass[0])*charge[s];
-	}
-
-
-
-	for(int s=0;s<nSpecies-1;s++){
-		renormRho[s] = chargeBar[s]/chargeBar[s+1];
-	}
-	renormRho[nSpecies-1] = chargeBar[nSpecies-1];
-
-	free(chargeBar);
-	return renormRho;
-
-}
-
-void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor){
+static void pSetNormParams(const dictionary *ini, Population *pop){
 
 	int nSpecies, nDims;
 	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
@@ -584,24 +497,32 @@ void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, 
 	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
 	double cellVolume = adProd(stepSize,nDims);
 
-
-	// TBD: chargeBar is calculated twice (also incide computeRenormRho). Clean up!
-	// Move stuff in here
+	/*
+	 * Normalizing charge and mass (used in energy computations)
+	 */
 	double *chargeBar = malloc(nSpecies*sizeof(*chargeBar));
 	double *massBar = malloc(nSpecies*sizeof(*massBar));
 	for(int s=0;s<nSpecies;s++){
-		chargeBar[s] = factor*(pow(timeStep,2)/cellVolume)*(charge[0]/mass[0])*charge[s];
-		massBar[s] = (pow(timeStep,2)/cellVolume)*pow(factor*charge[0]/mass[0],2)*mass[s];
+		chargeBar[s]	= (pow(timeStep,2)/cellVolume)*   (charge[0]/mass[0])  *charge[s];
+		massBar[s] 		= (pow(timeStep,2)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
 	}
 	pop->charge=chargeBar;
 	pop->mass=massBar;
 
+	/*
+	 * Computing renormalization factors (used in update equations)
+	 */
+	double *renormE = malloc(nSpecies*sizeof(*renormE));
+	double *renormRho = malloc(nSpecies*sizeof(*renormRho));
+	for(int s=0;s<nSpecies-1;s++){
+		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
+		renormRho[s] = chargeBar[s]/chargeBar[s+1];
+	}
+	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
+	renormRho[nSpecies-1] = chargeBar[nSpecies-1];
 
-	timeStep *= timeStepMul;
-
-
-	pop->renormE = computeRenormE(charge,mass,nSpecies);
-	pop->renormRho = computeRenormRho(charge,mass,nSpecies,cellVolume,timeStep,factor);
+	pop->renormE = renormE;
+	pop->renormRho = renormRho;
 
 	free(charge);
 	free(mass);
