@@ -284,21 +284,21 @@ typedef struct{
 	bndType *bnd;				///< Array storing boundary conditions
 } Grid;
 
-typedef struct timespec TimeSpec;
-
-/**
- * @brief	Timer struct for simple profiling
- * @see allocTimer(), freeTimer(), tMsg()
- */
-typedef struct{
-	TimeSpec previous;			///< Time of previous call
-	int rank;					///< Rank of node or negative to turn off timer
-} Timer;
-
+// typedef struct timespec TimeSpec;
+//
+// /**
+//  * @brief	Timer struct for simple profiling
+//  * @see allocTimer(), freeTimer(), tMsg()
+//  */
 // typedef struct{
-// 	unsigned long long int total;		/// Total time
-//	unsigned long long int start;		/// Previous start time
+// 	TimeSpec previous;			///< Time of previous call
+// 	int rank;					///< Rank of node or negative to turn off timer
 // } Timer;
+
+typedef struct{
+	unsigned long long int total;		/// Total time
+	unsigned long long int start;		/// Previous start time
+} Timer;
 //
 // unsigned long long int getNanoSec();
 // void tMsg(int rank, Timer *timer, format....);
@@ -1172,41 +1172,59 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
  */
 ///@{
 
-/**
- * @brief	Allocates a Timer struct
- * @param	rank	Rank of the node where the timer is active (-1 for all)
- * @return	Pointer to Timer struct
- * @see		Timer, freeTimer, tMsg()
- *
- * Remember to free using freeTimer().
- */
-Timer *tAlloc(int rank);
+Timer *tAlloc();
 
-/**
- * @brief	Frees a Timer struct allocated with allocTimer()
- * @param	timer 	Pointer to Timer struct
- * @see		Timer, allocTimer()
- */
-void tFree(Timer *timer);
+void tFree(Timer *t);
 
-/**
- * @brief	Prints a message along with timing information
- * @param	timer		Pointer to timer
- * @param	format		printf-like format specifier
- * @param	...			printf-like arguments
- * @return	void
- * @see 	Timer, allocTimer(), printf()
- *
- * Useful for testing execution speed of chunks of code. Each call to tMsg()
- * prints the total time the program has been running, along with the time since
- * last call to tMsg() before it resets the timer.
- *
- * To reset the timer without printing set format=NULL.
- *
- * Only MPI nodes for which the timer is activated by allocTimer() will print
- * the messages.
- */
-void tMsg(Timer *timer, const char *restrict format, ...);
+unsigned long long int getNanoSec();
+
+void tStart(Timer *t);
+
+void tStop(Timer *t);
+
+// unsigned long long int getNanoSec();
+// void tMsg(int rank, Timer *timer, format....);
+// void tStop(...);
+// void tic();
+// void toc();
+
+
+//
+// /**
+//  * @brief	Allocates a Timer struct
+//  * @param	rank	Rank of the node where the timer is active (-1 for all)
+//  * @return	Pointer to Timer struct
+//  * @see		Timer, freeTimer, tMsg()
+//  *
+//  * Remember to free using freeTimer().
+//  */
+// Timer *tAlloc(int rank);
+//
+// /**
+//  * @brief	Frees a Timer struct allocated with allocTimer()
+//  * @param	timer 	Pointer to Timer struct
+//  * @see		Timer, allocTimer()
+//  */
+// void tFree(Timer *timer);
+//
+// /**
+//  * @brief	Prints a message along with timing information
+//  * @param	timer		Pointer to timer
+//  * @param	format		printf-like format specifier
+//  * @param	...			printf-like arguments
+//  * @return	void
+//  * @see 	Timer, allocTimer(), printf()
+//  *
+//  * Useful for testing execution speed of chunks of code. Each call to tMsg()
+//  * prints the total time the program has been running, along with the time since
+//  * last call to tMsg() before it resets the timer.
+//  *
+//  * To reset the timer without printing set format=NULL.
+//  *
+//  * Only MPI nodes for which the timer is activated by allocTimer() will print
+//  * the messages.
+//  */
+// void tMsg(Timer *timer, const char *restrict format, ...);
 
 ///@}
 
