@@ -18,103 +18,126 @@
 /******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
+//
+// /**
+//  * @brief Automatically formats a TimeSpec into a string
+//  * @param[out]		str		Formatted string
+//  * @param			len		Allocated length in str
+//  * @param			time	TimeSpec to format
+//  *
+//  * Used in tMsg().
+//  */
+// static void tFormat(char *str, int len, const TimeSpec *time);
+//
+// /******************************************************************************
+//  * TIMING FUNCTIONS
+//  *****************************************************************************/
 
-/**
- * @brief Automatically formats a TimeSpec into a string
- * @param[out]		str		Formatted string
- * @param			len		Allocated length in str
- * @param			time	TimeSpec to format
- *
- * Used in tMsg().
- */
-static void tFormat(char *str, int len, const TimeSpec *time);
+Timer *tAlloc(){
 
-/******************************************************************************
- * TIMING FUNCTIONS
- *****************************************************************************/
+	Timer *t = malloc(sizeof(*t));
+	t->total = 0;
 
-static void tFormat(char *str, int len, const TimeSpec *time){
+	return t;
+}
 
-	long int sec = time->tv_sec;
-	long int nsec = time->tv_nsec;
+void tFree(Timer *t){
+	free(t);
+}
 
-	if(sec>=1){
-		snprintf(str,len,"%6.2fs ",(double)sec+(double)nsec/1000000000);
-	} else if(nsec>1000000) {
-		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
-	} else if(nsec>1000) {
-		snprintf(str,len,"%6.2fus",(double)nsec/1000);
+//Linux or mac implementation to getNanoSec (Local function)
+#if _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
+
+	unsigned long long int getNanoSec(void){
+
+		struct timespec time;
+		clock_gettime(CLOCK_MONOTONIC, &time);
+
+		return time.tv_sec*1e9 + time.tv_nsec;
+	}
+
+#elif	defined(__APPLE__)
+
+	unsigned long long int getNanoSec(void){
+		//TBD
+		msg(WARNING, "Timer function for macOS is not completed.");
+
+		return 0.;
+	}
+
+#endif
+
+
+void tStart(Timer *t){
+	t->start = getNanoSec();
+}
+
+void tStop(Timer *t){
+	t->total += getNanoSec() - t->start;
+}
+
+void tReset(Timer *t){
+	t->total = 0;
+}
+
+void tMsg(long long int nanoSec, const char *string){
+
+	if(nanoSec >= 1e9){
+		msg(TIMER|ONCE, "%s %6.2fs ", string, (double) nanoSec/1e9);
+	} else if(nanoSec>1e6) {
+		msg(TIMER|ONCE, "%s %6.2fms ", string, (double) nanoSec/1e6);
+	} else if(nanoSec>1e3) {
+		msg(TIMER|ONCE, "%s %6.2fus ", string, (double) nanoSec/1e3);
 	} else {
-		snprintf(str,len,"%6.2fns",(double)nsec);
-	}
-}
-
-Timer *tAlloc(int rank){
-
-	// Get rank of this MPI node
-	int thisRank;
-	MPI_Comm_rank(MPI_COMM_WORLD,&thisRank);
-
-	// Assign struct
-	Timer *timer = malloc(sizeof(Timer));
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
-	if(rank==thisRank || rank<0){
-		timer->rank=thisRank;
-	} else {
-		timer->rank=-1;	// Deactivate this timer
+		msg(TIMER|ONCE, "%s %6.2fns ", string, (double) nanoSec);
 	}
 
-	return timer;
 }
 
-void tFree(Timer *timer){
-	free(timer);
-}
-
-void tMsg(Timer *timer, const char *restrict format, ...){
-
-	if(timer->rank>=0){
-		TimeSpec now, diff;
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
-
-		if(format!=NULL){
-
-			// Take difference
-			diff.tv_sec = now.tv_sec-timer->previous.tv_sec;
-			diff.tv_nsec = now.tv_nsec-timer->previous.tv_nsec;
-
-			// Borrow from tv_sec if necessary
-			if(diff.tv_nsec<0){
-				diff.tv_sec-=1;
-				diff.tv_nsec+=1e9;
-			}
-
-			// Format time
-			const int strSize = 16;
-			char nowStr[strSize];
-			char diffStr[strSize];
-			tFormat(nowStr,strSize,&now);
-			tFormat(diffStr,strSize,&diff);
-
-			// Get message
-			const int bufferSize = 132;
-			char msg[bufferSize];
-			va_list args;
-			va_start(args,format);
-			vsnprintf(msg,bufferSize,format,args);
-			va_end(args);
-
-			// Print
-			char buffer[bufferSize];
-			snprintf(buffer,bufferSize,"TIMER (%i): [tot=%s, diff=%s] %s",timer->rank,nowStr,diffStr,msg);
-			fprintf(stdout,"%s\n",buffer);
-		}
-
-		// Store time of this call
-		//timer->previous = now;
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
-	}
-}
+// void tMsg(Timer *timer, const char *restrict format, ...){
+//
+// 	if(timer->rank>=0){
+// 		TimeSpec now, diff;
+// 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
+//
+// 		if(format!=NULL){
+//
+// 			// Take difference
+// 			diff.tv_sec = now.tv_sec-timer->previous.tv_sec;
+// 			diff.tv_nsec = now.tv_nsec-timer->previous.tv_nsec;
+//
+// 			// Borrow from tv_sec if necessary
+// 			if(diff.tv_nsec<0){
+// 				diff.tv_sec-=1;
+// 				diff.tv_nsec+=1e9;
+// 			}
+//
+// 			// Format time
+// 			const int strSize = 16;
+// 			char nowStr[strSize];
+// 			char diffStr[strSize];
+// 			tFormat(nowStr,strSize,&now);
+// 			tFormat(diffStr,strSize,&diff);
+//
+// 			// Get message
+// 			const int bufferSize = 132;
+// 			char msg[bufferSize];
+// 			va_list args;
+// 			va_start(args,format);
+// 			vsnprintf(msg,bufferSize,format,args);
+// 			va_end(args);
+//
+// 			// Print
+// 			char buffer[bufferSize];
+// 			snprintf(buffer,bufferSize,"TIMER (%i): [tot=%s, diff=%s] %s",timer->rank,nowStr,diffStr,msg);
+// 			fprintf(stdout,"%s\n",buffer);
+// 		}
+//
+// 		// Store time of this call
+// 		//timer->previous = now;
+// 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
+// 	}
+// }
 
 /******************************************************************************
  * STRING FUNCTIONS

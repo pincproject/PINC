@@ -220,7 +220,7 @@ void mgRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-	Timer *t = tAlloc(rank);
+	// Timer *t = tAlloc(rank);
 
 	double tol = 50;
 	double err = 10001;
@@ -268,6 +268,7 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv);
 	msg(STATUS|ONCE,"PINC started.");
 	MPI_Barrier(MPI_COMM_WORLD);
+
 
 	//Choose routine from ini file
 	char *routine = iniparser_getstring(ini, "main:routine", "\0");
