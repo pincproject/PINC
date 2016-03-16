@@ -90,13 +90,6 @@ SEPARATE MPIINFO
 															Sigvald Marholm
 															17.02.16
 
-UPDATE INTRODUCTION FILE
-
-	Update introduction file, more thourough discussion of how to use Git.
-	Consider switching from feature branch work flow to Gitflow.
-
-															Sigvald Marholm
-															17.02.16
 IDIOMATIC PINC PROGRAMMING PDF-FILE
 
 	Introduction to new programmers on how to write idiomatic PINC code, i.e.
@@ -109,57 +102,48 @@ IDIOMATIC PINC PROGRAMMING PDF-FILE
 	and efficient way. 
 															Sigvald Marholm
 															17.02.16
-CLEANING UP OUR GIT WORKFLOW
-
-	Our workflow in Git is a mess with back and forth merging. It has worked
-	well enough since we are only two programmers, both dedicated on code
-	quality. It becomes exponentially (I guess) more important the more
-	programmers we become. It is of utmost importance that our feature branches
-	are short-lived and merged back into master (or develop) for others to
-	benefit of our work without messy merging operations. We should also, then,
-	consider migrating to Gitflow rather than Feature Branch Workflow. Also,
-	it would probably be nice that new programmers are not allowed to merge
-	directly, but that origin relay the request of merging back to the
-	repository administrator (that's me) so that he can verify their code
-	before accepting the merge, and call them a motherfucker whenever they
-	write bad code,	or disobey our conventions. As they become accustomed to
-	our standards, they can gain right to merge themselves.
-															Sigvald Marholm
-															17.02.16
 
 MG OPTIMAL SETTINGS
 	
-	Making a routine that runs with several different MG cycle settings, and finds
-	the optimal settings
+	Making a routine that runs with several different MG cycle settings, and
+	finds the optimal settings.
 
 															Gullik Vetvik Killie
 															25.02.16
 
 INIPARSER SAFETY
 
-	Iniparser doesn't give a warning for empty inputs, but rather an invalid value
-	(often set to zero). Change this so we get an ERROR for invalid input key.
+	Iniparser doesn't give a warning for empty inputs, but rather an invalid
+	value (often set to zero). Change this so we get an ERROR for invalid input
+	key.
 
 															Sigvald Marholm
 															02.03.16
 
 MG CYCLES
 
-	Build additional MG cycles, for example FMG and W cycles. This can be done with the 
-	building using different V cycles that starts and end at different levels.
-	They should be setable from the input file.
+	Build additional MG cycles, for example FMG and W cycles. This can be done
+	with the building using different V cycles that starts and end at different
+	levels. They should be setable from the input file.
 
 															Gullik Vetvik Killie
-
 															26.02.16
 
 MEMORY LEAKS
 	
-	Go through and locate a memory leak probably found in the interactHalo functions.
+	Go through and locate a memory leak probably found in the interactHalo
+	functions.
 
 															Gullik Vetvik Killie
-
 															26.02.16
+
+ATTRIBUTES FOR HISTORY H5 FILE
+
+	History H5 file should have attributes specifying how to normalize the
+	quantities stored.
+															Sigvald Marholm
+															16.03.16
+
 
 ===============================================================================
 	WISH-list
@@ -320,8 +304,36 @@ COMPLETE MAIN ROUTINE
 	modules to run based on the information in the ini-file.
 															Sigvald Marholm
 															17.02.16
-Done by:	Gullik Killie
-		07.03.16
+	Done by:	Gullik Killie
+				07.03.16
 
+CLEANING UP OUR GIT WORKFLOW
 
+	Our workflow in Git is a mess with back and forth merging. It has worked
+	well enough since we are only two programmers, both dedicated on code
+	quality. It becomes exponentially (I guess) more important the more
+	programmers we become. It is of utmost importance that our feature branches
+	are short-lived and merged back into master (or develop) for others to
+	benefit of our work without messy merging operations. We should also, then,
+	consider migrating to Gitflow rather than Feature Branch Workflow. Also,
+	it would probably be nice that new programmers are not allowed to merge
+	directly, but that origin relay the request of merging back to the
+	repository administrator (that's me) so that he can verify their code
+	before accepting the merge, and call them a motherfucker whenever they
+	write bad code,	or disobey our conventions. As they become accustomed to
+	our standards, they can gain right to merge themselves.
+															Sigvald Marholm
+															17.02.16
+	Done by:	Sigvald Marholm
+				16.03.16
+				
+UPDATE INTRODUCTION FILE
+
+	Update introduction file, more thourough discussion of how to use Git.
+	Consider switching from feature branch work flow to Gitflow.
+
+															Sigvald Marholm
+															17.02.16
+	Done by:	Sigvald Marholm
+				16.03.16
 

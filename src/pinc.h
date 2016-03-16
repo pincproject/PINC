@@ -1148,6 +1148,28 @@ void freeStrArr(char** strArr);
  */
 hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt);
 
+/**
+ * @brief Creates a group in a .h5-file recursively
+ * @param	h5		.h5-file identifier
+ * @param	name	Group name
+ * @return	void
+ *
+ * createH5Group() handles creating multiple levels of groups recursively unlike
+ * H5Gcreate() which will crash ungracefully. It also will not crash if a group
+ * already exists. Note that the last group must have a trailing slash.
+ *
+ * Examples:
+ *	/group/group/dataset - Will create /group/group
+ *	/group/group/		 - Will create /group/group
+ */
+void createH5Group(hid_t h5, const char *name);
+
+hid_t histCreateH5(const dictionary *ini, const char *fName);
+void histCloseH5(hid_t h5);
+
+
+
+
 /******************************************************************************
  * DEFINED IN AUX.C
  *****************************************************************************/

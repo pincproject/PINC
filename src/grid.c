@@ -847,9 +847,9 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo){
 	free(mpiInfo->recv);
 }
 
-/***************************************************************************
- *		H5 FUNCTIONS
- **************************************************************************/
+/******************************************************************************
+ * H5 FUNCTIONS
+ *****************************************************************************/
 
 void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 
@@ -910,7 +910,6 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	hsize_t attrSize;
     hid_t attrSpace;
     hid_t attribute;
-
 
 	attrSize = (hsize_t)nDims;
 	attrSpace = H5Screate_simple(1,&attrSize,NULL);
@@ -977,7 +976,10 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 
 }
 
-// Assumes rho and phi of same kind of grid
+/******************************************************************************
+ * ENERGY FUNCTIONS
+ *****************************************************************************/
+
 void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop){
 
 	const double *rhoVal = rho->val;

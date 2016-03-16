@@ -35,33 +35,33 @@
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
 
- /**
-  * @brief Makes a directory
-  * @param	dir		Directory name
-  * @return	0 for success, 1 for failure
-  *
-  * dir can be a path but ancestors must exist. Directory will have permissions
-  * 0775. Used in makePath().
-  *
-  * @see makePath().
-  */
- static int makeDir(const char *dir);
+/**
+ * @brief Makes a directory
+ * @param	dir		Directory name
+ * @return	0 for success, 1 for failure
+ *
+ * dir can be a path but ancestors must exist. Directory will have permissions
+ * 0775. Used in makePath().
+ *
+ * @see makePath().
+ */
+static int makeDir(const char *dir);
 
- /**
-  * @brief Makes all parent directories of URL path
-  * @param	path	Path
-  * @return	0 for success, 1 for failure
-  *
-  * Examples:
-  *	path="dir/dir/file"	generates the folder "./dir/dir/"
-  *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
-  *  path="../dir/file" generates the folder "../dir/"
-  *	path="/dir/file" generates the folder "/dir/"
-  *
-  * Already existing folders are left as-is. This function can be used to ensure
-  * that the parent directories of its path exists.
-  */
- int makePath(const char *path);
+/**
+ * @brief Makes all parent directories of URL path
+ * @param	path	Path
+ * @return	0 for success, 1 for failure
+ *
+ * Examples:
+ *	path="dir/dir/file"	generates the folder "./dir/dir/"
+ *	path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
+ *	path="../dir/file" generates the folder "../dir/"
+ *	path="/dir/file" generates the folder "/dir/"
+ *
+ * Already existing folders are left as-is. This function can be used to ensure
+ * that the parent directories of its path exists.
+ */
+int makePath(const char *path);
 
 /**
  * @brief	Splits a comma-separated list-string to an array of strings.
@@ -358,6 +358,76 @@ hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt
 
 	return file;
 
+}
+
+void createH5Group(hid_t h5, const char *name){
+
+	// Makes a new editable copy of name. Input may be string literal, which
+	// cannot be edited anyway.
+	char *str = malloc(strlen(name)*sizeof(*str));
+	strcpy(str,name);
+
+	for(char *c=str+1; *c!='\0'; c++){
+
+		if(*c=='/'){
+			*c='\0';	// Temporarily ending string prematurely
+
+			// Creates this part of the path if it doesn't already exist
+			if(!H5Lexists(h5,str,H5P_DEFAULT)){
+				hid_t group = H5Gcreate(h5,str,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+				H5Gclose(group);
+			}
+
+			*c='/';		// Changes string back
+		}
+	}
+
+	free(str);
+
+}
+
+
+hid_t histCreateH5(const dictionary *ini, const char *fName){
+
+	return createH5File(ini,fName,"hist");
+}
+
+void histCreateH5Dataset(hid_t h5, const char *name){
+
+	createH5Group(h5,name);	// Creates parent groups
+
+	// hsize_t fileDims[] = {2,1};		// Size of data in file initially zero
+	// hsize_t fileDimsMax[] = {H5S_UNLIMITED,H5S_UNLIMITED};
+	// hid_t fileSpace = H5Screate_simple(2,fileDims,fileDimsMax);
+	//
+	//
+	// hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+	//
+	// H5Sclose(fileSpace);
+	// H5Dclose(dataset);
+
+}
+void histWriteH5(hid_t h5, const char* name, double timeStep, double value, MPI_Op op){
+
+	double data[] = {timeStep,value};
+
+	hsize_t memDims[] = {1,2};
+	hsize_t fileDims[] = {1,2};		// Size of data in file initially zero
+	hsize_t fileDimsMax[] = {1,H5S_UNLIMITED};
+
+	hid_t fileSpace = H5Screate_simple(2,fileDims,fileDimsMax);
+	hid_t memSpace = H5Screate_simple(2,memDims,NULL);
+
+
+	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+	// H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
+
+	H5Sclose(memSpace);
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+}
+void histCloseH5(hid_t h5){
+	H5Fclose(h5);
 }
 
 /******************************************************************************
