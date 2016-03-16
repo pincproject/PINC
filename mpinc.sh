@@ -15,7 +15,9 @@
 #
 
 # Path of caller (this script's folder)
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+
 
 # Get number of processes from PINC
 NP=`$DIR/pinc "$@" getnp`
