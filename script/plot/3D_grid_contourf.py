@@ -31,21 +31,25 @@ def plotEField(field):
 
 
 #Loading data/Shaving of last dimension
-filePhi = h5py.File('../test_phi.grid.h5','r')
+filePhi = h5py.File('../framework/test_phi.grid.h5','r')
 phi = filePhi['/n=0.0']
 phi = phi[:,:,:,0]
 
-fileRho = h5py.File('../test_rho.grid.h5','r')
+fileRho = h5py.File('../framework/test_rho.grid.h5','r')
 rho = fileRho['/n=0.0']
 rho = rho[:,:,:,0]
+
+fileRes = h5py.File('../framework/test_res.grid.h5','r')
+res = fileRes['/n=0.0']
+res = res[:,:,:,0]
 
 
 # fileE = h5py.File('../test_E.grid.h5', 'r')
 # E = fileE['/n=0.0']
 
-
-plotPlanesOfGrid(phi)
 plotPlanesOfGrid(rho)
+plotPlanesOfGrid(phi)
+plotPlanesOfGrid(res)
 
 # plotEField(E)
 

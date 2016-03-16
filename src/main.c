@@ -142,6 +142,54 @@ void regularRoutine(dictionary *ini){
 	return;
 }
 
+/**************************************************************
+ *			TEMP, to reading of h5 files are ready
+ *************************************************************/
+
+void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo){
+
+	//Load
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+	long int *sizeProd = grid->sizeProd;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+
+	double *val = grid->val;
+
+	//Hard code try
+	long int ind = 0;
+	if(nSubdomains[2]==1){
+		for(int j = 1; j < size[1]-1; j++){
+			for (int k = 1; k<size[2]-1; k++) {
+				for(int l = 1; l < size[3]-1; l++){
+					ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+					if(l < trueSize[3]/2) val[ind] = -1;
+					else if (l == trueSize[3]/2. || l == trueSize[3]) val[ind] = 0.;
+					else val[ind] = 1.;
+				}
+			}
+		}
+	} else {
+		for(int j = 1; j < size[1]-1; j++){
+			for (int k = 1; k<size[2]-1; k++) {
+				for(int l = 1; l < size[3]-1; l++){
+					ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+					if(subdomain[2]<nSubdomains[2]/2) val[ind] = -1.;
+					else val[ind] = 1.;
+				}
+			}
+		}
+		//Set in 0 at between domains (use sendSlice since it is reset every time it is used)
+		double *slice = grid->sendSlice;
+		for(int l = 0; l < size[3]; l++)	slice[l] = 0;
+		setSlice(slice, grid, 3, size[3]-2);
+	}
+
+	return;
+}
+
+
 void mgRoutine(dictionary *ini){
 
 	//Mpi
@@ -157,17 +205,8 @@ void mgRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
-
-	//Fill rho with lazy heaviside
-	int *subdomain = mpiInfo->subdomain;
-	int rank = rho->rank;
-	long int *sizeProd = rho->sizeProd;
-	double *val = rho->val;
-
-	double charge = (double) (subdomain[0]>0); // -1 + 2*(subdomain[0]>0);
-	for(int g = 0; g < sizeProd[rank]; g++) val[g] = charge;
-
 	//Prep to store grids
+	int rank = rho->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
@@ -176,19 +215,23 @@ void mgRoutine(dictionary *ini){
 
 	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gCreateH5(ini, res, mpiInfo, denorm, dimen, "res");
 
 	free(denorm);
 	free(dimen);
 
 	Timer *t = tAlloc(rank);
 
-	double tol = 10000;
+	double tol = 50;
 	double err = 10001;
+
+	//Compute stuff
+	debugFillHeaviside(rho, mpiInfo);
 
 	while(err>tol){
 		//Run solver
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-		msg(STATUS|ONCE, "The residual mass is %f ",err);
+
 
 		//Compute residual and mass
 		mgResidual(res,rho, phi, mpiInfo);
@@ -197,14 +240,14 @@ void mgRoutine(dictionary *ini){
 
 	}
 
-	tMsg(t, "Time to run");
-
-
 	gWriteH5(rho,mpiInfo,0.);
 	gWriteH5(phi,mpiInfo,0.);
+	gWriteH5(res,mpiInfo,0.);
+
 
 	gCloseH5(phi);
 	gCloseH5(rho);
+	gCloseH5(res);
 
 
 

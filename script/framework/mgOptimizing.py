@@ -21,7 +21,13 @@ import subprocess
 pinc = PINC()
 
 pinc.clean()
+#
+# data = open("mgOptData.txt", "wr")
+#
+# data.write("Hello moron brothers")
+#
+# data.close()
 
-pinc.mgLevels = 6
-
-pinc.runMG()
+for i in range(3):
+	pinc.runMG()
+	pinc.clean()
