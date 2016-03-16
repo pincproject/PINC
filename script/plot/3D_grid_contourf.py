@@ -35,11 +35,18 @@ filePhi = h5py.File('../test_phi.grid.h5','r')
 phi = filePhi['/n=0.0']
 phi = phi[:,:,:,0]
 
-fileE = h5py.File('../test_E.grid.h5', 'r')
-E = fileE['/n=0.0']
+fileRho = h5py.File('../test_rho.grid.h5','r')
+rho = fileRho['/n=0.0']
+rho = rho[:,:,:,0]
+
+
+# fileE = h5py.File('../test_E.grid.h5', 'r')
+# E = fileE['/n=0.0']
 
 
 plotPlanesOfGrid(phi)
-plotEField(E)
+plotPlanesOfGrid(rho)
+
+# plotEField(E)
 
 mlab.show()

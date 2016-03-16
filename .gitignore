@@ -17,3 +17,4 @@ tags
 local.mk
 **.jpg
 **.mp4
+**.pyc
