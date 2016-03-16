@@ -295,6 +295,19 @@ typedef struct{
 	int rank;					///< Rank of node or negative to turn off timer
 } Timer;
 
+// typedef struct{
+// 	unsigned long long int total;		/// Total time
+//	unsigned long long int start;		/// Previous start time
+// } Timer;
+//
+// unsigned long long int getNanoSec();
+// void tMsg(int rank, Timer *timer, format....);
+// void tStart(...);
+// void tStop(...);
+// void tic();
+// void toc();
+
+
 /**
  * @brief Defines different types of messages
  * @see msg()
