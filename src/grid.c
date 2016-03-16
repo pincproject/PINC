@@ -916,10 +916,8 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	attrSpace = H5Screate_simple(1,&attrSize,NULL);
 
 	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->stepSize);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, &grid->stepSize[1]); // Skip non-grid value
     H5Aclose(attribute);
-
-
 
 	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
 	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
@@ -1040,11 +1038,11 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 	double *v = grid->val;
 
 	for(long int p=0;p<sizeProd[rank];p++){
-		v[p] = 0;
+		v[p] = mpiRank*1000;
 		long int temp = p;
 
 		for(int d=0;d<rank;d++){
-			v[p] += (temp%size[d])*pow(10,d-1) + mpiRank*1000;
+			v[p] += (temp%size[d])*pow(10,d-1);
 			temp/=size[d];
 		}
 	}

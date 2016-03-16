@@ -837,7 +837,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo);
  *
  * In addition, 1000*mpiRank is added to all values. For instance the third
  * value (z-component) at grid point (j,k,l)=(4,5,6) of the subdomain with MPI
- * rank 3 will be 3654.3.
+ * rank 2 will be 2654.3.
  */
 void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
 
