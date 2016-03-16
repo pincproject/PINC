@@ -90,6 +90,43 @@ void puAcc3D1(Population *pop, Grid *E){
 		gMul(E,pop->renormE[s]);
 	}
 }
+
+void puAcc3D1KE(Population *pop, Grid *E){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+	double *mass = pop->mass;
+	double *kinEnergy = pop->kinEnergy;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		kinEnergy[s]=0;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3];
+			puInterp3D1(dv,&pos[p],val,sizeProd);
+			double velSquared=0;
+			for(int d=0;d<nDims;d++){
+				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
+				vel[p+d] += dv[d];
+			}
+			kinEnergy[s]+=velSquared;
+		}
+
+		kinEnergy[s]*=mass[s];
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+}
 // void puAcc3D2();
 // void puAccND0();
 // void puAccND1();

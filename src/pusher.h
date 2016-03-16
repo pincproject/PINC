@@ -88,6 +88,22 @@ void puDistr3D1(const Population *pop, Grid *rho);
  */
 void puAcc3D1(Population *pop, Grid *E);
 
+/**
+ * @brief Accelerates particles using 1st order interpolation. Fixed to 3D.
+ * @param[in,out]	pop		Population
+ * @param			E		E-field to determine acceleration from
+ * @return					void
+ *
+ * Same as puAcc3D1 but computes the kinetic energy the particles has in the
+ * mid-step. E.g. when the velocity is updated from timestep n-0.5 to n+0.5 the
+ * energy at time-step n is computed. This function is able to compute the
+ * energy per specie, and thus the energy per specie is stored in kinEnergy[s]
+ * in Population. If the user desires the total energy this is acheived by
+ * summation. Finally, the energy is only stored for particles residing in this
+ * subdomain, and this is merged upon storing to h5-file.
+ */
+void puAcc3D1KE(Population *pop, Grid *E);
+
 void puIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
 void puIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
 

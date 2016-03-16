@@ -59,8 +59,15 @@
  * (1,2,3) in the grid. Particles are usually specified in local frame but may
  * temporarily be expressed in global frame. See MpiInfo.
  *
- * energy[i] simply holds the kinetic energy of particle i, or if energy is not
- * computed, energy points to NULL.
+ * kinEnergy and potEnergy stores the kinetic and potential energy of the
+ * particles if an energy-computing function is utilized (see e.g. puAcc3D1KE
+ * and gPotEnergy). Some energy-computing functions may be able to compute the
+ * energy per specie, in which case kinEnergy[s] and potEnergy[s] is the energy
+ * for specie s. Others may only be able to compute the net energy for all
+ * species, in which case this is stored in the last element (
+ * kinEnergy[nSpecies] or potEnergy[nSpecies]). Note that this is only the
+ * energy for the current subdomain, and a separate function must be employed
+ * to sum the energy across the subdomains and store it to an .h5-file.
  *
  * If a population h5 output file is created, the handler to this file is
  * stored in h5.
@@ -68,11 +75,14 @@
 typedef struct{
 	double *pos;		///< Position
 	double *vel;		///< Velocity
-	double *energy;		///< Kinetic energy
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
 	double *renormRho;	///< Re-normalization factors for rho (nSpecies elements)
 	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
+	double *charge;		///< Normalized charge (q-bar)
+	double *mass;		///< Normalized mass (m-bar)
+	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements, last is sum over all species)
+	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
@@ -330,22 +340,6 @@ Population *pAlloc(const dictionary *ini);
  * @see allocPopulation()
  */
 void pFree(Population *pop);
-
-/**
- * @brief	Sets specie-specific normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- * @param	timeStepMul		What multiple time step is to be used
- * @param	factor			Which multiplicative factor is used for rho
- *
- * timeStepMul=1 for whole time steps and 0.5 for half and so on.
- * This function makes use of computeRenormE() and computeRenormPhi(). See those
- * for more in-depth explanation.
- *
- * timeStepMul and factor both defaults to 1 during allocation of Population.
- * Calling this function is only necessary for other values.
- */
-void pSetSpecieNorm(const dictionary *ini, Population *pop, double timeStepMul, double factor);
 
 /**
  * @brief	Assign particles uniformly distributed positions
@@ -916,6 +910,28 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid);
  * @param	mpiInfo	MpiInfo
  */
 void gDestroyNeighborhood(MpiInfo *mpiInfo);
+
+/**
+ * @brief Computes potential energy
+ * @param		rho		Charge density
+ * @param		phi		Electric potential
+ * @param[out]	pop		Population to store results in
+ *
+ * Computes the potential energy as
+ * \f[
+ *	U=\sum_j\rho_j\phi_j
+ * \f]
+ *
+ * Hence the computed energy will be for the same timestep as rho and phi is in.
+ * Only total energy (for all species) is calculated, and hence, the result is
+ * stored in potEnergy[nSpecies] in Population. Only the energy for this
+ * subdomain is computed. The energy for the whole domain is gathered during
+ * storing to h5-file.
+ *
+ * NB: rho and phi must be same kind of Grid.
+ * NB: Assumes electrostatic approximation.
+ */
+void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop);
 
 ///@}
 
