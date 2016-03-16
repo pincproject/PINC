@@ -45,8 +45,7 @@ void tFree(Timer *t){
 	free(t);
 }
 
-//Linux or mac implementation to getNanoSec
-
+//Linux or mac implementation to getNanoSec (Local function)
 #if _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
 
 	unsigned long long int getNanoSec(void){
@@ -54,10 +53,10 @@ void tFree(Timer *t){
 		struct timespec time;
 		clock_gettime(CLOCK_MONOTONIC, &time);
 
-		return time.tv_sec*1000000000 + time.tv_nsec;
+		return time.tv_sec*1e9 + time.tv_nsec;
 	}
 
-#elif	defined(_APPLE_)
+#elif	defined(__APPLE__)
 
 	unsigned long long int getNanoSec(void){
 		//TBD
@@ -77,46 +76,24 @@ void tStop(Timer *t){
 	t->total += getNanoSec() - t->start;
 }
 
+void tReset(Timer *t){
+	t->total = 0;
+}
 
+void tMsg(long long int nanoSec, const char *string){
 
-// static void tFormat(char *str, int len, const TimeSpec *time){
-//
-// 	long int sec = time->tv_sec;
-// 	long int nsec = time->tv_nsec;
-//
-// 	if(sec>=1){
-// 		snprintf(str,len,"%6.2fs ",(double)sec+(double)nsec/1000000000);
-// 	} else if(nsec>1000000) {
-// 		snprintf(str,len,"%6.2fms",(double)nsec/1000000);
-// 	} else if(nsec>1000) {
-// 		snprintf(str,len,"%6.2fus",(double)nsec/1000);
-// 	} else {
-// 		snprintf(str,len,"%6.2fns",(double)nsec);
-// 	}
-// }
-//
-// Timer *tAlloc(int rank){
-//
-// 	// Get rank of this MPI node
-// 	int thisRank;
-// 	MPI_Comm_rank(MPI_COMM_WORLD,&thisRank);
-//
-// 	// Assign struct
-// 	Timer *timer = malloc(sizeof(Timer));
-// 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
-// 	if(rank==thisRank || rank<0){
-// 		timer->rank=thisRank;
-// 	} else {
-// 		timer->rank=-1;	// Deactivate this timer
-// 	}
-//
-// 	return timer;
-// }
-//
-// void tFree(Timer *timer){
-// 	free(timer);
-// }
-//
+	if(nanoSec >= 1e9){
+		msg(TIMER|ONCE, "%s %6.2fs ", string, (double) nanoSec/1e9);
+	} else if(nanoSec>1e6) {
+		msg(TIMER|ONCE, "%s %6.2fms ", string, (double) nanoSec/1e6);
+	} else if(nanoSec>1e3) {
+		msg(TIMER|ONCE, "%s %6.2fus ", string, (double) nanoSec/1e3);
+	} else {
+		msg(TIMER|ONCE, "%s %6.2fns ", string, (double) nanoSec);
+	}
+
+}
+
 // void tMsg(Timer *timer, const char *restrict format, ...){
 //
 // 	if(timer->rank>=0){

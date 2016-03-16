@@ -1000,9 +1000,6 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 	for(int l = nGhostLayers[3]; l < size[3]-nGhostLayers[rank+3]; l++){
 		for(int k = nGhostLayers[2]; k < size[2]-nGhostLayers[rank+2]; k++){
 			for(int j = nGhostLayers[1]; j < size[1]-nGhostLayers[rank+1]; j++){
-				// index = sizeProd[1]*j + sizeProd[2]*k + sizeProd[3]*l;
-				// mass += val[index]*val[index];
-				//
 				mass += val[g]*val[g];
 				g++;
 			}
@@ -1018,8 +1015,6 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 			mass += massRecv;
 		}
 	}
-
-	//
 
 	return mass;
 }

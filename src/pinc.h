@@ -284,17 +284,27 @@ typedef struct{
 	bndType *bnd;				///< Array storing boundary conditions
 } Grid;
 
-// typedef struct timespec TimeSpec;
-//
-// /**
-//  * @brief	Timer struct for simple profiling
-//  * @see allocTimer(), freeTimer(), tMsg()
-//  */
-// typedef struct{
-// 	TimeSpec previous;			///< Time of previous call
-// 	int rank;					///< Rank of node or negative to turn off timer
-// } Timer;
+/**
+ * @brief	Timer struct for simple profiling
+ * @see allocTimer(), freeTimer(), tMsg()
+ *
+ *	Simple timer struct to keep track of time.
+ *	A simple example of where the time to add 10 to an integer 10 times is
+ *	computed:
+ *	\code
+ Timer *t = tAlloc();
 
+ int k = 0;
+ for (int i = 0; i < 10; i++){
+	 tStart(t);
+	 k += 10;
+	 tStop(t);
+	 tMsg(t->total, "Hello: ");
+ }
+
+ tFree(t);
+ *	\endcode
+ */
 typedef struct{
 	unsigned long long int total;		/// Total time
 	unsigned long long int start;		/// Previous start time
@@ -316,6 +326,7 @@ typedef enum{
 	STATUS = 0x00,		///< Normal status output about the progress of execution.
 	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
 	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
+	TIMER = 0x03,		///< Printing out formatted timing result
 	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
 } msgKind;
 
@@ -1172,40 +1183,68 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
  */
 ///@{
 
+
+/**
+ * @brief	Allocates a Timer struct
+ * @return	Pointer to Timer struct
+ * @see		Timer, tFree, tMsg()
+ *
+ * Remember to free using tFree().
+ */
 Timer *tAlloc();
 
+/**
+ * @brief	Frees a Timer struct allocated with tAlloc()
+ * @param	timer 	Pointer to Timer struct
+ * @see		Timer, tAlloc()
+ */
 void tFree(Timer *t);
 
-unsigned long long int getNanoSec();
 
+/**
+ * @brief	Starts the time counter
+ * @param	timer 	Pointer to Timer struct
+ * @see		tStop()
+ *
+ *	Sets t->start = clock().
+ *
+ */
 void tStart(Timer *t);
 
+
+/**
+ * @brief	Stops the timer stopwatch
+ * @param	timer 	Pointer to Timer struct
+ * @see		Timer, tStart()
+ *
+ *	Computes the time, since tStart was called and then the result is adtimerded to the
+ *	total time the stopwatch have been running.
+ *
+ */
 void tStop(Timer *t);
 
-// unsigned long long int getNanoSec();
-// void tMsg(int rank, Timer *timer, format....);
-// void tStop(...);
-// void tic();
-// void toc();
+/**
+ * @brief	Resets the timer
+ * @param	timer 	Pointer to Timer struct
+ * @see		Timer, tStart()
+ */
+void tReset(Timer *t);
 
+/**
+ * @brief	Prints a message along with a time converted to a sensible format
+ * @param	nanoSec 	nanoseconds
+ * @see		string		message before the time measurement
+ *
+ *	Prints the message along with the the time measurement, converted from
+ *	nanoseconds to a suitable format.
+ *
+ * Useful for testing execution speed of chunks of code. Each call to tMsg()
+ * prints the total time the program has been running, along with the time since
+ * last call to tMsg() before it resets the timer.
+ *
+ */
+void tMsg(long long int nanoSec, const char *string);
 
-//
-// /**
-//  * @brief	Allocates a Timer struct
-//  * @param	rank	Rank of the node where the timer is active (-1 for all)
-//  * @return	Pointer to Timer struct
-//  * @see		Timer, freeTimer, tMsg()
-//  *
-//  * Remember to free using freeTimer().
-//  */
-// Timer *tAlloc(int rank);
-//
-// /**
-//  * @brief	Frees a Timer struct allocated with allocTimer()
-//  * @param	timer 	Pointer to Timer struct
-//  * @see		Timer, allocTimer()
-//  */
-// void tFree(Timer *timer);
 //
 // /**
 //  * @brief	Prints a message along with timing information
