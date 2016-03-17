@@ -534,6 +534,45 @@ void pToLocalFrame(Population *pop, const MpiInfo *mpiInfo);
  */
 void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
 
+/**
+ * @brief Creates datasets in .xy.h5-file for storing energy
+ * @param	xy		.xy.h5-identifier
+ * @param	pop		Population
+ * @return			void
+ *
+ * Uses xyCreateDataset() to create datasets corresponding to the potential and
+ * kinetic energies stored in Population. Datasets for both kinetic and
+ * potential energy is created for each specie separately, as well as total for
+ * for all species, e.g. for two species:
+ *	- /energy/kinetic/specie 0
+ *  - /energy/kinetic/specie 1
+ *	- /energy/kinetic/total
+ *	- /energy/potential/specie 0
+ *	- /energy/potential/specie 1
+ *	- /energy/potential/total
+ *
+ * pWriteEnergy() can be used to populate these datasets.
+ */
+void pCreateEnergyDatasets(hid_t xy, Population *pop);
+
+/**
+ * @brief Writes energies to .xy.h5-file
+ * @param	xy		.xy.h5-identifier
+ * @param	pop		Population
+ * @return			void
+ *
+ * Uses xyWrite() to write potential and kinetic energies stored in Population
+ * to .xy.h5 datasets. These datasets must first be created using
+ * pCreateEnergyDatasets(). Note that this function does not populate the energy
+ * variables in Population with meaningful values, energy-computing functions
+ * such as gPotEnergy() and puAcc3D1KE() must be used for that. Beware though
+ * that energy computing functions typically only populate the energy per
+ * specie, or if that is unobtainable by the algorithm, the summed (total)
+ * energy for all species. In the former case, the total energy can be obtained
+ * simply by addition during post-processing.
+ */
+void pWriteEnergy(hid_t xy, Population *pop, double x);
+
 ///@}
 
 /******************************************************************************
@@ -1159,14 +1198,80 @@ hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt
  * already exists. Note that the last group must have a trailing slash.
  *
  * Examples:
- *	/group/group/dataset - Will create /group/group
- *	/group/group/		 - Will create /group/group
+ *	- /group/group/dataset	- Will create /group/group
+ *	- /group/group/		 	- Will create /group/group
  */
 void createH5Group(hid_t h5, const char *name);
 
+/**
+ * @brief Creates a .xy.h5-file for storing (x,y) datasets
+ * @param	ini		Dictionary to input file
+ * @param	name	File name
+ * @return	Handle for H5-file
+ *
+ * For conventions regarding the file name, see createH5File().
+ * See xyWriteH5() for how to write (x,y) datapoits to the file.
+ * Remember to close using xyCloseH5() or PINC will fail ungracefully.
+ */
 hid_t xyCreateH5(const dictionary *ini, const char *fName);
+
+/**
+ * @brief Closes a .xy.h5-file
+ * @param	h5		Identifier to h5-file to close
+ * @param			void
+ */
 void xyCloseH5(hid_t h5);
-void xyWrite(hid_t h5, const char* name, double timeStep, double value, MPI_Op op);
+
+/**
+ * @brief Writes an (x,y) datapoint to a dataset in an H5-file
+ * @param	h5		.h5-file identifier
+ * @param	name	Dataset name
+ * @param	x		x-value
+ * @param	y		y-value
+ * @param	op		MPI reduction operation performed on y
+ * @return	void
+ *
+ * A datapoint on a curve in the xy-plane is appended at the end of a dataset in
+ * the h5-file. For instance, the x-axis can represent the time steps and the y
+ * axis some kind of energy or error residual.
+ *
+ * In parallel executions, the y value is reduced across all MPI nodes using the
+ * specified MPI reduction operation, for instance MPI_SUM to sum the y-value of
+ * all MPI nodes before writing to file. If the x value differs amongst the
+ * nodes, the x-value of rank 0 is simply used.
+ *
+ * The dataset must be created beforehand by calling xyCreateDataset() and the
+ * file is created by xyCreateH5(). Remember to close the H5 file using
+ * xyCloseH5().
+ *
+ * Example:
+ * @code
+ *	hid_t hist = xyCreateH5(ini,"timesweep");
+ *
+ *	xyCreateDataset(hist,"/energy/potential");
+ *	xyCreateDataset(hist,"residual");
+ *
+ *	for(int n=0;n<N;n++){
+ *		...
+ *		// Energy summed across nodes using MPI_SUM and stored to file
+ *		xyWrite(hist,"/energy/potential",(double)n,energy,MPI_SUM);
+ *		xyWrite(hist,"residual",(double)n,res,MPI_SUM);
+ *		...
+ *	}
+ *	xyCloseH5(hist);
+ * @endcode
+ */
+void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op);
+
+/**
+ * @brief Creates a dataset in a .xy.h5 file
+ * @param	h5		Identifier to .h5-file to create dataset in
+ * @param	name	Dataset name
+ * @return			void
+ *
+ * Creates a dataset specified by its name and all parent groups with it. For
+ * example, see xyWrite().
+ */
 void xyCreateDataset(hid_t h5, const char *name);
 
 

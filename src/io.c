@@ -364,7 +364,7 @@ void createH5Group(hid_t h5, const char *name){
 
 	// Makes a new editable copy of name. Input may be string literal, which
 	// cannot be edited anyway.
-	char *str = malloc(strlen(name)*sizeof(*str));
+	char *str = malloc((strlen(name)+1)*sizeof(*str));
 	strcpy(str,name);
 
 	for(char *c=str+1; *c!='\0'; c++){
@@ -389,7 +389,7 @@ void createH5Group(hid_t h5, const char *name){
 
 hid_t xyCreateH5(const dictionary *ini, const char *fName){
 
-	return createH5File(ini,fName,"hist");
+	return createH5File(ini,fName,"xy");
 }
 
 void xyCreateDataset(hid_t h5, const char *name){
@@ -418,14 +418,14 @@ void xyCreateDataset(hid_t h5, const char *name){
 	H5Dclose(dataset);
 
 }
-void xyWrite(hid_t h5, const char* name, double timeStep, double value, MPI_Op op){
+void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 
 	int mpiRank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Reduce data across nodes
-	double result;
-	MPI_Reduce(&value,&result,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
+	double yReduced;
+	MPI_Reduce(&y,&yReduced,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
 
 	// Load dataset
 	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
@@ -451,7 +451,7 @@ void xyWrite(hid_t h5, const char* name, double timeStep, double value, MPI_Op o
 		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,count,memDims);
 
 		// Write to file
-		double data[] = {timeStep,result};
+		double data[] = {x,yReduced};
 		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
 		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
 		H5Sclose(memSpace);
