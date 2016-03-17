@@ -395,14 +395,18 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	for(int c = 0; c < nCycles; c++){
 		// Index of neighboring nodes
-		int gj = sizeProd[1];
-		int gjj= -sizeProd[1];
-		int gk = sizeProd[2];
-		int gkk= -sizeProd[2];
-		int gl = sizeProd[3];
-		int gll= -sizeProd[3];
+		long int g =  sizeProd[1] + sizeProd[2] + sizeProd[3];
 
-		for(long int g = 0; g < sizeProd[rank]; g++){
+		long int gj = sizeProd[1];
+		long int gjj= -sizeProd[1];
+		long int gk = sizeProd[2];
+		long int gkk= -sizeProd[2];
+		long int gl = sizeProd[3];
+		long int gll= -sizeProd[3];
+
+		long int end = sizeProd[rank] - 2*g;
+
+		for(long int q = 0; q < end; q++){
 			tempVal[g] = coeff*(phiVal[gj] + phiVal[gjj] +
 								phiVal[gk] + phiVal[gkk] +
 								phiVal[gl] + phiVal[gll] +
@@ -1086,7 +1090,6 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	int nPostSmooth= mgRho->nPostSmooth;
 	int nCoarseSolv= mgRho->nCoarseSolve;
 
-
 	//Down to coarsest level
 	for(int current = level; current <bottom; current ++){
 		//Load grids
@@ -1094,18 +1097,22 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		Grid *rho = mgRho->grids[current];
 		Grid *res = mgRes->grids[current];
 
+
+
 		//Boundary
 		gHaloOp(setSlice, phi,mpiInfo);
 		gBnd(phi,mpiInfo);
 
 		mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
-		//
+
 		mgResidual(res, rho, phi, mpiInfo);
 
 		gHaloOp(setSlice, res, mpiInfo);
 		gBnd(res,mpiInfo);
 		mgRho->restrictor(res, mgRho->grids[current + 1]);
 	}
+
+
 
 	//Solve at coarsest
 	gHaloOp(setSlice, mgRho->grids[bottom], mpiInfo);

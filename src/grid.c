@@ -244,18 +244,22 @@ static int *getSubdomain(const dictionary *ini){
  	double *objectVal = object->val;
 
  	// Index of neighboring nodes
- 	int gj = sizeProd[1];
- 	int gjj= -sizeProd[1];
- 	int gk = sizeProd[2];
- 	int gkk= -sizeProd[2];
+	long int g = sizeProd[1] + sizeProd[2];
+ 	long int gj = g + sizeProd[1];
+ 	long int gjj= g - sizeProd[1];
+ 	long int gk = g + sizeProd[2];
+ 	long int gkk= g - sizeProd[2];
+
+	long int end = sizeProd[rank] - 2*g;
 
  	//Laplacian
- 	for(int g = 0; g < sizeProd[rank]; g++){
+ 	for(int q = 0; q < end; q++){
  		resultVal[g] = -4.*objectVal[g];
  		resultVal[g] += objectVal[gj] + objectVal[gjj]
  						+objectVal[gk] + objectVal[gkk];
 
  		//Increment indexes
+		g++;
  		gj++;
  		gjj++;
  		gk++;
@@ -275,18 +279,18 @@ static int *getSubdomain(const dictionary *ini){
  	double *objectVal = object->val;
 
  	// Index of neighboring nodes
- 	int g = 0;
- 	int gj = g + sizeProd[1];
- 	int gjj= g - sizeProd[1];
- 	int gk = g + sizeProd[2];
- 	int gkk= g - sizeProd[2];
- 	int gl = g + sizeProd[3];
- 	int gll= g - sizeProd[3];
+ 	long int g = sizeProd[1] + sizeProd[2] + sizeProd[3];
+ 	long int gj = g + sizeProd[1];
+ 	long int gjj= g - sizeProd[1];
+ 	long int gk = g + sizeProd[2];
+ 	long int gkk= g - sizeProd[2];
+ 	long int gl = g + sizeProd[3];
+ 	long int gll= g - sizeProd[3];
+
+	long int end = sizeProd[rank] - 2*g;
 
  	//Laplacian
- 	for(int q = 0; q < sizeProd[rank]; q++){
- 		// resultVal[g] = 0.;
-
+ 	for(int q = 0; q < end; q++){
  		resultVal[g] = -6.*objectVal[g];
  		resultVal[g] += objectVal[gj] + objectVal[gjj]
  						+objectVal[gk] + objectVal[gkk]

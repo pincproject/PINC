@@ -153,13 +153,6 @@ MG CYCLES
 
 															26.02.16
 
-MEMORY LEAKS
-	
-	Go through and locate a memory leak probably found in the interactHalo functions.
-
-															Gullik Vetvik Killie
-
-															26.02.16
 
 ===============================================================================
 	WISH-list
@@ -307,6 +300,14 @@ MAKING A BUILD SERVER
 
 															Sigvald Marholm
 															17.02.16
+CREATING PLASMA STREAMS APP
+
+	In the vein of atomify, and the other educational apps, create at CompPhys,
+	it would be nice to look into the possibility of running PinC in realtime
+	on a tablet/phone.
+						
+															Gullik Vetvik Killie
+															17-03.16
 
 ===============================================================================
 	DONE-list
@@ -323,5 +324,13 @@ COMPLETE MAIN ROUTINE
 Done by:	Gullik Killie
 		07.03.16
 
+MEMORY LEAKS
+	
+	Go through and locate a memory leak probably found in the interactHalo functions.
 
+															Gullik Vetvik Killie
+
+															26.02.16
+Done by:	Gullik Killie
+		14.03.16
 

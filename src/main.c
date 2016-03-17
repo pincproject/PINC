@@ -228,15 +228,15 @@ void mgRoutine(dictionary *ini){
 	//Compute stuff
 	debugFillHeaviside(rho, mpiInfo);
 
+
 	while(err>tol){
 		//Run solver
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 
-
 		//Compute residual and mass
 		mgResidual(res,rho, phi, mpiInfo);
 		err = mgResMass3D(res,mpiInfo);
-		msg(STATUS|ONCE, "The residual mass is %f ",err);
+		msg(STATUS|ONCE, "The error mass (e^2) is %f ",err);
 
 	}
 
