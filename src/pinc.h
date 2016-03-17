@@ -1164,8 +1164,10 @@ hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt
  */
 void createH5Group(hid_t h5, const char *name);
 
-hid_t histCreateH5(const dictionary *ini, const char *fName);
-void histCloseH5(hid_t h5);
+hid_t xyCreateH5(const dictionary *ini, const char *fName);
+void xyCloseH5(hid_t h5);
+void xyWrite(hid_t h5, const char* name, double timeStep, double value, MPI_Op op);
+void xyCreateDataset(hid_t h5, const char *name);
 
 
 

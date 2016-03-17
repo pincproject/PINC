@@ -387,46 +387,83 @@ void createH5Group(hid_t h5, const char *name){
 }
 
 
-hid_t histCreateH5(const dictionary *ini, const char *fName){
+hid_t xyCreateH5(const dictionary *ini, const char *fName){
 
 	return createH5File(ini,fName,"hist");
 }
 
-void histCreateH5Dataset(hid_t h5, const char *name){
+void xyCreateDataset(hid_t h5, const char *name){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	createH5Group(h5,name);	// Creates parent groups
 
-	// hsize_t fileDims[] = {2,1};		// Size of data in file initially zero
-	// hsize_t fileDimsMax[] = {H5S_UNLIMITED,H5S_UNLIMITED};
-	// hid_t fileSpace = H5Screate_simple(2,fileDims,fileDimsMax);
-	//
-	//
-	// hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-	//
-	// H5Sclose(fileSpace);
-	// H5Dclose(dataset);
+	const int arrSize=2;
 
-}
-void histWriteH5(hid_t h5, const char* name, double timeStep, double value, MPI_Op op){
+	// Enable chunking of data in order to use extendible (unlimited) datasets
+	hsize_t chunkDims[] = {1,2};
+	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(pList, arrSize, chunkDims);
 
-	double data[] = {timeStep,value};
+	// Create dataspace for file initially empty but extendable
+	hsize_t fileDims[] = {0,2};
+	hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
+	hid_t fileSpace = H5Screate_simple(arrSize,fileDims,fileDimsMax);
 
-	hsize_t memDims[] = {1,2};
-	hsize_t fileDims[] = {1,2};		// Size of data in file initially zero
-	hsize_t fileDimsMax[] = {1,H5S_UNLIMITED};
+	// Create dataset in file using mentioned dataspace
+	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
 
-	hid_t fileSpace = H5Screate_simple(2,fileDims,fileDimsMax);
-	hid_t memSpace = H5Screate_simple(2,memDims,NULL);
-
-
-	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-	// H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
-
-	H5Sclose(memSpace);
 	H5Sclose(fileSpace);
 	H5Dclose(dataset);
+
 }
-void histCloseH5(hid_t h5){
+void xyWrite(hid_t h5, const char* name, double timeStep, double value, MPI_Op op){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	// Reduce data across nodes
+	double result;
+	MPI_Reduce(&value,&result,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
+
+	// Load dataset
+	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
+
+	// Extend dataspace in file by one row (must be done on all MPI nodes)
+	const int arrSize=2;
+	hid_t fileSpace = H5Dget_space(dataset);
+	hsize_t fileDims[arrSize];
+	H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
+	fileDims[0]++;
+	H5Dset_extent(dataset,fileDims);
+
+	// update fileSpace after change
+	H5Sclose(fileSpace);
+	fileSpace = H5Dget_space(dataset);
+
+	// Write only from MPI rank 0
+	if(mpiRank==0){
+		// Select hyperslab to write to
+		hsize_t offset[] = {fileDims[0]-1,0};
+		hsize_t count[] = {1,1};
+		hsize_t memDims[] = {1,2};
+		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,count,memDims);
+
+		// Write to file
+		double data[] = {timeStep,result};
+		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
+		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
+		H5Sclose(memSpace);
+	}
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+
+void xyCloseH5(hid_t h5){
+
 	H5Fclose(h5);
 }
 
