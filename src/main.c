@@ -228,15 +228,21 @@ void mgRoutine(dictionary *ini){
 	//Compute stuff
 	debugFillHeaviside(rho, mpiInfo);
 
+	Timer *t = tAlloc();
+
+	fMsg(ini, "mgLog", "New run \n\n");
 
 	while(err>tol){
 		//Run solver
+		tStart(t);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-
+		tStop(t);
 		//Compute residual and mass
 		mgResidual(res,rho, phi, mpiInfo);
 		err = mgResMass3D(res,mpiInfo);
-		msg(STATUS|ONCE, "The error mass (e^2) is %f ",err);
+		// msg(STATUS|ONCE, "The error mass (e^2) is %f, time %llu", err, t->total);
+		tMsg(t->total, "Hello:");
+		fMsg(ini, "mgLog", "Hello \n");
 
 	}
 
@@ -249,10 +255,7 @@ void mgRoutine(dictionary *ini){
 	gCloseH5(rho);
 	gCloseH5(res);
 
-
-
-
-
+	tFree(t);
 
 	return;
 }

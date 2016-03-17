@@ -94,6 +94,12 @@ void tMsg(long long int nanoSec, const char *string){
 
 }
 
+
+/****************************************************************************
+ *	Outdated Timer functions (Some functionality is lost in new)
+ ****************************************************************************/
+
+
 // void tMsg(Timer *timer, const char *restrict format, ...){
 //
 // 	if(timer->rank>=0){
