@@ -35,33 +35,33 @@
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
 
- /**
-  * @brief Makes a directory
-  * @param	dir		Directory name
-  * @return	0 for success, 1 for failure
-  *
-  * dir can be a path but ancestors must exist. Directory will have permissions
-  * 0775. Used in makePath().
-  *
-  * @see makePath().
-  */
- static int makeDir(const char *dir);
+/**
+ * @brief Makes a directory
+ * @param	dir		Directory name
+ * @return	0 for success, 1 for failure
+ *
+ * dir can be a path but ancestors must exist. Directory will have permissions
+ * 0775. Used in makePath().
+ *
+ * @see makePath().
+ */
+static int makeDir(const char *dir);
 
- /**
-  * @brief Makes all parent directories of URL path
-  * @param	path	Path
-  * @return	0 for success, 1 for failure
-  *
-  * Examples:
-  *	path="dir/dir/file"	generates the folder "./dir/dir/"
-  *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
-  *  path="../dir/file" generates the folder "../dir/"
-  *	path="/dir/file" generates the folder "/dir/"
-  *
-  * Already existing folders are left as-is. This function can be used to ensure
-  * that the parent directories of its path exists.
-  */
- int makePath(const char *path);
+/**
+ * @brief Makes all parent directories of URL path
+ * @param	path	Path
+ * @return	0 for success, 1 for failure
+ *
+ * Examples:
+ *	path="dir/dir/file"	generates the folder "./dir/dir/"
+ *	path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
+ *	path="../dir/file" generates the folder "../dir/"
+ *	path="/dir/file" generates the folder "/dir/"
+ *
+ * Already existing folders are left as-is. This function can be used to ensure
+ * that the parent directories of its path exists.
+ */
+int makePath(const char *path);
 
 /**
  * @brief	Splits a comma-separated list-string to an array of strings.
@@ -362,6 +362,113 @@ hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt
 
 	return file;
 
+}
+
+void createH5Group(hid_t h5, const char *name){
+
+	// Makes a new editable copy of name. Input may be string literal, which
+	// cannot be edited anyway.
+	char *str = malloc((strlen(name)+1)*sizeof(*str));
+	strcpy(str,name);
+
+	for(char *c=str+1; *c!='\0'; c++){
+
+		if(*c=='/'){
+			*c='\0';	// Temporarily ending string prematurely
+
+			// Creates this part of the path if it doesn't already exist
+			if(!H5Lexists(h5,str,H5P_DEFAULT)){
+				hid_t group = H5Gcreate(h5,str,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+				H5Gclose(group);
+			}
+
+			*c='/';		// Changes string back
+		}
+	}
+
+	free(str);
+
+}
+
+
+hid_t xyCreateH5(const dictionary *ini, const char *fName){
+
+	return createH5File(ini,fName,"xy");
+}
+
+void xyCreateDataset(hid_t h5, const char *name){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	createH5Group(h5,name);	// Creates parent groups
+
+	const int arrSize=2;
+
+	// Enable chunking of data in order to use extendible (unlimited) datasets
+	hsize_t chunkDims[] = {1,2};
+	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(pList, arrSize, chunkDims);
+
+	// Create dataspace for file initially empty but extendable
+	hsize_t fileDims[] = {0,2};
+	hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
+	hid_t fileSpace = H5Screate_simple(arrSize,fileDims,fileDimsMax);
+
+	// Create dataset in file using mentioned dataspace
+	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	// Reduce data across nodes
+	double yReduced;
+	MPI_Reduce(&y,&yReduced,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
+
+	// Load dataset
+	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
+
+	// Extend dataspace in file by one row (must be done on all MPI nodes)
+	const int arrSize=2;
+	hid_t fileSpace = H5Dget_space(dataset);
+	hsize_t fileDims[arrSize];
+	H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
+	fileDims[0]++;
+	H5Dset_extent(dataset,fileDims);
+
+	// update fileSpace after change
+	H5Sclose(fileSpace);
+	fileSpace = H5Dget_space(dataset);
+
+	// Write only from MPI rank 0
+	if(mpiRank==0){
+		// Select hyperslab to write to
+		hsize_t offset[] = {fileDims[0]-1,0};
+		hsize_t count[] = {1,1};
+		hsize_t memDims[] = {1,2};
+		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,count,memDims);
+
+		// Write to file
+		double data[] = {x,yReduced};
+		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
+		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
+		H5Sclose(memSpace);
+	}
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+
+void xyCloseH5(hid_t h5){
+
+	H5Fclose(h5);
 }
 
 /******************************************************************************

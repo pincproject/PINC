@@ -446,6 +446,49 @@ void pCloseH5(Population *pop){
 	H5Fclose(pop->h5);
 }
 
+
+void pCreateEnergyDatasets(hid_t xy, Population *pop){
+
+	char name[32];
+	int nSpecies = pop->nSpecies;
+
+	sprintf(name,"/energy/potential/total");
+	xyCreateDataset(xy,name);
+
+	sprintf(name,"/energy/kinetic/total");
+	xyCreateDataset(xy,name);
+
+	for(int s=0;s<nSpecies;s++){
+		sprintf(name,"/energy/potential/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/kinetic/specie %i",s);
+		xyCreateDataset(xy,name);
+	}
+}
+
+void pWriteEnergy(hid_t xy, Population *pop, double x){
+
+	char name[32];
+	int nSpecies = pop->nSpecies;
+
+	sprintf(name,"/energy/potential/total");
+	xyWrite(xy,name,x,pop->potEnergy[nSpecies],MPI_SUM);
+
+	sprintf(name,"/energy/kinetic/total");
+	xyWrite(xy,name,x,pop->kinEnergy[nSpecies],MPI_SUM);
+
+	for(int s=0;s<nSpecies;s++){
+
+		sprintf(name,"/energy/potential/specie %i",s);
+		xyWrite(xy,name,x,pop->potEnergy[s],MPI_SUM);
+
+		sprintf(name,"/energy/kinetic/specie %i",s);
+		xyWrite(xy,name,x,pop->kinEnergy[s],MPI_SUM);
+	}
+
+}
+
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/

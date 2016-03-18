@@ -60,6 +60,12 @@ void regularRoutine(dictionary *ini){
 	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	gCreateH5(ini, E, mpiInfo, denorm, dimen, "E");
 
+	hid_t history = xyCreateH5(ini,"history");
+	pCreateEnergyDatasets(history,pop);
+
+	// Add more time series to history if you want
+	// xyCreateDataset(history,"/group/group/dataset");
+
 	free(denorm);
 	free(dimen);
 
@@ -67,12 +73,10 @@ void regularRoutine(dictionary *ini){
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
-	int nTimesteps = iniparser_getint(ini, "time:nTimesteps", 0);
+	int nTimeSteps = iniparser_getint(ini, "time:nTimeSteps", 0);
 
 	//Inital conditions
 	pPosUniform(ini, pop, mpiInfo, rng);
-
-
 
 	//Get initial E-field
 	puDistr3D1(pop, rho);
@@ -85,9 +89,10 @@ void regularRoutine(dictionary *ini){
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
-	 //Time loop
-	for(int t = 0; t < nTimesteps; t++){
-//		msg(STATUS|ONCE, "Hello Kitty");
+	// Time loop
+	// n should start at 1 since that's the timestep we have after the first
+	// iteration (i.e. when storing H5-files).
+	for(int n = 1; n < nTimeSteps; n++){
 
 		//Move particles
 		puMove(pop);
@@ -104,10 +109,16 @@ void regularRoutine(dictionary *ini){
 		// gAddTo(Ext);
 
 		//Accelerate
-		puAcc3D1(pop, E);		// Including total kinetic energy for step n
+		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+
+		gPotEnergy(rho,phi,pop);
+
+		// Example of writing another dataset to history.xy.h5
+		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		pWriteH5(pop, mpiInfo, (double) t, (double) t);
+		pWriteH5(pop, mpiInfo, (double) n, (double) n);
+		pWriteEnergy(history,pop,(double)n);
 	}
 
 
@@ -121,6 +132,7 @@ void regularRoutine(dictionary *ini){
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
+	xyCloseH5(history);
 
 	//Free memory
 	mgFree(mgRho);
