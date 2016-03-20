@@ -175,10 +175,10 @@ void msg(msgKind kind, const char* restrict format,...){
 			strcpy(prefix,"ERROR");
 			stream = stderr;
 			break;
-    case TIMER:
-      strcpy(prefix, "TIMER");
-      stream = stderr;
-      break;
+	    case TIMER:
+		    strcpy(prefix, "TIMER");
+		    stream = stderr;
+		    break;
 	}
 
 	// Parse and assemble message
