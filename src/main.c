@@ -273,6 +273,15 @@ void mgRoutine(dictionary *ini){
 }
 
 
+void langmuirWaves(dictionary *ini){
+
+	msg(STATUS, "Hello Kitty");
+
+
+
+	return;
+}
+
 int main(int argc, char *argv[]){
 
 
@@ -290,6 +299,7 @@ int main(int argc, char *argv[]){
 
 	if(!strcmp(routine, "regular"))				regularRoutine(ini);
 	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
+
 
 
 	MPI_Barrier(MPI_COMM_WORLD);
