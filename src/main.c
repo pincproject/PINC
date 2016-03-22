@@ -69,7 +69,6 @@ void regularRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
@@ -272,15 +271,6 @@ void mgRoutine(dictionary *ini){
 	return;
 }
 
-
-void langmuirWaves(dictionary *ini){
-
-	msg(STATUS, "Hello Kitty");
-
-
-
-	return;
-}
 
 int main(int argc, char *argv[]){
 
