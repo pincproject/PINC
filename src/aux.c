@@ -64,19 +64,19 @@ void tFree(Timer *t){
 
                 #include <mach/mach_time.h> // mach_absolute_time
 
-                #define BILLION 1000000000L
+	   //#define BILLION 1000000000L
 
-	        struct timespec time; // represent the elapsed time, 
+	   //struct timespec time; // represent the elapsed time, 
 	        mach_timebase_info_data_t timebase; // needed to convert mach_absolute time to something meaningful  
 	        mach_timebase_info(&timebase); // needed to convert mach_absolute time to something meaningful
 
 		uint64_t clock = mach_absolute_time(); // capture the current time
 		uint64_t nanosecs = clock * (uint64_t)timebase.numer / (uint64_t)timebase.denom; // convert to nanoseconds
 
-		time.tv_sec = nanosecs / BILLION; // convert to timespec
-		time.tv_nsec = nanosecs % BILLION; // convert to timespec
+		//time.tv_sec = nanosecs / BILLION; // convert to timespec
+		//time.tv_nsec = nanosecs % BILLION; // convert to timespec
 	  
-		return time.tv_sec*1e9 + time.tv_nsec;
+		return nanosecs; //time.tv_sec*1e9 + time.tv_nsec;
 	    
 	}
 
