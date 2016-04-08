@@ -63,7 +63,6 @@ void regularRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
@@ -213,14 +212,15 @@ void mgRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
+	msg(STATUS, "Hello");
 	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	gCreateH5(ini, res, mpiInfo, denorm, dimen, "res");
+	// xyCreate(ini, )
+	msg(STATUS, "HEllo, made it pass the gCreate");
 
 	free(denorm);
 	free(dimen);
-
-	// Timer *t = tAlloc(rank);
 
 	double tol = 50;
 	double err = 10001;
@@ -229,8 +229,6 @@ void mgRoutine(dictionary *ini){
 	debugFillHeaviside(rho, mpiInfo);
 
 	Timer *t = tAlloc();
-
-	fMsg(ini, "mgLog", "New run \n\n");
 
 	while(err>tol){
 		//Run solver
@@ -242,13 +240,11 @@ void mgRoutine(dictionary *ini){
 		err = mgResMass3D(res,mpiInfo);
 		// msg(STATUS|ONCE, "The error mass (e^2) is %f, time %llu", err, t->total);
 		tMsg(t->total, "Hello:");
-		fMsg(ini, "mgLog", "Hello \n");
-
 	}
 
-	gWriteH5(rho,mpiInfo,0.);
-	gWriteH5(phi,mpiInfo,0.);
-	gWriteH5(res,mpiInfo,0.);
+	gWriteH5(rho,mpiInfo,1.);
+	gWriteH5(phi,mpiInfo,1.);
+	gWriteH5(res,mpiInfo,1.);
 
 
 	gCloseH5(phi);
@@ -278,7 +274,6 @@ int main(int argc, char *argv[]){
 
 	if(!strcmp(routine, "regular"))				regularRoutine(ini);
 	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
-
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI

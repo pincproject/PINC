@@ -136,12 +136,12 @@ dictionary* iniOpen(int argc, char *argv[]){
 			if(makePath(fName))
 				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
 
-			// // check whether file exists
-			// FILE *fh = fopen(fName,"r");
-			// if(fh!=NULL){
-			// 	fclose(fh);
-			// 	msg(ERROR|ONCE,"'%s' already exists.",fName);
-			// }
+			// check whether file exists
+			FILE *fh = fopen(fName,"r");
+			if(fh!=NULL){
+				fclose(fh);
+				msg(ERROR|ONCE,"'%s' already exists.",fName);
+			}
 		}
 
 	}
