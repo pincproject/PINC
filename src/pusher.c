@@ -40,6 +40,8 @@ void puMove(Population *pop){
 	}
 }
 
+// DEPRECATED, DOESN'T HANDLE MULTIPLE DOMAINS
+// IS NOW INTRINSICALLY HANDLED BY MIGRATION FUNCTIONS
 void puBndPeriodic(Population *pop, const Grid *grid){
 
 	int nSpecies = pop->nSpecies;
@@ -60,11 +62,12 @@ void puBndPeriodic(Population *pop, const Grid *grid){
 		}
 	}
 }
-// void puBndPeriodicDD();
-// void puBndOpen();
-// void puBndOpenDD();
+// void puBndPeriodicDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
+// void puBndOpen(); // DEPRECATED, BELONGS TO MIGRATION MODULE
+// void puBndOpenDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
 
-// void puAcc3D0();
+
+// LEAPFROG ACCELERATION, FIXED TO 3D 1st ORDER WEIGHTING
 void puAcc3D1(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -91,6 +94,7 @@ void puAcc3D1(Population *pop, Grid *E){
 	}
 }
 
+// SAME AS puAcc3D1 BUT COMPUTES KINETIC ENERGY
 void puAcc3D1KE(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -127,19 +131,69 @@ void puAcc3D1KE(Population *pop, Grid *E){
 		gMul(E,pop->renormE[s]);
 	}
 }
+
+// MORE LEAPFROG FUNCTIONS WITH DIFFERENT PARAMETERS FOLLOWING THE SAME NAMING
+// CONVENTIONS AS ABOVE.
+// void puAcc3D0();
+// void puAcc3D1(); // IMPLEMENTED
 // void puAcc3D2();
 // void puAccND0();
 // void puAccND1();
 // void puAccND2();
-//
+// void puAcc3D0KE();
+// void puAcc3D1KE(); // IMPLEMENTED
+// void puAcc3D2KE();
+// void puAccND0KE();
+// void puAccND1KE();
+// void puAccND2KE();
+
+// BORIS ACCELERATION WITH SPECIFIED DIMENSIONALITY, ORDER OF WEIGHTING, AND
+// WHETHER OR NOT KINETIC ENERGY IS COMPUTED. Homo INIDCATES THAT THE METHOD IS
+// FOR HOMOGENEOUS MAGNETIC FIELD, AND IT TAKEST t AND s VECTORS (SEE BIRDSALL)
+// AS AN ARRAY. THE NON-HOMOGENEOUS FUNCTIONS TAKE t AND s AS GRID QUANTITIES
+// WHICH WILL BE WEIGHTED WITH THE SAME SCHEME AS THE ELECTRIC FIELD. SUPPORTING
+// FUNCTIONS IS TO BE MADE TO CREATE t AND s FROM THE MAGNETIC FIELD. FOR
+// CONSTANT (STATIC) MAGNETIC FIELD THESE ARE CREATED ONLY ONCE. FOR
+// NON-CONSTANT (BUT STILL QUASI-STATIC) MAGNETIC FIELD THESE SUPPORTING
+// FUNCTIONS MUST BE RUN INSIDE THE LOOP TO RE-GENERATE t AND s EACH TIME STEP.
+// void puAccBorisHomo3D0();
+// void puAccBorisHomo3D1();
+// void puAccBorisHomo3D2();
+// void puAccBorisHomoND0();
+// void puAccBorisHomoND1();
+// void puAccBorisHomoND2();
+// void puAccBorisHomo3D0KE();
+// void puAccBorisHomo3D1KE();
+// void puAccBorisHomo3D2KE();
+// void puAccBorisHomoND0KE();
+// void puAccBorisHomoND1KE();
+// void puAccBorisHomoND2KE();
 // void puAccBoris3D0();
 // void puAccBoris3D1();
 // void puAccBoris3D2();
 // void puAccBorisND0();
 // void puAccBorisND1();
 // void puAccBorisND2();
-//
-// inline void puDistr3D0();
+// void puAccBoris3D0KE();
+// void puAccBoris3D1KE();
+// void puAccBoris3D2KE();
+// void puAccBorisND0KE();
+// void puAccBorisND1KE();
+// void puAccBorisND2KE();
+
+void puAccBorisHomo3D1(Population *pop, Grid *E, const double *t, const double *s){
+
+}
+
+
+
+// void puDistr3D0();
+// void puDistr3D0(); // IMPLEMENTED
+// void puDistr3D2();
+// void puDistrND0();
+// void puDistrND1();
+// void puDistrND2();
+
 void puDistr3D1(const Population *pop, Grid *rho){
 
 	gZero(rho);
@@ -196,6 +250,10 @@ void puDistr3D1(const Population *pop, Grid *rho){
 	}
 
 }
+
+/******************************************************************************
+ * MIGRATION FUNCTIONS (TO BE MOVED TO SEPARATE MODULE)
+ *****************************************************************************/
 
 // DEPRECATED (ID-technique doesn't work)
 void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
@@ -532,16 +590,17 @@ void puReflect(){
 
 }
 
-// inline void puDistr3D2();
-// inline void puDistrND0();
-// inline void puDistrND1();
-// inline void puDistrND2();
-
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
 
-// static inline double puInterp3D0();
+// static inline void puInterp3D0();
+// static inline void puInterp3D1(); // IMPLEMENTED
+// static inline void puInterp3D2();
+// static inline void puInterpND0();
+// static inline void puInterpND1();
+// static inline void puInterpND2();
+
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd){
 
 	// Integer parts of position
@@ -575,11 +634,6 @@ static inline void puInterp3D1(double *result, const double *pos, const double *
 								+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
 
 }
-
-// static inline double puInterp3D2();
-// static inline double puInterpND0();
-// static inline double puInterpND1();
-// static inline double puInterpND2();
 
 int puNeighborToReciprocal(int neighbor, int nDims){
 

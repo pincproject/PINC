@@ -11,6 +11,14 @@
  * All parts of a standard particle pusher is implemented herein, including
  * particle mover, particle accelerators (leapfrog, boris) and interpolation
  * schemes of various orders.
+ *
+ *	<table>
+ *		<caption>Accelerators</caption>
+ *		<tr><th colspan="3">Acceleration Method</th><th colspan="6">Interpolation Method</th></tr>
+ *		<tr><th colspan="3" rowspan="2"></th><th colspan="3">Fixed 3D (Fastest)</th><th colspan="3">N-dimensional</th></tr>
+ *		<tr><th>0th order</th><th>1st order</th><th>2nd order</th><th>0th order</th><th>1st order</th><th>2nd order</th></tr>
+ *		<tr><th rowspan="2">Leapfrog</th><th rowspan="2">No B-field</th><th>No energy computed</th><td>puAcc3D0()</td><td>puAcc3D1()</td><td>puAcc3D2()</td><td>puAccND0()</td><td>puAccND1()</td><td>puAccND2()</td></tr>
+ *	</table>
  */
 
 /******************************************************************************
