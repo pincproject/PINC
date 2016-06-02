@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd);
+static inline void addCross(const double *a, const double *b, double *res);
 
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
@@ -40,6 +41,8 @@ void puMove(Population *pop){
 	}
 }
 
+// DEPRECATED, DOESN'T HANDLE MULTIPLE DOMAINS
+// IS NOW INTRINSICALLY HANDLED BY MIGRATION FUNCTIONS
 void puBndPeriodic(Population *pop, const Grid *grid){
 
 	int nSpecies = pop->nSpecies;
@@ -60,11 +63,11 @@ void puBndPeriodic(Population *pop, const Grid *grid){
 		}
 	}
 }
-// void puBndPeriodicDD();
-// void puBndOpen();
-// void puBndOpenDD();
+// void puBndPeriodicDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
+// void puBndOpen(); // DEPRECATED, BELONGS TO MIGRATION MODULE
+// void puBndOpenDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
 
-// void puAcc3D0();
+// LEAPFROG ACCELERATION, FIXED TO 3D 1st ORDER WEIGHTING
 void puAcc3D1(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -91,6 +94,7 @@ void puAcc3D1(Population *pop, Grid *E){
 	}
 }
 
+// SAME AS puAcc3D1 BUT COMPUTES KINETIC ENERGY
 void puAcc3D1KE(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -127,19 +131,129 @@ void puAcc3D1KE(Population *pop, Grid *E){
 		gMul(E,pop->renormE[s]);
 	}
 }
-// void puAcc3D2();
-// void puAccND0();
-// void puAccND1();
-// void puAccND2();
-//
-// void puAccBoris3D0();
-// void puAccBoris3D1();
-// void puAccBoris3D2();
-// void puAccBorisND0();
-// void puAccBorisND1();
-// void puAccBorisND2();
-//
-// inline void puDistr3D0();
+
+//double vlength(double *vel){
+//	return sqrt(pow(vel[0],2)+pow(vel[1],2)+pow(vel[2],2));
+//}
+
+void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3], vPrime[3];
+			puInterp3D1(dv,&pos[p],val,sizeProd);
+
+			// Add half the acceleration (becomes v minus in B&L notation)
+			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
+
+			// Rotate
+			memcpy(vPrime,vel,3*sizeof(*vPrime));
+			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime
+			addCross(vPrime,&S[3*s],vel); // vel is now v plus (B&L)
+
+			// Compute energy here in KE-version
+
+			// Add half the acceleration
+			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
+		}
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+}
+
+void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+
+	double *kinEnergy = pop->kinEnergy;
+	double *mass = pop->mass;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		kinEnergy[s]=0;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3], vPrime[3];
+			puInterp3D1(dv,&pos[p],val,sizeProd);
+
+			// Add half the acceleration (becomes v minus in B&L notation)
+			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
+
+			// Rotate
+			memcpy(vPrime,vel,3*sizeof(*vPrime));
+			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime
+			addCross(vPrime,&S[3*s],vel); // vel is now v plus (B&L)
+
+			// Compute energy
+			double velSquared = 0;
+			for(int d=0;d<nDims;d++){
+				velSquared += pow(vel[p+d],2);
+			}
+			kinEnergy[s]+=velSquared;
+
+			// Add half the acceleration
+			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
+		}
+
+		kinEnergy[s]*=mass[s];
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+
+}
+
+void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
+
+	int nDims, nSpecies;
+	double *BExt = iniGetDoubleArr(ini,"fields:BExt",&nDims);
+	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
+	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	double halfTimeStep = 0.5*iniparser_getdouble(ini,"time:timeStep",0);
+
+	for(int s=0;s<nSpecies;s++){
+		double factor = halfTimeStep*charge[s]/mass[s];
+		double denom = 1;
+		for(int p=0;p<3;p++){
+			T[3*s+p] = factor*BExt[p];
+			denom += pow(T[3*s+p],2);
+		}
+		double mul = 2.0/denom;
+		for(int p=0;p<3;p++){
+			S[3*s+p] = mul*T[3*s+p];
+		}
+	}
+}
+
+// void puDistr3D0();
+// void puDistr3D0(); // IMPLEMENTED
+// void puDistr3D2();
+// void puDistrND0();
+// void puDistrND1();
+// void puDistrND2();
+
 void puDistr3D1(const Population *pop, Grid *rho){
 
 	gZero(rho);
@@ -196,6 +310,10 @@ void puDistr3D1(const Population *pop, Grid *rho){
 	}
 
 }
+
+/******************************************************************************
+ * MIGRATION FUNCTIONS (TO BE MOVED TO SEPARATE MODULE)
+ *****************************************************************************/
 
 // DEPRECATED (ID-technique doesn't work)
 void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
@@ -532,16 +650,17 @@ void puReflect(){
 
 }
 
-// inline void puDistr3D2();
-// inline void puDistrND0();
-// inline void puDistrND1();
-// inline void puDistrND2();
-
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
 
-// static inline double puInterp3D0();
+// static inline void puInterp3D0();
+// static inline void puInterp3D1(); // IMPLEMENTED
+// static inline void puInterp3D2();
+// static inline void puInterpND0();
+// static inline void puInterpND1();
+// static inline void puInterpND2();
+
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd){
 
 	// Integer parts of position
@@ -570,16 +689,11 @@ static inline void puInterp3D1(double *result, const double *pos, const double *
 	// Linear interpolation
 	for(int v=0;v<3;v++)
 		result[v] =	zcomp*(	 ycomp*(xcomp*val[p   +v]+x*val[pj  +v])
-								+y    *(xcomp*val[pk  +v]+x*val[pjk +v]) )
-						+z    *( ycomp*(xcomp*val[pl  +v]+x*val[pjl +v])
-								+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
+							+y    *(xcomp*val[pk  +v]+x*val[pjk +v]) )
+					+z    *( ycomp*(xcomp*val[pl  +v]+x*val[pjl +v])
+							+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
 
 }
-
-// static inline double puInterp3D2();
-// static inline double puInterpND0();
-// static inline double puInterpND1();
-// static inline double puInterpND2();
 
 int puNeighborToReciprocal(int neighbor, int nDims){
 
@@ -632,4 +746,11 @@ int puRankToNeighbor(MpiInfo *mpiInfo, int rank){
 
 	return neighbor;
 
+}
+
+// Adds cross product (Cross product is only defined for 3D, assuming vector 3 long)
+static inline void addCross(const double *a, const double *b, double *res){
+	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
+	res[1] += -(a[0]*b[2]-a[2]*b[0]);
+	res[2] +=  (a[0]*b[1]-a[1]*b[0]);
 }

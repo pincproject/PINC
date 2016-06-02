@@ -8,33 +8,17 @@
  * @brief		Particle Pusher
  * @date		16.12.15
  *
- * All parts of a standard particle pusher is implemented herein, including
- * particle mover, particle accelerators (leapfrog, boris) and interpolation
- * schemes of various orders.
+ * All parts of a standard explicit particle pusher is implemented herein,
+ * including particle mover, particle accelerators (leapfrog, boris) and
+ * interpolation schemes of various orders.
  */
 
 /******************************************************************************
  * DECLARING DATATYPES
  *****************************************************************************/
-/**
- * @brief Contains a population of particles.
- *
- *
- */
-//  typedef struct{
-// 	long int *migrants;		///< Index p of migrants (size specified in input file)
-// 	int nNeigh;				///< =pow(3,nDims)-1
-// 	int here;				///< Number of this domain itself
-// 	long int *neighStart;	///< At which index in 'migrants' the neighbours start (nNeigh elements)
-// 	long int *nMigrants;	///< Number of migrants of each specie for each neighbour (nSpecies*nNeigh elements)
-// 	double *bufferPos;		///< Buffer for receiving position
-// 	double *bufferVel;		///< Buffer for receiving velocity
-// 	double limits;			///< limits of migration [xl, yl, zl, xu, yu, zu]
-// } Migrants;
-
 
 /**
- * @brief Moves particles one time-step forward
+ * @brief Moves particles one timestep forward
  * @param[in,out]	pop		Population
  * @return					void
  *
@@ -45,16 +29,111 @@
  */
 void puMove(Population *pop);
 
-/**
- * @brief Enforce periodic particle boundary conditions
- * @param[in,out]	pop		Population
- * @param			grid	Grid
+/** @name Accelerators (with interpolation)
+ * This group of functions accelerates the particles in a population by
+ * advancing their velocities one time step. The interpolation of field
+ * quantities from the grid to the particles is embedded into the accelerators
+ * for better performence, despite a loss of modularity\footnote{Having
+ * separate accelerators and interpolators require either (a) that the
+ * interpolated field values of all particles be stored until subsequently
+ * calling a function for accelerating the particles which is very memory
+ * demanding, or (b) having a loop iterating through the particles with one
+ * interpolator and one accelerator function, yielding two function calls per
+ * particle. While function calls are normally not considered that costly doing
+ * it per particle is likely disastrous. The operations per particle should
+ * largely be limited to arithmetic operations requiring only minimal memory
+ * look-up. Internally, though, the interpolators *are* in fact separate inline
+ * functions acting per particle giving some feeling of modularity. Since they
+ * are inlined no function calls should actually be made.}. The following
+ * naming convention exist, according to which algorithms they use:
  *
- * Run after puMove() to enforce conditions. Only the grid size is used from the
- * grid input so it may be any quantity with the correct dimensions. Typically
- * the E-field.
+ *	name				| description
+ *	--------------------|-----------------------------------------------------------------------------------
+ *	puAccXDY()			| Simple increment in velocity (e.g. leapfrog) (no external B-field)
+ *	puAccXDYKE()		| Same as above but computes kinetic energy for each specie at the mid-step
+ *	puBorisXDY()		| Boris algorithm (for external homogeneous B-field, S and T are vectors)
+ *	puBorisXDYKE()		| Same as above but computes kinetic energy for each specie at the mid-step
+ *	puBorisInhXDY()		| Boris algorithm (for external inhomogeneous B-field, S and T are Grid quantities)
+ *	puBorisInhXDYKE()	| Same as above but computes kinetic energy for each specie at the mid-step
+ *
+ * Where X indicates the dimensionality and Y the order of interpolation used
+ * in wheighting the field(s) from the grid nodes to the particles. The
+ * interpolation is carried out by the underlying functions named
+ * puInterpXDY() according to the same convention. Functions with X=N works on
+ * configurations of arbitrary dimensionality, which is commonplace in PINC.
+ * However, since N-dimensional interpolation is significantly more
+ * time-consuming than algorithms with fixed dimensionality both are included.
+ * For instance, puInterp3D1() is about twice as fast as puInterpND1().
+ *
+ * Remember that Boris and leapfrog methods require the velocities to be
+ * located at half-integer steps. This initialization of the velocities can be
+ * performed by multiplying E (and S and T in case of Boris) by 0.5,
+ * accelerating once, and restoring E (and S and T) by multiplying them by 2.
+ * For instance to get a leapfrog iteration:
+ *
+ * @code
+ *	// Assume position and velocity initialized at timestep 0 here
+ *
+ *	gMul(E,0.5);
+ *	puAcc3D1KE(pop,E); // Increment velocity to timestep 0.5
+ *	gMul(E,2);
+ *
+ *	for(int n=1; n<=nTimeSteps; n++){ // Mind the range of n
+ *
+ *		puMove(pop);  // Advance position to timestep n
+ *
+ *		// Enforce boundaries here (see migrate.h)
+ *
+ *		puDistr3D1(pop, rho); // Distribute charges onto grid
+ *
+ *		// Solve field here (see e.g. multigrid.h)
+ *
+ *		puAcc3D1KE(pop, E); // Advance velocity to timestep n+0.5
+ *	}
+ * @endcode
+ *
+ * The kinetic energy-computing accelerators will here compute the energy at
+ * integer steps (n) leaving the total kinetic energy per specie, per
+ * subdomain, in the variable pop. Summing across the subdomains and storing to
+ * file can be done by pWriteEnergy().
+ *
+ * @param[in,out]	pop		Population
+ * @param			E		Electric field
+ * @param			S		Rotation parameter (Boris only)
+ * @param			T		Rotation parameter (Boris only)
+ * @return					void
+ *
+ * The E input is usually not constified since it is rescaled several times
+ * inside the function (specie-specific renormalization). By the end of the
+ * function call, however, it should be restored to its initial value (to within
+ * machine precision).
+ *
+ * The rotation parameters S and T for the homogeneous Boris methods are
+ * generated from the external B-field before the loop by
+ * puGet3DRotationParameters(). For inhomogeneous fields S and T are Grid
+ * quantities (no function to create them yet). For slowly time-varying
+ * magnetic fields S and T can be regenerated each iteration. However, using a
+ * Poisson solver does not properly deal with electromagnetic effects, so if
+ * considering this the magnetic field must be kept quasi-static (and
+ * quasi-homogeneous?).
  */
-void puBndPeriodic(Population *pop, const Grid *grid);
+///@{
+void puAcc3D1(Population *pop, Grid *E);
+void puAcc3D1KE(Population *pop, Grid *E);
+void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S);
+void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S);
+///@}
+
+/**
+ * @brief Generates rotation parameters for puBoris-funcitons.
+ * @param			ini		Input file
+ * @param[out]		T		Rotation parameter named t in B&L
+ * @param[out]		S		Rotation parameter named s in B&L
+ *
+ * S and T must be pre-allocated to hold 3*nSpecies doubles each.
+ * This functions needs some cleanup.
+ */
+void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
 
 /**
  * @brief Distributes charge density on grid using 1st order interpolation. Fixed to 3D.
@@ -68,41 +147,7 @@ void puBndPeriodic(Population *pop, const Grid *grid);
  */
 void puDistr3D1(const Population *pop, Grid *rho);
 
-/**
- * @brief Accelerates particles using 1st order interpolation. Fixed to 3D.
- * @param[in,out]	pop		Population
- * @param			E		E-field to determine acceleration from
- * @return					void
- *
- * Accelerates particles by interpolating the E-field and updating the velocity
- * of the particles by one time-step. A half time-step may be achieved by
- * multiplying the E-field by 0.5 prior to acceleration using gMulDouble().
- * This is useful to initialize a leapfrog algorithm. Remember to multiply
- * E-field by 2 again afterwards.
- *
- * E is not constified since it will be re-normalized (scaled) for each specie
- * in order to speed up calculations. However, when this function is done it is
- * scaled back to original again.
- *
- * NB: Only works on 3D
- */
-void puAcc3D1(Population *pop, Grid *E);
-
-/**
- * @brief Accelerates particles using 1st order interpolation. Fixed to 3D.
- * @param[in,out]	pop		Population
- * @param			E		E-field to determine acceleration from
- * @return					void
- *
- * Same as puAcc3D1 but computes the kinetic energy the particles has in the
- * mid-step. E.g. when the velocity is updated from timestep n-0.5 to n+0.5 the
- * energy at time-step n is computed. This function is able to compute the
- * energy per specie, and thus the energy per specie is stored in kinEnergy[s]
- * in Population. If the user desires the total energy this is acheived by
- * summation. Finally, the energy is only stored for particles residing in this
- * subdomain, and this is merged upon storing to h5-file.
- */
-void puAcc3D1KE(Population *pop, Grid *E);
+// EVERYTHING BELOW THIS SHOULD MOVE TO SEPARATE MIGRATION.H MODULE.
 
 void puIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
 void puIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
