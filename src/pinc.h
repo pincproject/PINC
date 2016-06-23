@@ -462,7 +462,7 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel);
  * @return	void
  * @see pWriteH5(), pCloseH5()
  *
- * An output file is created whose filename is as explained in createH5File().
+ * An output file is created whose filename is as explained in openH5File().
  * Remember to call pCloseH5().
  *
  * The file will have one group "/pos" for position data and one group "/vel"
@@ -492,7 +492,7 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel);
  * dimensionalizing factor converts the axes to meters. Likewise for the
  * velocity factors.
  */
-void pCreateH5(const dictionary *ini, Population *pop, const char *fName);
+void pOpenH5(const dictionary *ini, Population *pop, const char *fName);
 
 /**
  * @brief	Stores particles in Population in .pop.h5-file
@@ -501,7 +501,6 @@ void pCreateH5(const dictionary *ini, Population *pop, const char *fName);
  * @param	posN	Timestep of position data to be stored
  * @param	velN	Timestep of velocity data to be stored
  * @return			void
- * @see pCreateH5()
  *
  * The position and velocity of all particles are stored, referred to global
  * reference frame. The function takes care of merging the particles from all
@@ -902,7 +901,7 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * @return	void
  * @see gWriteH5(), gCloseH5()
  *
- * An output file is created whose filename is as explained in createH5File().
+ * An output file is created whose filename is as explained in openH5File().
  * Remember to call gCloseH5().
  *
  * The file will have one dataset in the root group for each time-step a grid
@@ -933,22 +932,37 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * in the inputs denorm and dimen in this function. They are expected to be of
  * length nDims.
  */
-void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
+void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
 
 /**
- * @brief	Stores quantity in gridQuantity in .grid.h5-file
+ * @brief	Store values in Grid to .grid.h5-file
  * @param	grid			Grid
  * @param	mpiInfo			MpiInfo
  * @param	n				Timestep of quantity to be stored
  * @return	void
- * @see gCreateH5()
  *
- * The position and velocity of all particles are stored, referred to global
- * reference frame. The function takes care of merging the particles from all
- * MPI nodes to one file.
+ * n is double to allow storing quantities at half time-steps
+ * (e.g. leapfrog). All but the most significant decimals are discarded.
  *
+ * The function will fail ungracefully if trying to write to an existing
+ * dataset (testing omitted for performance reasons).
  */
 void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
+
+/**
+ * @brief	Read values from .grid.h5-fiel to Grid
+ * @param	grid			Grid
+ * @param	mpiInfo			MpiInfo
+ * @param	n				Timestep to read from file
+ * @return	void
+ *
+ * n is double to allow reading quantities from half time-steps
+ * (e.g. leapfrog). All but the most significant decimals are discarded.
+ *
+ * The function will fail ungracefully if trying to read from a non-existing
+ * dataset (testing omitted for performance reasons).
+ */
+void gReadH5(Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
  * @brief	Closes .grid.h5-file
@@ -1158,22 +1172,24 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
 void freeStrArr(char** strArr);
 
 /**
- * @brief Creates .h5-file
+ * @brief Open (or create) an .h5-file
  * @param	ini		Input file dictionary
  * @param	fName	File name
  * @param	fSubExt	File sub-extension
  * @return	HDF5 file identifier
  * @see		H5Fcreate(), H5Fclose()
  *
- * This is the PINC equivalent of H5Fcreate() to create HDF5 files. The file
- * will be named <fName>.<fSubExt>.h5 or <prefix>_<fName>.<fSubExt>.h5.
- * Similarly as .h5 indicates the file type being h5, <fSubExt> indicates
- * _what kind_ of .h5-file it is, i.e. what kind of data it contains, typically
- * grid data (grid) or population data (pop).
+ * This function opens an existing .h5 file or creates it if it doesn't
+ * already exist. It takes the place of H5Fopen() and H5Fcreate() in PINC. The
+ * file name is <fName>.<fSubExt>.h5 or possibly <prefix>_<fName>.<fSubExt>.h5
+ * (see below).
  *
- * fName is a name which is hard-coded to further specify not only the _kind_ of
- * data but exactly which quantity. E.g. a file named "rho.grid.h5" specifies
- * charge density whereas "E.grid.h5" is for electric field.
+ * Similarly as .h5 indicates the file type being h5, <fSubExt> indicates _what
+ * kind_ of .h5-file it is, e.g. if it is a grid quantity (.grid.h5) or
+ * population data (.pop.h5). These kinds are standardized within PINC and have
+ * dedicated functions unifying file handling of these data types. fName is a
+ * name given by the developer to further specify the _contents_ of the file.
+ * E.g. is it charge density (rho.grid.h5) or electric field (E.grid.h5).
  *
  * The file will be stored in the folder specified by "files:output" in the
  * input file. Examples of valid values of "files:output":
@@ -1190,13 +1206,25 @@ void freeStrArr(char** strArr);
  *
  * This will output files such a "prefix_rho.grid.h5".
  *
- * Contrary to H5Fcreate() this function creates parent directories unless they
- * already exists. If a file already exists it will fail but contrary to
- * H5Fcreate() it will fail gracefully with an ERROR.
+ * Parent directories are created unless they already exists.
  *
  * Close return value using H5Fclose().
  */
-hid_t createH5File(const dictionary* ini, const char *fName, const char *fSubExt);
+hid_t openH5File(const dictionary* ini, const char *fName, const char *fSubExt);
+
+/**
+ * @brief Sets array of double as attributes in h5-file
+ * @param	h5		.h5-file identifier
+ * @param	name	Attribute name
+ * @param	value	Attribute value
+ * @param	size	Size of attribute
+ *
+ * If the attribute name already exists, the old attributes are overwritten.
+ * This function is not capable of setting multi-dimensional or non-double
+ * arrays as attributes (that's part of its simplification compared to the
+ * functions in the HDF5 library).
+ */
+void setH5Attr(hid_t h5, const char *name, const double *value, int size);
 
 /**
  * @brief Creates a group in a .h5-file recursively
@@ -1220,11 +1248,11 @@ void createH5Group(hid_t h5, const char *name);
  * @param	name	File name
  * @return	Handle for H5-file
  *
- * For conventions regarding the file name, see createH5File().
+ * For conventions regarding the file name, see openH5File().
  * See xyWriteH5() for how to write (x,y) datapoits to the file.
  * Remember to close using xyCloseH5() or PINC will fail ungracefully.
  */
-hid_t xyCreateH5(const dictionary *ini, const char *fName);
+hid_t xyOpenH5(const dictionary *ini, const char *fName);
 
 /**
  * @brief Closes a .xy.h5-file
@@ -1252,12 +1280,12 @@ void xyCloseH5(hid_t h5);
  * nodes, the x-value of rank 0 is simply used.
  *
  * The dataset must be created beforehand by calling xyCreateDataset() and the
- * file is created by xyCreateH5(). Remember to close the H5 file using
+ * file is created by xyOpenH5(). Remember to close the H5 file using
  * xyCloseH5().
  *
  * Example:
  * @code
- *	hid_t hist = xyCreateH5(ini,"timesweep");
+ *	hid_t hist = xyOpenH5(ini,"timesweep");
  *
  *	xyCreateDataset(hist,"/energy/potential");
  *	xyCreateDataset(hist,"residual");
@@ -1291,21 +1319,6 @@ void xyCreateDataset(hid_t h5, const char *name);
 /******************************************************************************
  * DEFINED IN AUX.C
  *****************************************************************************/
-
-/**
- * @brief	Stores quantity in Grid in .grid.h5-file
- * @param	grid			Grid
- * @param	mpiInfo			MpiInfo
- * @param	n				Timestep of quantity to be stored
- * @return	void
- * @see gCreateH5()
- *
- * The position and velocity of all particles are stored, referred to global
- * reference frame. The function takes care of merging the particles from all
- * MPI nodes to one file.
- *
- */
-void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
  * @name Timer functions

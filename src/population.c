@@ -284,13 +284,13 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
+void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 
 	/*
 	 * CREATE FILE
 	 */
 
-	hid_t file = createH5File(ini,fName,"pop");
+	hid_t file = openH5File(ini,fName,"pop");
 
 	/*
 	 * CREATE GROUPS
@@ -322,45 +322,30 @@ void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
 
 	int nDims;
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double *attrData = malloc(nDims*sizeof(*attrData));
-	hsize_t attrSize;
-    hid_t attrSpace;
-    hid_t attribute;
-
-	attrSize = (hsize_t)nDims;
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Position denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, stepSize);
-    H5Aclose(attribute);
-
-	double debye = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
-	for(int d=0;d<nDims;d++) attrData[d]=debye;
-	attribute = H5Acreate(file, "Position dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-    H5Aclose(attribute);
-
-
 	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0);
-	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
-	attribute = H5Acreate(file, "Velocity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-	H5Aclose(attribute);
-
+	double debye = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
 	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nDims);
+
 	double vThermal = sqrt(BOLTZMANN*T[0]/(mass[0]*ELECTRON_MASS));
-	for(int d=0;d<nDims;d++) attrData[d] = vThermal;
-	attribute = H5Acreate(file, "Velocity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-	H5Aclose(attribute);
+
+	double *attrData = malloc(nDims*sizeof(*attrData));
+
+	setH5Attr(file, "Position denormalization factor", stepSize, nDims);
+
+	adSetAll(attrData,nDims,debye);
+	setH5Attr(file, "Position dimensionalizing factor", attrData, nDims);
+
+	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
+	setH5Attr(file, "Velocity denormalization factor", attrData, nDims);
+
+	adSetAll(attrData,nDims,vThermal);
+	setH5Attr(file, "Velocity dimensionalizing factor", attrData, nDims);
 
 	free(T);
 	free(mass);
 	free(stepSize);
 	free(attrData);
-
-	H5Sclose(attrSpace);
 
 }
 
