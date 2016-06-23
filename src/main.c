@@ -55,12 +55,12 @@ void regularRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	pCreateH5(ini, pop, "pop");
-	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gCreateH5(ini, E, mpiInfo, denorm, dimen, "E");
+	pOpenH5(ini, pop, "pop");
+	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E");
 
-	hid_t history = xyCreateH5(ini,"history");
+	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
 
 	// Add more time series to history if you want
@@ -225,9 +225,9 @@ void mgRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gCreateH5(ini, res, mpiInfo, denorm, dimen, "res");
+	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gOpenH5(ini, res, mpiInfo, denorm, dimen, "res");
 
 	free(denorm);
 	free(dimen);

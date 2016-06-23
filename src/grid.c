@@ -862,9 +862,7 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	hid_t file = grid->h5;
 	double *val = grid->val;
 
-	/*
-	 * STORE DATA COLLECTIVELY
-	 */
+	// Enable collective datawriting
 	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
@@ -872,12 +870,32 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	sprintf(name,"/n=%.1f",n);
 
 	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-
 	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
 
 	H5Dclose(dataset);
-
 	H5Pclose(pList);
+}
+
+void gReadH5(Grid *grid, const MpiInfo *mpiInfo, double n){
+
+	hid_t fileSpace = grid->h5FileSpace;
+	hid_t memSpace = grid->h5MemSpace;
+	hid_t file = grid->h5;
+	double *val = grid->val;
+
+	// Enable collective datawriting
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+
+	char name[64];
+	sprintf(name,"/n=%.1f",n);
+
+	hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+	H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+
+	H5Dclose(dataset);
+	H5Pclose(pList);
+
 }
 
 void gCloseH5(Grid *grid){
@@ -886,7 +904,7 @@ void gCloseH5(Grid *grid){
 	H5Fclose(grid->h5);
 }
 
-void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
+void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 						  const double *denorm, const double *dimen, const char *fName){
 
 	int rank = grid->rank;
@@ -901,7 +919,7 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 * CREATE FILE
 	 */
 
-	hid_t file = createH5File(ini,fName,"grid");
+	hid_t file = openH5File(ini,fName,"grid");
 
 	/*
 	 * CREATE ATTRIBUTES
@@ -911,36 +929,10 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
 	for(int d=1;d<nDims;d++) debye[d]=debye[0];
 
-	hsize_t attrSize;
-    hid_t attrSpace;
-    hid_t attribute;
-
-	attrSize = (hsize_t)nDims;
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, &grid->stepSize[1]); // Skip non-grid value
-    H5Aclose(attribute);
-
-	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
-    H5Aclose(attribute);
-
-    H5Sclose(attrSpace);
-	free(debye);
-
-	attrSize = (hsize_t)size[0];
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Quantity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, denorm);
-	H5Aclose(attribute);
-
-	attribute = H5Acreate(file, "Quantity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dimen);
-	H5Aclose(attribute);
-
-	H5Sclose(attrSpace);
+	setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims);
+	setH5Attr(file,"Axis dimensionalizing factor",debye,nDims);
+	setH5Attr(file,"Quantity denormalization factor",denorm,size[0]);
+	setH5Attr(file,"Quantity dimensionalizing factor",denorm,size[0]);
 
 	/*
 	 * HDF5 HYPERSLAB DEFINITION

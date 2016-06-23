@@ -324,8 +324,7 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
  * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
  *****************************************************************************/
 
-hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt){
-
+hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
 
 	// Determine filename
 	char *fPrefix = iniparser_getstring((dictionary *)ini,"files:output","");	// don't free
@@ -334,33 +333,61 @@ hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt
 	char sep[2] = "\0\0";
 	char lastchar = fPrefix[strlen(fPrefix)-1];
 	if(strcmp(fPrefix,".")==0) sep[0]='/';
-	else if(lastchar!='/') sep[0]='_';
+	else if(strlen(fPrefix)>0 && lastchar!='/') sep[0]='_';
 
 	char *fTotName = strCatAlloc(6,fPrefix,sep,fName,".",fSubExt,".h5");
 
-	// Create file with MPI-I/O access
+	// Enable MPI-I/O access
 	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
-
 
 	// Make sure parent folder exist
 	if(makePath(fName))
 		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fTotName);
 
-	// check whether file exists
+	hid_t file;	// h5 file handle
+
+	// Open or create file (if it doesn't exist)
 	FILE *fh = fopen(fTotName,"r");
 	if(fh!=NULL){
 		fclose(fh);
-		msg(ERROR|ONCE,"'%s' already exists.",fTotName);
+		file = H5Fopen(fTotName,H5F_ACC_RDWR,pList);
+	} else {
+		file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
 	}
 
-	// create file
-	hid_t file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
 	H5Pclose(pList);
-
 	free(fTotName);
 
 	return file;
+
+}
+
+void setH5Attr(hid_t h5, const char *name, const double *value, int size){
+
+	if(H5Aexists(h5,name)){
+
+		int fNameSize = 128;
+		char fName[fNameSize];
+		H5Fget_name(h5,fName,fNameSize);
+
+		msg(WARNING|ONCE,"overwriting attribute \"%s\" in %s",name,fName);
+
+		H5Adelete(h5,name);
+
+	}
+
+	// Create attribute dataspace
+	hsize_t attrSize = (hsize_t)size;
+	hid_t attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	// Create attribute and write data to it
+	hid_t attribute = H5Acreate(h5, name, H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, value);
+
+	// Free
+    H5Aclose(attribute);
+    H5Sclose(attrSpace);
 
 }
 
@@ -391,9 +418,9 @@ void createH5Group(hid_t h5, const char *name){
 }
 
 
-hid_t xyCreateH5(const dictionary *ini, const char *fName){
+hid_t xyOpenH5(const dictionary *ini, const char *fName){
 
-	return createH5File(ini,fName,"xy");
+	return openH5File(ini,fName,"xy");
 }
 
 void xyCreateDataset(hid_t h5, const char *name){

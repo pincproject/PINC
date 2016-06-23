@@ -66,8 +66,8 @@ void tFree(Timer *t){
 
 	   //#define BILLION 1000000000L
 
-	   //struct timespec time; // represent the elapsed time, 
-	        mach_timebase_info_data_t timebase; // needed to convert mach_absolute time to something meaningful  
+	   //struct timespec time; // represent the elapsed time,
+	        mach_timebase_info_data_t timebase; // needed to convert mach_absolute time to something meaningful
 	        mach_timebase_info(&timebase); // needed to convert mach_absolute time to something meaningful
 
 		uint64_t clock = mach_absolute_time(); // capture the current time
@@ -75,9 +75,9 @@ void tFree(Timer *t){
 
 		//time.tv_sec = nanosecs / BILLION; // convert to timespec
 		//time.tv_nsec = nanosecs % BILLION; // convert to timespec
-	  
+
 		return nanosecs; //time.tv_sec*1e9 + time.tv_nsec;
-	    
+
 	}
 
 #endif
