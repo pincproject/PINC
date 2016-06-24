@@ -77,12 +77,14 @@ void regularRoutine(dictionary *ini){
 
 	//Inital conditions
 	pPosUniform(ini, pop, mpiInfo, rng);
+	// TBD: INITIAL VELOCITY
 
 	//Get initial E-field
 	puDistr3D1(pop, rho);
 	gHaloOp(setSlice, rho, mpiInfo);
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
+	gHaloOp(setSlice, E, mpiInfo);
 
 	//Half step
 	gMul(E, 0.5);
