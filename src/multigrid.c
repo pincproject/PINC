@@ -25,9 +25,9 @@
 
 void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
-	char *preSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:preSmooth", "\0");
-    char *postSmoothName = iniparser_getstring((dictionary*)ini, "multigrid:postSmooth", "\0");
-    char *coarseSolverName = iniparser_getstring((dictionary*)ini, "multigrid:coarseSolv", "\0");
+	char *preSmoothName = iniGetStr(ini, "multigrid:preSmooth");
+    char *postSmoothName = iniGetStr(ini, "multigrid:postSmooth");
+    char *coarseSolverName = iniGetStr(ini, "multigrid:coarseSolv");
 
 	int nDims = multigrid->grids[0]->rank-1;
 
@@ -65,19 +65,14 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
 
-    //Free!
-
-//    printf("If this is the last I say, I'm bad and segfaults at freeing stuff \n");
-    // free(cSolverName);
-    // free(postSmoothName);
-    // free(preSmoothName);
-
-	return;
+    free(preSmoothName);
+    free(postSmoothName);
+    free(coarseSolverName);
 }
 
 void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
-	char *restrictor = iniparser_getstring((dictionary*)ini, "multigrid:restrictor", "\0");
-	char *prolongator = iniparser_getstring((dictionary*)ini, "multigrid:prolongator", "\0");
+	char *restrictor = iniGetStr(ini, "multigrid:restrictor");
+	char *prolongator = iniGetStr(ini, "multigrid:prolongator");
 
 	int rank = multigrid->grids[0]->rank;
 
@@ -96,6 +91,8 @@ void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 		msg(ERROR, "No prolongation stencil specified");
 	}
 
+	free(restrictor);
+	free(prolongator);
 }
 
 
@@ -274,11 +271,11 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	//Multigrid
-	int nLevels = iniparser_getint((dictionary *) ini, "multigrid:mgLevels", 0);
-	int nMGCycles = iniparser_getint((dictionary *) ini, "multigrid:mgCycles", 0);
-	int nPreSmooth = iniparser_getint((dictionary *) ini, "multigrid:nPreSmooth", 0);
-	int nPostSmooth = iniparser_getint((dictionary *) ini, "multigrid:nPostSmooth", 0);
-	int nCoarseSolve = iniparser_getint((dictionary *) ini, "multigrid:nCoarseSolve", 0);
+	int nLevels = iniGetInt(ini, "multigrid:mgLevels");
+	int nMGCycles = iniGetInt(ini, "multigrid:mgCycles");
+	int nPreSmooth = iniGetInt(ini, "multigrid:nPreSmooth");
+	int nPostSmooth = iniGetInt(ini, "multigrid:nPostSmooth");
+	int nCoarseSolve = iniGetInt(ini, "multigrid:nCoarseSolve");
 	//Load data
 	int nDims = grid->rank-1;
 	int *trueSize = grid->trueSize;

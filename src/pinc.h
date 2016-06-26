@@ -1158,9 +1158,6 @@ int iniGetNElements(const dictionary* ini, const char* key);
  *
  * This code does nothing if the specified entries have equal length. Unequal
  * lengths will lead to an error.
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
  */
 int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
 
