@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "iniparser.h"
-#include "pinc.h"
+#include "core.h"
 
 #define BUFFSIZE 128
 
