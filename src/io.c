@@ -67,7 +67,6 @@ int makePath(const char *path);
  * @brief	Splits a comma-separated list-string to an array of strings.
  * @param	list	Comma-sepaprated list
  * @return	A NULL-terminated array of NULL-terminated strings
- * @see		freeStrArr(), listGetNElements()
  *
  * Example: when str="abc ,def, ghi", listToStrArr(str); will return
  * an array arr such that :
@@ -90,68 +89,17 @@ static char** listToStrArr(const char* list);
  */
 static int listGetNElements(const char* list);
 
+/**
+ * @brief Asserts that key exists in ini-file and emits ERROR if not.
+ * @param	ini		ini-file dictionary
+ * @param	key		Key to check existence of
+ * @return			void
+ */
+void iniAssertExistence(const dictionary *ini, const char* key);
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
-
-dictionary* iniOpen(int argc, char *argv[]){
-
-	// Sanity check on input arguments
-	if(argc<2)
-		msg(ERROR,"at least one argument expected (the input file).");
-
-	// Open ini-file
-	dictionary *ini = iniparser_load(argv[1]);
-	if(ini==NULL) msg(ERROR,"Failed to open %s.",argv[1]);
-
-	for(int i=2;i<argc;i++){
-		if(!strcmp(argv[i],"getnp")){	// Just returning number of processes
-			int nDims;
-			int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
-			int np = aiProd(nSubdomains,nDims);
-			printf("%i\n",np);
-			free(nSubdomains);
-			exit(0);
-		} else {
-			char *value = strstr(argv[i],"=");
-			*value = '\0';
-			value++;
-			iniparser_set(ini,argv[i],value);
-		}
-	}
-
-	// Start new fmsg()-files (iterate through all files in [msgfiles] section)
-	int nKeys = iniparser_getsecnkeys(ini,"msgfiles");
-	char **keys = iniparser_getseckeys(ini,"msgfiles");
-	for(int i=0;i<nKeys;i++){
-
-		// Get filename corresponding to key
-		char *fName = iniparser_getstring(ini,keys[i],""); // don't free
-
-		// Make file empty (unless using stdout or stderr)
-		if(strcmp(fName,"")==0){
-			msg(WARNING|ONCE,"%s not specified. Using stdout.",keys[i]);
-		} else if(strcmp(fName,"stdout")!=0 && strcmp(fName,"stderr")!=0) {
-
-			if(makePath(fName))
-				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
-
-			// // check whether file exists
-			// FILE *fh = fopen(fName,"r");
-			// if(fh!=NULL){
-			// 	fclose(fh);
-			// 	msg(ERROR|ONCE,"'%s' already exists.",fName);
-			// }
-		}
-
-	}
-
-	// Note that keys should be freed but not keys[0] and so on.
-	free(keys);
-
-	return ini;
-
-}
 
 void msg(msgKind kind, const char* restrict format,...){
 
@@ -234,65 +182,79 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  * DEFINING INI PARSING FUNCTIONS (expanding iniparser library)
  *****************************************************************************/
 
-int iniGetNElements(const dictionary* ini, const char* key){
+dictionary* iniOpen(int argc, char *argv[]){
 
-	char *list = iniparser_getstring((dictionary*)ini,key,"");
-	return listGetNElements(list);
+	// Sanity check on input arguments
+	if(argc<2)
+		msg(ERROR,"at least one argument expected (the input file).");
+
+	// Open ini-file
+	dictionary *ini = iniparser_load(argv[1]);
+	if(ini==NULL) msg(ERROR,"Failed to open %s.",argv[1]);
+
+	for(int i=2;i<argc;i++){
+		if(!strcmp(argv[i],"getnp")){	// Just returning number of processes
+			int nDims;
+			int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+			int np = aiProd(nSubdomains,nDims);
+			printf("%i\n",np);
+			free(nSubdomains);
+			exit(0);
+		} else {
+			char *value = strstr(argv[i],"=");
+			*value = '\0';
+			value++;
+			iniparser_set(ini,argv[i],value);
+		}
+	}
+
+	// Start new fmsg()-files (iterate through all files in [msgfiles] section)
+	int nKeys = iniparser_getsecnkeys(ini,"msgfiles");
+	char **keys = iniparser_getseckeys(ini,"msgfiles");
+	for(int i=0;i<nKeys;i++){
+
+		// Get filename corresponding to key
+		char *fName = iniparser_getstring(ini,keys[i],""); // don't free
+
+		// Make file empty (unless using stdout or stderr)
+		if(strcmp(fName,"")==0){
+			msg(WARNING|ONCE,"%s not specified. Using stdout.",keys[i]);
+		} else if(strcmp(fName,"stdout")!=0 && strcmp(fName,"stderr")!=0) {
+
+			if(makePath(fName))
+				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
+
+			// // check whether file exists
+			// FILE *fh = fopen(fName,"r");
+			// if(fh!=NULL){
+			// 	fclose(fh);
+			// 	msg(ERROR|ONCE,"'%s' already exists.",fName);
+			// }
+		}
+
+	}
+
+	// Note that keys should be freed but not keys[0] and so on.
+	free(keys);
+
+	return ini;
 
 }
 
-
-char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
-
-	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free this
-	char **strArr = listToStrArr(list);
-
-	*nElements = listGetNElements(list);
-
-	return strArr;
-
+void iniClose(dictionary *ini){
+	iniparser_freedict(ini);
 }
 
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
+void iniAssertExistence(const dictionary *ini, const char* key){
 
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	long int *result = malloc(*nElements*sizeof(long int));
-	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
-
-	freeStrArr(strArr);
-
-	return result;
-
-}
-
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
-
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	int *result = malloc(*nElements*sizeof(int));
-	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,10);
-
-	freeStrArr(strArr);
-
-	return result;
-
-}
-
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
-
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	double *result = malloc(*nElements*sizeof(double));
-	for(int i=0;i<*nElements;i++) result[i] = strtod(strArr[i],NULL);
-
-	freeStrArr(strArr);
-
-	return result;
+	if(!iniparser_find_entry((dictionary*)ini,key))
+		msg(ERROR,"Key \"%s\" not found in input file",key);
 
 }
 
 int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
+
+	// iniGetNElements() asserts the existence of the keys
 
 	va_list args;
 	va_start(args,nKeys);
@@ -317,6 +279,106 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
 	}
 
 	return nElements;
+
+}
+
+int iniGetNElements(const dictionary* ini, const char* key){
+
+	iniAssertExistence(ini,key);
+	char *list = iniparser_getstring((dictionary*)ini,key,"");
+	return listGetNElements(list);
+
+}
+
+int iniGetInt(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	return iniparser_getint((dictionary*)ini,key,0);
+	
+}
+
+long int iniGetLongInt(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return strtol(res,NULL,0);	
+	
+}
+
+double iniGetDouble(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	return iniparser_getdouble((dictionary*)ini,key,0.0);
+
+}
+
+char* iniGetStr(const dictionary *ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	char *temp = iniparser_getstring((dictionary*)ini,key,NULL); // don't free
+
+	// temp points to instance inside dictionary which is ruined if free'd.
+	// Creating a copy which must be free'd to make this function's behavior
+	// consistent with other ini-functions, e.g. iniGetIntArr().
+	int len = strlen(temp);
+	char *value = malloc((len+1)*sizeof(*value));
+	strcpy(value,temp);
+
+	return value;
+
+}
+
+int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	int *result = malloc(*nElements*sizeof(int));
+	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,0);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	long int *result = malloc(*nElements*sizeof(long int));
+	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	double *result = malloc(*nElements*sizeof(double));
+	for(int i=0;i<*nElements;i++) result[i] = strtod(strArr[i],NULL);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free
+	char **strArr = listToStrArr(list);
+
+	*nElements = listGetNElements(list);
+
+	return strArr;
 
 }
 

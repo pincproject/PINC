@@ -1053,7 +1053,31 @@ void msg(msgKind kind, const char* restrict format,...);
 void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...);
 
 /**
- * @name ini-functions
+ * @name ini functions
+ * Opens .ini input files as dictionary and reads from it. The base
+ * functionality is provided by the iniparser library which provides the
+ * "dictionary" datatype, but its features is largely extended by the
+ * ini-functions (e.g. error handling and array inputs) which serves as a layer
+ * on top of iniparser. Do not call iniparser directly.
+ *
+ * The notation "section:key" is used to indicate keys under various sections
+ * in the ini-file.
+ *
+ * Comma-separated lists (using "," as delimeter) is interpreted as arrays.
+ *
+ * Remember to free returned arrays.
+ *
+ * Example of use:
+ *
+ * @code
+ *	dictionary *ini = iniOpen(argc,argv);
+ *	int value = iniGetInt(ini,"section:key");
+ *	iniClose(ini);
+ * @endcode
+ *
+ * @param		ini			ini-file dictionary
+ * @param		key			Key to get value from ("section:key")
+ * @param[out]	nElements	Number of elements in returned array
  */
 ///@{
 
@@ -1063,21 +1087,46 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  * @param	argv	Arugment vector (as passed to PINC)
  * @return	Allocated iniparser dictionary holding data from ini-file
  *
- * Performs sanity check on argc and argv and opens the specified input file.
- * It also empties all files specified in msgfiles.
+ * Performs sanity check on argc and argv and opens the input file specified in
+ * argv[1]. It also empties all files specified in msgfiles.
+ *
+ * Following arguments are used to override settings from the input file, which
+ * may be useful if running parameter sweeps from external scripts. E.g. if
+ * argv[2]=="grid:nSubdomains=2,2,2" the value of this key is overriden in
+ * the returned dictionary. Any number of such arguments can be accepted, and
+ * in any order, but the key must already exist in the input file (a
+ * restriction inherited from the underlying iniparser library).
+ *
+ * The special argument "getnp" is used to get the number of MPI processes PINC
+ * requires within an external script, for instance to know which "-np"
+ * argument to pass to mpirun. When PINC stumbles upon "getnp" it immediately
+ * terminates after returning the requested number, even before processing
+ * further arguments. Since changing settings (i.e. "grid:nSubdomains") may
+ * change the required number of processes, "getnp" should always be the last
+ * argument.
+ *
+ * Close dictionary using iniClose() after use.
  */
 dictionary* iniOpen(int argc, char *argv[]);
 
-/**
- * @brief Get the number of elements in an array
- * @param 	ini		Dictionary to search
- * @param	key		Key string to look for
- * @return	Number of elements in entry. 0 if entry does not exist.
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
- */
-int iniGetNElements(const dictionary* ini, const char* key);
+///@brief Close dictionary
+void iniClose(dictionary *ini);
+
+///@brief Get integer
+int iniGetInt(const dictionary* ini, const char *key);
+///@brief Get long int
+long int iniGetLongInt(const dictionary* ini, const char *key);
+///@brief Get double
+double iniGetDouble(const dictionary* ini, const char *key);
+///@brief Allocate and get string (remeber to free)
+char* iniGetStr(const dictionary *ini, const char *key);
+
+///@brief Allocate and get array of integers (remember to free)
+int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
+///@brief Allocate and get array of long ints (remember to free)
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements);
+///@brief Allocate and get array of doubles (remember to free)
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
 
 /**
  * @brief Get the array of strings associated to a key.
@@ -1085,60 +1134,14 @@ int iniGetNElements(const dictionary* ini, const char* key);
  * @param			key			Key string to look for
  * @param[out]		nElements	Number of elements in returned array
  * @return			NULL-terminated array of NULL-terminated strings
- * @see				iniparser_getstring(), freeStrArr(), listToStrArr()
  *
  * Output is similar to listToStrArr(). Remember to free resulting string array
  * using freeStrArr().
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
  */
 char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements);
 
-/**
- * @brief Get the array of integers associated to a key.
- * @param			ini			Dictionary to search
- * @param			key			Key string to look for
- * @param[out]		nElements	Number of elements in returned array
- * @return			array of integers
- * @see				iniGetLongIntArr(), iniparser_getint()
- *
- * Remember to free result array using free().
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
- */
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
-
-/**
- * @brief Get the array of long integers associated to a key.
- * @param			ini			Dictionary to search
- * @param			key			Key string to look for
- * @param[out]		nElements	Number of elements in returned array
- * @return			array of integers
- * @see				iniGetIntArr()
- *
- * Remember to free result array using free().
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
- */
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements);
-
-/**
- * @brief Get the array of doubles associated to a key.
- * @param			ini			Dictionary to search
- * @param			key			Key string to look for
- * @param[out]		nElements	Number of elements in returned array
- * @return			array of doubles
- * @see				iniparser_getdouble()
- *
- * Remember to free result array using free().
- *
- * This function can be seen as an extension to iniparser in order to parse
- * comma-separated entries as arrays.
- */
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
+///@brief Get the number of elements in an array/comma-separated list
+int iniGetNElements(const dictionary* ini, const char* key);
 
 /**
  * @brief Assert that a number of entries are arrays of equal length.
@@ -1164,7 +1167,7 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
 ///@}
 
 /**
- * @brief Frees dynamically allocated NULL-terminated array of strings
+ * @brief Frees dynamically allocated NULL-terminated array of NULL-terminated strings
  * @param	strArr	Pointer to array of strings
  * @return	void
  * @see listToStrArr(), iniGetStrArr()

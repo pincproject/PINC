@@ -7,7 +7,6 @@
  * @date        08.10.15
  *
  * Main routine for PINC (Particle-IN-Cell).
- * Replaces old DiP3D main.c file by Wojciech Jacek Miloch.
  */
 
 #include <gsl/gsl_rng.h>
