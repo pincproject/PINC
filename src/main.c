@@ -7,7 +7,6 @@
  * @date        08.10.15
  *
  * Main routine for PINC (Particle-IN-Cell).
- * Replaces old DiP3D main.c file by Wojciech Jacek Miloch.
  */
 
 #include <gsl/gsl_rng.h>
@@ -73,7 +72,7 @@ void regularRoutine(dictionary *ini){
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
-	int nTimeSteps = iniparser_getint(ini, "time:nTimeSteps", 0);
+	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 
 	//Inital conditions
 	pPosUniform(ini, pop, mpiInfo, rng);
@@ -288,11 +287,12 @@ int main(int argc, char *argv[]){
 
 
 	//Choose routine from ini file
-	char *routine = iniparser_getstring(ini, "main:routine", "\0");
+	char *routine = iniGetStr(ini,"main:routine");
 
 	if(!strcmp(routine, "regular"))				regularRoutine(ini);
 	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
 
+	free(routine);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI

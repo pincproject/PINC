@@ -322,8 +322,8 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 
 	int nDims;
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0);
-	double debye = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double debye = iniGetDouble(ini,"grid:debye");
 	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nDims);
 
@@ -522,7 +522,7 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
 
 	/*

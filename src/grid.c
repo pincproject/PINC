@@ -609,7 +609,7 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 	int nSpecies, nDims;
 	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
 	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	gMul(E,pow(timeStep,2)*(q[0]/m[0]));
 	for(int p=0;p<E->sizeProd[E->rank];p++){
@@ -926,7 +926,7 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 */
 
 	double *debye = malloc(nDims*sizeof(*debye));
-	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	debye[0] = iniGetDouble(ini,"grid:debye");
 	for(int d=1;d<nDims;d++) debye[d]=debye[0];
 
 	setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims);
