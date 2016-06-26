@@ -22,11 +22,11 @@ ODIR	= src/obj
 HDIR	= src
 LDIR	= lib
 DDIR	= doc
-TDIR	= test
+TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= pinc.h pusher.h multigrid.h
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h
 SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox
@@ -79,7 +79,7 @@ $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(TODIR)/%.o: $(TDIR)/%.c $(HEAD) $(TESTHEAD)
+$(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo "Compiling $<"
 	@mkdir -p $(TODIR)
 	@./check.sh $<
@@ -89,8 +89,8 @@ $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
 	@cd $(LDIR)/iniparser && $(MAKE) libiniparser.a > /dev/null 2>&1
 
-$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TDIR)/test.c $(DDIR)/doxygen/$(DOC_)
-	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
+$(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TSDIR)/test.c $(DDIR)/doxygen/$(DOC_)
+	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TSDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
 	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) $(DOC_) test.h test.c  >> $(DDIR)/doxygen/doxyfile.inc
 
 doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc

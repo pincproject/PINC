@@ -9,13 +9,7 @@
  * Main routine for PINC (Particle-IN-Cell).
  */
 
-#include <gsl/gsl_rng.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <mpi.h>
-#include <hdf5.h>
-
-#include "pinc.h"
+#include "core.h"
 #include "iniparser.h"
 #include "pusher.h"
 #include "multigrid.h"

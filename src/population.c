@@ -9,7 +9,7 @@
  * particle structs, reading and writing of data and so on.
  */
 
-#include "pinc.h"
+#include "core.h"
 #include <math.h>
 #include <mpi.h>
 #include <gsl/gsl_rng.h>
