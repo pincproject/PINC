@@ -17,7 +17,7 @@
 void regularRoutine(dictionary *ini){
 
 	//Random number seeds
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -69,7 +69,7 @@ void regularRoutine(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 
 	//Inital conditions
-	pPosUniform(ini, pop, mpiInfo, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
 	// TBD: INITIAL VELOCITY
 
 	//Get initial E-field
@@ -140,13 +140,12 @@ void regularRoutine(dictionary *ini){
 	pFree(pop);
 
 
-	 /*
-		* FINALIZE THIRD PARTY LIBRARIES
-		*/
-	// iniClose(ini); 	//No iniClose??
-	gsl_rng_free(rng);
+	/*
+	 * FINALIZE THIRD PARTY LIBRARIES
+	 */
+	iniClose(ini);
+	gsl_rng_free(rngSync);
 
-	return;
 }
 
 /**************************************************************
