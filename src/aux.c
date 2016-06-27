@@ -9,7 +9,7 @@
  */
 #define _XOPEN_SOURCE 700
 
-#include "pinc.h"
+#include "core.h"
 #include <time.h>
 #include <mpi.h>
 #include <stdarg.h>

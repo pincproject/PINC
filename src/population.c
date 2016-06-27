@@ -11,7 +11,7 @@
 
 #define _XOPEN_SOURCE 700
 
-#include "pinc.h"
+#include "core.h"
 #include <math.h>
 #include <mpi.h>
 #include <gsl/gsl_rng.h>

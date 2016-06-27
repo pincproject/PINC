@@ -10,7 +10,7 @@
  * particle structs, reading and writing of data and so on.
  */
 
-#include "pinc.h"
+#include "core.h"
 #include <mpi.h>
 #include <math.h>
 #include <hdf5.h>

@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
-#include "pinc.h"
+#include "core.h"
 #include "multigrid.h"
 
 /******************************************************************************

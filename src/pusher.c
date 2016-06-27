@@ -8,7 +8,7 @@
  * Particle pusher schemes
  */
 
-#include "pinc.h"
+#include "core.h"
 #include "pusher.h"
 #include <math.h>
 
