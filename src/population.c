@@ -9,6 +9,8 @@
  * particle structs, reading and writing of data and so on.
  */
 
+#define _XOPEN_SOURCE 700
+
 #include "pinc.h"
 #include <math.h>
 #include <mpi.h>
@@ -115,11 +117,10 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
-	int *nSubdomains = mpiInfo->nSubdomains;
 	double *posToSubdomain = mpiInfo->posToSubdomain;
 
 	// Compute normalized length of global reference frame
-	int *L = getGlobalSize(ini);
+	int *L = gGetGlobalSize(ini);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -179,6 +180,7 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 		msg(ERROR|ONCE,"population:perturbMode neeeds to have nDims*nSpecies elements");
 
 	int *L = gGetGlobalSize(ini);
+	double *pos = pop->pos;
 
 	pToGlobalFrame(pop,mpiInfo);
 
@@ -189,7 +191,7 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 		for(long int i=iStart;i<iStop;i++){
 
 			for(int d=0;d<nDims;d++){
-				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(2*M_PI*mode[s*nDims+d]/L[d]);
+				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(2.0*M_PI*mode[s*nDims+d]*pos[i*nDims+d]/L[d]);
 			}
 		}
 	}
@@ -197,6 +199,8 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 	pToLocalFrame(pop,mpiInfo);
 
 	free(L);
+	free(amplitude);
+	free(mode);
 
 }
 
@@ -213,7 +217,8 @@ void pPosDebug(const dictionary *ini, Population *pop){
 		nParticles[s] /= mpiSize;
 	}
 
-	int nDims = pop->nDims;	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
+	int nDims = pop->nDims;
+	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
 	alSet(nMigrantsResult,81,	1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
 								1,1,0,1,1,0,1,1,0,3,3,0,0,0,0,4,4,0,1,1,0,1,1,0,1,1,0,
 								1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0);

@@ -440,42 +440,45 @@ void alSet(long int *a, long int n, ...){
 	va_end(args);
 }
 
-void adPrintInner(double *a, long int n, char *varName){
+void adPrintInner(double *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-inc;i+=inc){
 		printf("%f ",a[i]);
 	}
-	printf("%f]\n",a[n-1]);
+	printf("%f]\n",a[i]);
 
 }
 
-void aiPrintInner(int *a, long int n, char *varName){
+void aiPrintInner(int *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-1;i+=inc){
 		printf("%i ",a[i]);
 	}
-	printf("%i]\n",a[n-1]);
+	printf("%i]\n",a[i]);
 
 }
 
-void alPrintInner(long int *a, long int n, char *varName){
+void alPrintInner(long int *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-1;i+=inc){
 		printf("%li ",a[i]);
 	}
-	printf("%li]\n",a[n-1]);
+	printf("%li]\n",a[i]);
 
 }
 

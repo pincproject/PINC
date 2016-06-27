@@ -388,6 +388,9 @@ void pFree(Population *pop);
  */
 void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rngSync);
 
+
+void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
+
 /**
  * @brief	Assign particles artificial positions suitable for debugging
  * @param			ini		Dictionary to input file
@@ -1017,7 +1020,7 @@ void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop);
  *
  * trueSize*nSubdomains-1 for all dimension.
  */
-int *gGetGlobalSize(dictionary *ini);
+int *gGetGlobalSize(const dictionary *ini);
 
 ///@}
 
@@ -1597,17 +1600,23 @@ void aiSet(int *a, long int n, ...);
 ///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
 void alSet(long int *a, long int n, ...);
 ///@brief See adPrint(). varName is the name to output for the variable.
-void adPrintInner(double *a, long int n, char *varName);
+void adPrintInner(double *a, long int inc, long int end, char *varName);
 ///@brief See aiPrint(). varName is the name to output for the variable.
-void aiPrintInner(int *a, long int n, char *varName);
+void aiPrintInner(int *a, long int inc, long int end, char *varName);
 ///@brief See alPrint(). varName is the name to output for the variable.
-void alPrintInner(long int *a, long int n, char *varName);
+void alPrintInner(long int *a, long int inc, long int end, char *varName);
 ///@brief Prints an array in a nice format (for debugging only).
-#define adPrint(a,n) do { adPrintInner(a,n,#a); } while (0)
+#define adPrint(a,n) do { adPrintInner(a,1,n,#a); } while (0)
 ///@brief Prints an array in a nice format (for debugging only).
-#define aiPrint(a,n) do { aiPrintInner(a,n,#a); } while (0)
+#define aiPrint(a,n) do { aiPrintInner(a,1,n,#a); } while (0)
 ///@brief Prints an array in a nice format (for debugging only).
-#define alPrint(a,n) do { alPrintInner(a,n,#a); } while (0)
+#define alPrint(a,n) do { alPrintInner(a,1,n,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define adPrintSpaced(a,inc,end) do { adPrintInner(a,inc,end,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define aiPrintSpaced(a,inc,end) do { aiPrintInner(a,inc,end,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define alPrintSpaced(a,inc,end) do { alPrintInner(a,inc,end,#a); } while (0)
 ///@}
 
 /**

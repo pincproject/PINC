@@ -570,7 +570,7 @@ void gFree(Grid *grid){
 
 }
 
-int *gGetGlobalSize(dictionary *ini){
+int *gGetGlobalSize(const dictionary *ini){
 
 	int nDims;
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
@@ -578,6 +578,7 @@ int *gGetGlobalSize(dictionary *ini){
 
 	int *L = malloc(nDims*sizeof(int));
 	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
+	aiPrint(L,3);
 
 	return L;
 }

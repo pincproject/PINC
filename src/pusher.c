@@ -447,7 +447,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 			int nz = - (z<lz) + (z>=uz);
 			int ne = 13 + nx + 3*ny + 9*nz;
 
-			if(ne!=neighborhoodCenter){
+			if(ne!=neighborhoodCenter){ // hard-code to 13 since it's 3D?
 				*(emigrants[ne]++) = x;
 				*(emigrants[ne]++) = y;
 				*(emigrants[ne]++) = z;
