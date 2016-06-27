@@ -1,6 +1,3 @@
-#ifndef PUSHER_H
-#define PUSHER_H
-
 /**
  * @file		pusher.h
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
@@ -12,6 +9,9 @@
  * including particle mover, particle accelerators (leapfrog, boris) and
  * interpolation schemes of various orders.
  */
+
+#ifndef PUSHER_H
+#define PUSHER_H
 
 /******************************************************************************
  * DECLARING DATATYPES
