@@ -119,8 +119,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 	double *posToSubdomain = mpiInfo->posToSubdomain;
 
 	// Compute normalized length of global reference frame
-	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
+	int *L = getGlobalSize(ini);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -163,6 +162,41 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 	free(L);
 	free(nParticles);
 	free(trueSize);
+
+}
+
+void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
+
+	iniAssertEqualNElements(ini,2,"population:perturbAmplitude","population:perturbMode");
+
+	int nElements;
+	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",&nElements);
+	double *mode = iniGetDoubleArr(ini,"population:perturbMode",&nElements);
+
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+	if(nElements!=nDims*nSpecies)
+		msg(ERROR|ONCE,"population:perturbMode neeeds to have nDims*nSpecies elements");
+
+	int *L = gGetGlobalSize(ini);
+
+	pToGlobalFrame(pop,mpiInfo);
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+		for(long int i=iStart;i<iStop;i++){
+
+			for(int d=0;d<nDims;d++){
+				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(2*M_PI*mode[s*nDims+d]/L[d]);
+			}
+		}
+	}
+
+	pToLocalFrame(pop,mpiInfo);
+
+	free(L);
 
 }
 

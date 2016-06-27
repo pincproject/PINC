@@ -1010,6 +1010,15 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo);
  */
 void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop);
 
+/**
+ * @brief Returns normalized size of global domain
+ * @param	ini		Input file dictionary
+ * @return	Array of normalized dimensions.
+ *
+ * trueSize*nSubdomains-1 for all dimension.
+ */
+int *gGetGlobalSize(dictionary *ini);
+
 ///@}
 
 /******************************************************************************

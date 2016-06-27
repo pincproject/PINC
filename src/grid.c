@@ -198,9 +198,9 @@ static int *getSubdomain(const dictionary *ini){
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
- /******************************************************************************
-  *	FINITE DIFFERENCE
-  *****************************************************************************/
+/******************************************************************************
+ *	FINITE DIFFERENCE
+ *****************************************************************************/
 
  void gFinDiff1st(const Grid *scalar, Grid *field){
 
@@ -269,7 +269,7 @@ static int *getSubdomain(const dictionary *ini){
  	return;
  }
 
- void gFinDiff2nd3D(Grid *result, const  Grid *object){
+void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
  	//Load
  	int rank = object->rank;
@@ -371,8 +371,6 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
 					sendTo, mpiRank, grid);
 
-
-	return;
 }
 
 /*****************************************************************************
@@ -572,7 +570,17 @@ void gFree(Grid *grid){
 
 }
 
+int *gGetGlobalSize(dictionary *ini){
 
+	int nDims;
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+
+	int *L = malloc(nDims*sizeof(int));
+	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
+
+	return L;
+}
 
 /****************************************************************************
  *	CONVENIENCE GRID OPERATIONS
