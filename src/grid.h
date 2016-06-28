@@ -103,6 +103,8 @@ void gFreeMpi(MpiInfo *mpiInfo);
  */
 void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int reverse);
 
+void gHaloOpDim2(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse);
+
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
  * @param sliceOp			SliceOpPointer

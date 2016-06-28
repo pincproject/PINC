@@ -50,11 +50,6 @@ static int *getSubdomain(const dictionary *ini);
  * @see gHaloOpDim
  */
 
-static inline void gSliceOp(SliceOpPointer sliceOp,
-					const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int sendTo,
-					const int recvFrom, const int mpiRank, Grid *grid);
-
 static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
 								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
 
@@ -138,32 +133,6 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 
 	val += offset*sizeProd[d];
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
-}
-
-static inline void gSliceOp(SliceOpPointer sliceOp,
-					const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int sendTo,
-					const int recvFrom, const int mpiRank, Grid *grid){
-
-	double *sendSlice = grid->sendSlice;
-	double *recvSlice = grid->recvSlice;
-
-	MPI_Request		sendRequest,recvRequest;
-	MPI_Status 		status;
-
-	//Send
-	getSlice(sendSlice, grid, d, offsetTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
-
-	//Recieve
-	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
-	MPI_Wait(&recvRequest, &status);
-
-	sliceOp(recvSlice, grid, d, offsetPlace);
-
-	MPI_Wait(&sendRequest, &status); // I moved this after sliceOp() since sliceOp can start working without this
-
-	return;
 }
 
 static int *getSubdomain(const dictionary *ini){
@@ -322,7 +291,7 @@ void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int rev
 	return;
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int reverse){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -330,58 +299,60 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	int *nSubdomains = mpiInfo->nSubdomains;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 
-
 	//Load
 	int rank = grid->rank;
-	// int nDims = rank-1;
 	int *size = grid->size;
 	long int *sizeProd = grid->sizeProd;
+	double *sendSlice = grid->sendSlice;
+	double *recvSlice = grid->recvSlice;
 
-	//Local temporary variables
-	int sendTo, recvFrom;
-	int nSlicePoints;
-	int offsetTake, offsetPlace;
+	// Normal operation: take 2nd outermost layer and place it outermost
+	// Inverse operation: take outermost layer and place it 2nd outermost
+	int offsetUpperTake  = size[d]-2+inverse;
+	int offsetUpperPlace = size[d]-1-inverse;
+	int offsetLowerTake  =         1-inverse;
+	int offsetLowerPlace =           inverse;
 
 	//Dimension used for subdomains, 1 less entry than grid dimensions
 	int dd = d - 1;
-	nSlicePoints = sizeProd[rank]/size[d];
-
-	/*****************************************************
-	 *			Sending and recieving upper
-	 *****************************************************/
-	if(!reverse){ // most common case first is often optimal
-		offsetTake = size[d]-2;
-		offsetPlace = 0;
-	} else {
-		offsetTake = 0;
-		offsetPlace = size[d]-2;
-	}
+	int nSlicePoints = sizeProd[rank]/size[d];
 
 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
-	sendTo = firstElem
- 				+ (subdomain[dd] + 1)%nSubdomains[dd]*nSubdomainsProd[dd];
-	recvFrom = firstElem
-				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
+	int upperSubdomain = firstElem 
+		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
+	int lowerSubdomain = firstElem
+		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
-					recvFrom, mpiRank, grid);
+	msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
-	/*****************************************************
-	 *			Sending and recieving lower
-	 *****************************************************/
-	if(!reverse){ // most common case first is often optimal
-		offsetTake = 1;
-		offsetPlace = size[d]-1;
-	} else {
-		offsetTake = size[d]-1;
-		offsetPlace = 1;
-	}
+	MPI_Request	sendRequest, recvRequest;
+	MPI_Status 	status;
 
-	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
-					sendTo, mpiRank, grid);
+	// Send upper (tag 1)
+	getSlice(sendSlice, grid, d, offsetUpperTake);
+	MPI_Isend(	sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
+
+	// Recieve lower (upper on neighbor, hence tag 1)
+	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &recvRequest);
+	MPI_Wait(&recvRequest, &status);
+	sliceOp(recvSlice, grid, d, offsetLowerPlace);
+
+	MPI_Wait(&sendRequest, &status);
+
+	// Send lower (tag 0)
+	getSlice(sendSlice, grid, d, offsetLowerTake);
+	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0, MPI_COMM_WORLD, &sendRequest);
+
+	// Recieve upper (lower on neighbor, hence tag 0)
+	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &recvRequest);
+	MPI_Wait(&recvRequest, &status);
+	sliceOp(recvSlice, grid, d, offsetUpperPlace);
+
+	MPI_Wait(&sendRequest, &status);
 
 }
+
 
 /*****************************************************************************
  *		ALLOC/DESTRUCTORS

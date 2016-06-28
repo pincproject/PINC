@@ -74,10 +74,10 @@ void regularRoutine(dictionary *ini){
 
 	//Get initial E-field
 	puDistr3D1(pop, rho);
-	gHaloOp(setSlice, rho, mpiInfo);
+	gHaloOp(setSlice, rho, mpiInfo, 0);
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo);
+	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	//Half step
 	gMul(E, 0.5);
@@ -95,10 +95,10 @@ void regularRoutine(dictionary *ini){
 
 		//Compute E field
 		puDistr3D1(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo);
+		gHaloOp(addSlice, rho, mpiInfo, 0);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo);
+		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		//Apply external E
 		// gAddTo(Ext);
