@@ -20,11 +20,10 @@ y = np.arange(rho.shape[1])
 X,Y = np.meshgrid(x,y,indexing='ij')
 
 fig, ax = plt.subplots(1)
-im = ax.contourf(X,Y,rho[:,:,3], 50)
+im = ax.contourf(X,Y,rho[:,:,0], 50)
 
 fig.subplots_adjust(bottom = 0.25)
 cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
 
 plt.show()
-

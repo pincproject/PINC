@@ -138,7 +138,8 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 			// Count the number of dimensions where the particle resides in the range of this node
 			int correctRange = 0;
-			for(int d=0;d<nDims;d++) correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+			for(int d=0;d<nDims;d++)
+				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
 
 			// Iterate only if particle resides in this sub-domain.
 			if(correctRange==nDims){

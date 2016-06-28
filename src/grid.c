@@ -122,7 +122,7 @@ static const double *addSliceInner(const double *nextGhost, double **valp, const
 			*valp += (*mul)*(*points-1);
 		} else {
 			for(int j=0; j<*points;j++)
-				nextGhost = setSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+				nextGhost = addSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
 		}
 		return nextGhost;
 
@@ -158,9 +158,10 @@ static inline void gSliceOp(SliceOpPointer sliceOp,
 	//Recieve
 	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
 	MPI_Wait(&recvRequest, &status);
-	MPI_Wait(&sendRequest, &status);
 
 	sliceOp(recvSlice, grid, d, offsetPlace);
+
+	MPI_Wait(&sendRequest, &status); // I moved this after sliceOp() since sliceOp can start working without this
 
 	return;
 }
@@ -313,15 +314,15 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse){
 
 	int rank = grid->rank;
-	for(int d = 1; d < rank; d++) gHaloOpDim(sliceOp, grid, mpiInfo, d);
+	for(int d = 1; d < rank; d++) gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
 
 	return;
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int reverse){
 
 	//Load MpiInfo
 	int mpiRank = mpiInfo->mpiRank;
@@ -347,9 +348,14 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 
 	/*****************************************************
 	 *			Sending and recieving upper
-	******************************************************/
-	offsetTake = size[d]-2;
-	offsetPlace = 0;
+	 *****************************************************/
+	if(!reverse){ // most common case first is often optimal
+		offsetTake = size[d]-2;
+		offsetPlace = 0;
+	} else {
+		offsetTake = 0;
+		offsetPlace = size[d]-2;
+	}
 
 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
@@ -358,15 +364,19 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	recvFrom = firstElem
 				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
 
-
 	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
 					recvFrom, mpiRank, grid);
 
 	/*****************************************************
 	 *			Sending and recieving lower
-	******************************************************/
-	offsetTake = 1;
-	offsetPlace = size[d]-1;
+	 *****************************************************/
+	if(!reverse){ // most common case first is often optimal
+		offsetTake = 1;
+		offsetPlace = size[d]-1;
+	} else {
+		offsetTake = size[d]-1;
+		offsetPlace = 1;
+	}
 
 	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
 					sendTo, mpiRank, grid);
