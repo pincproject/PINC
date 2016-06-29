@@ -319,12 +319,10 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 
 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
-	int upperSubdomain = firstElem 
+	int upperSubdomain = firstElem
 		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
 	int lowerSubdomain = firstElem
 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
-
-	msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
 	MPI_Request	sendRequest, recvRequest;
 	MPI_Status 	status;
@@ -556,9 +554,19 @@ int *gGetGlobalSize(const dictionary *ini){
 	int nDims;
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
 	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+	char *bnd = iniGetStr(ini,"grid:boundaries");
 
-	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
+	int *L = malloc(nDims*sizeof(*L));
+
+	if(!strcmp(bnd,"PERIODIC")){
+		for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d];
+	} else {
+		msg(ERROR,"Only PERIODIC grid:boundaries supported yet");
+	}
+
+	free(trueSize);
+	free(nSubdomains);
+	free(bnd);
 
 	return L;
 }
