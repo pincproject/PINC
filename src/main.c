@@ -10,37 +10,76 @@
  */
 
 #include "core.h"
-#include "iniparser.h"
 #include "pusher.h"
 #include "multigrid.h"
 
+/*
+ * MAIN ROUTINES (RUN MODES PERHAPS A BETTER NAME?)
+ */
+void regularRoutine(dictionary *ini);
+void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo);
+void mgRoutine(dictionary *ini);
+
+int main(int argc, char *argv[]){
+
+	/*
+	 * INITIALIZE PINC
+	 */
+	MPI_Init(&argc,&argv);
+	dictionary *ini = iniOpen(argc,argv); // No printing before this
+	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	/*
+	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
+	 */
+	char *routine = iniGetStr(ini,"main:routine");
+	if(!strcmp(routine, "regular"))				regularRoutine(ini);
+	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
+	free(routine);
+
+	/*
+	 * FINALIZE PINC
+	 */
+	iniClose(ini);
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
+	MPI_Finalize();
+
+	return 0;
+}
+
+
 void regularRoutine(dictionary *ini){
 
-	//Random number seeds
+	// Random number seeds
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
 
-	//MPI struct
+	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
-	 //Setting up particles.
+	 // Setting up particles.
 	Population *pop = pAlloc(ini);
 
-	//Allocating grids
+	// Allocating grids
 	Grid *E = gAlloc(ini, 3);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
 
-	//Alloc multigrids
+	// Creating a neighbourhood in the rho Grid variable to handle migrants
+	gCreateNeighborhood(ini, mpiInfo, rho);
+
+	// Alloc multigrids
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
 
-	//Alloc h5 files
+	// Alloc h5 files
 	int rank = phi->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
@@ -68,18 +107,25 @@ void regularRoutine(dictionary *ini){
 	 **************************************************************/
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 
-	//Inital conditions
+	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rng);
-	// TBD: INITIAL VELOCITY
+	pVelZero(pop);
 
-	//Get initial E-field
+	// Perturb particles
+	pPosPerturb(ini, pop, mpiInfo);
+	puExtractEmigrants3D(pop, mpiInfo);
+	puMigrate(pop, mpiInfo, rho);
+
+	// Get initial charge density
 	puDistr3D1(pop, rho);
-	gHaloOp(setSlice, rho, mpiInfo, 0);
+	gHaloOp(addSlice, rho, mpiInfo, 1);
+
+	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
-	//Half step
+	// Advance velocities half a step
 	gMul(E, 0.5);
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
@@ -87,23 +133,31 @@ void regularRoutine(dictionary *ini){
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
-	for(int n = 1; n < nTimeSteps; n++){
+	for(int n = 1; n <= nTimeSteps; n++){
 
-		//Move particles
+		msg(STATUS|ONCE,"Computing time-step %i",n);
+
+		// Move particles
 		puMove(pop);
+
+		puExtractEmigrants3D(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, E);
 
-		//Compute E field
+		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
+
+		// Compute charge density
 		puDistr3D1(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, 0);
+
+		// Compute E-field
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
-		//Apply external E
+		// Apply external E
 		// gAddTo(Ext);
 
-		//Accelerate
+		// Accelerate
 		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
 
 		gPotEnergy(rho,phi,pop);
@@ -120,16 +174,16 @@ void regularRoutine(dictionary *ini){
 	 /*
 	 * FINALIZE PINC VARIABLES
 	 */
-	 gFreeMpi(mpiInfo);
+	gFreeMpi(mpiInfo);
 
-	//  //Close h5 files
+	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
 	xyCloseH5(history);
 
-	//Free memory
+	// Free memory
 	mgFree(mgRho);
 	mgFree(mgPhi);
 	mgFree(mgRes);
@@ -139,14 +193,11 @@ void regularRoutine(dictionary *ini){
 	gFree(E);
 	pFree(pop);
 
-
-	 /*
-		* FINALIZE THIRD PARTY LIBRARIES
-		*/
-	// iniClose(ini); 	//No iniClose??
+	/*
+	 * FINALIZE THIRD PARTY LIBRARIES
+	 */
 	gsl_rng_free(rng);
 
-	return;
 }
 
 /**************************************************************
@@ -265,34 +316,6 @@ void mgRoutine(dictionary *ini){
 	tFree(t);
 
 	return;
-}
-
-
-int main(int argc, char *argv[]){
-
-
-	/*
-	 * INITIALIZE THIRD PARTY LIBRARIES
-	 */
-	MPI_Init(&argc,&argv);
-	dictionary *ini = iniOpen(argc,argv);
-	msg(STATUS|ONCE,"PINC started.");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-
-	//Choose routine from ini file
-	char *routine = iniGetStr(ini,"main:routine");
-
-	if(!strcmp(routine, "regular"))				regularRoutine(ini);
-	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
-
-	free(routine);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
-	MPI_Finalize();
-
-	return 0;
 }
 
 /*****************************************************************

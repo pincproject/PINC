@@ -76,6 +76,10 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
  */
 void pVelSet(Population *pop, const double *vel);
 
+void pVelZero(Population *pop);
+
+void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
+
 /**
  * @brief	Assign particles Maxwellian distributed velocities
  * @param			ini		Dictionary to input file

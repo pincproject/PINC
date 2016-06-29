@@ -329,7 +329,7 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 
 	// Send upper (tag 1)
 	getSlice(sendSlice, grid, d, offsetUpperTake);
-	MPI_Isend(	sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
+	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
 
 	// Recieve lower (upper on neighbor, hence tag 1)
 	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &recvRequest);
@@ -478,7 +478,6 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 MpiInfo *gAllocMpi(const dictionary *ini){
 	//Sanity check
 	iniAssertEqualNElements(ini, 2,"grid:nSubdomains","grid:trueSize");
-
 
 	// Get MPI info
 	int mpiSize, mpiRank;

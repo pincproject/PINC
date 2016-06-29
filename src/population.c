@@ -240,6 +240,36 @@ void pPosDebug(const dictionary *ini, Population *pop){
 
 }
 
+// Verify that position is indeed within local frame and will not produce any
+// segmentation faults
+void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
+
+	int *size = grid->size;
+	double *pos = pop->pos;
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart;i<iStop;i++){
+
+			for(int d=0; d<nDims; d++){
+
+				if(pos[i*nDims+d]>size[d+1]){
+					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]);
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 	iniAssertEqualNElements(ini,3,"population:temperature","population:drift","population:nParticles");
@@ -282,6 +312,24 @@ void pVelSet(Population *pop, const double *vel){
 		for(long int i=iStart;i<iStop;i++){
 			for(int d=0;d<nDims;d++){
 				pop->vel[i*nDims+d] = vel[d];
+			}
+		}
+	}
+}
+
+void pVelZero(Population *pop){
+
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = 0;
 			}
 		}
 	}
