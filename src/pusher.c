@@ -247,13 +247,6 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 	}
 }
 
-// void puDistr3D0();
-// void puDistr3D0(); // IMPLEMENTED
-// void puDistr3D2();
-// void puDistrND0();
-// void puDistrND1();
-// void puDistrND2();
-
 void puDistr3D1(const Population *pop, Grid *rho){
 
 	gZero(rho);
@@ -293,6 +286,9 @@ void puDistr3D1(const Population *pop, Grid *rho){
 			long int pjl 	= pl + 1; //sizeProd[1];
 			long int pkl 	= pl + sizeProd[2];
 			long int pjkl 	= pkl + 1; //sizeProd[1];
+
+			// if(pjkl>=sizeProd[4])
+			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
 
 			val[p] 		+= xcomp*ycomp*zcomp;
 			val[pj]		+= x    *ycomp*zcomp;
@@ -414,7 +410,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	double *pos = pop->pos;
 	double *vel = pop->vel;
 	double *thresholds = mpiInfo->thresholds;
-	int neighborhoodCenter = mpiInfo->neighborhoodCenter;
+	const int neighborhoodCenter = 13;
 	long int *nEmigrants = mpiInfo->nEmigrants;
 	int nNeighbors = mpiInfo->nNeighbors;
 
@@ -433,10 +429,13 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	double uy = thresholds[4];
 	double uz = thresholds[5];
 
+	// adPrint(thresholds,6);
+
 	for(int s=0;s<nSpecies;s++){
 
 		long int pStart = pop->iStart[s]*3;
 		long int pStop = pop->iStop[s]*3;
+
 
 		for(long int p=pStart;p<pStop;p+=3){
 			double x = pos[p];
@@ -445,9 +444,12 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 			int nx = - (x<lx) + (x>=ux);
 			int ny = - (y<ly) + (y>=uy);
 			int nz = - (z<lz) + (z>=uz);
-			int ne = 13 + nx + 3*ny + 9*nz;
+			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
-			if(ne!=neighborhoodCenter){ // hard-code to 13 since it's 3D?
+			// if(p==371*3)
+			// 	msg(STATUS|ONCE,"x1: %f",x);
+
+			if(ne!=neighborhoodCenter){
 				*(emigrants[ne]++) = x;
 				*(emigrants[ne]++) = y;
 				*(emigrants[ne]++) = z;
@@ -462,14 +464,19 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 				vel[p]   = vel[pStop-3];
 				vel[p+1] = vel[pStop-2];
 				vel[p+2] = vel[pStop-1];
+
+				// if(p==371*3)
+				// 	msg(STATUS|ONCE,"x2: %f",pos[p]);
+
 				pStop -= 3;
 				p -= 3;
 				pop->iStop[s]--;
 
+
 			}
 		}
+		// msg(STATUS|ONCE,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
 	}
-
 }
 
 // Works
@@ -567,6 +574,11 @@ static inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 		double shift = n*grid->trueSize[d+1];
 		for(int i=0;i<nImmigrantsTotal;i++){
 			immigrants[d+2*nDims*i] += shift;
+
+			// double pos = immigrants[d+2*nDims*i];
+			// if(pos>grid->trueSize[d+1])
+			// 	msg(ERROR,"particle %i skipped two domains");
+
 		}
 
 	}

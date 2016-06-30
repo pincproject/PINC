@@ -787,7 +787,8 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 		msg(ERROR|ONCE,"grid:threshold must be 2*nDims=%i elements", 2*nDims);
 	}
 	for(int i=0;i<2*nDims;i++){
-		if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
+		// if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
+		if(thresholds[i]<0) thresholds[i] += (size[i%nDims+1]-1);
 	}
 
 	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT

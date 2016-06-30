@@ -125,7 +125,6 @@ void msg(msgKind kind, const char* restrict format,...){
 			break;
 	    case TIMER:
 		    strcpy(prefix, "TIMER");
-		    stream = stderr;
 		    break;
 	}
 
@@ -294,15 +293,15 @@ int iniGetInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
 	return iniparser_getint((dictionary*)ini,key,0);
-	
+
 }
 
 long int iniGetLongInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
 	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
-	return strtol(res,NULL,0);	
-	
+	return strtol(res,NULL,0);
+
 }
 
 double iniGetDouble(const dictionary* ini, const char *key){

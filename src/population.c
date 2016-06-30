@@ -254,12 +254,39 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 
 		long int iStart = pop->iStart[s];
 		long int iStop  = pop->iStop[s];
-		for(int i=iStart;i<iStop;i++){
+		for(int i=iStart; i<iStop; i++){
 
 			for(int d=0; d<nDims; d++){
 
-				if(pos[i*nDims+d]>size[d+1]){
+				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
 					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]);
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+void pVelAssertMax(const Population *pop, double max){
+
+	double *vel = pop->vel;
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart; i<iStop; i++){
+
+			for(int d=0;d<nDims;d++){
+
+				if(vel[i*nDims+d]>max){
+					msg(ERROR,"Particle i=%li (of specie %i) travels too fast in dimension %i: %f>%f",i,s,d,vel[i*nDims+d],max);
 				}
 
 			}

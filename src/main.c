@@ -34,8 +34,8 @@ int main(int argc, char *argv[]){
 	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
 	 */
 	char *routine = iniGetStr(ini,"main:routine");
-	if(!strcmp(routine, "regular"))				regularRoutine(ini);
-	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
+	if(!strcmp(routine, "regular"))		regularRoutine(ini);
+	if(!strcmp(routine, "mgRoutine"))	mgRoutine(ini);
 	free(routine);
 
 	/*
@@ -66,7 +66,7 @@ void regularRoutine(dictionary *ini){
 	Population *pop = pAlloc(ini);
 
 	// Allocating grids
-	Grid *E = gAlloc(ini, 3);
+	Grid *E   = gAlloc(ini, 3);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
@@ -90,7 +90,7 @@ void regularRoutine(dictionary *ini){
 	pOpenH5(ini, pop, "pop");
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E");
+	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -113,6 +113,7 @@ void regularRoutine(dictionary *ini){
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
+
 	puExtractEmigrants3D(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
@@ -120,15 +121,23 @@ void regularRoutine(dictionary *ini){
 	puDistr3D1(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
+	msg(STATUS,"1");
+
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
+	msg(STATUS,"2");
+
 	// Advance velocities half a step
 	gMul(E, 0.5);
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
+
+	// aiPrint(rho->size,4);
+	// alPrint(rho->sizeProd,4);
+	// adPrint(mpiInfo->thresholds,6);
 
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
@@ -136,38 +145,44 @@ void regularRoutine(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS|ONCE,"Computing time-step %i",n);
+		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
+		pVelAssertMax(pop,8.0);		// Just for catching errors while debugging
 
 		// Move particles
 		puMove(pop);
 
 		puExtractEmigrants3D(pop, mpiInfo);
-		puMigrate(pop, mpiInfo, E);
+		
+		puMigrate(pop, mpiInfo, rho);
 
 		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
 
 		// Compute charge density
 		puDistr3D1(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo, 0);
+		msg(STATUS,"1");
+		gHaloOp(addSlice, rho, mpiInfo, 1);
+		msg(STATUS,"2");
 
 		// Compute E-field
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo, 0);
+		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		// gFinDiff1st(phi, E);
+		// gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
 
 		// Accelerate
-		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		// puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
 
-		gPotEnergy(rho,phi,pop);
+		// gPotEnergy(rho,phi,pop);
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		pWriteH5(pop, mpiInfo, (double) n, (double) n);
-		pWriteEnergy(history,pop,(double)n);
+		// pWriteH5(pop, mpiInfo, (double) n, (double) n);
+		// pWriteEnergy(history,pop,(double)n);
 	}
 
 
