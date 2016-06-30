@@ -62,7 +62,6 @@ void regularRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
@@ -289,6 +288,7 @@ int main(int argc, char *argv[]){
 	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
 
 	free(routine);
+
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
