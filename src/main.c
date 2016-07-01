@@ -149,7 +149,6 @@ void regularRoutine(dictionary *ini){
 		puMove(pop);
 
 		puExtractEmigrants3D(pop, mpiInfo);
-
 		puMigrate(pop, mpiInfo, rho);
 
 		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
@@ -159,24 +158,27 @@ void regularRoutine(dictionary *ini){
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
 		// Compute E-field
-		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-		// gFinDiff1st(phi, E);
-		// gHaloOp(setSlice, E, mpiInfo, 0);
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		gFinDiff1st(phi, E);
+		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
 
 		// Accelerate
-		// puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
 
-		// gPotEnergy(rho,phi,pop);
+		gPotEnergy(rho,phi,pop);
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		// pWriteH5(pop, mpiInfo, (double) n, (double) n);
-		// pWriteEnergy(history,pop,(double)n);
+		gWriteH5(E, mpiInfo, (double) n);
+		gWriteH5(rho, mpiInfo, (double) n);
+		gWriteH5(phi, mpiInfo, (double) n);
+		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		pWriteEnergy(history,pop,(double)n);
 	}
 
 
