@@ -121,14 +121,10 @@ void regularRoutine(dictionary *ini){
 	puDistr3D1(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
-	msg(STATUS,"1");
-
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, 0);
-
-	msg(STATUS,"2");
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -153,16 +149,14 @@ void regularRoutine(dictionary *ini){
 		puMove(pop);
 
 		puExtractEmigrants3D(pop, mpiInfo);
-		
+
 		puMigrate(pop, mpiInfo, rho);
 
 		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
 
 		// Compute charge density
 		puDistr3D1(pop, rho);
-		msg(STATUS,"1");
 		gHaloOp(addSlice, rho, mpiInfo, 1);
-		msg(STATUS,"2");
 
 		// Compute E-field
 		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);

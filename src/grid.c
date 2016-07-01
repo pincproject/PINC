@@ -286,9 +286,10 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse){
 
 	int rank = grid->rank;
-	for(int d = 1; d < rank; d++) gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
+	for(int d = 1; d < rank; d++){
+		gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
+	}
 
-	return;
 }
 
 void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse){
@@ -324,16 +325,20 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	int lowerSubdomain = firstElem
 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	MPI_Request	sendRequest, recvRequest;
+	MPI_Request	sendRequest;
 	MPI_Status 	status;
+
+	// TBD: Ommitting this seems to yield race condition between consecutive
+	// calls to gHaloOpDim(). I'm not quite sure why so this should be
+	// investigated further.
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Send upper (tag 1)
 	getSlice(sendSlice, grid, d, offsetUpperTake);
 	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
 
 	// Recieve lower (upper on neighbor, hence tag 1)
-	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &recvRequest);
-	MPI_Wait(&recvRequest, &status);
+	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetLowerPlace);
 
 	MPI_Wait(&sendRequest, &status);
@@ -343,13 +348,12 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0, MPI_COMM_WORLD, &sendRequest);
 
 	// Recieve upper (lower on neighbor, hence tag 0)
-	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &recvRequest);
-	MPI_Wait(&recvRequest, &status);
+	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetUpperPlace);
 
 	MPI_Wait(&sendRequest, &status);
-
 }
+
 
 
 /*****************************************************************************
