@@ -1,5 +1,4 @@
-# To test that a (hopefully) sinusoidal small perturbation of a uniform
-# positions makes indeed a sinusoidal charge density.
+# Simple plot of a 2D slice through a single field quantity
 
 import h5py
 import numpy as np
