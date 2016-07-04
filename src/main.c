@@ -229,7 +229,7 @@ void mgRoutine(dictionary *ini){
 	// gHaloOp(setSlice, res, mpiInfo);
 
 
-	if(mpiInfo->mpiRank==0) fMsg(ini, "mgLog", "%llu \n", t->total);
+	// if(mpiInfo->mpiRank==0) fMsg(ini, "mgLog", "%llu \n", t->total);
 
 	//Prep to store grids
 	// int lvl = 0;

@@ -1163,6 +1163,8 @@ void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRe
 
 	// gZero(mgPhi->grids[0]);
 	for(int c = 0; c < nMGCycles; c++){
+
+		// msg(STATUS, "Cyclestep: %d", c);
 		// mgVRecursive(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 		// mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 		mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
