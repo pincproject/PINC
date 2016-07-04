@@ -16,34 +16,35 @@ def scatterPlot(pop, charge):
 
 mlab.options.offscreen = True
 
-popFile = h5py.File('../test_pop.pop.h5','r')
+popFile = h5py.File('../../test_pop.pop.h5','r')
 
-
+print popFile
 #Initial to set axes
-mlab.figure()
+# mlab.figure()
 pop1 = popFile['/pos/specie 0/n=0.0']
 
-plt = scatterPlot(pop1, 5)
-
-mlab.axes()
-v = mlab.view()
-
-for n in range(0,500):
-
-	time = str(float(n))
-
-	pop1 = popFile['/pos/specie 0/n=' +time]
-	# pop2 = popFile['/pos/specie 0/n=' +time]
-
-	x1 = pop1[:,0]
-	y1 = pop1[:,1]
-	z1 = pop1[:,2]
-
-	plt.mlab_source.set(x=x1, y = y1, z = z1)
-
-	mlab.savefig("movie/%04d.jpg" % n)
-# 	# mlab.clf()
-
-
-
-mlab.show()
+#
+# plt = scatterPlot(pop1, 5)
+#
+# mlab.axes()
+# v = mlab.view()
+#
+# for n in range(0,500):
+#
+# 	time = str(float(n))
+#
+# 	pop1 = popFile['/pos/specie 0/n=' +time]
+# 	# pop2 = popFile['/pos/specie 0/n=' +time]
+#
+# 	x1 = pop1[:,0]
+# 	y1 = pop1[:,1]
+# 	z1 = pop1[:,2]
+#
+# 	plt.mlab_source.set(x=x1, y = y1, z = z1)
+#
+# 	mlab.savefig("movie/%04d.jpg" % n)
+# # 	# mlab.clf()
+#
+#
+#
+# mlab.show()

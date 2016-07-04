@@ -91,9 +91,10 @@ void mgFree(Multigrid *multigrid);
 
 void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo);
-//
-// void inline static mgVRecursive(int level, int bottom, Multigrid *mgRho, Multigrid *mgPhi,
-//  									Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
 /**
  * @brief Solves Poissons equation for electric potential, with multigrid V cycles
  * @param	mrRho	Source term

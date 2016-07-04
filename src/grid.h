@@ -10,6 +10,8 @@
 #ifndef GRID_H
 #define GRID_H
 
+
+
 /**
  * @brief Allocates a Grid object as specified in the input file
  * @param	ini			Input file
@@ -101,6 +103,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
  */
+
 void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int reverse);
 
 void gHaloOpDim2(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse);
@@ -278,6 +281,18 @@ void gNormalizeE(const dictionary *ini, Grid *E);
 void gAddTo(Grid *result, Grid *addition);
 
 /**
+* @brief Subtracts a grid from another.
+* @param	result		Grid subtracted from
+* @param	subtraction	Grid that is subtracted from the other
+*
+*	Subtracts one grid to another. result = result - addition
+*
+*/
+
+void gSubFrom(Grid *result, Grid *subtraction);
+
+
+/**
  * @brief Applies boundary conditions to edge
  * @param 	grid		Grid to apply boundary conditions to
  * @param	mpiInfo		Info about subdomain
@@ -439,5 +454,23 @@ int *gGetGlobalSize(const dictionary *ini);
 
 void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);
+
+/**
+ * @brief Initial grid configurations, temporary untill a read hdf5 method is available
+ */
+
+ #define PI 3.14159265
+
+void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo);
+void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo);
+void fillPointCharge(Grid *grid, const MpiInfo *mpiInfo);
+void fillPointSol(Grid *grid, const MpiInfo *mpiInfo);
+void fillSin(Grid *grid, const MpiInfo *mpiInfo);
+void fillSinSol(Grid *grid, const MpiInfo *mpiInfo);
+void fillExp(Grid *grid, const MpiInfo *mpiInfo);
+void fillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng);
+void fillCst(Grid *grid, const MpiInfo *mpiInfo);
+void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo);
+
 
 #endif // GRID_H
