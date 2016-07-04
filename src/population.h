@@ -80,6 +80,8 @@ void pVelZero(Population *pop);
 
 void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
 void pVelAssertMax(const Population *pop, double max);
+void pSumPotEnergy(Population *pop);
+void pSumKinEnergy(Population *pop);
 
 /**
  * @brief	Assign particles Maxwellian distributed velocities

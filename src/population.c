@@ -578,13 +578,35 @@ void pWriteEnergy(hid_t xy, Population *pop, double x){
 	sprintf(name,"/energy/kinetic/total");
 	xyWrite(xy,name,x,pop->kinEnergy[nSpecies],MPI_SUM);
 
-	for(int s=0;s<nSpecies;s++){
+	for(int s=0; s<nSpecies; s++){
 
 		sprintf(name,"/energy/potential/specie %i",s);
 		xyWrite(xy,name,x,pop->potEnergy[s],MPI_SUM);
 
 		sprintf(name,"/energy/kinetic/specie %i",s);
 		xyWrite(xy,name,x,pop->kinEnergy[s],MPI_SUM);
+	}
+
+}
+
+void pSumKinEnergy(Population *pop){
+
+	int nSpecies = pop->nSpecies;
+
+	pop->kinEnergy[nSpecies] = 0;
+	for(int s=0; s<nSpecies; s++){
+		pop->kinEnergy[nSpecies] += pop->kinEnergy[s];
+	}
+
+}
+
+void pSumPotEnergy(Population *pop){
+
+	int nSpecies = pop->nSpecies;
+
+	pop->potEnergy[nSpecies] = 0;
+	for(int s=0; s<nSpecies; s++){
+		pop->potEnergy[nSpecies] += pop->potEnergy[s];
 	}
 
 }

@@ -167,6 +167,7 @@ void regularRoutine(dictionary *ini){
 
 		// Accelerate
 		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		pSumKinEnergy(pop);
 
 		gPotEnergy(rho,phi,pop);
 
@@ -177,7 +178,7 @@ void regularRoutine(dictionary *ini){
 		gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 	}
 
