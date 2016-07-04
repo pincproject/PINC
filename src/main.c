@@ -137,12 +137,13 @@ void regularRoutine(dictionary *ini){
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
+
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS|ONCE,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		pVelAssertMax(pop,8.0);		// Just for catching errors while debugging
+		pVelAssertMax(pop,128.0);		// Just for catching errors while debugging
 
 		// Move particles
 		puMove(pop);
@@ -157,8 +158,11 @@ void regularRoutine(dictionary *ini){
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
 		// Compute E-field
+		gZero(phi);
+		gZero(res);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 
+		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
@@ -176,7 +180,7 @@ void regularRoutine(dictionary *ini){
 
 		//Write h5 files
 		// gWriteH5(E, mpiInfo, (double) n);
-		// gWriteH5(rho, mpiInfo, (double) n);
+		gWriteH5(rho, mpiInfo, (double) n);
 		// gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 
