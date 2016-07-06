@@ -604,14 +604,13 @@ void gSet(Grid *grid, const double *value){
 	for(long int p=0;p<sizeProd[rank];p+=size[0])
 		for(int pp=0;pp<size[0];pp++)
 			grid->val[p+pp] = value[pp];
-
 }
 
 void gNormalizeE(const dictionary *ini, Grid *E){
 
 	int nSpecies, nDims;
-	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
+	double *q = iniGetDoubleArr(ini,"population:charge",&nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:mass",&nSpecies);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	gMul(E,pow(timeStep,2)*(q[0]/m[0]));

@@ -49,7 +49,6 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-
 void regularRoutine(dictionary *ini){
 
 	// Random number seeds
@@ -130,6 +129,8 @@ void regularRoutine(dictionary *ini){
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
+	adPrint(pop->renormRho,3);
+
 	// aiPrint(rho->size,4);
 	// alPrint(rho->sizeProd,4);
 	// adPrint(mpiInfo->thresholds,6);
@@ -143,7 +144,7 @@ void regularRoutine(dictionary *ini){
 		msg(STATUS|ONCE,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		pVelAssertMax(pop,128.0);		// Just for catching errors while debugging
+		pVelAssertMax(pop,32.0);		// Just for catching errors while debugging
 
 		// Move particles
 		puMove(pop);
