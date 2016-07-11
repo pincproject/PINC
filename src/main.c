@@ -246,12 +246,12 @@ void mgRoutine(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	fillHeaviside(rho, mpiInfo);
+	// fillHeaviside(rho, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);
 	// fillExp(analytical, mpiInfo);
-	// fillSin(rho, mpiInfo);
+	fillSin(rho, mpiInfo);
 	// fillSinSol(analytical, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
