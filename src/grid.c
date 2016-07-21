@@ -56,6 +56,10 @@ static int *getSubdomain(const dictionary *ini);
 static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
 								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
 
+static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+									const int *trueSize, const long int *sizeProd);
+
+
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
@@ -588,6 +592,21 @@ void gMul(Grid *grid, double num){
 	for(long int p=0;p<nElements;p++) grid->val[p] *= num;
 }
 
+void gAdd(Grid *grid, double num){
+
+	int rank = grid->rank;
+	long int nElements = grid->sizeProd[rank];
+	for(long int p=0;p<nElements;p++) grid->val[p] += num;
+}
+
+void gSub(Grid *grid, double num){
+
+	int rank = grid->rank;
+	long int nElements = grid->sizeProd[rank];
+	for(long int p=0;p<nElements;p++) grid->val[p] -= num;
+}
+
+
 void gZero(Grid *grid){
 
 	int rank = grid->rank;
@@ -619,6 +638,58 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 	}
 
 }
+
+//Not that well tested
+void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo){
+
+	const double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+	int *trueSize = rho->trueSize;
+	int *nGhostLayers = rho->nGhostLayers;
+	int rank = rho->rank;
+	int mpiSize = mpiInfo->mpiSize;
+
+	double myCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	double totCharge = 0;
+
+	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
+
+	gAdd(rho, avgCharge);
+
+	avgCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+}
+
+static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+									const int *trueSize, const long int *sizeProd){
+
+	double charge = 0.;
+
+	if(*sizeProd==1){
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			charge += (*(*val)++);
+
+		*val += *sizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			charge += gNeutralizeRhoInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+
+		*val += *sizeProd**nGhostLayersAfter;
+	}
+
+	return charge;
+}
+
+
 
 void gAddTo(Grid *result, Grid *addition){
 
@@ -1086,7 +1157,7 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(k < (trueSize[2]+1)/2.) val[ind] = 1.;
+				   if(k < (trueSize[2]+1)/2.) val[ind] = 10.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
 				   else val[ind] = -1.;
 			   }
@@ -1099,7 +1170,7 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(subdomain[2]<nSubdomains[2]/2) val[ind] = -1.0;
-				   else val[ind] = 1.;
+				   else val[ind] = 10.;
 			   }
 		   }
 	   }

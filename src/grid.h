@@ -234,6 +234,22 @@ void gSet(Grid *grid, const double *value);
 void gMul(Grid *grid, double num);
 
 /**
+ * @brief Add all values in grid by a number
+ * @param	grid	Grid
+ * @param	num		Number to multiply by
+ * @return			void
+ */
+void gAdd(Grid *grid, double num);
+
+/**
+ * @brief Add all values in grid by a number
+ * @param	grid	Grid
+ * @param	num		Number to multiply by
+ * @return			void
+ */
+void gSub(Grid *grid, double num);
+
+/**
  * @brief Performs a central space finite difference on a grid
  * @param 	scalar 	Value to do the finite differencing on
  * @return	field	Field returned after derivating
@@ -269,6 +285,16 @@ void gFinDiff2nd2D(Grid *phi,const Grid *rho);
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
 
+/**
+ * @brief Set total rho to 0
+ * @param rho	rho-field
+ *
+ *	Sets total charge density to 0. This can be useful to avoid infinite potential
+ *	when using periodic boundary conditions.
+ *
+ */
+
+void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo);
 
 /**
 * @brief Adds a grid to another.
