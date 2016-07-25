@@ -10,10 +10,13 @@
  * particle structs, reading and writing of data and so on.
  */
 
-#include "pinc.h"
+#include "core.h"
 #include <mpi.h>
 #include <math.h>
 #include <hdf5.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
+
 
 
 /******************************************************************************
@@ -50,13 +53,12 @@ static int *getSubdomain(const dictionary *ini);
  * @see gHaloOpDim
  */
 
-static inline void gSliceOp(SliceOpPointer sliceOp,
-					const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int sendTo,
-					const int recvFrom, const int mpiRank, Grid *grid);
-
 static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
 								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
+
+static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+									const int *trueSize, const long int *sizeProd);
+
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
@@ -122,7 +124,7 @@ static const double *addSliceInner(const double *nextGhost, double **valp, const
 			*valp += (*mul)*(*points-1);
 		} else {
 			for(int j=0; j<*points;j++)
-				nextGhost = setSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+				nextGhost = addSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
 		}
 		return nextGhost;
 
@@ -138,31 +140,6 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 
 	val += offset*sizeProd[d];
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
-}
-
-static inline void gSliceOp(SliceOpPointer sliceOp,
-					const int nSlicePoints, const int offsetTake,
-					const int offsetPlace, const int d, const int sendTo,
-					const int recvFrom, const int mpiRank, Grid *grid){
-
-	double *sendSlice = grid->sendSlice;
-	double *recvSlice = grid->recvSlice;
-
-	MPI_Request		sendRequest,recvRequest;
-	MPI_Status 		status;
-
-	//Send
-	getSlice(sendSlice, grid, d, offsetTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, sendTo, mpiRank, MPI_COMM_WORLD, &sendRequest);
-
-	//Recieve
-	MPI_Irecv(recvSlice, nSlicePoints, MPI_DOUBLE, recvFrom, recvFrom, MPI_COMM_WORLD, &recvRequest);
-	MPI_Wait(&recvRequest, &status);
-	MPI_Wait(&sendRequest, &status);
-
-	sliceOp(recvSlice, grid, d, offsetPlace);
-
-	return;
 }
 
 static int *getSubdomain(const dictionary *ini){
@@ -198,9 +175,9 @@ static int *getSubdomain(const dictionary *ini){
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
- /******************************************************************************
-  *	FINITE DIFFERENCE
-  *****************************************************************************/
+/******************************************************************************
+ *	FINITE DIFFERENCE
+ *****************************************************************************/
 
  void gFinDiff1st(const Grid *scalar, Grid *field){
 
@@ -269,7 +246,7 @@ static int *getSubdomain(const dictionary *ini){
  	return;
  }
 
- void gFinDiff2nd3D(Grid *result, const  Grid *object){
+void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
  	//Load
  	int rank = object->rank;
@@ -313,72 +290,83 @@ static int *getSubdomain(const dictionary *ini){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo){
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse){
 
 	int rank = grid->rank;
-	for(int d = 1; d < rank; d++) gHaloOpDim(sliceOp, grid, mpiInfo, d);
+	for(int d = 1; d < rank; d++){
+		gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
+	}
 
-	return;
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse){
 
-	//Load MpiInfo
-	int mpiRank = mpiInfo->mpiRank;
-	int *subdomain = mpiInfo->subdomain;
-	int *nSubdomains = mpiInfo->nSubdomains;
-	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
-
+ 	//Load MpiInfo
+ 	int mpiRank = mpiInfo->mpiRank;
+ 	int *subdomain = mpiInfo->subdomain;
+ 	int *nSubdomains = mpiInfo->nSubdomains;
+ 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 
 	//Load
 	int rank = grid->rank;
-	// int nDims = rank-1;
 	int *size = grid->size;
 	long int *sizeProd = grid->sizeProd;
+	double *sendSlice = grid->sendSlice;
+	double *recvSlice = grid->recvSlice;
 
-	//Local temporary variables
-	int sendTo, recvFrom;
-	int nSlicePoints;
-	int offsetTake, offsetPlace;
+	// Normal operation: take 2nd outermost layer and place it outermost
+	// Inverse operation: take outermost layer and place it 2nd outermost
+	int offsetUpperTake  = size[d]-2+inverse;
+	int offsetUpperPlace = size[d]-1-inverse;
+	int offsetLowerTake  =         1-inverse;
+	int offsetLowerPlace =           inverse;
 
 	//Dimension used for subdomains, 1 less entry than grid dimensions
 	int dd = d - 1;
-	nSlicePoints = sizeProd[rank]/size[d];
-
-	/*****************************************************
-	 *			Sending and recieving upper
-	******************************************************/
-	offsetTake = size[d]-2;
-	offsetPlace = 0;
+	int nSlicePoints = sizeProd[rank]/size[d];
 
 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
-	sendTo = firstElem
- 				+ (subdomain[dd] + 1)%nSubdomains[dd]*nSubdomainsProd[dd];
-	recvFrom = firstElem
-				 + (subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd]*nSubdomainsProd[dd];
+ 	// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
+	int upperSubdomain = firstElem
+		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
+	int lowerSubdomain = firstElem
+		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, sendTo,
-					recvFrom, mpiRank, grid);
+	MPI_Request	sendRequest;
+	MPI_Status 	status;
 
-	/*****************************************************
-	 *			Sending and recieving lower
-	******************************************************/
-	offsetTake = 1;
-	offsetPlace = size[d]-1;
+	// TBD: Ommitting this seems to yield race condition between consecutive
+	// calls to gHaloOpDim(). I'm not quite sure why so this should be
+	// investigated further.
+	MPI_Barrier(MPI_COMM_WORLD);
 
-	gSliceOp(sliceOp, nSlicePoints, offsetTake, offsetPlace, d, recvFrom,
-					sendTo, mpiRank, grid);
+	// Send upper (tag 1)
+	getSlice(sendSlice, grid, d, offsetUpperTake);
+	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
 
+	// Recieve lower (upper on neighbor, hence tag 1)
+	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &status);
+	sliceOp(recvSlice, grid, d, offsetLowerPlace);
 
-	return;
+	MPI_Wait(&sendRequest, &status);
+
+	// Send lower (tag 0)
+	getSlice(sendSlice, grid, d, offsetLowerTake);
+	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0, MPI_COMM_WORLD, &sendRequest);
+
+	// Recieve upper (lower on neighbor, hence tag 0)
+	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &status);
+	sliceOp(recvSlice, grid, d, offsetUpperPlace);
+
+	MPI_Wait(&sendRequest, &status);
 }
+
 
 /*****************************************************************************
  *		ALLOC/DESTRUCTORS
  ****************************************************************************/
-
 
 Grid *gAlloc(const dictionary *ini, int nValues){
 
@@ -502,7 +490,6 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	//Sanity check
 	iniAssertEqualNElements(ini, 2,"grid:nSubdomains","grid:trueSize");
 
-
 	// Get MPI info
 	int mpiSize, mpiRank;
 	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
@@ -572,7 +559,27 @@ void gFree(Grid *grid){
 
 }
 
+int *gGetGlobalSize(const dictionary *ini){
 
+	int nDims;
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+	char *bnd = iniGetStr(ini,"grid:boundaries");
+
+	int *L = malloc(nDims*sizeof(*L));
+
+	if(!strcmp(bnd,"PERIODIC")){
+		for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d];
+	} else {
+		msg(ERROR,"Only PERIODIC grid:boundaries supported yet");
+	}
+
+	free(trueSize);
+	free(nSubdomains);
+	free(bnd);
+
+	return L;
+}
 
 /****************************************************************************
  *	CONVENIENCE GRID OPERATIONS
@@ -584,6 +591,21 @@ void gMul(Grid *grid, double num){
 	long int nElements = grid->sizeProd[rank];
 	for(long int p=0;p<nElements;p++) grid->val[p] *= num;
 }
+
+void gAdd(Grid *grid, double num){
+
+	int rank = grid->rank;
+	long int nElements = grid->sizeProd[rank];
+	for(long int p=0;p<nElements;p++) grid->val[p] += num;
+}
+
+void gSub(Grid *grid, double num){
+
+	int rank = grid->rank;
+	long int nElements = grid->sizeProd[rank];
+	for(long int p=0;p<nElements;p++) grid->val[p] -= num;
+}
+
 
 void gZero(Grid *grid){
 
@@ -601,15 +623,14 @@ void gSet(Grid *grid, const double *value){
 	for(long int p=0;p<sizeProd[rank];p+=size[0])
 		for(int pp=0;pp<size[0];pp++)
 			grid->val[p+pp] = value[pp];
-
 }
 
 void gNormalizeE(const dictionary *ini, Grid *E){
 
 	int nSpecies, nDims;
-	double *q = iniGetDoubleArr(ini,"population:q",&nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:m",&nSpecies);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
+	double *q = iniGetDoubleArr(ini,"population:charge",&nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	gMul(E,pow(timeStep,2)*(q[0]/m[0]));
 	for(int p=0;p<E->sizeProd[E->rank];p++){
@@ -617,6 +638,58 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 	}
 
 }
+
+//Not that well tested
+void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo){
+
+	const double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+	int *trueSize = rho->trueSize;
+	int *nGhostLayers = rho->nGhostLayers;
+	int rank = rho->rank;
+	int mpiSize = mpiInfo->mpiSize;
+
+	double myCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	double totCharge = 0;
+
+	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
+
+	gAdd(rho, avgCharge);
+
+	avgCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+}
+
+static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+									const int *trueSize, const long int *sizeProd){
+
+	double charge = 0.;
+
+	if(*sizeProd==1){
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			charge += (*(*val)++);
+
+		*val += *sizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			charge += gNeutralizeRhoInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+
+		*val += *sizeProd**nGhostLayersAfter;
+	}
+
+	return charge;
+}
+
+
 
 void gAddTo(Grid *result, Grid *addition){
 
@@ -628,6 +701,18 @@ void gAddTo(Grid *result, Grid *addition){
 	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] += addVal[g];
 
 }
+
+void gSubFrom(Grid *result, Grid *subtraction){
+
+	int rank = result->rank;
+	long int *sizeProd = result->sizeProd;
+	double *resultVal = result->val;
+	double *subVal = subtraction->val;
+
+	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] -= subVal[g];
+
+}
+
 
 /****************************************************************
  *		Boundary conditions
@@ -791,7 +876,8 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 		msg(ERROR|ONCE,"grid:threshold must be 2*nDims=%i elements", 2*nDims);
 	}
 	for(int i=0;i<2*nDims;i++){
-		if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
+		// if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
+		if(thresholds[i]<0) thresholds[i] += (size[i%nDims+1]-1);
 	}
 
 	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT
@@ -851,9 +937,9 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo){
 	free(mpiInfo->recv);
 }
 
-/***************************************************************************
- *		H5 FUNCTIONS
- **************************************************************************/
+/******************************************************************************
+ * H5 FUNCTIONS
+ *****************************************************************************/
 
 void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 
@@ -862,9 +948,7 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	hid_t file = grid->h5;
 	double *val = grid->val;
 
-	/*
-	 * STORE DATA COLLECTIVELY
-	 */
+	// Enable collective datawriting
 	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
@@ -872,12 +956,32 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	sprintf(name,"/n=%.1f",n);
 
 	hid_t dataset = H5Dcreate(file,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-
 	H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
 
 	H5Dclose(dataset);
-
 	H5Pclose(pList);
+}
+
+void gReadH5(Grid *grid, const MpiInfo *mpiInfo, double n){
+
+	hid_t fileSpace = grid->h5FileSpace;
+	hid_t memSpace = grid->h5MemSpace;
+	hid_t file = grid->h5;
+	double *val = grid->val;
+
+	// Enable collective datawriting
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+
+	char name[64];
+	sprintf(name,"/n=%.1f",n);
+
+	hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+	H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+
+	H5Dclose(dataset);
+	H5Pclose(pList);
+
 }
 
 void gCloseH5(Grid *grid){
@@ -886,7 +990,7 @@ void gCloseH5(Grid *grid){
 	H5Fclose(grid->h5);
 }
 
-void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
+void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 						  const double *denorm, const double *dimen, const char *fName){
 
 	int rank = grid->rank;
@@ -901,49 +1005,20 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 * CREATE FILE
 	 */
 
-	hid_t file = createH5File(ini,fName,"grid");
+	hid_t file = openH5File(ini,fName,"grid");
 
 	/*
 	 * CREATE ATTRIBUTES
 	 */
 
 	double *debye = malloc(nDims*sizeof(*debye));
-	debye[0] = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
+	debye[0] = iniGetDouble(ini,"grid:debye");
 	for(int d=1;d<nDims;d++) debye[d]=debye[0];
 
-	hsize_t attrSize;
-    hid_t attrSpace;
-    hid_t attribute;
-
-
-	attrSize = (hsize_t)nDims;
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Axis denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, grid->stepSize);
-    H5Aclose(attribute);
-
-
-
-	attribute = H5Acreate(file, "Axis dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, debye);
-    H5Aclose(attribute);
-
-    H5Sclose(attrSpace);
-	free(debye);
-
-	attrSize = (hsize_t)size[0];
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Quantity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, denorm);
-	H5Aclose(attribute);
-
-	attribute = H5Acreate(file, "Quantity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, dimen);
-	H5Aclose(attribute);
-
-	H5Sclose(attrSpace);
+	setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims);
+	setH5Attr(file,"Axis dimensionalizing factor",debye,nDims);
+	setH5Attr(file,"Quantity denormalization factor",denorm,size[0]);
+	setH5Attr(file,"Quantity dimensionalizing factor",denorm,size[0]);
 
 	/*
 	 * HDF5 HYPERSLAB DEFINITION
@@ -983,7 +1058,10 @@ void gCreateH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 
 }
 
-// Assumes rho and phi of same kind of grid
+/******************************************************************************
+ * ENERGY FUNCTIONS
+ *****************************************************************************/
+
 void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop){
 
 	const double *rhoVal = rho->val;
@@ -1044,12 +1122,322 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 	double *v = grid->val;
 
 	for(long int p=0;p<sizeProd[rank];p++){
-		v[p] = 0;
+		v[p] = mpiRank*1000;
 		long int temp = p;
 
 		for(int d=0;d<rank;d++){
-			v[p] += (temp%size[d])*pow(10,d-1) + mpiRank*1000;
+			v[p] += (temp%size[d])*pow(10,d-1);
 			temp/=size[d];
 		}
 	}
+}
+
+/**************************************************************
+*			TEMP, to reading of h5 files are ready
+*************************************************************/
+
+void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Load
+   int *size = grid->size;
+   int *trueSize = grid->trueSize;
+   long int *sizeProd = grid->sizeProd;
+   int *subdomain = mpiInfo->subdomain;
+   int *nSubdomains = mpiInfo->nSubdomains;
+
+   double *val = grid->val;
+
+   gZero(grid);
+
+   //Hardcoding try
+   long int ind = 0;
+   if(nSubdomains[1]==1){
+	   //One core
+	   for(int j = 1; j < size[1]-1; j++){
+		   for (int k = 1; k<size[2]-1; k++) {
+			   for(int l = 1; l < size[3]-1; l++){
+				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				   if(k < (trueSize[2]+1)/2.) val[ind] = 10.;
+				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
+				   else val[ind] = -1.;
+			   }
+		   }
+	   }
+   } else {
+	   msg(STATUS|ONCE, "Hello");
+	   //Multi core
+	   for(int j = 1; j < size[1]-1; j++){
+		   for (int k = 1; k<size[2]-1; k++) {
+			   for(int l = 1; l < size[3]-1; l++){
+				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				//    val[ind] = 1.;
+				//    msg(STATUS|ONCE, "%d", ind);
+				   if(subdomain[1]<nSubdomains[1]/2) val[ind] = 1.0;
+				   else val[ind] = -1.;
+			   }
+		   }
+	   }
+	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
+	   double *slice = grid->sendSlice;
+	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
+	   setSlice(slice, grid, 1, size[1]-2);
+   }
+
+
+
+   // msg(STATUS, "%f", adSum(val, sizeProd[4]));
+
+   return;
+}
+
+void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Load
+   int *size = grid->size;
+   int *trueSize = grid->trueSize;
+   long int *sizeProd = grid->sizeProd;
+   double *val =grid->val;
+
+   //Hardcoding try
+   long int ind = 0;
+   //One core in z dir
+   for(int j = 1; j < size[1]-1; j++){
+	   for (int k = 1; k<size[2]-1; k++) {
+		   for(int l = 1; l < size[3]-1; l++){
+			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+			   if(l < trueSize[3]/2)  val[ind] = -128. + (double)(l - 16.)*(l - 16.)/2.;
+			   else if (l == trueSize[3]/2. || l == trueSize[3]) val[ind] = 0.;
+			   else val[ind] = -128.;
+		   }
+	   }
+   }
+
+   return;
+}
+
+void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
+
+   int *size = grid->size;
+   long int *sizeProd = grid->sizeProd;
+
+   //Load GridQuantity
+   double *val = grid->val;
+
+   long int ind = 0;
+   for(int j = 1; j < size[1]-1; j++){
+	   for (int k = 1; k<size[2]-1; k++) {
+		   for(int l = 1; l < size[3]-1; l++){
+		   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+		   val[ind] = (double) j*j;
+		   // val[ind] = 1.;
+
+		   }
+		   // msg(STATUS, "j = %d, k =%d", j,k);
+	   }
+   }
+
+   return;
+
+}
+
+
+
+void fillPointCharge(Grid *grid , const MpiInfo *mpiInfo){
+
+   //Grid info
+   int *size = grid->size;
+   // int *nGhostLayers = grid->nGhostLayers;
+   long int *sizeProd = grid->sizeProd;
+   // int rank = grid->rank;
+   double *val = grid->val;
+
+   double value = (double ) -1e2;
+
+   gZero(grid);
+
+   //Mpi info
+   int mpiRank = mpiInfo->mpiRank;
+
+   if(mpiRank == 0){	//Always placed at center of node 0;
+	   long int ind =(size[1]/2)*sizeProd[1]
+				   + (size[2]/2)*sizeProd[2]
+				   + (size[3]/2)*sizeProd[3];
+	   val[ind] = value;
+   }
+
+   return;
+
+}
+
+void fillPointSol(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Grid info
+   int *size = grid->size;
+   // int *nGhostLayers = grid->nGhostLayers;
+   long int *sizeProd = grid->sizeProd;
+   // int rank = grid->rank;
+   double *val = grid->val;
+
+   //Point of charge
+   double x = (double)(size[1]/2);
+   double y = (double)(size[2]/2);
+   double z = (double)(size[3]/2);
+
+   // msg(STATUS, "x,y,z = [%f, %f, %f]", x,y,z);
+
+   //Mpi info
+   int mpiRank = mpiInfo->mpiRank;
+
+   if(mpiRank == 0){	//Always placed at center of node 0;
+	   //Find node at center
+	   for(int j = 1; j < size[1]-1; j ++){
+		   for(int k = 1; k < size[2]-1; k ++){
+			   for(int l = 1; l < size[3]-1; l++){
+				   double distance = (j-x)*(j-x) + (k-y)*(k-y) + (l-z)*(l-z);
+				   distance = sqrt(distance);
+				   long int ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+
+				   if(distance > 0.00001)
+					   val[ind] = 1./distance;
+				   else val[ind] = 0.;
+			   }
+		   }
+	   }
+   }
+
+   return;
+}
+
+void fillSin(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Load MPI stuff
+   int *subdomain = mpiInfo->subdomain;
+   int *nSubdomains = mpiInfo->nSubdomains;
+
+   //Load grid info
+   int *trueSize = grid->trueSize;
+   int *size = grid->size;
+   int *nGhostLayers = grid->nGhostLayers;
+   long int *sizeProd = grid->sizeProd;
+   double *val = grid->val;
+
+   //Temp quick functions and constants
+   double sin(double);
+
+   long int ind;
+   double coeffX = 2*PI/((trueSize[1])*nSubdomains[0]);
+   double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
+   // double coeffZ = PI/(size[3]*nSubdomains[2]);
+
+
+   for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
+	   for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
+		   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
+			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
+			   // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
+			   val[ind] = 	sin( ( (j - nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
+						   *sin( ( (k - nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffY);
+						   // *sin((l+size[3]*subdomain[2])*coeffZ);
+
+		   }
+	   }
+   }
+
+
+   return;
+}
+
+void fillSinSol(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Load MPI stuff
+   int *subdomain = mpiInfo->subdomain;
+   int *nSubdomains = mpiInfo->nSubdomains;
+
+   //Load grid info
+   int *trueSize = grid->trueSize;
+   int *size = grid->size;
+   int *nGhostLayers = grid->nGhostLayers;
+   long int *sizeProd = grid->sizeProd;
+   double *val = grid->val;
+
+   //Temp quick functions and constants
+   double sin(double);
+
+   long int ind;
+   double coeffX = 2*PI/(trueSize[1]*nSubdomains[0]);
+   double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
+   // double coeffZ = PI/(size[3]*nSubdomains[2]);
+
+
+   for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
+	   for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
+		   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
+			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
+			   // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
+			   val[ind] = 	-1/(coeffX*coeffX)*sin( ( (j-nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
+						   -1/(coeffY*coeffY)*sin( ( (k-nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffX);
+						   // *sin((l+size[3]*subdomain[2])*coeffZ);
+
+		   }
+	   }
+   }
+
+
+   return;
+}
+
+void fillExp(Grid *grid, const MpiInfo *mpiInfo){
+
+   //Load Mpi
+   // int *subdomain = mpiInfo->subdomain;
+   // int *nSubdomains = mpiInfo->nSubdomains;
+
+   //Load
+   int *trueSize = grid->size;
+   long int *sizeProd = grid->sizeProd;
+
+   //Load GridQuantity
+   double *val = grid->val;
+
+   //Function
+   double exp(double x);
+   double halfPoint = trueSize[1]/2;
+   double normalize = 1./(trueSize[1]*trueSize[1]);
+
+   long int ind = 0;
+   for(int j = 0; j < trueSize[1]; j++){
+	   for (int k = 0; k<trueSize[2]; k++) {
+		   for(int l = 0; l < trueSize[3]; l++){
+			   ind = (j+1)*sizeProd[1] + (k+1)*sizeProd[2] + (l+1)*sizeProd[3];
+			   val[ind] = exp(-10*((j-halfPoint)*(j-halfPoint)*normalize +
+								   (k-halfPoint)*(k-halfPoint)*normalize +
+									   (l-halfPoint)*(l-halfPoint)*normalize));
+		   }
+	   }
+   }
+
+   return;
+}
+
+void fillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
+
+   //Load
+   double *val = grid->val;
+   long int *sizeProd = grid->sizeProd;
+   int rank = grid->rank;
+   for(int g = 0; g < sizeProd[rank]; g++) val[g] = gsl_ran_gaussian_ziggurat (rng,1.);
+
+   return;
+}
+
+void fillCst(Grid *grid, const MpiInfo *mpiInfo){
+
+   int rank = grid->rank;
+   long int *sizeProd = grid->sizeProd;
+   double *val = grid->val;
+
+   for(int g = 0; g < sizeProd[rank]; g++)  val[g] = 1.;
+
+
+   return;
 }

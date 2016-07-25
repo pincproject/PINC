@@ -9,7 +9,7 @@
  */
 #define _XOPEN_SOURCE 700
 
-#include "pinc.h"
+#include "core.h"
 #include <time.h>
 #include <mpi.h>
 #include <stdarg.h>
@@ -58,11 +58,26 @@ void tFree(Timer *t){
 
 #elif	defined(__APPLE__)
 
-	unsigned long long int getNanoSec(void){
+         unsigned long long int getNanoSec(void){
 		//TBD
-		msg(WARNING, "Timer function for macOS is not completed.");
+		//msg(WARNING, "Timer function for macOS is not completed.");
 
-		return 0.;
+                #include <mach/mach_time.h> // mach_absolute_time
+
+	   //#define BILLION 1000000000L
+
+	   //struct timespec time; // represent the elapsed time,
+	        mach_timebase_info_data_t timebase; // needed to convert mach_absolute time to something meaningful
+	        mach_timebase_info(&timebase); // needed to convert mach_absolute time to something meaningful
+
+		uint64_t clock = mach_absolute_time(); // capture the current time
+		uint64_t nanosecs = clock * (uint64_t)timebase.numer / (uint64_t)timebase.denom; // convert to nanoseconds
+
+		//time.tv_sec = nanosecs / BILLION; // convert to timespec
+		//time.tv_nsec = nanosecs % BILLION; // convert to timespec
+
+		return nanosecs; //time.tv_sec*1e9 + time.tv_nsec;
+
 	}
 
 #endif
@@ -425,42 +440,45 @@ void alSet(long int *a, long int n, ...){
 	va_end(args);
 }
 
-void adPrintInner(double *a, long int n, char *varName){
+void adPrintInner(double *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-inc;i+=inc){
 		printf("%f ",a[i]);
 	}
-	printf("%f]\n",a[n-1]);
+	printf("%f]\n",a[i]);
 
 }
 
-void aiPrintInner(int *a, long int n, char *varName){
+void aiPrintInner(int *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-1;i+=inc){
 		printf("%i ",a[i]);
 	}
-	printf("%i]\n",a[n-1]);
+	printf("%i]\n",a[i]);
 
 }
 
-void alPrintInner(long int *a, long int n, char *varName){
+void alPrintInner(long int *a, long int inc, long int end, char *varName){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	printf("PRINT(%i): %s = \n  [",rank,varName);
-	for(int i=0;i<n-1;i++){
+	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
+	int i;
+	for(i=0;i<end-1;i+=inc){
 		printf("%li ",a[i]);
 	}
-	printf("%li]\n",a[n-1]);
+	printf("%li]\n",a[i]);
 
 }
 
@@ -545,3 +563,5 @@ void alPrintInner(long int *a, long int n, char *varName){
 
     return;
  }
+
+ 

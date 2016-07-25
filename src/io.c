@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "iniparser.h"
-#include "pinc.h"
+#include "core.h"
 
 #define BUFFSIZE 128
 
@@ -35,39 +35,38 @@
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
 
- /**
-  * @brief Makes a directory
-  * @param	dir		Directory name
-  * @return	0 for success, 1 for failure
-  *
-  * dir can be a path but ancestors must exist. Directory will have permissions
-  * 0775. Used in makePath().
-  *
-  * @see makePath().
-  */
- static int makeDir(const char *dir);
+/**
+ * @brief Makes a directory
+ * @param	dir		Directory name
+ * @return	0 for success, 1 for failure
+ *
+ * dir can be a path but ancestors must exist. Directory will have permissions
+ * 0775. Used in makePath().
+ *
+ * @see makePath().
+ */
+static int makeDir(const char *dir);
 
- /**
-  * @brief Makes all parent directories of URL path
-  * @param	path	Path
-  * @return	0 for success, 1 for failure
-  *
-  * Examples:
-  *	path="dir/dir/file"	generates the folder "./dir/dir/"
-  *  path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
-  *  path="../dir/file" generates the folder "../dir/"
-  *	path="/dir/file" generates the folder "/dir/"
-  *
-  * Already existing folders are left as-is. This function can be used to ensure
-  * that the parent directories of its path exists.
-  */
- int makePath(const char *path);
+/**
+ * @brief Makes all parent directories of URL path
+ * @param	path	Path
+ * @return	0 for success, 1 for failure
+ *
+ * Examples:
+ *	path="dir/dir/file"	generates the folder "./dir/dir/"
+ *	path="dir/dir/dir/" generates the folder "./dir/dir/dir/"
+ *	path="../dir/file" generates the folder "../dir/"
+ *	path="/dir/file" generates the folder "/dir/"
+ *
+ * Already existing folders are left as-is. This function can be used to ensure
+ * that the parent directories of its path exists.
+ */
+int makePath(const char *path);
 
 /**
  * @brief	Splits a comma-separated list-string to an array of strings.
  * @param	list	Comma-sepaprated list
  * @return	A NULL-terminated array of NULL-terminated strings
- * @see		freeStrArr(), listGetNElements()
  *
  * Example: when str="abc ,def, ghi", listToStrArr(str); will return
  * an array arr such that :
@@ -90,8 +89,96 @@ static char** listToStrArr(const char* list);
  */
 static int listGetNElements(const char* list);
 
+/**
+ * @brief Asserts that key exists in ini-file and emits ERROR if not.
+ * @param	ini		ini-file dictionary
+ * @param	key		Key to check existence of
+ * @return			void
+ */
+void iniAssertExistence(const dictionary *ini, const char* key);
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
+ *****************************************************************************/
+
+void msg(msgKind kind, const char* restrict format,...){
+
+	// Retrieve argument list
+	va_list args;
+	va_start(args,format);
+	const int bufferSize = 132;
+
+	// Set prefix and determine which output to use
+	char prefix[8];
+	FILE *stream = stdout;
+	switch(kind&0x0F){
+		case STATUS:
+			strcpy(prefix,"STATUS");
+			break;
+		case WARNING:
+			strcpy(prefix,"WARNING");
+			stream = stderr;
+			break;
+		case ERROR:
+			strcpy(prefix,"ERROR");
+			stream = stderr;
+			break;
+	    case TIMER:
+		    strcpy(prefix, "TIMER");
+		    break;
+	}
+
+	// Parse and assemble message
+	int rank;
+	char msg[bufferSize], buffer[bufferSize];
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	vsnprintf(msg,bufferSize,format,args);
+	snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
+	va_end(args);
+
+	// Print message
+	if(!(kind&ONCE) || rank==0){
+		fprintf(stream,"%s\n",buffer);
+	}
+
+	// Quit if error
+	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
+
+}
+
+void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
+
+	// Get filename
+	char key[BUFFSIZE] = "msgfiles:";
+	strcat(key,fNameKey);
+	char *fName = iniGetStr(ini,key);
+
+	// Have you opened a file that must be closed?
+	int fileOpen = 0;
+
+	// Open file (or other stream)
+	FILE *file;
+	if(strcmp(fName,"stdout")==0)		file = stdout;
+	else if(strcmp(fName,"stderr")==0)	file = stderr;
+	else if(strcmp(fName,"")==0)		file = stdout;
+	else {
+		file = fopen(fName,"a");
+		fileOpen = 1;
+	}
+
+	// Print
+	va_list args;
+	va_start(args,format);
+	vfprintf(file,format,args);
+	va_end(args);
+
+	// Close file
+	if(fileOpen) fclose(file);
+	free(fName);
+}
+
+/******************************************************************************
+ * DEFINING INI PARSING FUNCTIONS (expanding iniparser library)
  *****************************************************************************/
 
 dictionary* iniOpen(int argc, char *argv[]){
@@ -136,12 +223,12 @@ dictionary* iniOpen(int argc, char *argv[]){
 			if(makePath(fName))
 				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
 
-			// check whether file exists
-			FILE *fh = fopen(fName,"r");
-			if(fh!=NULL){
-				fclose(fh);
-				msg(ERROR|ONCE,"'%s' already exists.",fName);
-			}
+			// // check whether file exists
+			// FILE *fh = fopen(fName,"r");
+			// if(fh!=NULL){
+			// 	fclose(fh);
+			// 	msg(ERROR|ONCE,"'%s' already exists.",fName);
+			// }
 		}
 
 	}
@@ -153,146 +240,20 @@ dictionary* iniOpen(int argc, char *argv[]){
 
 }
 
-void msg(msgKind kind, const char* restrict format,...){
-
-	// Retrieve argument list
-	va_list args;
-	va_start(args,format);
-	const int bufferSize = 132;
-
-	// Set prefix and determine which output to use
-	char prefix[8];
-	FILE *stream = stdout;
-	switch(kind&0x0F){
-		case STATUS:
-			strcpy(prefix,"STATUS");
-			break;
-		case WARNING:
-			strcpy(prefix,"WARNING");
-			stream = stderr;
-			break;
-		case ERROR:
-			strcpy(prefix,"ERROR");
-			stream = stderr;
-			break;
-    case TIMER:
-      strcpy(prefix, "TIMER");
-      stream = stderr;
-      break;
-	}
-
-	// Parse and assemble message
-	int rank;
-	char msg[bufferSize], buffer[bufferSize];
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	vsnprintf(msg,bufferSize,format,args);
-	snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
-	va_end(args);
-
-	// Print message
-	if(!(kind&ONCE) || rank==0){
-		fprintf(stream,"%s\n",buffer);
-	}
-
-	// Quit if error
-	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
-
+void iniClose(dictionary *ini){
+	iniparser_freedict(ini);
 }
 
-void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
+void iniAssertExistence(const dictionary *ini, const char* key){
 
-	// Get filename
-	char key[BUFFSIZE] = "msgfiles:";
-	strcat(key,fNameKey);
-	char *fName = iniparser_getstring(ini,key,"");
-
-	// Have you opened a file that must be closed?
-	int fileOpen = 0;
-
-	// Open file (or other stream)
-	FILE *file;
-	if(strcmp(fName,"stdout")==0)		file = stdout;
-	else if(strcmp(fName,"stderr")==0)	file = stderr;
-	else if(strcmp(fName,"")==0)		file = stdout;
-	else {
-		file = fopen(fName,"a");
-		fileOpen = 1;
-	}
-
-	// Print
-	va_list args;
-	va_start(args,format);
-	vfprintf(file,format,args);
-	va_end(args);
-
-	// Close file
-	if(fileOpen) fclose(file);
-
-}
-
-/******************************************************************************
- * DEFINING INI PARSING FUNCTIONS (expanding iniparser library)
- *****************************************************************************/
-
-int iniGetNElements(const dictionary* ini, const char* key){
-
-	char *list = iniparser_getstring((dictionary*)ini,key,"");
-	return listGetNElements(list);
-
-}
-
-
-char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
-
-	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free this
-	char **strArr = listToStrArr(list);
-
-	*nElements = listGetNElements(list);
-
-	return strArr;
-
-}
-
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
-
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	long int *result = malloc(*nElements*sizeof(long int));
-	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
-
-	freeStrArr(strArr);
-
-	return result;
-
-}
-
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
-
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	int *result = malloc(*nElements*sizeof(int));
-	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,10);
-
-	freeStrArr(strArr);
-
-	return result;
-
-}
-
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
-
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	double *result = malloc(*nElements*sizeof(double));
-	for(int i=0;i<*nElements;i++) result[i] = strtod(strArr[i],NULL);
-
-	freeStrArr(strArr);
-
-	return result;
+	if(!iniparser_find_entry((dictionary*)ini,key))
+		msg(ERROR,"Key \"%s\" not found in input file",key);
 
 }
 
 int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
+
+	// iniGetNElements() asserts the existence of the keys
 
 	va_list args;
 	va_start(args,nKeys);
@@ -320,48 +281,283 @@ int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
 
 }
 
+int iniGetNElements(const dictionary* ini, const char* key){
+
+	iniAssertExistence(ini,key);
+	char *list = iniparser_getstring((dictionary*)ini,key,"");
+	return listGetNElements(list);
+
+}
+
+int iniGetInt(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	return iniparser_getint((dictionary*)ini,key,0);
+
+}
+
+long int iniGetLongInt(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return strtol(res,NULL,0);
+
+}
+
+double iniGetDouble(const dictionary* ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	return iniparser_getdouble((dictionary*)ini,key,0.0);
+
+}
+
+char* iniGetStr(const dictionary *ini, const char *key){
+
+	iniAssertExistence(ini,key);
+	char *temp = iniparser_getstring((dictionary*)ini,key,NULL); // don't free
+
+	// temp points to instance inside dictionary which is ruined if free'd.
+	// Creating a copy which must be free'd to make this function's behavior
+	// consistent with other ini-functions, e.g. iniGetIntArr().
+	int len = strlen(temp);
+	char *value = malloc((len+1)*sizeof(*value));
+	strcpy(value,temp);
+
+	return value;
+
+}
+
+int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	int *result = malloc(*nElements*sizeof(int));
+	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,0);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	long int *result = malloc(*nElements*sizeof(long int));
+	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	double *result = malloc(*nElements*sizeof(double));
+	for(int i=0;i<*nElements;i++) result[i] = strtod(strArr[i],NULL);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
+
+	iniAssertExistence(ini,key);
+	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free
+	char **strArr = listToStrArr(list);
+
+	*nElements = listGetNElements(list);
+
+	return strArr;
+
+}
+
 /******************************************************************************
  * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
  *****************************************************************************/
 
-hid_t createH5File(const dictionary *ini, const char *fName, const char *fSubExt){
-
+hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
 
 	// Determine filename
-	char *fPrefix = iniparser_getstring((dictionary *)ini,"files:output","");	// don't free
+	char *fPrefix = iniGetStr(ini,"files:output");
 
 	// Add separator if filename prefix (not just folder) is specified
 	char sep[2] = "\0\0";
 	char lastchar = fPrefix[strlen(fPrefix)-1];
 	if(strcmp(fPrefix,".")==0) sep[0]='/';
-	else if(lastchar!='/') sep[0]='_';
+	else if(strlen(fPrefix)>0 && lastchar!='/') sep[0]='_';
 
 	char *fTotName = strCatAlloc(6,fPrefix,sep,fName,".",fSubExt,".h5");
 
-	// Create file with MPI-I/O access
+	// Enable MPI-I/O access
 	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
-
 
 	// Make sure parent folder exist
 	if(makePath(fName))
 		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fTotName);
 
-	// check whether file exists
+	hid_t file;	// h5 file handle
+
+	// Open or create file (if it doesn't exist)
 	FILE *fh = fopen(fTotName,"r");
 	if(fh!=NULL){
 		fclose(fh);
-		msg(ERROR|ONCE,"'%s' already exists.",fTotName);
+		file = H5Fopen(fTotName,H5F_ACC_RDWR,pList);
+	} else {
+		file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
 	}
 
-	// create file
-	hid_t file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
 	H5Pclose(pList);
-
+	free(fPrefix);
 	free(fTotName);
 
 	return file;
 
+}
+
+void setH5Attr(hid_t h5, const char *name, const double *value, int size){
+
+	if(H5Aexists(h5,name)){
+
+		int fNameSize = 128;
+		char fName[fNameSize];
+		H5Fget_name(h5,fName,fNameSize);
+
+		msg(WARNING|ONCE,"overwriting attribute \"%s\" in %s",name,fName);
+
+		H5Adelete(h5,name);
+
+	}
+
+	// Create attribute dataspace
+	hsize_t attrSize = (hsize_t)size;
+	hid_t attrSpace = H5Screate_simple(1,&attrSize,NULL);
+
+	// Create attribute and write data to it
+	hid_t attribute = H5Acreate(h5, name, H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+	H5Awrite(attribute, H5T_NATIVE_DOUBLE, value);
+
+	// Free
+    H5Aclose(attribute);
+    H5Sclose(attrSpace);
+
+}
+
+void createH5Group(hid_t h5, const char *name){
+
+	// Makes a new editable copy of name. Input may be string literal, which
+	// cannot be edited anyway.
+	char *str = malloc((strlen(name)+1)*sizeof(*str));
+	strcpy(str,name);
+
+	for(char *c=str+1; *c!='\0'; c++){
+
+		if(*c=='/'){
+			*c='\0';	// Temporarily ending string prematurely
+
+			// Creates this part of the path if it doesn't already exist
+			if(!H5Lexists(h5,str,H5P_DEFAULT)){
+				hid_t group = H5Gcreate(h5,str,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+				H5Gclose(group);
+			}
+
+			*c='/';		// Changes string back
+		}
+	}
+
+	free(str);
+
+}
+
+
+hid_t xyOpenH5(const dictionary *ini, const char *fName){
+
+	return openH5File(ini,fName,"xy");
+}
+
+void xyCreateDataset(hid_t h5, const char *name){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	createH5Group(h5,name);	// Creates parent groups
+
+	const int arrSize=2;
+
+	// Enable chunking of data in order to use extendible (unlimited) datasets
+	hsize_t chunkDims[] = {1,2};
+	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(pList, arrSize, chunkDims);
+
+	// Create dataspace for file initially empty but extendable
+	hsize_t fileDims[] = {0,2};
+	hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
+	hid_t fileSpace = H5Screate_simple(arrSize,fileDims,fileDimsMax);
+
+	// Create dataset in file using mentioned dataspace
+	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
+
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	// Reduce data across nodes
+	double yReduced;
+	MPI_Reduce(&y,&yReduced,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
+
+	// Load dataset
+	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
+
+	// Extend dataspace in file by one row (must be done on all MPI nodes)
+	const int arrSize=2;
+	hid_t fileSpace = H5Dget_space(dataset);
+	hsize_t fileDims[arrSize];
+	H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
+	fileDims[0]++;
+	H5Dset_extent(dataset,fileDims);
+
+	// update fileSpace after change
+	H5Sclose(fileSpace);
+	fileSpace = H5Dget_space(dataset);
+
+	// Write only from MPI rank 0
+	if(mpiRank==0){
+		// Select hyperslab to write to
+		hsize_t offset[] = {fileDims[0]-1,0};
+		hsize_t count[] = {1,1};
+		hsize_t memDims[] = {1,2};
+		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,count,memDims);
+
+		// Write to file
+		double data[] = {x,yReduced};
+		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
+		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
+		H5Sclose(memSpace);
+	}
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+
+void xyCloseH5(hid_t h5){
+
+	H5Fclose(h5);
 }
 
 /******************************************************************************
@@ -444,211 +640,6 @@ void freeStrArr(char** strArr){
 	free(strArr);
 
 }
-
-/******************************************************************************
- * DEPRECATED FUNCTIONS
- *****************************************************************************/
-
-/*
-static void listparser_getint(	const dictionary *d, const char *key,
-								int *result){
-
-	char *list = iniparser_getstring((dictionary*)d,key,"");
-	char **strarr = list_to_strarr(list);
-	int count = list_getnelements(list);
-
-	for(int i=0;i<count;i++) result[i] = (int)strtol(strarr[i],NULL,10);
-
-	free_strarr(strarr);
-
-}
-
-static void listparser_getdouble(	const dictionary *d, const char *key,
-									double *result){
-
-	char *list = iniparser_getstring((dictionary*)d,key,"");
-	char **strarr = list_to_strarr(list);
-	int count = list_getnelements(list);
-
-	for(int i=0;i<count;i++) result[i] = strtod(strarr[i],NULL);
-
-	free_strarr(strarr);
-
-}
-*/
-
-/*
-void ini_complete_time(dictionary *ini){
-
-	// Load input parameters from [time]
-	int Nt = iniparser_getint(ini,"time:Nt",0);
-	double T = iniparser_getdouble(ini,"time:T",0);
-	double dt = iniparser_getdouble(ini,"time:dt",0);
-
-	// Number of parameters specified
-	int nparams = (Nt!=0) + (T!=0) + (dt!=0);
-
-	// Check for correct number of input parameters
-	if(nparams<2) msg(ERROR,"[time] is under-determined. Specify 2 of these: Nt, T and dt.");
-	if(nparams>2) msg(ERROR,"[time] is over-determined. Specify only 2 of these: Nt, T and dt.");
-
-	// Compute non-specified input parameter and store in dictionary
-	// Hexadecimal (%a) specifier is used since this cause no precision loss when converting to string
-	if(dt==0){
-		dt = T/Nt;
-
-		char buffer[BUFFSIZE];
-		sprintf(buffer,"%a",dt);
-		iniparser_set(ini,"time:dt",buffer);
-
-		fmsg(ini,"parsedump","Computed dt.\n");
-	}
-	if(T==0){
-		T = Nt*dt;
-
-		char buffer[BUFFSIZE];
-		sprintf(buffer,"%a",T);
-		iniparser_set(ini,"time:T",buffer);
-
-		fmsg(ini,"parsedump","Computed T.\n");
-	}
-	if(Nt==0){
-		Nt = (int) ceil(T/dt);
-		double dt_new = T/Nt;
-
-		char buffer[BUFFSIZE];
-		sprintf(buffer,"%i",Nt);
-		iniparser_set(ini,"time:Nt",buffer);
-		sprintf(buffer,"%a",dt_new);
-		iniparser_set(ini,"time:dt",buffer);
-
-		fmsg(ini,"parsedump","Computed Nt.\n");
-		if(dt!=dt_new){
-			msg(WARNING,			"had to reduce dt from %f to %f to get integer Nt.",dt,dt_new);
-			fmsg(ini,"parsedump",	"Had to reduce dt from %f to %f to get integer Nt.\n",dt,dt_new);
-		}
-
-	}
-	fmsg(ini,"parsedump","Nt=%i\n",Nt);
-	fmsg(ini,"parsedump","T=%f 1/omega_p (exact: %a)\n",T,T);
-	fmsg(ini,"parsedump","dt=%f 1/omega_p (exact: %a)\n",dt,dt);
-
-}
-
-void ini_complete_grid(dictionary *ini){
-
-	// Get dimensions specified by each parameters (0 if unspecified)
-	int Ng_dim = listparser_getnelements(ini,"grid:Ng");
-	int L_dim  = listparser_getnelements(ini,"grid:L");
-	int dx_dim = listparser_getnelements(ini,"grid:dx");
-
-	// Number of grid input parameters specified
-	int nparams = (Ng_dim!=0) + (L_dim!=0) + (dx_dim!=0);
-
-	// Check for correct number of input parameters
-	if(nparams<2) msg(ERROR,"[grid] is under-determined. Specify 2 of these: Ng, L and dx.");
-	if(nparams>2) msg(ERROR,"[grid] is over-determined. Specify only 2 of these: Ng, L and dx.");
-
-	// Check for equal length of lists
-	if(Ng_dim==0 && L_dim!=dx_dim)
-		msg(ERROR,"L and dx have unequal number of elements.");
-
-	if(L_dim==0 && Ng_dim!=dx_dim)
-		msg(ERROR,"Ng and dx have unequal number of elements.");
-
-	if(dx_dim==0 && Ng_dim!=L_dim)
-		msg(ERROR,"Ng and L have unequal number of elements.");
-
-	// Get number of dimensions (one is zero, the other two equals dim)
-	int dim = (Ng_dim + L_dim + dx_dim)/2;
-
-	fmsg(ini,"parsedump","Nd=%i dimensions\n",dim);
-
-	// Check for valid number of dimensions
-	if(dim!=3) msg(ERROR,"%i dimensions specified but only 3D simulations are supported.",dim);
-
-	// Load specified input parameters
-	int 	*Ng = malloc(dim*sizeof(int));
-	double	*L  = malloc(dim*sizeof(double));
-	double	*dx = malloc(dim*sizeof(double));
-	listparser_getint(ini,"grid:Ng",Ng);
-	listparser_getdouble(ini,"grid:L",L);
-	listparser_getdouble(ini,"grid:dx",dx);
-
-	// Compute non-specified input parameter and store in dictionary
-	// Hexadecimal (%a) specifier is used since this cause no precision loss when converting to string
-	if(dx_dim==0){
-		fmsg(ini,"parsedump","Computed dx.\n");
-
-		char buffer[BUFFSIZE]="";
-		for(int i=0;i<dim;i++){
-			dx[i] = L[i]/Ng[i];
-			sprintf(buffer,"%s,%a",buffer,dx[i]);
-		}
-
-		char *temp=buffer+1;	// Skip first comma
-		iniparser_set(ini,"grid:dx",temp);
-
-	}
-	if(L_dim==0){
-		fmsg(ini,"parsedump","Computed L.\n");
-
-		char buffer[BUFFSIZE]="";
-		for(int i=0;i<dim;i++){
-			L[i] = Ng[i]*dx[i];
-			sprintf(buffer,"%s,%a",buffer,L[i]);
-		}
-
-		char *temp=buffer+1;	// Skip first comma
-		iniparser_set(ini,"grid:L",temp);
-	}
-	if(Ng_dim==0){
-		fmsg(ini,"parsedump","Computed Ng.\n");
-
-		char buffer_Ng[BUFFSIZE]="";
-		char buffer_dx[BUFFSIZE]="";
-		for(int i=0;i<dim;i++){
-			Ng[i] = (int) ceil(L[i]/dx[i]);
-			double dx_new = L[i]/Ng[i];
-
-			sprintf(buffer_Ng,"%s,%i",buffer_Ng,Ng[i]);
-			sprintf(buffer_dx,"%s,%a",buffer_dx,dx_new);
-
-			if(dx[i]!=dx_new){
-				msg(WARNING,			"had to reduce dx[%i] from %f to %f to get integer Ng[%i].",i,dx[i],dx_new,i);
-				fmsg(ini,"parsedump",	"Had to reduce dx[%i] from %f to %f to get integer Ng[%i].\n",i,dx[i],dx_new,i);
-			}
-		}
-
-		char *temp_Ng=buffer_Ng+1;		// Skip first comma
-		char *temp_dx=buffer_dx+1;
-		iniparser_set(ini,"grid:Ng",temp_Ng);
-		iniparser_set(ini,"grid:dx",temp_dx);
-
-	}
-
-	fmsg(ini,"parsedump","Ng=%f",Ng[0]);
-	for(int i=1;i<dim;i++) fmsg(ini,"parsedump",",%f",Ng[i]);
-	fmsg(ini,"parsedump","\n");
-
-	fmsg(ini,"parsedump","L=%f",L[0]);
-	for(int i=1;i<dim;i++) fmsg(ini,"parsedump",",%f",L[i]);
-	fmsg(ini,"parsedump"," (exact: %a",L[0]);
-	for(int i=1;i<dim;i++) fmsg(ini,"parsedump",",%a",L[i]);
-	fmsg(ini,"parsedump",")\n");
-
-	fmsg(ini,"parsedump","dx=%f",dx[0]);
-	for(int i=1;i<dim;i++) fmsg(ini,"parsedump",",%f",dx[i]);
-	fmsg(ini,"parsedump"," (exact: %a",dx[0]);
-	for(int i=1;i<dim;i++) fmsg(ini,"parsedump",",%a",dx[i]);
-	fmsg(ini,"parsedump",")\n");
-
-	free(Ng);
-	free(L);
-	free(dx);
-
-}
-*/
 
 static int makeDir(const char *dir){
     struct stat st;

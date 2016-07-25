@@ -4,6 +4,19 @@
 
 \section sec_intro Introduction to PINC source code
 
-hei hå hå hå ho hi ho he ho
+Function prefix description:
+
+Prefix		| Header		| Source		| Description
+------------|---------------|---------------|------------------------------------------------------
+ad/ai/al	| pinc.h		| aux.c			| Array operations (set value, arithmetic operations between vectors and vector/scalar, find extremums, test for equality, print for debugging)
+g			| pinc.h		| grid.c		| Handle grid quantities using the Grid struct (alloc/free, store to file, set values, arithmetic operations, extract slices, potential energy, finite differencing)
+ini			| pinc.h		| io.c			| Open and read simulation settings from .ini-file
+mg			| multigrid.h	| multigrid.c	| Multigrid Poisson solver (acting on Grid and Multigrid)
+p			| pinc.h		| population.c	| Handle particle quantities using the Population struct (alloc/free, store to file, set values, transform between subdomains)
+pu			| pusher.h		| pusher.c		| Particle pusher (accelerate and move particles, and weighting)
+t			| pinc.h		| aux.c			| Timing functions for code profiling
+xy			| pinc.h		| io.c			| Create .xy.h5 file and append simple (x,y) datapoints to it
+
+
 
 */

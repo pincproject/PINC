@@ -9,7 +9,9 @@
  * particle structs, reading and writing of data and so on.
  */
 
-#include "pinc.h"
+#define _XOPEN_SOURCE 700
+
+#include "core.h"
 #include <math.h>
 #include <mpi.h>
 #include <gsl/gsl_rng.h>
@@ -115,12 +117,10 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
-	int *nSubdomains = mpiInfo->nSubdomains;
 	double *posToSubdomain = mpiInfo->posToSubdomain;
 
 	// Compute normalized length of global reference frame
-	int *L = malloc(nDims*sizeof(int));
-	for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d]-1;
+	int *L = gGetGlobalSize(ini);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -138,7 +138,8 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 			// Count the number of dimensions where the particle resides in the range of this node
 			int correctRange = 0;
-			for(int d=0;d<nDims;d++) correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+			for(int d=0;d<nDims;d++)
+				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
 
 			// Iterate only if particle resides in this sub-domain.
 			if(correctRange==nDims){
@@ -166,6 +167,44 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 }
 
+void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
+
+	iniAssertEqualNElements(ini,2,"population:perturbAmplitude","population:perturbMode");
+
+	int nElements;
+	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",&nElements);
+	double *mode = iniGetDoubleArr(ini,"population:perturbMode",&nElements);
+
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+	if(nElements!=nDims*nSpecies)
+		msg(ERROR|ONCE,"population:perturbMode neeeds to have nDims*nSpecies elements");
+
+	int *L = gGetGlobalSize(ini);
+	double *pos = pop->pos;
+
+	pToGlobalFrame(pop,mpiInfo);
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+		for(long int i=iStart;i<iStop;i++){
+
+			for(int d=0;d<nDims;d++){
+				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(2.0*M_PI*mode[s*nDims+d]*pos[i*nDims+d]/L[d]);
+			}
+		}
+	}
+
+	pToLocalFrame(pop,mpiInfo);
+
+	free(L);
+	free(amplitude);
+	free(mode);
+
+}
+
 void pPosDebug(const dictionary *ini, Population *pop){
 
 	int nSpecies;
@@ -179,7 +218,8 @@ void pPosDebug(const dictionary *ini, Population *pop){
 		nParticles[s] /= mpiSize;
 	}
 
-	int nDims = pop->nDims;	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
+	int nDims = pop->nDims;
+	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
 	alSet(nMigrantsResult,81,	1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
 								1,1,0,1,1,0,1,1,0,3,3,0,0,0,0,4,4,0,1,1,0,1,1,0,1,1,0,
 								1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0);
@@ -197,6 +237,63 @@ void pPosDebug(const dictionary *ini, Population *pop){
 	}
 
 	free(nParticles);
+
+}
+
+// Verify that position is indeed within local frame and will not produce any
+// segmentation faults
+void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
+
+	int *size = grid->size;
+	double *pos = pop->pos;
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart; i<iStop; i++){
+
+			for(int d=0; d<nDims; d++){
+
+				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
+					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]);
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+void pVelAssertMax(const Population *pop, double max){
+
+	double *vel = pop->vel;
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart; i<iStop; i++){
+
+			for(int d=0;d<nDims;d++){
+
+				if(vel[i*nDims+d]>max){
+					msg(ERROR,"Particle i=%li (of specie %i) travels too fast in dimension %i: %f>%f",i,s,d,vel[i*nDims+d],max);
+				}
+
+			}
+
+		}
+
+	}
 
 }
 
@@ -247,6 +344,24 @@ void pVelSet(Population *pop, const double *vel){
 	}
 }
 
+void pVelZero(Population *pop){
+
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = 0;
+			}
+		}
+	}
+}
+
 void pNew(Population *pop, int s, const double *pos, const double *vel){
 
 	int nDims = pop->nDims;
@@ -284,13 +399,13 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
+void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 
 	/*
 	 * CREATE FILE
 	 */
 
-	hid_t file = createH5File(ini,fName,"pop");
+	hid_t file = openH5File(ini,fName,"pop");
 
 	/*
 	 * CREATE GROUPS
@@ -322,45 +437,30 @@ void pCreateH5(const dictionary *ini, Population *pop, const char *fName){
 
 	int nDims;
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double *attrData = malloc(nDims*sizeof(*attrData));
-	hsize_t attrSize;
-    hid_t attrSpace;
-    hid_t attribute;
-
-	attrSize = (hsize_t)nDims;
-	attrSpace = H5Screate_simple(1,&attrSize,NULL);
-
-	attribute = H5Acreate(file, "Position denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, stepSize);
-    H5Aclose(attribute);
-
-	double debye = iniparser_getdouble((dictionary *)ini,"grid:debye",0);
-	for(int d=0;d<nDims;d++) attrData[d]=debye;
-	attribute = H5Acreate(file, "Position dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-    H5Aclose(attribute);
-
-
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0);
-	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
-	attribute = H5Acreate(file, "Velocity denormalization factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-	H5Aclose(attribute);
-
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double debye = iniGetDouble(ini,"grid:debye");
 	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nDims);
+
 	double vThermal = sqrt(BOLTZMANN*T[0]/(mass[0]*ELECTRON_MASS));
-	for(int d=0;d<nDims;d++) attrData[d] = vThermal;
-	attribute = H5Acreate(file, "Velocity dimensionalizing factor", H5T_IEEE_F64LE, attrSpace, H5P_DEFAULT, H5P_DEFAULT);
-	H5Awrite(attribute, H5T_NATIVE_DOUBLE, attrData);
-	H5Aclose(attribute);
+
+	double *attrData = malloc(nDims*sizeof(*attrData));
+
+	setH5Attr(file, "Position denormalization factor", stepSize, nDims);
+
+	adSetAll(attrData,nDims,debye);
+	setH5Attr(file, "Position dimensionalizing factor", attrData, nDims);
+
+	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
+	setH5Attr(file, "Velocity denormalization factor", attrData, nDims);
+
+	adSetAll(attrData,nDims,vThermal);
+	setH5Attr(file, "Velocity dimensionalizing factor", attrData, nDims);
 
 	free(T);
 	free(mass);
 	free(stepSize);
 	free(attrData);
-
-	H5Sclose(attrSpace);
 
 }
 
@@ -446,6 +546,71 @@ void pCloseH5(Population *pop){
 	H5Fclose(pop->h5);
 }
 
+
+void pCreateEnergyDatasets(hid_t xy, Population *pop){
+
+	char name[32];
+	int nSpecies = pop->nSpecies;
+
+	sprintf(name,"/energy/potential/total");
+	xyCreateDataset(xy,name);
+
+	sprintf(name,"/energy/kinetic/total");
+	xyCreateDataset(xy,name);
+
+	for(int s=0;s<nSpecies;s++){
+		sprintf(name,"/energy/potential/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/kinetic/specie %i",s);
+		xyCreateDataset(xy,name);
+	}
+}
+
+void pWriteEnergy(hid_t xy, Population *pop, double x){
+
+	char name[32];
+	int nSpecies = pop->nSpecies;
+
+	sprintf(name,"/energy/potential/total");
+	xyWrite(xy,name,x,pop->potEnergy[nSpecies],MPI_SUM);
+
+	sprintf(name,"/energy/kinetic/total");
+	xyWrite(xy,name,x,pop->kinEnergy[nSpecies],MPI_SUM);
+
+	for(int s=0; s<nSpecies; s++){
+
+		sprintf(name,"/energy/potential/specie %i",s);
+		xyWrite(xy,name,x,pop->potEnergy[s],MPI_SUM);
+
+		sprintf(name,"/energy/kinetic/specie %i",s);
+		xyWrite(xy,name,x,pop->kinEnergy[s],MPI_SUM);
+	}
+
+}
+
+void pSumKinEnergy(Population *pop){
+
+	int nSpecies = pop->nSpecies;
+
+	pop->kinEnergy[nSpecies] = 0;
+	for(int s=0; s<nSpecies; s++){
+		pop->kinEnergy[nSpecies] += pop->kinEnergy[s];
+	}
+
+}
+
+void pSumPotEnergy(Population *pop){
+
+	int nSpecies = pop->nSpecies;
+
+	pop->potEnergy[nSpecies] = 0;
+	for(int s=0; s<nSpecies; s++){
+		pop->potEnergy[nSpecies] += pop->potEnergy[s];
+	}
+
+}
+
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
@@ -494,7 +659,7 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
-	double timeStep = iniparser_getdouble((dictionary *)ini,"time:timeStep",0.0);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
 
 	/*

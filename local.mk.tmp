@@ -30,4 +30,5 @@
 # CLOCAL =	-I/usr/mylib/include/	\
 #			-L/usr/mylib/lib/		\
 #			-I/usr/mylib2/include	\
-#			-L/usr/mylib2/lib/
+#			-L/usr/mylib2/lib		\
+#			-lgslcblas

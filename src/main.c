@@ -7,47 +7,78 @@
  * @date        08.10.15
  *
  * Main routine for PINC (Particle-IN-Cell).
- * Replaces old DiP3D main.c file by Wojciech Jacek Miloch.
  */
 
-#include <gsl/gsl_rng.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <mpi.h>
-#include <hdf5.h>
-
-#include "pinc.h"
-#include "iniparser.h"
+#include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
 
+/*
+ * MAIN ROUTINES (RUN MODES PERHAPS A BETTER NAME?)
+ */
+void regularRoutine(dictionary *ini);
+void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo);
+void mgRoutine(dictionary *ini);
+
+int main(int argc, char *argv[]){
+
+	/*
+	 * INITIALIZE PINC
+	 */
+	MPI_Init(&argc,&argv);
+	dictionary *ini = iniOpen(argc,argv); // No printing before this
+	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	/*
+	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
+	 */
+	char *routine = iniGetStr(ini,"main:routine");
+	if(!strcmp(routine, "regular"))		regularRoutine(ini);
+	if(!strcmp(routine, "mgRoutine"))	mgRoutine(ini);
+	free(routine);
+
+	/*
+	 * FINALIZE PINC
+	 */
+	iniClose(ini);
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
+	MPI_Finalize();
+
+	return 0;
+}
+
 void regularRoutine(dictionary *ini){
 
-	//Random number seeds
+	// Random number seeds
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
 
-	//MPI struct
+	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
-	 //Setting up particles.
+	 // Setting up particles.
 	Population *pop = pAlloc(ini);
 
-	//Allocating grids
-	Grid *E = gAlloc(ini, 3);
+	// Allocating grids
+	Grid *E   = gAlloc(ini, 3);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
 
-	//Alloc multigrids
+	// Creating a neighbourhood in the rho Grid variable to handle migrants
+	gCreateNeighborhood(ini, mpiInfo, rho);
+
+	// Alloc multigrids
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
 
-	//Alloc h5 files
+	// Alloc h5 files
 	int rank = phi->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
@@ -55,10 +86,16 @@ void regularRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	pCreateH5(ini, pop, "pop");
-	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gCreateH5(ini, E, mpiInfo, denorm, dimen, "E");
+	pOpenH5(ini, pop, "pop");
+	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
+
+	hid_t history = xyOpenH5(ini,"history");
+	pCreateEnergyDatasets(history,pop);
+
+	// Add more time series to history if you want
+	// xyCreateDataset(history,"/group/group/dataset");
 
 	free(denorm);
 	free(dimen);
@@ -66,62 +103,106 @@ void regularRoutine(dictionary *ini){
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
-	int nTimesteps = iniparser_getint(ini, "time:nTimesteps", 0);
+	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 
-	//Inital conditions
+	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rng);
+	pVelZero(pop);
 
+	// Perturb particles
+	pPosPerturb(ini, pop, mpiInfo);
 
+	puExtractEmigrants3D(pop, mpiInfo);
+	puMigrate(pop, mpiInfo, rho);
 
-	//Get initial E-field
+	// Get initial charge density
 	puDistr3D1(pop, rho);
-	gHaloOp(setSlice, rho, mpiInfo);
+	gHaloOp(addSlice, rho, mpiInfo, 1);
+
+	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
+	gHaloOp(setSlice, E, mpiInfo, 0);
 
-	//Half step
+	// Advance velocities half a step
 	gMul(E, 0.5);
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
-	 //Time loop
-	for(int t = 0; t < nTimesteps; t++){
-//		msg(STATUS|ONCE, "Hello Kitty");
+	adPrint(pop->renormRho,3);
 
-		//Move particles
+	// aiPrint(rho->size,4);
+	// alPrint(rho->sizeProd,4);
+	// adPrint(mpiInfo->thresholds,6);
+
+	// Time loop
+	// n should start at 1 since that's the timestep we have after the first
+	// iteration (i.e. when storing H5-files).
+
+	for(int n = 1; n <= nTimeSteps; n++){
+
+		msg(STATUS|ONCE,"Computing time-step %i",n);
+		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
+		pVelAssertMax(pop,32.0);		// Just for catching errors while debugging
+
+		// Move particles
 		puMove(pop);
-		puMigrate(pop, mpiInfo, E);
 
-		//Compute E field
+		puExtractEmigrants3D(pop, mpiInfo);
+		puMigrate(pop, mpiInfo, rho);
+
+		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
+
+		// Compute charge density
 		puDistr3D1(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo);
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo);
+		gHaloOp(addSlice, rho, mpiInfo, 1);
 
-		//Apply external E
+		// Compute E-field
+		gZero(phi);
+		gZero(res);
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+
+		// gMul(phi,-1.0);
+		gFinDiff1st(phi, E);
+		gHaloOp(setSlice, E, mpiInfo, 0);
+
+		// Apply external E
 		// gAddTo(Ext);
 
-		//Accelerate
-		puAcc3D1(pop, E);		// Including total kinetic energy for step n
+		// Accelerate
+		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		pSumKinEnergy(pop);
+
+		gPotEnergy(rho,phi,pop);
+
+		// Example of writing another dataset to history.xy.h5
+		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		pWriteH5(pop, mpiInfo, (double) t, (double) t);
+		// gWriteH5(E, mpiInfo, (double) n);
+		gWriteH5(rho, mpiInfo, (double) n);
+		// gWriteH5(phi, mpiInfo, (double) n);
+		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+
+		pWriteEnergy(history,pop,(double)n);
+
 	}
 
 
 	 /*
 	 * FINALIZE PINC VARIABLES
 	 */
-	 gFreeMpi(mpiInfo);
+	gFreeMpi(mpiInfo);
 
-	//  //Close h5 files
+	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
+	xyCloseH5(history);
 
-	//Free memory
+	// Free memory
 	mgFree(mgRho);
 	mgFree(mgPhi);
 	mgFree(mgRes);
@@ -131,62 +212,13 @@ void regularRoutine(dictionary *ini){
 	gFree(E);
 	pFree(pop);
 
-
-	 /*
-		* FINALIZE THIRD PARTY LIBRARIES
-		*/
-	// iniClose(ini); 	//No iniClose??
+	/*
+	 * FINALIZE THIRD PARTY LIBRARIES
+	 */
 	gsl_rng_free(rng);
 
-	return;
 }
 
-/**************************************************************
- *			TEMP, to reading of h5 files are ready
- *************************************************************/
-
-void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo){
-
-	//Load
-	int *size = grid->size;
-	int *trueSize = grid->trueSize;
-	long int *sizeProd = grid->sizeProd;
-	int *subdomain = mpiInfo->subdomain;
-	int *nSubdomains = mpiInfo->nSubdomains;
-
-	double *val = grid->val;
-
-	//Hard code try
-	long int ind = 0;
-	if(nSubdomains[2]==1){
-		for(int j = 1; j < size[1]-1; j++){
-			for (int k = 1; k<size[2]-1; k++) {
-				for(int l = 1; l < size[3]-1; l++){
-					ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-					if(l < trueSize[3]/2) val[ind] = -1;
-					else if (l == trueSize[3]/2. || l == trueSize[3]) val[ind] = 0.;
-					else val[ind] = 1.;
-				}
-			}
-		}
-	} else {
-		for(int j = 1; j < size[1]-1; j++){
-			for (int k = 1; k<size[2]-1; k++) {
-				for(int l = 1; l < size[3]-1; l++){
-					ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-					if(subdomain[2]<nSubdomains[2]/2) val[ind] = -1.;
-					else val[ind] = 1.;
-				}
-			}
-		}
-		//Set in 0 at between domains (use sendSlice since it is reset every time it is used)
-		double *slice = grid->sendSlice;
-		for(int l = 0; l < size[3]; l++)	slice[l] = 0;
-		setSlice(slice, grid, 3, size[3]-2);
-	}
-
-	return;
-}
 
 
 void mgRoutine(dictionary *ini){
@@ -194,93 +226,111 @@ void mgRoutine(dictionary *ini){
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
+	//Rand Seed
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+
 	//Grids
 	Grid *phi = gAlloc(ini, 1);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res= gAlloc(ini, 1);
+	Grid *analytical = gAlloc(ini, 1);
 
 	//Multilevel grids
 	Multigrid *mgPhi = mgAlloc(ini, phi);
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
-	//Prep to store grids
 	int rank = rho->rank;
+	Timer *t = tAlloc(rank);
+
+	// double tol = 77000.;
+	// double err = tol+1.;
+
+	//Compute stuff
+	fillHeaviside(rho, mpiInfo);
+	// fillPointCharge(rho, mpiInfo);
+	// fillPolynomial(rho, mpiInfo);
+	// fillPointSol(analytical, mpiInfo);
+	// fillExp(analytical, mpiInfo);
+	// fillSin(rho, mpiInfo);
+	// fillSinSol(analytical, mpiInfo);
+	// fillCst(rho, mpiInfo);
+	// fillRng(rho, mpiInfo, rng);
+
+	// gHaloOp(setSlice, analytical, mpiInfo);
+	// gFinDiff2nd3D(rho, analytical);
+
+	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
+	// gNeutralizeRho(rho, mpiInfo);
+
+	double tol = 50;
+	double err = 10001;
+
+	// while(err>tol){
+		// Run solver
+		tStart(t);
+		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		// for(int n = 0; n < mgRho->nMGCycles; n++){
+		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
+		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
+		// // // 	// mgJacob3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
+		// // // 	// mgJacob3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
+		// 	mgRho->preSmooth(phi, rho, mgRho->nPreSmooth, mpiInfo);
+		// 	mgRho->postSmooth(phi, rho, mgRho->nPreSmooth, mpiInfo);
+		// // //
+		// }
+
+		tStop(t);
+
+
+
+		//Compute residual and mass
+		// mgResidual(res,rho, phi, mpiInfo);
+		// gHaloOp(setSlice, res, mpiInfo);
+		// err = mgResMass3D(res,mpiInfo);
+		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+	// }
+
+
+
+	// if(mpiInfo->mpiRank==0) fMsg(ini, "mgLog", "%llu \n", t->total);
+
+	/*********************************************************************
+	 *			STORE GRIDS
+	 ********************************************************************/
+
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	msg(STATUS, "Hello");
-	gCreateH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gCreateH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gCreateH5(ini, res, mpiInfo, denorm, dimen, "res");
-	// xyCreate(ini, )
-	msg(STATUS, "HEllo, made it pass the gCreate");
+	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+	gOpenH5(ini, res, mpiInfo, denorm, dimen, "res");
+	gOpenH5(ini, analytical, mpiInfo, denorm, dimen, "analytical");
 
 	free(denorm);
 	free(dimen);
 
-	double tol = 50;
-	double err = 10001;
-
-	//Compute stuff
-	debugFillHeaviside(rho, mpiInfo);
-
-	Timer *t = tAlloc();
-
-	while(err>tol){
-		//Run solver
-		tStart(t);
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-		tStop(t);
-		//Compute residual and mass
-		mgResidual(res,rho, phi, mpiInfo);
-		err = mgResMass3D(res,mpiInfo);
-		// msg(STATUS|ONCE, "The error mass (e^2) is %f, time %llu", err, t->total);
-		tMsg(t->total, "Hello:");
-	}
-
-	gWriteH5(rho,mpiInfo,1.);
-	gWriteH5(phi,mpiInfo,1.);
-	gWriteH5(res,mpiInfo,1.);
-
+	gWriteH5(rho,mpiInfo,0.);
+	gWriteH5(phi,mpiInfo,0.);
+	gWriteH5(res,mpiInfo,0.);
+	gWriteH5(analytical, mpiInfo, 0.);
 
 	gCloseH5(phi);
 	gCloseH5(rho);
 	gCloseH5(res);
+	gCloseH5(analytical);
 
 	tFree(t);
+	gFreeMpi(mpiInfo);
+
+	gsl_rng_free(rng);
 
 	return;
 }
 
-
-int main(int argc, char *argv[]){
-
-
-	/*
-	 * INITIALIZE THIRD PARTY LIBRARIES
-	 */
-	MPI_Init(&argc,&argv);
-	dictionary *ini = iniOpen(argc,argv);
-	msg(STATUS|ONCE,"PINC started.");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-
-	//Choose routine from ini file
-	char *routine = iniparser_getstring(ini, "main:routine", "\0");
-
-	if(!strcmp(routine, "regular"))				regularRoutine(ini);
-	if(!strcmp(routine, "mgRoutine"))			mgRoutine(ini);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
-	MPI_Finalize();
-
-	return 0;
-}
 
 /*****************************************************************
  *			Blueprint
