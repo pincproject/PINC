@@ -247,12 +247,12 @@ void mgRoutine(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	// fillHeaviside(rho, mpiInfo);
+	fillHeaviside(rho, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);
 	// fillExp(analytical, mpiInfo);
-	fillSin(rho, mpiInfo);
+	// fillSin(rho, mpiInfo);
 	// fillSinSol(analytical, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
@@ -261,11 +261,12 @@ void mgRoutine(dictionary *ini){
 	// gFinDiff2nd3D(rho, analytical);
 
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
+	gNeutralizeRho(rho, mpiInfo);
 
 	// while(err>tol){
 		// Run solver
 		tStart(t);
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 		// for(int n = 0; n < mgRho->nMGCycles; n++){
 		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
 		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
@@ -286,13 +287,13 @@ void mgRoutine(dictionary *ini){
 		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
 	// }
 
-	gHaloOp(setSlice, phi, mpiInfo, 0);
-	gHaloOp(setSlice, rho, mpiInfo, 0);
-	gHaloOp(setSlice, res, mpiInfo, 0);
+	// gHaloOp(setSlice, phi, mpiInfo, 0);
+	// gHaloOp(setSlice, rho, mpiInfo, 0);
+	// gHaloOp(setSlice, res, mpiInfo, 0);
 
 
 	// gFinDiff2nd3D(res, phi);
-	mgResidual(res, rho, phi, mpiInfo);
+	// mgResidual(res, rho, phi, mpiInfo);
 
 	// dumpTrueGrid(ini, res);
 	// gHaloOp(setSlice, res, mpiInfo);

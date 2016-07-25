@@ -30,6 +30,9 @@ def plot2DSlice(name, grid, saveStr):
 
 	X,Y = np.meshgrid(x,y, indexing= 'ij')
 
+	print(rho.shape)
+
+
 	plt.figure()
 	plt.contourf(X,Y,grid)
 
@@ -55,17 +58,18 @@ rho = fileRho['/n=0.0']
 rho = np.transpose(rho, (3,2,1,0))
 rho = np.squeeze(rho)
 
-filePhi = h5py.File('../../test_phi.grid.h5','r')
-phi = filePhi['/n=0.0']
-phi = np.transpose(phi, (3,2,1,0))
-phi = np.squeeze(phi)
 
-
-
-fileRes = h5py.File('../../test_res.grid.h5','r')
-res = fileRes['/n=0.0']
-res = np.transpose(res, (3,2,1,0))
-res = np.squeeze(res)
+# filePhi = h5py.File('../../test_phi.grid.h5','r')
+# phi = filePhi['/n=0.0']
+# phi = np.transpose(phi, (3,2,1,0))
+# phi = np.squeeze(phi)
+#
+#
+#
+# fileRes = h5py.File('../../test_res.grid.h5','r')
+# res = fileRes['/n=0.0']
+# res = np.transpose(res, (3,2,1,0))
+# res = np.squeeze(res)
 
 # fileAnalytical = h5py.File('../../test_analytical.grid.h5','r')
 # analytical = fileAnalytical['/n=0.0']
@@ -83,12 +87,16 @@ res = np.squeeze(res)
 # plotPlanesOfGrid("analytical", analytical)
 # plotPlanesOfGrid("error",error)
 # plotPlanesOfGrid("res",res)
-#
-plot2DSlice("$\\rho$", rho[:,:,30], "rho.pdf")
-plot2DSlice("Numerical $\phi$", phi[:,:,30], "numerical.pdf")
+
+slice = int(rho.shape[2]*0.3)
+
+print slice
+
+plot2DSlice("$\\rho$", rho[:,:,slice], "rho.pdf")
+# plot2DSlice("Numerical $\phi$", phi[:,:,30], "numerical.pdf")
 # plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error[:,:,30], "error.pdf")
 # plot2DSlice("Analytical $\phi$", analytical[:,:,30], "analytical.pdf")
-plot2DSlice("Residual", res[:,:,30], "residual.pdf")
+# plot2DSlice("Residual", res[:,:,30], "residual.pdf")
 
 
 # plotEField(E)
