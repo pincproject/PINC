@@ -656,7 +656,7 @@ void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo){
 
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
-	gAdd(rho, avgCharge);
+	gSub(rho, avgCharge);
 
 	avgCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 

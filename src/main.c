@@ -269,7 +269,7 @@ void mgRoutine(dictionary *ini){
 	// while(err>tol){
 		// Run solver
 		tStart(t);
-		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 		// for(int n = 0; n < mgRho->nMGCycles; n++){
 		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
 		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
@@ -285,11 +285,16 @@ void mgRoutine(dictionary *ini){
 
 
 		//Compute residual and mass
-		// mgResidual(res,rho, phi, mpiInfo);
 		// gHaloOp(setSlice, res, mpiInfo);
 		// err = mgResMass3D(res,mpiInfo);
 		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
 	// }
+
+	//Compute residual
+	gZero(res);
+	gHaloOp(setSlice, rho, mpiInfo, 0);
+	gHaloOp(setSlice, phi,mpiInfo, 0);
+	mgResidual(res,rho, phi, mpiInfo);
 
 
 

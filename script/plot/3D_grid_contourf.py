@@ -63,26 +63,10 @@ def plot2DSlice(name, grid, saveStr):
 #Loading data/Shaving of last dimension
 rho = transformData(h5py.File('../../test_rho.grid.h5','r'))
 phi = transformData(h5py.File('../../test_phi.grid.h5','r'))
-
-# filePhi = h5py.File('../../test_phi.grid.h5','r')
-# phi = filePhi['/n=0.0']
-# phi = np.transpose(phi, (3,2,1,0))
-# phi = np.squeeze(phi)
-#
-#
-#
-# fileRes = h5py.File('../../test_res.grid.h5','r')
-# res = fileRes['/n=0.0']
-# res = np.transpose(res, (3,2,1,0))
-# res = np.squeeze(res)
-
-# fileAnalytical = h5py.File('../../test_analytical.grid.h5','r')
-# analytical = fileAnalytical['/n=0.0']
-# analytical = analytical[:,:,:,0]
+res = transformData(h5py.File('../../test_res.grid.h5','r'))
 
 #Compute ERROR
 # error = np.abs((phi - analytical))
-
 
 # fileE = h5py.File('../test_E.grid.h5', 'r')
 # E = fileE['/n=0.0']
@@ -98,10 +82,10 @@ slice = int(rho.shape[0]*0.3)
 # print rho[5,:,:]
 
 plot2DSlice("$\\rho$", rho[slice,:,:], "rho.pdf")
-# plot2DSlice("Numerical $\phi$", phi[:,:,30], "numerical.pdf")
+plot2DSlice("Numerical $\phi$", phi[slice,:,:], "numerical.pdf")
+plot2DSlice("Residual", res[slice,:,:], "residual.pdf")
 # plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error[:,:,30], "error.pdf")
 # plot2DSlice("Analytical $\phi$", analytical[:,:,30], "analytical.pdf")
-# plot2DSlice("Residual", res[:,:,30], "residual.pdf")
 
 
 # plotEField(E)
