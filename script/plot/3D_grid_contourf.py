@@ -38,9 +38,6 @@ def plot2DSlice(name, grid, saveStr):
 
 	X,Y = np.meshgrid(x,y, indexing= 'ij')
 
-	print(rho.shape)
-
-
 	plt.figure()
 	plt.contourf(X,Y,grid, 20)
 

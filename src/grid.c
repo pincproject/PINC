@@ -640,29 +640,29 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 }
 
 //Not that well tested
-void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo){
+void gNeutralizeGrid(Grid *grid, MpiInfo *mpiInfo){
 
-	const double *val = rho->val;
-	long int *sizeProd = rho->sizeProd;
-	int *trueSize = rho->trueSize;
-	int *nGhostLayers = rho->nGhostLayers;
-	int rank = rho->rank;
+	const double *val = grid->val;
+	long int *sizeProd = grid->sizeProd;
+	int *trueSize = grid->trueSize;
+	int *nGhostLayers = grid->nGhostLayers;
+	int rank = grid->rank;
 	int mpiSize = mpiInfo->mpiSize;
 
-	double myCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	double totCharge = 0;
 
 	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
-	gSub(rho, avgCharge);
+	gSub(grid, avgCharge);
 
-	avgCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	avgCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 
 }
 
-static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd){
 
 	double charge = 0.;
@@ -681,7 +681,7 @@ static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBe
 		*val += *sizeProd**nGhostLayersBefore;
 
 		for(int j=0;j<*trueSize;j++)
-			charge += gNeutralizeRhoInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+			charge += gNeutralizeGridInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
 
 		*val += *sizeProd**nGhostLayersAfter;
 	}
@@ -720,6 +720,8 @@ void gSubFrom(Grid *result, Grid *subtraction){
 
 static void gPeriodic(){
 	// msg(STATUS, "Hello");
+
+
 	return;
 }
 
@@ -768,9 +770,11 @@ void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mp
 	constant *=-2;
 	getSlice(slice, grid, d, offset + 2 - 4*(boundary>rank));
 
-	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant;
+	for(int s = 0; s < nSlicePoints;	//Compute dimensions and slicesize
+	int d = boundary%rank;
+	int offset = (boundary>rank)*(size[d]-1);
 
-	setSlice(slice, grid, d, offset);
+	setSlice();
 
 	return;
 }

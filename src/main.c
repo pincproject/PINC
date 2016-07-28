@@ -261,7 +261,7 @@ void mgRoutine(dictionary *ini){
 	// gFinDiff2nd3D(rho, analytical);
 
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
-	// gNeutralizeRho(rho, mpiInfo);
+	gNeutralizeGrid(rho, mpiInfo);
 
 	double tol = 50;
 	double err = 10001;
