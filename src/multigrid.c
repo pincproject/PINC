@@ -537,6 +537,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		}
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gBnd(phi, mpiInfo);
 
 		/*********************
 		 *	Black pass
@@ -565,6 +566,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		 }
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gBnd(phi, mpiInfo);
 	}
 
 
@@ -1001,7 +1003,8 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 	for(int l = nGhostLayers[3]; l < size[3]-nGhostLayers[rank+3]; l++){
 		for(int k = nGhostLayers[2]; k < size[2]-nGhostLayers[rank+2]; k++){
 			for(int j = nGhostLayers[1]; j < size[1]-nGhostLayers[rank+1]; j++){
-				mass += val[g]*val[g];
+				mass += abs(val[g]);//*val[g];
+				// mass += val[g]*val[g];
 				g++;
 			}
 			g+=kEdgeInc;
@@ -1016,9 +1019,7 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 			mass += massRecv;
 		}
 	}
-
-	return mass;
-}
+heavi
 
 void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 

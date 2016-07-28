@@ -294,7 +294,7 @@ void gNormalizeE(const dictionary *ini, Grid *E);
  *
  */
 
-void gNeutralizeGrid(Grid *rho, MpiInfo *mpiInfo);
+void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 
 /**
 * @brief Adds a grid to another.

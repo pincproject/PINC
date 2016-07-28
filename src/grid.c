@@ -640,7 +640,7 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 }
 
 //Not that well tested
-void gNeutralizeGrid(Grid *grid, MpiInfo *mpiInfo){
+void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 
 	const double *val = grid->val;
 	long int *sizeProd = grid->sizeProd;
@@ -718,9 +718,9 @@ void gSubFrom(Grid *result, Grid *subtraction){
  *		Boundary conditions
  ***************************************************************/
 
-static void gPeriodic(){
+static void gPeriodic(Grid *phi, const  MpiInfo *mpiInfo){
 	// msg(STATUS, "Hello");
-
+	gNeutralizeGrid(phi, mpiInfo);
 
 	return;
 }
@@ -787,7 +787,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Lower edge
 	for(int d = 1; d < rank; d++){
 		if(subdomain[d-1] == 0){
-			if(bnd[d] == PERIODIC)	gPeriodic();
+			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
 			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
 			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
 		}
@@ -796,7 +796,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == PERIODIC)	gPeriodic();
+			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
 			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
 			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
 		}
@@ -1159,7 +1159,7 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(k < (trueSize[2]+1)/2.) val[ind] = 10.;
+				   if(k < (trueSize[2]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
 				   else val[ind] = -1.;
 			   }

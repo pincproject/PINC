@@ -263,7 +263,7 @@ void mgRoutine(dictionary *ini){
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
-	double tol = 50;
+	// double tol = 50;
 	double err = 10001;
 
 	// while(err>tol){
@@ -282,23 +282,24 @@ void mgRoutine(dictionary *ini){
 
 		tStop(t);
 
-
-
-		//Compute residual and mass
-		// gHaloOp(setSlice, res, mpiInfo);
-		// err = mgResMass3D(res,mpiInfo);
-		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+		// Compute residual and mass
+		gZero(res);
+		gHaloOp(setSlice, rho, mpiInfo, 0);
+		gHaloOp(setSlice, phi,mpiInfo, 0);
+		mgResidual(res,rho, phi, mpiInfo);
+		gHaloOp(setSlice, res, mpiInfo, 0);
+		err = mgResMass3D(res,mpiInfo);
+		// gZero(res);
+		msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
 	// }
 
-	//Compute residual
-	gZero(res);
-	gHaloOp(setSlice, rho, mpiInfo, 0);
-	gHaloOp(setSlice, phi,mpiInfo, 0);
-	mgResidual(res,rho, phi, mpiInfo);
+	//Savetime
 
 
 
-	// if(mpiInfo->mpiRank==0) fMsg(ini, "mgLog", "%llu \n", t->total);
+	// if(mpiInfo->mpiRank==0) tMsg(ini, "mgLog", "%llu \n", t->total);
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+
 
 	/*********************************************************************
 	 *			STORE GRIDS
