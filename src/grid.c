@@ -56,7 +56,7 @@ static int *getSubdomain(const dictionary *ini);
 static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
 								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
 
-static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd);
 
 
@@ -770,11 +770,9 @@ void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mp
 	constant *=-2;
 	getSlice(slice, grid, d, offset + 2 - 4*(boundary>rank));
 
-	for(int s = 0; s < nSlicePoints;	//Compute dimensions and slicesize
-	int d = boundary%rank;
-	int offset = (boundary>rank)*(size[d]-1);
+	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant ;	//Compute dimensions and slicesize
 
-	setSlice();
+	setSlice(slice, grid, d, offset);
 
 	return;
 }
