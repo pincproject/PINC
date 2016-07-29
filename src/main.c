@@ -240,6 +240,19 @@ void mgRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
+	//Sets the boudary slices
+	gSetBndSlices(phi, mpiInfo);
+	mgRestrictBnd(mgPhi);
+
+	gBnd(phi, mpiInfo);
+	gBnd(mgPhi->grids[1], mpiInfo);
+
+	dumpWholeGrid(ini, phi);
+	dumpWholeGrid(ini, mgPhi->grids[1]);
+
+	return;
+
+
 	int rank = rho->rank;
 	Timer *t = tAlloc(rank);
 
@@ -247,7 +260,7 @@ void mgRoutine(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	fillHeaviside(rho, mpiInfo);
+	// fillHeaviside(rho, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);

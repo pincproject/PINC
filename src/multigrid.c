@@ -146,6 +146,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		double *val = malloc(subSizeProd[rank]*sizeof(*val));
 		double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 		double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
+		double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
 
 		//Ghost layer vector
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
@@ -154,6 +155,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		//Copying boundaries and stepSize
 		bndType *subBnd = malloc(rank*2*sizeof(*subBnd));
 		for(int d = 0; d < 2*rank; d++)	subBnd[d] = bnd[d];
+
+
 
 		double *subStepSize = malloc(rank*sizeof(*subStepSize));
 		for(int d = 0; d < rank; d++)	subStepSize[d] = stepSize[d];
@@ -171,6 +174,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 		grid->sendSlice = sendSlice;
 		grid->recvSlice = recvSlice;
+		grid->bndSlice = bndSlice;
 		grid->h5 = 0;
 		grid->bnd = subBnd;
 
@@ -951,6 +955,82 @@ void mgBilinProl2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 	return;
 }
 
+void mgRestrictBnd(Multigrid *mgGrid){
+
+	int nLevels = mgGrid->nLevels;
+	Grid **grid = mgGrid->grids;
+	int rank = grid[0]->rank;
+
+	//Set inside grid loop
+	double *fineBnd;
+	double *coarseBnd;
+	int *fineSize;
+	int *coarseSize;
+
+
+	//Restrict down all grids
+	for(int lvl = 0; lvl < nLevels-1; lvl++ ){
+		//Setting size and
+		fineSize = grid[lvl]->size;
+		fineBnd = grid[lvl]->bndSlice;
+		long int nFineSlice = 0;
+
+		coarseBnd = grid[lvl+1]->bndSlice;
+		coarseSize = grid[lvl+1]->size;
+		long int nCoarseSlice = 0;
+
+		//Number of elements in slice
+		for(int d=0;d<rank;d++){
+			long int nSlice = 1;
+			for(int dd=0;dd<rank;dd++){
+				if(dd!=d) nSlice *= fineSize[dd];
+			}
+			if(nSlice>nFineSlice) nFineSlice = nSlice;
+		}
+
+
+		for(int d=0;d<rank;d++){
+			long int nSlice = 1;
+			for(int dd=0;dd<rank;dd++){
+				if(dd!=d) nSlice *= coarseSize[dd];
+			}
+			if(nSlice>nCoarseSlice) nCoarseSlice = nSlice;
+		}
+
+
+		// msg(STATUS, "Fineslice = %d", nFineSlice);
+		// msg(STATUS, "CoarseSlice = %d", nCoarseSlice);
+
+		/**************************************************
+		 *		This is probably not correct for nonconstant
+		 * 		boundaries
+		 *************************************************/
+		//Lower part
+		for(int d = 1; d < rank; d++){
+			for(int s = 0; s < nCoarseSlice; s++){
+				coarseBnd[s + (nCoarseSlice * d)] = fineBnd[2*s + (nFineSlice*d)];
+			}
+		}
+
+		//Upper part
+		for(int d = rank+1; d < 2*rank; d++){
+			for(int s = 0; s < nCoarseSlice; s++){
+				coarseBnd[s + (nCoarseSlice * d)] = fineBnd[2*s + (nFineSlice*d)];
+			}
+		}
+
+
+		//Restriction by injection
+		// for(int s = 0; s < nSliceMax*2*rank; s++){
+		// 	coarseBnd[s/2] = fineBnd[s];
+		// }
+		// adPrint(coarseBnd, 72*2*rank);
+
+	}
+
+
+}
+
 /*******************************************************
  *			VARIOUS COMPUTATIONS (RESIDUAL)
  ******************************************************/
@@ -1019,7 +1099,9 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 			mass += massRecv;
 		}
 	}
-heavi
+
+	return mass;
+}
 
 void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
@@ -1054,14 +1136,14 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, 0);
- 	gBnd(rho,mpiInfo);
+ // 	gBnd(rho,mpiInfo);
 
  	//Prepare to go down
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
  	mgResidual(res, rho, phi, mpiInfo);
 
  	gHaloOp(setSlice, res, mpiInfo, 0);
- 	gBnd(res, mpiInfo);
+ // 	gBnd(res, mpiInfo);
 
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
@@ -1112,20 +1194,20 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		mgRho->preSmooth(phiCurrent, rhoCurrent, nPreSmooth, mpiInfo);
 
 		gHaloOp(setSlice, rhoCurrent, mpiInfo, 0);
-		gBnd(rhoCurrent, mpiInfo);
+		// gBnd(rhoCurrent, mpiInfo);
 
 		gZero(resCurrent);
 		mgResidual(resCurrent, rhoCurrent, phiCurrent, mpiInfo);
 
 		gHaloOp(setSlice, resCurrent, mpiInfo, 0);
-		gBnd(resCurrent, mpiInfo);
+		// gBnd(resCurrent, mpiInfo);
 
 		mgRho->restrictor(resCurrent, mgRho->grids[current + 1]);
 	}
 
 	//Solve at coarsest
 	gHaloOp(setSlice, mgRho->grids[bottom], mpiInfo, 0);
-	gBnd(mgRho->grids[bottom],mpiInfo);
+	// gBnd(mgRho->grids[bottom],mpiInfo);
 
 	mgRho->coarseSolv(mgPhi->grids[bottom], mgRho->grids[bottom], nCoarseSolv, mpiInfo);
 

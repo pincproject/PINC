@@ -438,6 +438,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
+	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice)); //Maybe seek
+	//a different solution where it is only stored where needed
 
 	//Set boundary conditions, should be cleaned up
 	int inc = 1;
@@ -481,6 +483,7 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->h5 = 0;	// Must be activated separately
 	grid->sendSlice = sendSlice;
 	grid->recvSlice = recvSlice;
+	grid->bndSlice = bndSlice;
 	grid->bnd = bnd;
 
 	return grid;
@@ -579,6 +582,62 @@ int *gGetGlobalSize(const dictionary *ini){
 	free(bnd);
 
 	return L;
+}
+
+void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	bndType *bnd = grid->bnd;
+	double *bndSlice = grid->bndSlice;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+
+	double constant1 = 1.;
+	double constant2 = 2.;
+
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		if(subdomain[d-1] == 0){
+			if(bnd[d] == DIRICHLET)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant1;
+				}
+			if(bnd[d] == NEUMANN)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+		}
+	}
+
+	//Higher edge
+	for(int d = rank+1; d < 2*rank; d++){
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant1;
+
+				}
+			if(bnd[d] == NEUMANN)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+		}
+	}
+
+	// adPrint(bndSlice, nSliceMax*rank);
+
+	return;
 }
 
 /****************************************************************************
@@ -732,45 +791,56 @@ void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
-	double *slice = grid->sendSlice;
+	double *bndSlice = grid->bndSlice;
 
 	//Compute dimensions and size of slice
 	int d = boundary%rank;
-	int offset = 1+(boundary>rank)*(size[d]-3);
-	int nSlicePoints = 1;
+	int offset = (boundary>rank)*(size[d]-1);
 
-	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
 
-	nSlicePoints *= 1./size[d];
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 
-	for(int s = 0; s < nSlicePoints; s++) slice[s] = constant;
-
-	setSlice(slice, grid, d, offset);
+	// adPrint(&bndSlice[(boundary-1)*nSliceMax], 10);
 
 	return;
 
 }
 
-void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mpiInfo){
+void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
+	double *bndSlice = grid->bndSlice;
 	double *slice = grid->sendSlice;
 
 	//Compute dimensions and slicesize
 	int d = boundary%rank;
 	int offset = (boundary>rank)*(size[d]-1);
 
-	int nSlicePoints = 1;
-	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
-	nSlicePoints *= 1./size[d];
-
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
 	//Compute d/dx u(x) = u(x_2) - 2A
-	constant *=-2;
+	// constant *=-2;
 	getSlice(slice, grid, d, offset + 2 - 4*(boundary>rank));
 
-	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant ;	//Compute dimensions and slicesize
+	for(int s = 0; s < nSliceMax; s++) slice[s] -=2*bndSlice[s+boundary*nSliceMax];
 
 	setSlice(slice, grid, d, offset);
 
@@ -789,7 +859,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
 			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
 
@@ -798,7 +868,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
 			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
 
