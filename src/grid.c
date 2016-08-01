@@ -784,7 +784,7 @@ static void gPeriodic(Grid *phi, const  MpiInfo *mpiInfo){
 	return;
 }
 
-void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo *mpiInfo){
+void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 	// msg(STATUS, "Hello from Dirichlet");
 
@@ -795,7 +795,7 @@ void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo
 
 	//Compute dimensions and size of slice
 	int d = boundary%rank;
-	int offset = (boundary>rank)*(size[d]-1);
+	int offset = 1 + (boundary>rank)*(size[d]-2);
 
 	//Number of elements in slice
 	long int nSliceMax = 0;
@@ -858,7 +858,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = 1; d < rank; d++){
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
 			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
@@ -867,7 +867,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
 			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}

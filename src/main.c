@@ -247,10 +247,10 @@ void mgRoutine(dictionary *ini){
 	gBnd(phi, mpiInfo);
 	gBnd(mgPhi->grids[1], mpiInfo);
 
-	dumpWholeGrid(ini, phi);
-	dumpWholeGrid(ini, mgPhi->grids[1]);
-
-	return;
+	// dumpWholeGrid(ini, phi);
+	// dumpWholeGrid(ini, mgPhi->grids[1]);
+	//
+	// return;
 
 
 	int rank = rho->rank;
@@ -265,7 +265,7 @@ void mgRoutine(dictionary *ini){
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);
 	// fillExp(analytical, mpiInfo);
-	// fillSin(rho, mpiInfo);
+	fillSin(rho, mpiInfo);
 	// fillSinSol(analytical, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
@@ -276,10 +276,10 @@ void mgRoutine(dictionary *ini){
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
-	// double tol = 50;
+	double tol = 1000;
 	double err = 10001;
 
-	// while(err>tol){
+	while(err>tol){
 		// Run solver
 		tStart(t);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
@@ -299,12 +299,13 @@ void mgRoutine(dictionary *ini){
 		gZero(res);
 		gHaloOp(setSlice, rho, mpiInfo, 0);
 		gHaloOp(setSlice, phi,mpiInfo, 0);
+		gBnd(phi, mpiInfo);
 		mgResidual(res,rho, phi, mpiInfo);
 		gHaloOp(setSlice, res, mpiInfo, 0);
 		err = mgResMass3D(res,mpiInfo);
 		// gZero(res);
 		msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
-	// }
+	}
 
 	//Savetime
 
