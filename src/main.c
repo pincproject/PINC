@@ -130,8 +130,8 @@ void regularRoutine(dictionary *ini){
 	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
 	//Norm E (random attempts)
-	// double normE = 1./1836.;
-	// gMul(E, normE);
+	double normE = 1./1836.;
+	gMul(E, normE);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
@@ -175,7 +175,7 @@ void regularRoutine(dictionary *ini){
 
 		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
-		// gMul(E, normE);
+		gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
