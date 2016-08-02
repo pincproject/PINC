@@ -1190,6 +1190,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		//Boundary
 		gHaloOp(setSlice, phiCurrent, mpiInfo, 0);
 		gBnd(phiCurrent, mpiInfo);
+		// msg(STATUS|ONCE, "Hello");
 
 		mgRho->preSmooth(phiCurrent, rhoCurrent, nPreSmooth, mpiInfo);
 

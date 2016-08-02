@@ -58,6 +58,7 @@ void regularRoutine(dictionary *ini){
 	 * INITIALIZE PINC VARIABLES
 	 */
 
+
 	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -73,10 +74,15 @@ void regularRoutine(dictionary *ini){
 	// Creating a neighbourhood in the rho Grid variable to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
+	// Setting Boundary slices
+	gSetBndSlices(phi, mpiInfo);
+
 	// Alloc multigrids
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+
 
 	// Alloc h5 files
 	int rank = phi->rank;
@@ -121,7 +127,11 @@ void regularRoutine(dictionary *ini){
 
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
+	//Norm E (random attempts)
+	// double normE = 1./1836.;
+	// gMul(E, normE);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
@@ -129,7 +139,7 @@ void regularRoutine(dictionary *ini){
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
-	adPrint(pop->renormRho,3);
+	// adPrint(pop->renormRho,3);
 
 	// aiPrint(rho->size,4);
 	// alPrint(rho->sizeProd,4);
@@ -165,6 +175,7 @@ void regularRoutine(dictionary *ini){
 
 		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
+		// gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
@@ -180,9 +191,9 @@ void regularRoutine(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		// gWriteH5(E, mpiInfo, (double) n);
+		gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
-		// gWriteH5(phi, mpiInfo, (double) n);
+		gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 
 		pWriteEnergy(history,pop,(double)n);
