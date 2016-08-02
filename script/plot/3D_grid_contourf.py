@@ -23,18 +23,24 @@ import pylab as plt
 #
 # 	return
 
+def transformData(dataset, timestep):
+	grid = dataset['/n=%.1f'%timestep]
+	# grid = np.transpose(grid, (3,2,1,0))
+	grid = np.squeeze(grid)
+	grid = np.average(grid, axis = 0)
+
+	return grid
+
+
 def plot2DSlice(name, grid, saveStr):
 	#Format
 	x = np.arange(grid.shape[1])
 	y = np.arange(grid.shape[0])
 
-	X,Y = np.meshgrid(x,y, indexing= 'ij')
-
-	print(rho.shape)
-
+	X,Y = np.meshgrid(x,y)#, indexing= 'ij')
 
 	plt.figure()
-	plt.contourf(X,Y,grid)
+	plt.contourf(X,Y,grid, 20)
 
 	plt.colorbar()
 	plt.title(name)
@@ -51,52 +57,20 @@ def plot2DSlice(name, grid, saveStr):
 #
 # 	return
 
+rho = transformData(h5py.File('../../test_rho.grid.h5','r'),1)
+phi = transformData(h5py.File('../../test_phi.grid.h5','r'),1)
+# res = transformData(h5py.File('../../test_res.grid.h5','r'),1)
+E = transformData(h5py.File('../../test_E.grid.h5','r'),1)
 
-#Loading data/Shaving of last dimension
-fileRho= h5py.File('../../test_rho.grid.h5','r')
-rho = fileRho['/n=1.0']
-rho = np.transpose(rho, (3,2,1,0))
-rho = np.squeeze(rho)
+# print E.shape
+# exit()
 
-
-# filePhi = h5py.File('../../test_phi.grid.h5','r')
-# phi = filePhi['/n=0.0']
-# phi = np.transpose(phi, (3,2,1,0))
-# phi = np.squeeze(phi)
-#
-#
-#
-# fileRes = h5py.File('../../test_res.grid.h5','r')
-# res = fileRes['/n=0.0']
-# res = np.transpose(res, (3,2,1,0))
-# res = np.squeeze(res)
-
-# fileAnalytical = h5py.File('../../test_analytical.grid.h5','r')
-# analytical = fileAnalytical['/n=0.0']
-# analytical = analytical[:,:,:,0]
-
-#Compute ERROR
-# error = np.abs((phi - analytical))
-
-
-# fileE = h5py.File('../test_E.grid.h5', 'r')
-# E = fileE['/n=0.0']
-
-# plotPlanesOfGrid("rho", rho)
-# plotPlanesOfGrid("phi",phi)
-# plotPlanesOfGrid("analytical", analytical)
-# plotPlanesOfGrid("error",error)
-# plotPlanesOfGrid("res",res)
-
-slice = int(rho.shape[2]*0.3)
-
-print slice
-
-plot2DSlice("$\\rho$", rho[:,:,slice], "rho.pdf")
-# plot2DSlice("Numerical $\phi$", phi[:,:,30], "numerical.pdf")
+plot2DSlice("$\\rho$", rho, "rho.pdf")
+plot2DSlice("Numerical $\phi$", phi, "numerical.pdf")
+plot2DSlice("$E$", E[:,:,0], "E.pdf")
+# plot2DSlice("Residual", res[slice,:,:], "residual.pdf")
 # plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error[:,:,30], "error.pdf")
 # plot2DSlice("Analytical $\phi$", analytical[:,:,30], "analytical.pdf")
-# plot2DSlice("Residual", res[:,:,30], "residual.pdf")
 
 
 # plotEField(E)

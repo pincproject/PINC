@@ -56,7 +56,7 @@ static int *getSubdomain(const dictionary *ini);
 static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
 								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
 
-static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd);
 
 
@@ -438,6 +438,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
+	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice)); //Maybe seek
+	//a different solution where it is only stored where needed
 
 	//Set boundary conditions, should be cleaned up
 	int inc = 1;
@@ -481,6 +483,7 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->h5 = 0;	// Must be activated separately
 	grid->sendSlice = sendSlice;
 	grid->recvSlice = recvSlice;
+	grid->bndSlice = bndSlice;
 	grid->bnd = bnd;
 
 	return grid;
@@ -581,6 +584,62 @@ int *gGetGlobalSize(const dictionary *ini){
 	return L;
 }
 
+void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	bndType *bnd = grid->bnd;
+	double *bndSlice = grid->bndSlice;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+
+	double constant1 = 1.;
+	double constant2 = 2.;
+
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		if(subdomain[d-1] == 0){
+			if(bnd[d] == DIRICHLET)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant1;
+				}
+			if(bnd[d] == NEUMANN)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+		}
+	}
+
+	//Higher edge
+	for(int d = rank+1; d < 2*rank; d++){
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant1;
+
+				}
+			if(bnd[d] == NEUMANN)
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+		}
+	}
+
+	// adPrint(bndSlice, nSliceMax*rank);
+
+	return;
+}
+
 /****************************************************************************
  *	CONVENIENCE GRID OPERATIONS
  ***************************************************************************/
@@ -640,29 +699,37 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 }
 
 //Not that well tested
-void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo){
+void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 
-	const double *val = rho->val;
-	long int *sizeProd = rho->sizeProd;
-	int *trueSize = rho->trueSize;
-	int *nGhostLayers = rho->nGhostLayers;
-	int rank = rho->rank;
+	const double *val = grid->val;
+	long int *sizeProd = grid->sizeProd;
+	int *trueSize = grid->trueSize;
+	int *nGhostLayers = grid->nGhostLayers;
+	int rank = grid->rank;
 	int mpiSize = mpiInfo->mpiSize;
 
-	double myCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	double totCharge = 0;
 
+	// MPI_Barrier(MPI_COMM_WORLD);
+
+	// msg(STATUS, "Hello before");
 	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	// msg(STATUS, "HELLO AFTER");
+
+	// MPI_Barrier(MPI_COMM_WORLD);
+
 
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
-	gAdd(rho, avgCharge);
+	gSub(grid, avgCharge);
 
-	avgCharge = gNeutralizeRhoInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
-
+	// avgCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	return;
 }
 
-static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd){
 
 	double charge = 0.;
@@ -681,7 +748,7 @@ static double gNeutralizeRhoInner(	const double **val, const int *nGhostLayersBe
 		*val += *sizeProd**nGhostLayersBefore;
 
 		for(int j=0;j<*trueSize;j++)
-			charge += gNeutralizeRhoInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+			charge += gNeutralizeGridInner(val,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
 
 		*val += *sizeProd**nGhostLayersAfter;
 	}
@@ -718,57 +785,70 @@ void gSubFrom(Grid *result, Grid *subtraction){
  *		Boundary conditions
  ***************************************************************/
 
-static void gPeriodic(){
+static void gPeriodic(Grid *phi, const  MpiInfo *mpiInfo){
 	// msg(STATUS, "Hello");
+	// gNeutralizeGrid(phi, mpiInfo);
+
 	return;
 }
 
-void gDirichlet(Grid *grid, const int boundary, double constant,  const  MpiInfo *mpiInfo){
+void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 	// msg(STATUS, "Hello from Dirichlet");
 
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
-	double *slice = grid->sendSlice;
+	double *bndSlice = grid->bndSlice;
 
 	//Compute dimensions and size of slice
 	int d = boundary%rank;
-	int offset = 1+(boundary>rank)*(size[d]-3);
-	int nSlicePoints = 1;
+	int offset = 1 + (boundary>rank)*(size[d]-2);
 
-	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
 
-	nSlicePoints *= 1./size[d];
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 
-	for(int s = 0; s < nSlicePoints; s++) slice[s] = constant;
-
-	setSlice(slice, grid, d, offset);
+	// adPrint(&bndSlice[(boundary-1)*nSliceMax], 10);
 
 	return;
 
 }
 
-void gNeumann(Grid *grid, const int boundary, double constant, const MpiInfo *mpiInfo){
+void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
+	double *bndSlice = grid->bndSlice;
 	double *slice = grid->sendSlice;
 
 	//Compute dimensions and slicesize
 	int d = boundary%rank;
 	int offset = (boundary>rank)*(size[d]-1);
 
-	int nSlicePoints = 1;
-	for(int dd = 0; dd < rank; dd++) nSlicePoints *=size[dd];
-	nSlicePoints *= 1./size[d];
-
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=0;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
 	//Compute d/dx u(x) = u(x_2) - 2A
-	constant *=-2;
+	// constant *=-2;
 	getSlice(slice, grid, d, offset + 2 - 4*(boundary>rank));
 
-	for(int s = 0; s < nSlicePoints; s++) slice[s] += constant;
+	for(int s = 0; s < nSliceMax; s++) slice[s] -=2*bndSlice[s+boundary*nSliceMax];
 
 	setSlice(slice, grid, d, offset);
 
@@ -785,18 +865,18 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Lower edge
 	for(int d = 1; d < rank; d++){
 		if(subdomain[d-1] == 0){
-			if(bnd[d] == PERIODIC)	gPeriodic();
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
+			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
 
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == PERIODIC)	gPeriodic();
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, 0., mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, -100., mpiInfo);
+			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
+			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
 
@@ -1151,33 +1231,36 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[2]==1){
+   if(nSubdomains[1]==1){
 	   //One core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(k < (trueSize[2]+1)/2.) val[ind] = 10.;
+				   if(k < (trueSize[2]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
 				   else val[ind] = -1.;
 			   }
 		   }
 	   }
    } else {
+	   msg(STATUS|ONCE, "Hello");
 	   //Multi core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(subdomain[2]<nSubdomains[2]/2) val[ind] = -1.0;
-				   else val[ind] = 10.;
+				//    val[ind] = 1.;
+				//    msg(STATUS|ONCE, "%d", ind);
+				   if(subdomain[1]<nSubdomains[1]/2) val[ind] = 1.0;
+				   else val[ind] = -1.;
 			   }
 		   }
 	   }
-	   //Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
+	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
 	   double *slice = grid->sendSlice;
-	   for(int l = 0; l < size[3]; l++)	slice[l] = 0;
-	   setSlice(slice, grid, 3, size[3]-2);
+	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
+	   setSlice(slice, grid, 1, size[1]-2);
    }
 
 

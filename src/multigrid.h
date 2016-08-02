@@ -213,11 +213,22 @@ void mgBilinProl2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  * @param	mpiInfo	Subdomain information
  * @return	fine
  *
- *	Implementation of a bilnear interpolation scheme, interpolating the coarse
+ *	Implementation of a bilnear interpolation scheme, instructterpolating the coarse
  *	grid onto the fine grid.
  *
  */
 void mgBilinProl3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+
+
+/*
+ * @brief Restrict boundary conditions down to coarser grids
+ * @param mgGrid   Multigrid struct
+ *
+ *  OBS, WARNING!
+ *  INJECTION PROBABLY ONLY WORKS FOR CONSTANT DIRICHLET AND NEUMANN CONDITIONS
+ */
+void mgRestrictBnd(Multigrid *mgGrid);
+
 
 /**
  * @brief Computes residual

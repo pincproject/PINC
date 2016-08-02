@@ -20,7 +20,7 @@ import subprocess
 
 pinc = PINC()
 
-pinc.clean()
+# pinc.clean()
 #
 # data = open("mgOptData.txt", "wr")
 #
@@ -30,4 +30,4 @@ pinc.clean()
 
 for i in range(3):
 	pinc.runMG()
-	pinc.clean()
+	# pinc.clean()

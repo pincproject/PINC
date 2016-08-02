@@ -58,6 +58,7 @@ void regularRoutine(dictionary *ini){
 	 * INITIALIZE PINC VARIABLES
 	 */
 
+
 	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -73,10 +74,15 @@ void regularRoutine(dictionary *ini){
 	// Creating a neighbourhood in the rho Grid variable to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
+	// Setting Boundary slices
+	gSetBndSlices(phi, mpiInfo);
+
 	// Alloc multigrids
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+
 
 	// Alloc h5 files
 	int rank = phi->rank;
@@ -121,7 +127,10 @@ void regularRoutine(dictionary *ini){
 
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
+	//Norm E
+	double normE = 0.0;
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
@@ -180,9 +189,9 @@ void regularRoutine(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		// gWriteH5(E, mpiInfo, (double) n);
+		gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
-		// gWriteH5(phi, mpiInfo, (double) n);
+		gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 
 		pWriteEnergy(history,pop,(double)n);
@@ -240,6 +249,19 @@ void mgRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
+	//Sets the boudary slices
+	gSetBndSlices(phi, mpiInfo);
+	mgRestrictBnd(mgPhi);
+
+	gBnd(phi, mpiInfo);
+	gBnd(mgPhi->grids[1], mpiInfo);
+
+	// dumpWholeGrid(ini, phi);
+	// dumpWholeGrid(ini, mgPhi->grids[1]);
+	//
+	// return;
+
+
 	int rank = rho->rank;
 	Timer *t = tAlloc(rank);
 
@@ -247,12 +269,12 @@ void mgRoutine(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	fillHeaviside(rho, mpiInfo);
+	// fillHeaviside(rho, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);
 	// fillExp(analytical, mpiInfo);
-	// fillSin(rho, mpiInfo);
+	fillSin(rho, mpiInfo);
 	// fillSinSol(analytical, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
@@ -261,12 +283,15 @@ void mgRoutine(dictionary *ini){
 	// gFinDiff2nd3D(rho, analytical);
 
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
-	gNeutralizeRho(rho, mpiInfo);
+	gNeutralizeGrid(rho, mpiInfo);
 
-	// while(err>tol){
+	double tol = 1000;
+	double err = 10001;
+
+	while(err>tol){
 		// Run solver
 		tStart(t);
-		// mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 		// for(int n = 0; n < mgRho->nMGCycles; n++){
 		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
 		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
@@ -279,33 +304,29 @@ void mgRoutine(dictionary *ini){
 
 		tStop(t);
 
+		// Compute residual and mass
 		gZero(res);
-		//Compute residual and mass
-		// mgResidual(res,rho, phi, mpiInfo);
-		// gHaloOp(setSlice, res, mpiInfo);
-		// err = mgResMass3D(res,mpiInfo);
-		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
-	// }
+		gHaloOp(setSlice, rho, mpiInfo, 0);
+		gHaloOp(setSlice, phi,mpiInfo, 0);
+		gBnd(phi, mpiInfo);
+		mgResidual(res,rho, phi, mpiInfo);
+		gHaloOp(setSlice, res, mpiInfo, 0);
+		err = mgResMass3D(res,mpiInfo);
+		// gZero(res);
+		msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+	}
 
-	// gHaloOp(setSlice, phi, mpiInfo, 0);
-	// gHaloOp(setSlice, rho, mpiInfo, 0);
-	// gHaloOp(setSlice, res, mpiInfo, 0);
-
-
-	// gFinDiff2nd3D(res, phi);
-	// mgResidual(res, rho, phi, mpiInfo);
-
-	// dumpTrueGrid(ini, res);
-	// gHaloOp(setSlice, res, mpiInfo);
+	//Savetime
 
 
-	// if(mpiInfo->mpiRank==0) fMsg(ini, "mgLog", "%llu \n", t->total);
 
-	//Prep to store grids
-	// int lvl = 0;
-	// Grid *rho = mgRho->grids[lvl];
-	// Grid *phi = mgPhi->grids[lvl];
-	// Grid *res = mgRes->grids[lvl];
+	// if(mpiInfo->mpiRank==0) tMsg(ini, "mgLog", "%llu \n", t->total);
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+
+
+	/*********************************************************************
+	 *			STORE GRIDS
+	 ********************************************************************/
 
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));

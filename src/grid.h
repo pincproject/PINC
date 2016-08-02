@@ -35,6 +35,23 @@ Grid *gAlloc(const dictionary *ini, int nValues);
 void gFree(Grid *grid);
 
 /**
+ * @brief Set boundary slices
+ * @param   grid    Grid
+ * @param   mpiInfo Mpi Info
+ * @return  void
+ *
+ *  Set the boundary slices. With Dirichlet and Neumann bnd conditions the values
+ *  which corresponds to phi and the gradient of phi is set here.
+ *
+ *  For now it only has the capability of constant boundaries, but it could
+ *  later be expanded without too much trouble.
+ *
+ *
+ */
+
+void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo);
+
+/**
  * @brief Allocates the memory for an MpiInfo struct according to input file
  * @param	ini		Input file dictionary
  * @return	Pointer to MpiInfo
@@ -294,7 +311,7 @@ void gNormalizeE(const dictionary *ini, Grid *E);
  *
  */
 
-void gNeutralizeRho(Grid *rho, MpiInfo *mpiInfo);
+void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 
 /**
 * @brief Adds a grid to another.
