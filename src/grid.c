@@ -779,7 +779,7 @@ void gSubFrom(Grid *result, Grid *subtraction){
 
 static void gPeriodic(Grid *phi, const  MpiInfo *mpiInfo){
 	// msg(STATUS, "Hello");
-	gNeutralizeGrid(phi, mpiInfo);
+	// gNeutralizeGrid(phi, mpiInfo);
 
 	return;
 }

@@ -58,6 +58,7 @@ void regularRoutine(dictionary *ini){
 	 * INITIALIZE PINC VARIABLES
 	 */
 
+
 	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -121,6 +122,7 @@ void regularRoutine(dictionary *ini){
 
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
