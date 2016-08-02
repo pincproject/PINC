@@ -54,7 +54,7 @@ def plot2DSlice(name, grid, saveStr):
 
 #Loading data/Shaving of last dimension
 fileRho= h5py.File('../../test_rho.grid.h5','r')
-rho = fileRho['/n=0.0']
+rho = fileRho['/n=1.0']
 rho = np.transpose(rho, (3,2,1,0))
 rho = np.squeeze(rho)
 
