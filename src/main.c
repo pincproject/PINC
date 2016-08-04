@@ -251,12 +251,14 @@ void mgRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
+	MgAlgo mgAlgo = getMgAlgo(ini);
+
 	//Sets the boudary slices
 	gSetBndSlices(phi, mpiInfo);
 	mgRestrictBnd(mgPhi);
 
-	gBnd(phi, mpiInfo);
-	gBnd(mgPhi->grids[1], mpiInfo);
+	// gBnd(phi, mpiInfo);
+	// gBnd(mgPhi->grids[1], mpiInfo);
 
 	// dumpWholeGrid(ini, phi);
 	// dumpWholeGrid(ini, mgPhi->grids[1]);
@@ -271,12 +273,12 @@ void mgRoutine(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	// fillHeaviside(rho, mpiInfo);
+	fillHeaviside(rho, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
 	// fillPointSol(analytical, mpiInfo);
 	// fillExp(analytical, mpiInfo);
-	fillSin(rho, mpiInfo);
+	// fillSin(rho, mpiInfo);
 	// fillSinSol(analytical, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
@@ -287,13 +289,16 @@ void mgRoutine(dictionary *ini){
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
-	double tol = 1000;
+	double tol = 10000;
 	double err = 10001;
+	double counter = tol+1;
 
-	while(err>tol){
+	while(counter>tol){
+		counter--;
 		// Run solver
+		gZero(res);
 		tStart(t);
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 		// for(int n = 0; n < mgRho->nMGCycles; n++){
 		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
 		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
@@ -305,17 +310,16 @@ void mgRoutine(dictionary *ini){
 		// }
 
 		tStop(t);
-
-		// Compute residual and mass
-		gZero(res);
-		gHaloOp(setSlice, rho, mpiInfo, 0);
-		gHaloOp(setSlice, phi,mpiInfo, 0);
-		gBnd(phi, mpiInfo);
-		mgResidual(res,rho, phi, mpiInfo);
-		gHaloOp(setSlice, res, mpiInfo, 0);
-		err = mgResMass3D(res,mpiInfo);
+		//
+		// // Compute residual and mass
 		// gZero(res);
-		msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+		// gHaloOp(setSlice, rho, mpiInfo, 0);
+		// gHaloOp(setSlice, phi,mpiInfo, 0);
+		// gBnd(phi, mpiInfo);
+		// mgResidual(res,rho, phi, mpiInfo);
+		// gHaloOp(setSlice, res, mpiInfo, 0);
+		// err = mgResMass3D(res,mpiInfo);
+		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
 	}
 
 	//Savetime
@@ -335,6 +339,12 @@ void mgRoutine(dictionary *ini){
 
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+	//Saving lvl of grids
+	int lvl=1;
+	rho = mgRho->grids[lvl];
+	phi = mgPhi->grids[lvl];
+	res = mgRes->grids[lvl];
 
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");

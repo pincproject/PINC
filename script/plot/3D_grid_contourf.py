@@ -28,6 +28,7 @@ def transformData(dataset, timestep):
 	# grid = np.transpose(grid, (3,2,1,0))
 	grid = np.squeeze(grid)
 	grid = np.average(grid, axis = 0)
+	# grid = grid[20,:,:]
 
 	return grid
 
@@ -37,7 +38,7 @@ def plot2DSlice(name, grid, saveStr):
 	x = np.arange(grid.shape[1])
 	y = np.arange(grid.shape[0])
 
-	X,Y = np.meshgrid(x,y)#, indexing= 'ij')
+	X,Y = np.meshgrid(x,y, indexing= 'ij')
 
 	plt.figure()
 	plt.contourf(X,Y,grid, 20)
@@ -59,18 +60,18 @@ def plot2DSlice(name, grid, saveStr):
 
 
 #Loading data/Shaving of last dimension
-rho = transformData(h5py.File('../../test_rho.grid.h5','r'),1)
-phi = transformData(h5py.File('../../test_phi.grid.h5','r'),1)
-# res = transformData(h5py.File('../../test_res.grid.h5','r'),1)
-E = transformData(h5py.File('../../test_E.grid.h5','r'),1)
+rho = transformData(h5py.File('../../test_rho.grid.h5','r'),0)
+phi = transformData(h5py.File('../../test_phi.grid.h5','r'),0)
+res = transformData(h5py.File('../../test_res.grid.h5','r'),0)
+# E = transformData(h5py.File('../../test_E.grid.h5','r'),0)
 
 # print E.shape
 # exit()
 
 plot2DSlice("$\\rho$", rho, "rho.pdf")
 plot2DSlice("Numerical $\phi$", phi, "numerical.pdf")
-plot2DSlice("$E$", E[:,:,0], "E.pdf")
-# plot2DSlice("Residual", res[slice,:,:], "residual.pdf")
+# plot2DSlice("$E$", E[:,:,0], "E.pdf")
+plot2DSlice("Residual", res, "residual.pdf")
 # plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error[:,:,30], "error.pdf")
 # plot2DSlice("Analytical $\phi$", analytical[:,:,30], "analytical.pdf")
 

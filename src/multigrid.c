@@ -95,6 +95,20 @@ void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	free(prolongator);
 }
 
+MgAlgo getMgAlgo(const dictionary *ini){
+
+	char *mgAlgo = iniGetStr(ini, "multigrid:cycle");
+
+	MgAlgo algorithm;
+
+	if(!strcmp(mgAlgo, "mgVRegular"))	algorithm = &mgVRegular;
+	if(!strcmp(mgAlgo, "mgVRecursive"))	algorithm = &mgVRecursive;
+	if(!strcmp(mgAlgo, "mgFMG"))		algorithm = &mgFMG;
+	if(!strcmp(mgAlgo, "mgW"))			algorithm = &mgW;
+
+	return algorithm;
+}
+
 
 Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 						const int nLevels){
@@ -286,8 +300,8 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 
 	//Sanity checks
-	if(nLevels<2) msg(ERROR, "Multi Grid levels is 0, or 1, direct solver not implemented yet \n");
-
+	if(nLevels<1) msg(ERROR, "Multi Grid levels is 0, need 1 grid level \n");
+	if(nLevels==1) msg(WARNING|ONCE, "Multi Grid levels is 1, using Gauss-Seidel Red'Black \n");
 
 	if(!nMGCycles) msg(ERROR, "MG cycles is 0 \n");
 
@@ -1118,11 +1132,14 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  void inline static mgVRecursiveInner(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
   									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
+
  	//Solve and return at coarsest level
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, 0);
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
  		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
+		msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
+
  		return;
  	}
 
@@ -1145,11 +1162,13 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	gHaloOp(setSlice, res, mpiInfo, 0);
  // 	gBnd(res, mpiInfo);
 
+	msg(STATUS|ONCE, "Restricting to lvl: %d", level+1);
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
-
- 	//Prepare to go up
+	//
+ // 	//Prepare to go up
+	// // gMul(res,10);
  	gSubFrom( phi, res );
  	gHaloOp(setSlice, phi,mpiInfo, 0);
  	gBnd(phi,mpiInfo);
@@ -1157,8 +1176,10 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Go up
  	if(level > top){
+		msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
  		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
  	}
+
  	return;
  }
 
@@ -1174,84 +1195,160 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
+	msg(STATUS|ONCE, "Running mgV; start = %d, bottom = %d, top = %d",level, bottom, top);
+
 	//Gathering info
 	int nPreSmooth = mgRho->nPreSmooth;
 	int nPostSmooth= mgRho->nPostSmooth;
 	int nCoarseSolv= mgRho->nCoarseSolve;
 
+	//Needed grids
+	Grid *phi;
+	Grid *rho;
+	Grid *res;
+
+	//Solvers
+	void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles,
+		const MpiInfo *mpiInfo) = mgRho->coarseSolv;
+	void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles,
+		const MpiInfo *mpiInfo) = mgRho->postSmooth;
+	void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles,
+		const MpiInfo *mpiInfo) = mgRho->preSmooth;
+
+	//Restriction/Prolongators
+	void (*restrictor)(const Grid *fine, Grid *coarse) = mgRho->restrictor;
+	void (*prolongator)(Grid *fine, const Grid *coarse,
+		const MpiInfo *mpiInfo) = mgRho->prolongator;
 
 	//Down to coarsest level
 	for(int current = level; current < bottom; current ++){
 		//Load grids
-		Grid *phiCurrent = mgPhi->grids[current];
-		Grid *rhoCurrent = mgRho->grids[current];
-		Grid *resCurrent = mgRes->grids[current];
+		phi = mgPhi->grids[current];
+		rho = mgRho->grids[current];
+		res = mgRes->grids[current];
 
 		//Boundary
-		gHaloOp(setSlice, phiCurrent, mpiInfo, 0);
-		gBnd(phiCurrent, mpiInfo);
-		// msg(STATUS|ONCE, "Hello");
+		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gBnd(phi, mpiInfo);
+		gNeutralizeGrid(rho, mpiInfo);
 
-		mgRho->preSmooth(phiCurrent, rhoCurrent, nPreSmooth, mpiInfo);
 
-		gHaloOp(setSlice, rhoCurrent, mpiInfo, 0);
-		// gBnd(rhoCurrent, mpiInfo);
+		preSmooth(phi, rho, nPreSmooth, mpiInfo);
 
-		gZero(resCurrent);
-		mgResidual(resCurrent, rhoCurrent, phiCurrent, mpiInfo);
+		gHaloOp(setSlice, rho, mpiInfo, 0);
+		gBnd(phi, mpiInfo);
 
-		gHaloOp(setSlice, resCurrent, mpiInfo, 0);
-		// gBnd(resCurrent, mpiInfo);
+		gZero(res);
+		mgResidual(res, rho, phi, mpiInfo);
 
-		mgRho->restrictor(resCurrent, mgRho->grids[current + 1]);
+		gHaloOp(setSlice, res, mpiInfo, 0);
+
+		restrictor(res, mgRho->grids[current + 1]);
+		msg(STATUS|ONCE, "Restricting from lvl %d -> %d", current, current+1);
 	}
 
+	rho = mgRho->grids[bottom];
+	phi = mgPhi->grids[bottom];
+
+	/*****************************************************
+	 *	//OBS, ONLY NEEDED FOR PERIODIC (neutralize)
+	 *****************************************************/
+	gNeutralizeGrid(rho, mpiInfo);
+
 	//Solve at coarsest
-	gHaloOp(setSlice, mgRho->grids[bottom], mpiInfo, 0);
-	// gBnd(mgRho->grids[bottom],mpiInfo);
+	gHaloOp(setSlice, rho, mpiInfo, 0);
+	coarseSolv(phi, rho, nCoarseSolv, mpiInfo);
 
-	mgRho->coarseSolv(mgPhi->grids[bottom], mgRho->grids[bottom], nCoarseSolv, mpiInfo);
+	//Send up
+	gHaloOp(setSlice, phi, mpiInfo, 0);
+	gBnd(phi,mpiInfo);
+	prolongator(mgRes->grids[bottom-1], phi, mpiInfo);
+	msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", bottom, bottom-1);
 
-	gHaloOp(setSlice, mgPhi->grids[bottom], mpiInfo, 0);
-	gBnd(mgPhi->grids[bottom],mpiInfo);
-
-	mgRho->prolongator(mgRes->grids[bottom-1], mgPhi->grids[bottom], mpiInfo);
 
 	//Up to finest
-	for(int current = bottom-1; current >-1; current --){
+	for(int current = bottom-1; current >= top; current --){
 
 		//Load grids
-		Grid *phi = mgPhi->grids[current];
-		Grid *rho = mgRho->grids[current];
-		Grid *res = mgRes->grids[current];
+		phi = mgPhi->grids[current];
+		rho = mgRho->grids[current];
+		res = mgRes->grids[current];
 
 		//Prepare to go up
 		gSubFrom( phi, res );
+		// gAddTo(phi, res);
+
 		gHaloOp(setSlice, phi,mpiInfo, 0);
 		gBnd(phi,mpiInfo);
+		postSmooth(phi, rho, nPostSmooth, mpiInfo);
+		gBnd(phi, mpiInfo);
 
-		mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
+		msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", current, current-1);
 
-		if(level > top)	mgRho->prolongator(mgRes->grids[current-1], phi, mpiInfo);
+		if(current > top) prolongator(mgRes->grids[current-1], phi, mpiInfo);
 	}
-
 
 	return;
 }
+
+void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 			Multigrid *mgRes, const MpiInfo *mpiInfo){
+	//Info
+	Grid **rho = &mgRho->grids[0];;
+	Grid **rhoNext;
+	void (*restrictor)(const Grid *fine, Grid *coarse) = mgRho->restrictor;
+
+	//Restrict down problem
+	for(int current = 0; current < bottom; current ++){
+		rhoNext = &mgRho->grids[current+1];
+
+		gHaloOp(setSlice, *rho, mpiInfo,0);
+		restrictor(*rho, *rhoNext);
+
+		*rho = *rhoNext;
+	}
+
+	//Solve problem
+	mgVRegular(bottom, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+
+	return;
+}
+
+void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+			Multigrid *mgRes, const MpiInfo *mpiInfo){
+
+	int middle = bottom/2;
+
+	mgVRegular(0, bottom, middle, mgRho, mgPhi, mgRes, mpiInfo);
+	mgVRegular(middle, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+
+}
+
+
 
 
 void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
+	int nLevels = mgRho->nLevels;
 
 	// gZero(mgPhi->grids[0]);
-	for(int c = 0; c < nMGCycles; c++){
-
-		// msg(STATUS, "Cyclestep: %d", c);
-		// mgVRecursive(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		// mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+	if(nLevels >1){
+		for(int c = 0; c < nMGCycles; c++){
+			// msg(STATUS, "Cyclestep: %d", c);
+			// mgVRecursive(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+			// mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+		}
+	}	else {
+		Grid *phi = mgPhi->grids[0];
+		Grid *rho = mgRho->grids[0];
+		gHaloOp(setSlice, rho, mpiInfo, 0);
+		gBnd(rho, mpiInfo);
+		// gHaloOp(setSlice, rho, mpiInfo, 0);
+		mgRho->coarseSolv(phi, rho,
+							mgRho->nPreSmooth+mgRho->nPostSmooth, mpiInfo);
 	}
 
 	return;

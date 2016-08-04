@@ -38,6 +38,7 @@
     void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
 	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
 	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
+
 } Multigrid;
 
 /**
@@ -46,6 +47,8 @@
  */
 typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 									Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+
 
 /**
  * @brief Allocates multigrid struct
@@ -89,11 +92,21 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
+MgAlgo getMgAlgo(const dictionary *ini);
+
 void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+
+void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
 
 /**
  * @brief Solves Poissons equation for electric potential, with multigrid V cycles

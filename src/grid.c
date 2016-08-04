@@ -1259,8 +1259,8 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 	   }
 	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
 	   double *slice = grid->sendSlice;
-	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
-	   setSlice(slice, grid, 1, size[1]-2);
+	   for(int k = 0; k < size[2]; k++)	slice[k] = 0;
+	   setSlice(slice, grid, 2, size[2]-2);
    }
 
 
