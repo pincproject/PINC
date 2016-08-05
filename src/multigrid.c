@@ -792,6 +792,8 @@ void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	int rank = fine->rank;
 	int *nGhostLayers = fine->nGhostLayers;
 
+	// aiPrint(fTrueSize, rank);
+
 	//Load coarse grid
 	double *cVal = coarse->val;
 	long int *cSizeProd = coarse->sizeProd;
@@ -1174,7 +1176,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
 
  	//Go up
- 	if(level > top){
+ 	if(level >top){
 		msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
  		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
  	}
@@ -1318,8 +1320,8 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 	int middle = bottom/2;
 
-	mgVRegular(0, bottom, middle, mgRho, mgPhi, mgRes, mpiInfo);
-	mgVRegular(middle, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+	mgVRecursive(0, bottom, middle, mgRho, mgPhi, mgRes, mpiInfo);
+	mgVRecursive(middle, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 
 }
 

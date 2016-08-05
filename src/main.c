@@ -312,14 +312,14 @@ void mgRoutine(dictionary *ini){
 		tStop(t);
 		//
 		// // Compute residual and mass
-		gZero(res);
-		gHaloOp(setSlice, rho, mpiInfo, 0);
-		gHaloOp(setSlice, phi,mpiInfo, 0);
-		gBnd(phi, mpiInfo);
-		mgResidual(res,rho, phi, mpiInfo);
-		gHaloOp(setSlice, res, mpiInfo, 0);
-		err = mgResMass3D(res,mpiInfo);
-		msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+		// gZero(res);
+		// gHaloOp(setSlice, rho, mpiInfo, 0);
+		// gHaloOp(setSlice, phi,mpiInfo, 0);
+		// gBnd(phi, mpiInfo);
+		// mgResidual(res,rho, phi, mpiInfo);
+		// gHaloOp(setSlice, res, mpiInfo, 0);
+		// err = mgResMass3D(res,mpiInfo);
+		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
 	}
 
 	//Savetime
@@ -340,29 +340,39 @@ void mgRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
+	char fName[12];
 	//Saving lvl of grids
-	int lvl=0;
-	rho = mgRho->grids[lvl];
-	phi = mgPhi->grids[lvl];
-	res = mgRes->grids[lvl];
+	for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
+		// int lvl = 0;
 
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, res, mpiInfo, denorm, dimen, "res");
-	gOpenH5(ini, analytical, mpiInfo, denorm, dimen, "analytical");
+		rho = mgRho->grids[lvl];
+		phi = mgPhi->grids[lvl];
+		res = mgRes->grids[lvl];
 
+		sprintf(fName, "rho_%d", lvl);
+		gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+		sprintf(fName, "phi_%d", lvl);
+		gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
+		sprintf(fName, "res_%d", lvl);
+		gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+		// sprintf(fName, "analytical_%d", lvl);
+		// gOpenH5(ini, analytical, mpiInfo, denorm, dimen, fName);
+
+
+		gWriteH5(rho,mpiInfo,0.);
+		gWriteH5(phi,mpiInfo,0.);
+		gWriteH5(res,mpiInfo,0.);
+		// gWriteH5(analytical, mpiInfo, 0.);
+
+		gCloseH5(phi);
+		gCloseH5(rho);
+		gCloseH5(res);
+		// gCloseH5(analytical);
+
+	}
 	free(denorm);
 	free(dimen);
 
-	gWriteH5(rho,mpiInfo,0.);
-	gWriteH5(phi,mpiInfo,0.);
-	gWriteH5(res,mpiInfo,0.);
-	gWriteH5(analytical, mpiInfo, 0.);
-
-	gCloseH5(phi);
-	gCloseH5(rho);
-	gCloseH5(res);
-	gCloseH5(analytical);
 
 	tFree(t);
 	gFreeMpi(mpiInfo);
