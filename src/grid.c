@@ -334,7 +334,6 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	int lowerSubdomain = firstElem
 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	MPI_Request	sendRequest;
 	MPI_Status 	status;
 
 	// TBD: Ommitting this seems to yield race condition between consecutive
@@ -342,25 +341,20 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	// investigated further.
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Send upper (tag 1)
+	// Send and recieve upper (tag 1)
 	getSlice(sendSlice, grid, d, offsetUpperTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
-
-	// Recieve lower (upper on neighbor, hence tag 1)
-	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
+                 recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
+                 MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetLowerPlace);
 
-	MPI_Wait(&sendRequest, &status);
-
-	// Send lower (tag 0)
+	// Send and recieve lower (tag 0)
 	getSlice(sendSlice, grid, d, offsetLowerTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0, MPI_COMM_WORLD, &sendRequest);
-
-	// Recieve upper (lower on neighbor, hence tag 0)
-	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
+                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
+                 MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetUpperPlace);
 
-	MPI_Wait(&sendRequest, &status);
 }
 
 
