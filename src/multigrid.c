@@ -1153,23 +1153,22 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, 0);
- // 	gBnd(rho,mpiInfo);
+ 	gBnd(rho,mpiInfo);
 
  	//Prepare to go down
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
  	mgResidual(res, rho, phi, mpiInfo);
 
  	gHaloOp(setSlice, res, mpiInfo, 0);
- // 	gBnd(res, mpiInfo);
 
 	msg(STATUS|ONCE, "Restricting to lvl: %d", level+1);
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
 	//
- // 	//Prepare to go up
-	// // gMul(res,10);
+ 	//Prepare to go up
  	gSubFrom( phi, res );
+	// gAddTo(phi, res);
  	gHaloOp(setSlice, phi,mpiInfo, 0);
  	gBnd(phi,mpiInfo);
  	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
