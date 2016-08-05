@@ -129,8 +129,9 @@ void regularRoutine(dictionary *ini){
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
-	//Norm E
-	double normE = 0.0;
+	//Norm E (random attempts)
+	// double normE = 1./1836.;
+	// gMul(E, normE);
 	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
@@ -138,7 +139,7 @@ void regularRoutine(dictionary *ini){
 	puAcc3D1(pop, E);
 	gMul(E, 2.0);
 
-	adPrint(pop->renormRho,3);
+	// adPrint(pop->renormRho,3);
 
 	// aiPrint(rho->size,4);
 	// alPrint(rho->sizeProd,4);
@@ -174,6 +175,7 @@ void regularRoutine(dictionary *ini){
 
 		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
+		// gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
