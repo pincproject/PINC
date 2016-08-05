@@ -71,6 +71,8 @@ void regularRoutine(dictionary *ini){
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
 
+	double dx = E->stepSize[1];
+
 	// Creating a neighbourhood in the rho Grid variable to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -110,6 +112,7 @@ void regularRoutine(dictionary *ini){
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
+	double dt = iniGetDouble(ini,"time:timeStep"); // DEBUG
 
 	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rng);
@@ -122,20 +125,22 @@ void regularRoutine(dictionary *ini){
 	puMigrate(pop, mpiInfo, rho);
 
 	// Get initial charge density
-	puDistr3D1(pop, rho);
+	puDistr3D1Debug(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+	gMul(phi,dx*dx); // DEBUG: multiply phi by some number
 	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
+	gMul(E,-1.0/dx); // DEBUG: mulitply E by some number
 	//Norm E
 	double normE = 0.0;
-	gHaloOp(setSlice, E, mpiInfo, 0);
+	gHaloOp(setSlice, E, mpiInfo, 0);	// ?? What does this do?
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	puAcc3D1(pop, E);
+	puAcc3D1KEDebug(pop, E, dt);
 	gMul(E, 2.0);
 
 	adPrint(pop->renormRho,3);
@@ -164,23 +169,24 @@ void regularRoutine(dictionary *ini){
 		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
 
 		// Compute charge density
-		puDistr3D1(pop, rho);
+		puDistr3D1Debug(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
 		// Compute E-field
 		gZero(phi);
 		gZero(res);
 		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		gMul(phi,dx*dx);	// DEBUG: multiply phi by some number
 
 		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
+		gMul(E,-1.0/dx); // DEBUG: multiply E by some number
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
-
 		// Accelerate
-		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		puAcc3D1KEDebug(pop, E, dt);		// Includes kinetic energy for step n
 		pSumKinEnergy(pop);
 
 		gPotEnergy(rho,phi,pop);

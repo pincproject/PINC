@@ -167,6 +167,65 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 }
 
+void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
+
+	// Read from ini
+	int nSpecies, nDims;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+
+	// Read from mpiInfo
+	int *subdomain = mpiInfo->subdomain;
+	double *posToSubdomain = mpiInfo->posToSubdomain;
+
+	// Compute normalized length of global reference frame
+	int *L = gGetGlobalSize(ini);
+
+	for(int s=0;s<nSpecies;s++){
+
+		// Start on first particle of this specie
+		long int iStart = pop->iStart[s];
+		long int iStop = iStart;
+		double *pos = &pop->pos[iStart*nDims];
+
+		// Iterate through all particles to be generated
+		// Same seed on all MPI nodes ensure same particles are generated everywhere.
+		for(long int i=0;i<nParticles[s];i++){	// Generate nParticles of this specie
+
+			// Generate position for particle i
+			for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
+
+			// Count the number of dimensions where the particle resides in the range of this node
+			int correctRange = 0;
+			for(int d=0;d<nDims;d++)
+				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+
+			// Iterate only if particle resides in this sub-domain.
+			if(correctRange==nDims){
+				pos += nDims;
+				iStop++;
+			}
+
+		}
+
+		if(iStop>pop->iStart[s+1]){
+			int allocated = pop->iStart[s+1]-iStart;
+			int generated = iStop-iStart;
+			msg(ERROR,"allocated only %i particles of specie %i per node but %i generated",allocated,s,generated);
+		}
+
+		pop->iStop[s]=iStop;
+
+	}
+
+	pToLocalFrame(pop,mpiInfo);
+
+	free(L);
+	free(nParticles);
+	free(trueSize);
+
+}
+
 void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
 
 	iniAssertEqualNElements(ini,2,"population:perturbAmplitude","population:perturbMode");
@@ -259,7 +318,7 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 			for(int d=0; d<nDims; d++){
 
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
-					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]);
+					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]-1);
 				}
 
 			}
@@ -661,6 +720,27 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
+
+	/*
+	 * DEBUG
+	 */
+
+	double *debugQ = malloc(nSpecies*sizeof(*debugQ));
+	double *debugQM = malloc(nSpecies*sizeof(*debugQM));
+
+	adSet(debugQM,2,-1.0,1.0/1836.0);
+	adPrint(debugQM,2);
+
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
+	long int V = gGetGlobalVolume(ini);
+	double wpSq = 1;
+	double Q = wpSq*((double)V/nParticles[0])*(1/debugQM[0]);
+	msg(STATUS|ONCE,"V=%li, Q=%f",V,Q);
+	adSet(debugQ,2,-Q,Q);
+
+	pop->debugQ = debugQ;
+	pop->debugQM = debugQM;
+
 
 	/*
 	 * Normalizing charge and mass (used in energy computations)

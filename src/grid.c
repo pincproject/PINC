@@ -371,7 +371,7 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 Grid *gAlloc(const dictionary *ini, int nValues){
 
 	//Sanity check
-	iniAssertEqualNElements(ini, 2,"grid:trueSize", "grid:stepSize");
+	iniAssertEqualNElements(ini, 2, "grid:trueSize", "grid:stepSize");
 
 	// Get MPI info
 	int mpiSize, mpiRank;
@@ -582,6 +582,20 @@ int *gGetGlobalSize(const dictionary *ini){
 	free(bnd);
 
 	return L;
+}
+
+long int gGetGlobalVolume(const dictionary *ini){
+
+	int nDims;
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	free(trueSize);
+
+	int *L = gGetGlobalSize(ini);
+	long int V = aiProd(L,nDims);
+	free(L);
+
+	return V;
+
 }
 
 void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){

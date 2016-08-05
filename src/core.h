@@ -89,6 +89,9 @@ typedef struct{
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
+
+	double *debugQ;
+	double *debugQM;
 } Population;
 
 /**
