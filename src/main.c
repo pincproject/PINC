@@ -53,6 +53,7 @@ void regularRoutine(dictionary *ini){
 
 	// Random number seeds
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+//	gsl_rng_set(rng,2);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -115,7 +116,8 @@ void regularRoutine(dictionary *ini){
 	double dt = iniGetDouble(ini,"time:timeStep"); // DEBUG
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rng);
+//	pPosUniform(ini, pop, mpiInfo, rng);
+	pPosLattice(ini, pop, mpiInfo);
 	pVelZero(pop);
 
 	// Perturb particles
@@ -190,6 +192,8 @@ void regularRoutine(dictionary *ini){
 		pSumKinEnergy(pop);
 
 		gPotEnergy(rho,phi,pop);
+//		adScale(pop->potEnergy,3,pow(dx,3));
+		adScale(pop->potEnergy,3,0.5);
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);

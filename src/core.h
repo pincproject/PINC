@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include <hdf5.h>
 #include <gsl/gsl_rng.h>
 
@@ -92,6 +93,7 @@ typedef struct{
 
 	double *debugQ;
 	double *debugQM;
+	double *debugM;
 } Population;
 
 /**

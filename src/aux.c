@@ -222,6 +222,18 @@ void alMul(const long int *a, const long int *b, long int *res, long int n){
 	for(long int i=0;i<n;i++) res[i]=a[i]*b[i];
 }
 
+void adScale(double *a, long int n, double value){
+	for(long int i=0;i<n;i++) a[i] *= value;
+}
+
+void aiScale(int *a, long int n, int value){
+	for(long int i=0;i<n;i++) a[i] *= value;
+}
+
+void alScale(long int *a, long int n, int value){
+	for(long int i=0;i<n;i++) a[i] *= value;
+}
+
 void adShift(double *a, long int n, double value){
 	for(long int i=0;i<n;i++) a[i] += value;
 }
@@ -563,5 +575,3 @@ void alPrintInner(long int *a, long int inc, long int end, char *varName){
 
     return;
  }
-
- 

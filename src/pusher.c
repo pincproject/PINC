@@ -145,6 +145,7 @@ void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
 	double *val = E->val;
 
 	double *debugQM = pop->debugQM;
+	double *debugM = pop->debugM;
 
 	double dx = E->stepSize[1];
 
@@ -170,7 +171,8 @@ void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
 			kinEnergy[s]+=velSquared;
 		}
 
-		kinEnergy[s]*=mass[s];
+		// kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*debugM[s];
 
 		gMul(E,1.0/debugQM[s]);
 

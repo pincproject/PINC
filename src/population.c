@@ -180,8 +180,12 @@ void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 
 	// Compute normalized length of global reference frame
 	int *L = gGetGlobalSize(ini);
+	long int V = gGetGlobalVolume(ini);
 
 	for(int s=0;s<nSpecies;s++){
+
+		// Particle-particle distance in lattice
+		double l = pow(V/(double)nParticles[s],1.0/nDims);
 
 		// Start on first particle of this specie
 		long int iStart = pop->iStart[s];
@@ -189,11 +193,15 @@ void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 		double *pos = &pop->pos[iStart*nDims];
 
 		// Iterate through all particles to be generated
-		// Same seed on all MPI nodes ensure same particles are generated everywhere.
-		for(long int i=0;i<nParticles[s];i++){	// Generate nParticles of this specie
+		// Generate particles on global frame on all nodes and discard the ones
+		// out of range. This is simpler as it resembles pPosUniform()
+		for(long int i=0;i<nParticles[s];i++){
 
-			// Generate position for particle i
-			for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
+			double linearPos = l*i;
+			for(int d=0;d<nDims;d++){
+				pos[d] = fmod(linearPos,L[d]);
+				linearPos /= L[d];
+			}
 
 			// Count the number of dimensions where the particle resides in the range of this node
 			int correctRange = 0;
@@ -727,6 +735,7 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 
 	double *debugQ = malloc(nSpecies*sizeof(*debugQ));
 	double *debugQM = malloc(nSpecies*sizeof(*debugQM));
+	double *debugM = malloc(nSpecies*sizeof(*debugM));
 
 	adSet(debugQM,2,-1.0,1.0/1836.0);
 	adPrint(debugQM,2);
@@ -738,8 +747,11 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	msg(STATUS|ONCE,"V=%li, Q=%f",V,Q);
 	adSet(debugQ,2,-Q,Q);
 
+	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1],debugQM[1]);
+
 	pop->debugQ = debugQ;
 	pop->debugQM = debugQM;
+	pop->debugM = debugM;
 
 
 	/*
