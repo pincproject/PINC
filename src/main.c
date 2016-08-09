@@ -114,6 +114,8 @@ void regularRoutine(dictionary *ini){
 	 **************************************************************/
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	double dt = iniGetDouble(ini,"time:timeStep"); // DEBUG
+	long int V = gGetGlobalVolume(ini);
+
 
 	// Initalize particles
 //	pPosUniform(ini, pop, mpiInfo, rng);
@@ -135,7 +137,7 @@ void regularRoutine(dictionary *ini){
 	gMul(phi,dx*dx); // DEBUG: multiply phi by some number
 	// msg(STATUS, "Hello");
 	gFinDiff1st(phi, E);
-	gMul(E,-1.0/dx); // DEBUG: mulitply E by some number
+	gMul(E,1.0/dx); // DEBUG: mulitply E by some number
 	//Norm E
 	double normE = 0.0;
 	gHaloOp(setSlice, E, mpiInfo, 0);	// ?? What does this do?
@@ -146,6 +148,7 @@ void regularRoutine(dictionary *ini){
 	gMul(E, 2.0);
 
 	adPrint(pop->renormRho,3);
+	msg(STATUS|ONCE,"dx=%f, dt=%f",dx,dt);
 
 	// aiPrint(rho->size,4);
 	// alPrint(rho->sizeProd,4);
@@ -160,7 +163,7 @@ void regularRoutine(dictionary *ini){
 		msg(STATUS|ONCE,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		pVelAssertMax(pop,32.0);		// Just for catching errors while debugging
+		pVelAssertMax(pop,1.0);		// Just for catching errors while debugging
 
 		// Move particles
 		puMove(pop);
@@ -182,7 +185,7 @@ void regularRoutine(dictionary *ini){
 
 		// gMul(phi,-1.0);
 		gFinDiff1st(phi, E);
-		gMul(E,-1.0/dx); // DEBUG: multiply E by some number
+		gMul(E,1.0/dx); // DEBUG: multiply E by some number
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
@@ -193,7 +196,9 @@ void regularRoutine(dictionary *ini){
 
 		gPotEnergy(rho,phi,pop);
 //		adScale(pop->potEnergy,3,pow(dx,3));
-		adScale(pop->potEnergy,3,0.5);
+//		adScale(pop->potEnergy,3,0.5);
+//		adScale(pop->potEnergy,3,0.5/V);
+		adScale(pop->potEnergy,3,0.5*pow(dx,0));
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);

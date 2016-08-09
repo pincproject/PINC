@@ -738,16 +738,19 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *debugM = malloc(nSpecies*sizeof(*debugM));
 
 	adSet(debugQM,2,-1.0,1.0/1836.0);
-	adPrint(debugQM,2);
 
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
 	long int V = gGetGlobalVolume(ini);
 	double wpSq = 1;
 	double Q = wpSq*((double)V/nParticles[0])*(1/debugQM[0]);
 	msg(STATUS|ONCE,"V=%li, Q=%f",V,Q);
-	adSet(debugQ,2,-Q,Q);
+	adSet(debugQ,2,Q,-Q);
 
-	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1],debugQM[1]);
+	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1]/debugQM[1]);
+
+	adPrint(debugQM,2);
+	adPrint(debugQ,2);
+	adPrint(debugM,2);
 
 	pop->debugQ = debugQ;
 	pop->debugQM = debugQM;
