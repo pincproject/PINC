@@ -1,45 +1,80 @@
 #   Plotting a 1D graf of all the grids in a multigrid
 #   Used for debugging on a heaviside function
+#
+#	This presupposes that the different grids are stored numbered
+#
+#	The wanted # of grids to plot is specified by the input.
+#
+#	python plotMultigrid1D.py 4
+#
+#	This will plot 4 grid levels
+#
+#	by Gullik V Killie
+
 
 import h5py
 import numpy as np
 import pylab as plt
+import sys as sys
 
 def transformData(dataset, timestep):
 	grid = dataset['/n=%.1f'%timestep]
-	# grid = np.transpose(grid, (3,2,1,0))
 	grid = np.squeeze(grid)
-	grid = np.average(grid, axis = 0)
-	grid = np.average(grid, axis = 1)
-	# grid = grid[20,:,:]
-
+	#Accounting for reverse zyx order
+	if len(grid.shape)==4:
+		grid = grid[:,:,:,0]
+	if grid.shape[0] > 1:
+		grid = np.average(grid, axis = 0)
+		# grid = grid[10,:,:]
+	if grid.shape[1] > 1:
+		grid = np.average(grid, axis = 0)
+		# grid = grid[10,:]
 	return grid
 
-def plot2DSlice(name, grid, saveStr):
-	#Format
-	x = np.arange(grid.shape[1])
-	y = np.arange(grid.shape[0])
 
-	X,Y = np.meshgrid(x,y, indexing= 'ij')
-
-	plt.figure()
-	plt.contourf(X,Y,grid, 20)
-
-	plt.colorbar()
-	plt.title(name)
-	plt.savefig("figures/" + saveStr)
-
-	return
-
-def plot1DSubgrid(name, grid):
+def plot1DSubgrid(name, grid, ax):
+	length= grid.shape[0]
 	x = np.arange(grid.shape[0])
+	ax.plot(x,grid)
+	# ax.set_title(str(grid.shape[0]), 'right')
+	ax.set_xlim([0,length-1])
+	ax.text(length/5, 0, " Max = " + str(np.round(np.max(grid))) + "\n L=" + str(length))
+	ax.locator_params(axis='y',nbins=3)
 
-	plt.plot(x,grid)
 
-#Plot all grids
-for i in range(3):
-	path = '../../test_phi_'+ str(i) +'.grid.h5'
-	phi = transformData(h5py.File(path,'r'),0)
-	plot1DSubgrid("$\\phi$", phi)
+def plotAllGrids(name, nLevels, totLevels , savePath = 'figures/'):
+	#Plot all grids
+	f, ax = plt.subplots(nLevels,1)
+	if nLevels == 1:
+		path = '../../test_'+name+'_'+ str(0) +'.grid.h5'
+		grid = transformData(h5py.File(path,'r'),0)
+		plot1DSubgrid(name, grid, ax)
+
+	else:
+		for i in range(nLevels):
+			path = '../../test_'+name+'_'+ str(i) +'.grid.h5'
+			grid = transformData(h5py.File(path,'r'),0)
+			plot1DSubgrid(name, grid, ax[i])
+			plt.setp([a.get_xticklabels() for a in f.axes[:]], visible=False)
+			plt.setp([a.get_yticklabels() for a in f.axes[:]], visible=False)
+			del grid
+	f.suptitle(name)
+	f.subplots_adjust(hspace=0)
+	f.savefig(savePath + name + str(totLevels) + '.eps')
+
+
+nLevels = int(sys.argv[1])
+if len(sys.argv) > 1:
+	totLevels = int(sys.argv[2])
+else:
+	totLevels = 0
+
+plotAllGrids("phi", nLevels, totLevels)
+# plotAllGrids("rho", nLevels)
+plotAllGrids("res", nLevels, totLevels)
+if nLevels ==1:
+	plotAllGrids("sol", nLevels, totLevels)
+	plotAllGrids("E", nLevels, totLevels)
+	plotAllGrids("error", nLevels, totLevels)
 
 plt.show()

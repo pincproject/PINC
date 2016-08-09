@@ -665,6 +665,15 @@ void gSub(Grid *grid, double num){
 	for(long int p=0;p<nElements;p++) grid->val[p] -= num;
 }
 
+void gSquare(Grid *grid){
+
+	int rank = grid->rank;
+	long int nElements = grid->sizeProd[rank];
+	double *val = grid->val;
+	for(long int g=0;g<nElements;g++) val[g] = val[g]*val[g];
+
+}
+
 
 void gZero(Grid *grid){
 
@@ -682,6 +691,18 @@ void gSet(Grid *grid, const double *value){
 	for(long int p=0;p<sizeProd[rank];p+=size[0])
 		for(int pp=0;pp<size[0];pp++)
 			grid->val[p+pp] = value[pp];
+}
+
+void gCopy(const Grid *original, Grid *copy){
+	//Load
+	int rank = original->rank;
+	long int *sizeProd = original->sizeProd;
+
+	double *origVal =	original->val;
+	double *copyVal=	copy->val;
+
+	for(int g = 0; g < sizeProd[rank]; g++) copyVal[g] = origVal[g];
+
 }
 
 void gNormalizeE(const dictionary *ini, Grid *E){
@@ -769,7 +790,7 @@ void gAddTo(Grid *result, Grid *addition){
 
 }
 
-void gSubFrom(Grid *result, Grid *subtraction){
+void gSubFrom(Grid *result, const Grid *subtraction){
 
 	int rank = result->rank;
 	long int *sizeProd = result->sizeProd;
@@ -779,6 +800,52 @@ void gSubFrom(Grid *result, Grid *subtraction){
 	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] -= subVal[g];
 
 }
+
+static double gSumTruegridInner(const double **val, const int *nGhostLayersBefore,
+								const int *nGhostLayersAfter, const int *trueSize,
+								const long int *sizeProd){
+
+	double sum = 0;
+
+	if(*sizeProd==1){
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			sum += (*(*val)++);
+
+		*val += *sizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			sum += gSumTruegridInner(val,nGhostLayersBefore-1,
+									nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+
+		*val += *sizeProd**nGhostLayersAfter;
+	}
+
+	return sum;
+}
+
+double gSumTruegrid(const Grid *grid){
+
+	//Load
+	const double *val = grid->val;
+	long int *sizeProd = grid->sizeProd;
+	int *trueSize = grid->trueSize;
+	int *nGhostLayers = grid->nGhostLayers;
+	int rank = grid->rank;
+
+	double sum = gSumTruegridInner(&val,&nGhostLayers[rank-1],
+					&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+	return sum;
+
+}
+
 
 
 /****************************************************************
@@ -1231,20 +1298,19 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[1]==1){
+   if(nSubdomains[0]==0){
 	   //One core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(k < (trueSize[2]+1)/2.) val[ind] = 1.;
+				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
 				   else val[ind] = -1.;
 			   }
 		   }
 	   }
    } else {
-	   msg(STATUS|ONCE, "Hello");
 	   //Multi core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
@@ -1252,15 +1318,15 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				//    val[ind] = 1.;
 				//    msg(STATUS|ONCE, "%d", ind);
-				   if(subdomain[1]<nSubdomains[1]/2) val[ind] = 1.0;
+				   if(subdomain[0]<nSubdomains[0]/2) val[ind] = 1.0;
 				   else val[ind] = -1.;
 			   }
 		   }
 	   }
 	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
 	   double *slice = grid->sendSlice;
-	   for(int k = 0; k < size[2]; k++)	slice[k] = 0;
-	   setSlice(slice, grid, 2, size[2]-2);
+	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
+	   setSlice(slice, grid, 1, size[1]-2);
    }
 
 
@@ -1272,24 +1338,52 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 
 void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 
-   //Load
-   int *size = grid->size;
-   int *trueSize = grid->trueSize;
-   long int *sizeProd = grid->sizeProd;
-   double *val =grid->val;
+	//Load
+    int *size = grid->size;
+    int *trueSize = grid->trueSize;
+    long int *sizeProd = grid->sizeProd;
+    int *subdomain = mpiInfo->subdomain;
+    int *nSubdomains = mpiInfo->nSubdomains;
+
+	double *val = grid->val;
 
    //Hardcoding try
    long int ind = 0;
-   //One core in z dir
-   for(int j = 1; j < size[1]-1; j++){
-	   for (int k = 1; k<size[2]-1; k++) {
-		   for(int l = 1; l < size[3]-1; l++){
-			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-			   if(l < trueSize[3]/2)  val[ind] = -128. + (double)(l - 16.)*(l - 16.)/2.;
-			   else if (l == trueSize[3]/2. || l == trueSize[3]) val[ind] = 0.;
-			   else val[ind] = -128.;
+   if(nSubdomains[0]==0){
+	   //One core
+	   for(int j = 1; j < size[1]-1; j++){
+		   for (int k = 1; k<size[2]-1; k++) {
+			   for(int l = 1; l < size[3]-1; l++){
+				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
+				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
+				   else val[ind] = -1.;
+			   }
 		   }
 	   }
+   } else {
+	   //Multi core
+	   long int J;	//Total domain position
+	   for(int j = 1; j < size[1]-1; j++){
+		   for (int k = 1; k<size[2]-1; k++) {
+			   for(int l = 1; l < size[3]-1; l++){
+				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				   if(subdomain[0]<nSubdomains[0]/2){
+					   J = j+subdomain[0]*trueSize[1];
+					   val[ind] = (0.5*J- 32.)*J;
+					//    adPrint(&val[j],1);
+				   }
+				   else{
+					   J = j + subdomain[0]/nSubdomains[0]*trueSize[1];
+					   val[ind] = -(0.5*(J)- 32.)*(J);
+				   }
+			   }
+		   }
+	   }
+	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
+	   double *slice = grid->sendSlice;
+	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
+	   setSlice(slice, grid, 1, size[1]-2);
    }
 
    return;

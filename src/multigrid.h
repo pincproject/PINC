@@ -274,6 +274,28 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 
 
  /**
+  * @brief Compares numerical solution to an analytical solution
+  * @param  numerical           Numerical solution
+  * @param  analytical          Analytical solution
+  * @param  error               Difference between solutions
+  * @return error
+  */
+
+void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
+
+
+/**
+ * @brief Returns the square of the error on the true grid
+ * @param  error               Difference between solutions
+ * @param  mpiInfo             MpiInfo
+ * @return error
+ *
+ *  WARNING!    Stores the squared values on the original grid
+ *              Recompute error if needed
+ */
+double mgSumErrorSquared(Grid *error,const MpiInfo *mpiInfo);
+
+ /**
   * @brief Writes out information about the MG cycles, used when optimizing the number of cycles
   * @param ini 					dictionary of the input file
   * @param multigrid 		multigrid struct

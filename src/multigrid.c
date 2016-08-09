@@ -354,7 +354,7 @@ void mgFree(Multigrid *multigrid){
 void mgJacob2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
 	//Warning not optimzed
 
-	msg(STATUS, "Hello");
+	// msg(STATUS, "Hello");
 	//Common variables
 	int rank = phi->rank;
 	long int *sizeProd = phi->sizeProd;
@@ -1119,6 +1119,28 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 	return mass;
 }
 
+
+void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error){
+
+	gCopy(numerical, error);
+	gSubFrom(error, analytical);
+
+	return;
+}
+
+double mgSumErrorSquared(Grid *error,const MpiInfo *mpiInfo){
+
+	//Square and sum
+	gSquare(error);
+	double sum = gSumTruegrid(error);
+
+	//Reduce
+	MPI_Allreduce(&sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+	return sum;
+}
+
+
 void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
 
@@ -1138,9 +1160,12 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	//Solve and return at coarsest level
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, 0);
+		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, 0);
+		gNeutralizeGrid(mgRho->grids[level], mpiInfo);
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
+		gNeutralizeGrid(mgPhi->grids[level], mpiInfo);
  		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
-		msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
+		// msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
 
  		return;
  	}
@@ -1163,7 +1188,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	gHaloOp(setSlice, res, mpiInfo, 0);
 
-	msg(STATUS|ONCE, "Restricting to lvl: %d", level+1);
+	// msg(STATUS|ONCE, "Restricting to lvl: %d", level+1);
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
@@ -1174,10 +1199,11 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	gHaloOp(setSlice, phi,mpiInfo, 0);
  	gBnd(phi,mpiInfo);
  	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
+	gNeutralizeGrid(phi, mpiInfo);
 
  	//Go up
  	if(level >top){
-		msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
+		// msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
  		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
  	}
 

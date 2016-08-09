@@ -243,6 +243,16 @@ void gZero(Grid *grid);
 void gSet(Grid *grid, const double *value);
 
 /**
+ * @brief Copy a grid
+ * @param	original	 Original grid
+ * @param	copy	     Copied grid
+ *
+ * Each grid point is set to have the vector value specified by 'value'. Hence
+ * value is expected to have length grid->size[0]
+ */
+void gCopy(const Grid *original, Grid *copy);
+
+/**
  * @brief Multiply all values in grid by a number
  * @param	grid	Grid
  * @param	num		Number to multiply by
@@ -265,6 +275,14 @@ void gAdd(Grid *grid, double num);
  * @return			void
  */
 void gSub(Grid *grid, double num);
+
+/**
+ * @brief   Square a grid
+ * @param	grid	Grid
+ * @return			void
+ */
+
+void gSquare(Grid *grid);
 
 /**
  * @brief Performs a central space finite difference on a grid
@@ -332,7 +350,17 @@ void gAddTo(Grid *result, Grid *addition);
 *
 */
 
-void gSubFrom(Grid *result, Grid *subtraction);
+void gSubFrom(Grid *result, const Grid *subtraction);
+
+/**
+* @brief Sums up the values in the true grid
+* @param	grid       Grid
+* @param	mpiInfo	   MpiInfo
+*
+*	Sums the true grid, uses a NDimensional algorithm
+*
+*/
+double gSumTruegrid(const Grid *grid);
 
 
 /**

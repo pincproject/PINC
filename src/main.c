@@ -244,7 +244,9 @@ void mgRoutine(dictionary *ini){
 	Grid *phi = gAlloc(ini, 1);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res= gAlloc(ini, 1);
-	Grid *analytical = gAlloc(ini, 1);
+	Grid *sol = gAlloc(ini, 1);
+	Grid *E = gAlloc(ini, 3);
+	Grid *error =gAlloc(ini, 1);
 
 	//Multilevel grids
 	Multigrid *mgPhi = mgAlloc(ini, phi);
@@ -274,23 +276,25 @@ void mgRoutine(dictionary *ini){
 
 	//Compute stuff
 	fillHeaviside(rho, mpiInfo);
+	fillHeaviSol(sol, mpiInfo);
 	// fillPointCharge(rho, mpiInfo);
 	// fillPolynomial(rho, mpiInfo);
-	// fillPointSol(analytical, mpiInfo);
-	// fillExp(analytical, mpiInfo);
+	// fillPointSol(sol, mpiInfo);
+	// fillExp(sol, mpiInfo);
 	// fillSin(rho, mpiInfo);
-	// fillSinSol(analytical, mpiInfo);
+	// fillSinSol(sol, mpiInfo);
 	// fillCst(rho, mpiInfo);
 	// fillRng(rho, mpiInfo, rng);
 
-	// gHaloOp(setSlice, analytical, mpiInfo);
-	// gFinDiff2nd3D(rho, analytical);
+	// gHaloOp(setSlice, sol, mpiInfo);
+	// gFinDiff2nd3D(rho, sol);
 
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
 	double tol = 10000;
-	double err = 10001;
+	double errSquared = 10001;
+	double resSquared = 10001;
 	double counter = tol+1;
 
 	while(counter>tol){
@@ -310,8 +314,14 @@ void mgRoutine(dictionary *ini){
 		// }
 
 		tStop(t);
-		//
-		// // Compute residual and mass
+
+		//Compute error
+		mgCompError(phi,sol,error);
+		errSquared = mgSumErrorSquared(error, mpiInfo);
+		resSquared = mgSumErrorSquared(res, mpiInfo);
+
+
+		// Compute residual and mass
 		// gZero(res);
 		// gHaloOp(setSlice, rho, mpiInfo, 0);
 		// gHaloOp(setSlice, phi,mpiInfo, 0);
@@ -319,14 +329,12 @@ void mgRoutine(dictionary *ini){
 		// mgResidual(res,rho, phi, mpiInfo);
 		// gHaloOp(setSlice, res, mpiInfo, 0);
 		// err = mgResMass3D(res,mpiInfo);
-		// msg(STATUS|ONCE, "The error mass (e^2) is %f", err);
+		msg(STATUS|ONCE, "Error squared (e^2) = %f", errSquared);
+		msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
+			// The res squared (res^2) = %f", errSquared, resSquared);
 	}
 
-	//Savetime
 
-
-
-	// if(mpiInfo->mpiRank==0) tMsg(ini, "mgLog", "%llu \n", t->total);
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 
@@ -340,10 +348,31 @@ void mgRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	char fName[12];
+
+	//(Re)Compute E, error and residual
+	gHaloOp(setSlice, phi, mpiInfo, 0);
+	gBnd(phi, mpiInfo);
+	gFinDiff1st(phi, E);
+	mgCompError(phi,sol,error);
+	mgResidual(res,rho, phi, mpiInfo);
+
+
+	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
+	gWriteH5(E, mpiInfo, 0.);
+	gCloseH5(E);
+
+	gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
+	gWriteH5(sol, mpiInfo, 0.);
+	gCloseH5(sol);
+
+	gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
+	gWriteH5(error, mpiInfo, 0.);
+	gCloseH5(error);
+
+
 	//Saving lvl of grids
+	char fName[12];
 	for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
-		// int lvl = 0;
 
 		rho = mgRho->grids[lvl];
 		phi = mgPhi->grids[lvl];
@@ -355,21 +384,19 @@ void mgRoutine(dictionary *ini){
 		gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
 		sprintf(fName, "res_%d", lvl);
 		gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
-		// sprintf(fName, "analytical_%d", lvl);
-		// gOpenH5(ini, analytical, mpiInfo, denorm, dimen, fName);
 
 
 		gWriteH5(rho,mpiInfo,0.);
 		gWriteH5(phi,mpiInfo,0.);
 		gWriteH5(res,mpiInfo,0.);
-		// gWriteH5(analytical, mpiInfo, 0.);
 
 		gCloseH5(phi);
 		gCloseH5(rho);
 		gCloseH5(res);
-		// gCloseH5(analytical);
 
 	}
+
+
 	free(denorm);
 	free(dimen);
 
