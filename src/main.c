@@ -163,7 +163,7 @@ void regularRoutine(dictionary *ini){
 		msg(STATUS|ONCE,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		pVelAssertMax(pop,1.0);		// Just for catching errors while debugging
+		pVelAssertMax(pop,64.0);		// Just for catching errors while debugging
 
 		// Move particles
 		puMove(pop);
