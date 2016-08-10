@@ -1128,7 +1128,7 @@ void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error){
 	return;
 }
 
-double mgSumErrorSquared(Grid *error,const MpiInfo *mpiInfo){
+double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo){
 
 	//Square and sum
 	gSquare(error);
@@ -1180,10 +1180,16 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, 0);
- 	gBnd(rho,mpiInfo);
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE, "Bnd Starts");
+ 	gNeutralizeGrid(rho,mpiInfo);
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS|ONCE, "Bnd Fails?");
 
  	//Prepare to go down
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
+	// msg(STATUS|ONCE, "Restricting from lvl %d -> %d", level, level+1);
+
  	mgResidual(res, rho, phi, mpiInfo);
 
  	gHaloOp(setSlice, res, mpiInfo, 0);
@@ -1303,10 +1309,10 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 
 		//Prepare to go up
 		gSubFrom( phi, res );
-		// gAddTo(phi, res);
 
 		gHaloOp(setSlice, phi,mpiInfo, 0);
 		gBnd(phi,mpiInfo);
+
 		postSmooth(phi, rho, nPostSmooth, mpiInfo);
 		gBnd(phi, mpiInfo);
 
@@ -1363,19 +1369,19 @@ void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRe
 	// gZero(mgPhi->grids[0]);
 	if(nLevels >1){
 		for(int c = 0; c < nMGCycles; c++){
-			// msg(STATUS, "Cyclestep: %d", c);
-			// mgVRecursive(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-			// mgVRegular(0,bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+			// msg(STATUS|ONCE, "Cycle = %d", c);
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 		}
 	}	else {
-		Grid *phi = mgPhi->grids[0];
-		Grid *rho = mgRho->grids[0];
-		gHaloOp(setSlice, rho, mpiInfo, 0);
-		gBnd(rho, mpiInfo);
-		// gHaloOp(setSlice, rho, mpiInfo, 0);
-		mgRho->coarseSolv(phi, rho,
-							mgRho->nPreSmooth+mgRho->nPostSmooth, mpiInfo);
+		for(int c = 0; c < nMGCycles; c++){
+
+			Grid *phi = mgPhi->grids[0];
+			Grid *rho = mgRho->grids[0];
+			gHaloOp(setSlice, rho, mpiInfo, 0);
+			gBnd(rho, mpiInfo);
+			mgRho->coarseSolv(phi, rho,
+								mgRho->nPreSmooth+mgRho->nPostSmooth, mpiInfo);
+		}
 	}
 
 	return;

@@ -361,6 +361,7 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	sliceOp(recvSlice, grid, d, offsetUpperPlace);
 
 	MPI_Wait(&sendRequest, &status);
+
 }
 
 
@@ -721,7 +722,6 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 
 //Not that well tested
 void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
-
 	const double *val = grid->val;
 	long int *sizeProd = grid->sizeProd;
 	int *trueSize = grid->trueSize;
@@ -730,18 +730,19 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 	int mpiSize = mpiInfo->mpiSize;
 
 
+
 	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	double totCharge = 0;
 
-	// MPI_Barrier(MPI_COMM_WORLD);
-
+	// return;
+	MPI_Barrier(MPI_COMM_WORLD);
 	// msg(STATUS, "Hello before");
 	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	// msg(STATUS, "HELLO AFTER");
 
-	// MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 
-
+	// msg(STATUS|ONCE, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
 	gSub(grid, avgCharge);
@@ -1323,10 +1324,11 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 			   }
 		   }
 	   }
-	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
-	   double *slice = grid->sendSlice;
-	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
-	   setSlice(slice, grid, 1, size[1]-2);
+	//Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
+	//    double *slice = grid->sendSlice;
+	//    for(int j = 0; j < size[1]; j++)	slice[j] = 0;
+	//    if(subdomain[0] == 0)	setSlice(slice, grid, 1, 1);
+	//    if(subdomain[0] == nSubdomains[0])	setSlice(slice, grid, 1, 1);
    }
 
 
@@ -1354,6 +1356,7 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
+				   msg(STATUS|ONCE, "Not implemented for 1 domain");
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
@@ -1364,26 +1367,22 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
    } else {
 	   //Multi core
 	   long int J;	//Total domain position
+	   int half = nSubdomains[0]/2 * trueSize[1];
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(subdomain[0]<nSubdomains[0]/2){
-					   J = j+subdomain[0]*trueSize[1];
-					   val[ind] = (0.5*J- 32.)*J;
-					//    adPrint(&val[j],1);
+					   J = j  + subdomain[0]*trueSize[1];
+					   val[ind] = -0.5*(half - J)*J;
 				   }
 				   else{
-					   J = j + subdomain[0]/nSubdomains[0]*trueSize[1];
-					   val[ind] = -(0.5*(J)- 32.)*(J);
+					   J = j + trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
+					   val[ind] = -0.5*(J - half)*J;
 				   }
 			   }
 		   }
 	   }
-	//    Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
-	   double *slice = grid->sendSlice;
-	   for(int j = 0; j < size[1]; j++)	slice[j] = 0;
-	   setSlice(slice, grid, 1, size[1]-2);
    }
 
    return;

@@ -317,8 +317,8 @@ void mgRoutine(dictionary *ini){
 
 		//Compute error
 		mgCompError(phi,sol,error);
-		errSquared = mgSumErrorSquared(error, mpiInfo);
-		resSquared = mgSumErrorSquared(res, mpiInfo);
+		errSquared = mgSumTrueSquared(error, mpiInfo);
+		resSquared = mgSumTrueSquared(res, mpiInfo);
 
 
 		// Compute residual and mass

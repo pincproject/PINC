@@ -293,7 +293,7 @@ void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
  *  WARNING!    Stores the squared values on the original grid
  *              Recompute error if needed
  */
-double mgSumErrorSquared(Grid *error,const MpiInfo *mpiInfo);
+double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo);
 
  /**
   * @brief Writes out information about the MG cycles, used when optimizing the number of cycles

@@ -70,7 +70,7 @@ else:
 	totLevels = 0
 
 plotAllGrids("phi", nLevels, totLevels)
-# plotAllGrids("rho", nLevels)
+# plotAllGrids("rho", nLevels, totLevels)
 plotAllGrids("res", nLevels, totLevels)
 if nLevels ==1:
 	plotAllGrids("sol", nLevels, totLevels)
