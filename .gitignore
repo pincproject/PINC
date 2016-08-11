@@ -20,3 +20,4 @@ local.mk
 **.pyc
 **.txt
 **.nfs**
+**.eps

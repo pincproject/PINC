@@ -1170,6 +1170,8 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  		return;
  	}
 
+
+
  	//Gathering info
  	int nPreSmooth = mgRho->nPreSmooth;
  	int nPostSmooth= mgRho->nPostSmooth;
@@ -1180,15 +1182,18 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, 0);
-	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE, "Bnd Starts");
  	gNeutralizeGrid(rho,mpiInfo);
-	MPI_Barrier(MPI_COMM_WORLD);
 	msg(STATUS|ONCE, "Bnd Fails?");
 
  	//Prepare to go down
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS, "Solving at lvl = %d", level);
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
-	// msg(STATUS|ONCE, "Restricting from lvl %d -> %d", level, level+1);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+
+	msg(STATUS|ONCE, "Restricting from lvl %d -> %d", level, level+1);
 
  	mgResidual(res, rho, phi, mpiInfo);
 

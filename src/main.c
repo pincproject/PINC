@@ -314,11 +314,11 @@ void mgRoutine(dictionary *ini){
 		// }
 
 		tStop(t);
-
-		//Compute error
-		mgCompError(phi,sol,error);
-		errSquared = mgSumTrueSquared(error, mpiInfo);
-		resSquared = mgSumTrueSquared(res, mpiInfo);
+		//
+		// //Compute error
+		// mgCompError(phi,sol,error);
+		// errSquared = mgSumTrueSquared(error, mpiInfo);
+		// resSquared = mgSumTrueSquared(res, mpiInfo);
 
 
 		// Compute residual and mass
