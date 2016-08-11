@@ -72,8 +72,6 @@ void regularRoutine(dictionary *ini){
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
 
-	double dx = E->stepSize[1];
-
 	// Creating a neighbourhood in the rho Grid variable to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -113,9 +111,6 @@ void regularRoutine(dictionary *ini){
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	double dt = iniGetDouble(ini,"time:timeStep"); // DEBUG
-	long int V = gGetGlobalVolume(ini);
-	double *debugQM = pop->debugQM;
 
 
 	// Initalize particles

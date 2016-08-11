@@ -132,59 +132,6 @@ void puAcc3D1KE(Population *pop, Grid *E){
 	}
 }
 
-void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
-
-	int nSpecies = pop->nSpecies;
-	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
-	double *pos = pop->pos;
-	double *vel = pop->vel;
-	double *mass = pop->mass;
-	double *kinEnergy = pop->kinEnergy;
-
-	long int *sizeProd = E->sizeProd;
-	double *val = E->val;
-
-	double *debugQM = pop->debugQM;
-	double *debugM = pop->debugM;
-
-	double dx = E->stepSize[1];
-
-	// gMul(E,dt*dt/dx);
-	// gMul(E,debugQM[0]);
-
-	for(int s=0;s<nSpecies;s++){
-
-		// gMul(E,debugQM[s]);
-
-		long int pStart = pop->iStart[s]*nDims;
-		long int pStop = pop->iStop[s]*nDims;
-
-		kinEnergy[s]=0;
-
-		for(long int p=pStart;p<pStop;p+=nDims){
-			double dv[3];
-			puInterp3D1(dv,&pos[p],val,sizeProd);
-			double velSquared=0;
-			for(int d=0;d<nDims;d++){
-				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
-				vel[p+d] += dv[d];
-			}
-			kinEnergy[s]+=velSquared;
-		}
-
-		// kinEnergy[s]*=mass[s];
-		// kinEnergy[s]*=0.5*debugM[s]*pow(dx/dt,2);
-		kinEnergy[s]*=debugM[s];//*pow(dx/dt,2);
-
-		// Specie-specific re-normalization
-		// gMul(E,1.0/debugQM[s]);
-		gMul(E,pop->renormE[s]);
-	}
-
-	// gMul(E,dx/(dt*dt));
-}
-
-
 //double vlength(double *vel){
 //	return sqrt(pow(vel[0],2)+pow(vel[1],2)+pow(vel[2],2));
 //}
@@ -312,67 +259,6 @@ void puDistr3D1(const Population *pop, Grid *rho){
 
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
-
-		for(int i=iStart;i<iStop;i++){
-
-			double *pos = &pop->pos[3*i];
-
-			// Integer parts of position
-			int j = (int) pos[0];
-			int k = (int) pos[1];
-			int l = (int) pos[2];
-
-			// Decimal (cell-referenced) parts of position and their complement
-			double x = pos[0]-j;
-			double y = pos[1]-k;
-			double z = pos[2]-l;
-			double xcomp = 1-x;
-			double ycomp = 1-y;
-			double zcomp = 1-z;
-
-			// Index of neighbouring nodes
-			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
-			long int pj 	= p + 1; //sizeProd[1];
-			long int pk 	= p + sizeProd[2];
-			long int pjk 	= pk + 1; //sizeProd[1];
-			long int pl 	= p + sizeProd[3];
-			long int pjl 	= pl + 1; //sizeProd[1];
-			long int pkl 	= pl + sizeProd[2];
-			long int pjkl 	= pkl + 1; //sizeProd[1];
-
-			// if(pjkl>=sizeProd[4])
-			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
-
-			val[p] 		+= xcomp*ycomp*zcomp;
-			val[pj]		+= x    *ycomp*zcomp;
-			val[pk]		+= xcomp*y    *zcomp;
-			val[pjk]	+= x    *y    *zcomp;
-			val[pl]     += xcomp*ycomp*z    ;
-			val[pjl]	+= x    *ycomp*z    ;
-			val[pkl]	+= xcomp*y    *z    ;
-			val[pjkl]	+= x    *y    *z    ;
-
-		}
-
-		gMul(rho,pop->renormRho[s]);
-
-	}
-
-}
-
-void puDistr3D1Debug(const Population *pop, Grid *rho){
-
-	gZero(rho);
-	double *val = rho->val;
-	long int *sizeProd = rho->sizeProd;
-
-	int nSpecies = pop->nSpecies;
-
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-		double q = pop->debugQ[s];
 
 		for(int i=iStart;i<iStop;i++){
 
