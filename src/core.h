@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include <hdf5.h>
 #include <gsl/gsl_rng.h>
 
@@ -89,6 +90,10 @@ typedef struct{
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
+
+	double *debugQ;
+	double *debugQM;
+	double *debugM;
 } Population;
 
 /**

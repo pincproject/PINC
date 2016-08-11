@@ -158,11 +158,11 @@ void adAdd(const double *a, const double *b, double *res, long int n);
 void aiAdd(const int *a, const int *b, int *res, long int n);
 ///@brief Adds two arrays
 void alAdd(const long int *a, const long int *b, long int *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void adMul(const double *a, const double *b, double *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void aiMul(const int *a, const int *b, int *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void alMul(const long int *a, const long int *b, long int *res, long int n);
 ///@brief Shifts an array by a constant value
 void adShift(double *a, long int n, double value);
@@ -170,6 +170,12 @@ void adShift(double *a, long int n, double value);
 void aiShift(int *a, long int n, int value);
 ///@brief Shifts an array by a constant value
 void alShift(long int *a, long int n, long int value);
+///@brief Scales an array by a constant value
+void adScale(double *a, long int n, double value);
+///@brief Scales an array by a constant value
+void aiScale(int *a, long int n, int value);
+///@brief Scales an array by a constant value
+void alScale(long int *a, long int n, int value);
 ///@brief Returns maximum value in an array
 double adMax(const double *a, long int n);
 ///@brief Returns maximum value in an array

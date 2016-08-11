@@ -167,6 +167,73 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 }
 
+void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
+
+	// Read from ini
+	int nSpecies, nDims;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+
+	// Read from mpiInfo
+	int *subdomain = mpiInfo->subdomain;
+	double *posToSubdomain = mpiInfo->posToSubdomain;
+
+	// Compute normalized length of global reference frame
+	int *L = gGetGlobalSize(ini);
+	long int V = gGetGlobalVolume(ini);
+
+	for(int s=0;s<nSpecies;s++){
+
+		// Particle-particle distance in lattice
+		double l = pow(V/(double)nParticles[s],1.0/nDims);
+
+		// Start on first particle of this specie
+		long int iStart = pop->iStart[s];
+		long int iStop = iStart;
+		double *pos = &pop->pos[iStart*nDims];
+
+		// Iterate through all particles to be generated
+		// Generate particles on global frame on all nodes and discard the ones
+		// out of range. This is simpler as it resembles pPosUniform()
+		for(long int i=0;i<nParticles[s];i++){
+
+			double linearPos = l*i;
+			for(int d=0;d<nDims;d++){
+				pos[d] = fmod(linearPos,L[d]);
+				linearPos /= L[d];
+			}
+
+			// Count the number of dimensions where the particle resides in the range of this node
+			int correctRange = 0;
+			for(int d=0;d<nDims;d++)
+				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+
+			// Iterate only if particle resides in this sub-domain.
+			if(correctRange==nDims){
+				pos += nDims;
+				iStop++;
+			}
+
+		}
+
+		if(iStop>pop->iStart[s+1]){
+			int allocated = pop->iStart[s+1]-iStart;
+			int generated = iStop-iStart;
+			msg(ERROR,"allocated only %i particles of specie %i per node but %i generated",allocated,s,generated);
+		}
+
+		pop->iStop[s]=iStop;
+
+	}
+
+	pToLocalFrame(pop,mpiInfo);
+
+	free(L);
+	free(nParticles);
+	free(trueSize);
+
+}
+
 void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
 
 	iniAssertEqualNElements(ini,2,"population:perturbAmplitude","population:perturbMode");
@@ -259,7 +326,7 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 			for(int d=0; d<nDims; d++){
 
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
-					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]);
+					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]-1);
 				}
 
 			}
@@ -658,9 +725,47 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	int nSpecies, nDims;
 	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",&nSpecies);
+
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
+
+	// Multiply charge and mass by multiplicity
+	adMul(charge,multiplicity,charge,nSpecies);
+	adMul(mass,multiplicity,mass,nSpecies);
+
+
+	/*
+	 * DEBUG
+	 */
+
+	double *debugQ = malloc(nSpecies*sizeof(*debugQ));
+	double *debugQM = malloc(nSpecies*sizeof(*debugQM));
+	double *debugM = malloc(nSpecies*sizeof(*debugM));
+
+	adSet(debugQM,2,-1.0,1.0/1836.0);
+
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
+	long int V = gGetGlobalVolume(ini);
+	double wpSq = 1;
+	double Q = wpSq*((double)V/nParticles[0])*(1/debugQM[0]);
+	msg(STATUS|ONCE,"V=%li, Q=%f",V,Q);
+	adSet(debugQ,2,Q,-Q);
+
+	msg(STATUS|ONCE,"multiplicity=%f",Q/(-1.0));
+
+	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1]/debugQM[1]);
+
+	pop->debugQ = debugQ;
+	pop->debugQM = debugQM;
+	pop->debugM = debugM;
+
+	// adPrint(debugQM,2);
+	// adPrint(debugQ,2);
+	// adPrint(debugM,2);
+	// adPrint(charge,2);
+	// adPrint(mass,2);
 
 	/*
 	 * Normalizing charge and mass (used in energy computations)
@@ -669,7 +774,8 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *massBar = malloc(nSpecies*sizeof(*massBar));
 	for(int s=0;s<nSpecies;s++){
 		chargeBar[s]	= (pow(timeStep,2)/cellVolume)*   (charge[0]/mass[0])  *charge[s];
-		massBar[s] 		= (pow(timeStep,2)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
+		// massBar[s] 		= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
+		massBar[s]		= pow(timeStep,2)*mass[s];
 	}
 	pop->charge=chargeBar;
 	pop->mass=massBar;
@@ -682,15 +788,18 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	for(int s=0;s<nSpecies-1;s++){
 		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
 		renormRho[s] = chargeBar[s]/chargeBar[s+1];
+		// renormRho[s] = charge[s]/charge[s+1];
 	}
 	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
-	renormRho[nSpecies-1] = chargeBar[nSpecies-1];
+	// renormRho[nSpecies-1] = chargeBar[nSpecies-1];
+	renormRho[nSpecies-1] = pow(timeStep,2)*(charge[0]/mass[0])*charge[nSpecies-1];
 
 	pop->renormE = renormE;
 	pop->renormRho = renormRho;
 
 	free(charge);
 	free(mass);
+	free(multiplicity);
 	free(stepSize);
 
 }
