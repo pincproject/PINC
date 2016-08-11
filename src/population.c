@@ -774,7 +774,8 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *massBar = malloc(nSpecies*sizeof(*massBar));
 	for(int s=0;s<nSpecies;s++){
 		chargeBar[s]	= (pow(timeStep,2)/cellVolume)*   (charge[0]/mass[0])  *charge[s];
-		massBar[s] 		= (pow(timeStep,2)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
+		// massBar[s] 		= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
+		massBar[s]		= pow(timeStep,2)*mass[s];
 	}
 	pop->charge=chargeBar;
 	pop->mass=massBar;

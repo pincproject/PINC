@@ -173,7 +173,8 @@ void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
 		}
 
 		// kinEnergy[s]*=mass[s];
-		kinEnergy[s]*=0.5*debugM[s]*pow(dx/dt,2);
+		// kinEnergy[s]*=0.5*debugM[s]*pow(dx/dt,2);
+		kinEnergy[s]*=debugM[s];//*pow(dx/dt,2);
 
 		// Specie-specific re-normalization
 		// gMul(E,1.0/debugQM[s]);
