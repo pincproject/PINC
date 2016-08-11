@@ -181,74 +181,74 @@ static int *getSubdomain(const dictionary *ini){
 
  void gFinDiff1st(const Grid *scalar, Grid *field){
 
- 	//Performs first order centered finite difference on scalar and returns a field
+	// Performs first order centered finite difference on scalar and returns a field
 
- 	int rank =scalar->rank;
- 	long int *sizeProd = scalar->sizeProd;
- 	long int *fieldSizeProd = field->sizeProd;
+	int rank = scalar->rank;
+	long int *sizeProd = scalar->sizeProd;
+	long int *fieldSizeProd = field->sizeProd;
 
- 	double *scalarVal = scalar->val;
- 	double *fieldVal = field->val;
+	double *scalarVal = scalar->val;
+	double *fieldVal = field->val;
 
  	//Scalar indexes
- 	long int sNext, sPrev;
- 	long int f;
- 	int fNext = fieldSizeProd[1];
+	long int sNext, sPrev;
+	long int f;
+	int fNext = fieldSizeProd[1];
 
- 	//Centered Finite difference
- 	for(int d = 1; d < rank; d++){
- 		sNext = sizeProd[d];
- 		sPrev = -sizeProd[d];
- 		f = d-1;
- 		for(int g = 0; g < sizeProd[rank]; g++){
- 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
- 			sNext++;
- 			sPrev++;
- 			f += fNext;
- 		}
- 	}
+	// Centered Finite difference
+	for(int d = 1; d < rank; d++){
+		sNext = sizeProd[d];
+		sPrev = -sizeProd[d];
+		f = d-1;
 
- 	return;
- }
 
- void gFinDiff2nd2D(Grid *result, const Grid *object){
+		for(int g = 0; g < sizeProd[rank]; g++){
+			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
+			sNext++;
+			sPrev++;
+			f += fNext;
+		}
+	}
+}
 
- 	//Load
- 	int rank = object->rank;
- 	long int *sizeProd = object->sizeProd;
+void gFinDiff2nd2D(Grid *result, const Grid *object){
 
- 	double *resultVal = result->val;
- 	double *objectVal = object->val;
+	// Load
+	int rank = object->rank;
+	long int *sizeProd = object->sizeProd;
 
- 	// Index of neighboring nodes
+	double *resultVal = result->val;
+	double *objectVal = object->val;
+
+	// Index of neighboring nodes
 	long int g = sizeProd[1] + sizeProd[2];
- 	long int gj = g + sizeProd[1];
- 	long int gjj= g - sizeProd[1];
- 	long int gk = g + sizeProd[2];
- 	long int gkk= g - sizeProd[2];
+	long int gj = g + sizeProd[1];
+	long int gjj= g - sizeProd[1];
+	long int gk = g + sizeProd[2];
+	long int gkk= g - sizeProd[2];
 
 	long int end = sizeProd[rank] - 2*g;
 
- 	//Laplacian
- 	for(int q = 0; q < end; q++){
- 		resultVal[g] = -4.*objectVal[g];
- 		resultVal[g] += objectVal[gj] + objectVal[gjj]
- 						+objectVal[gk] + objectVal[gkk];
+	// Laplacian
+	for(int q = 0; q < end; q++){
+		resultVal[g] = -4.*objectVal[g];
+		resultVal[g] += objectVal[gj] + objectVal[gjj]
+						+objectVal[gk] + objectVal[gkk];
 
- 		//Increment indexes
+		// Increment indices
 		g++;
- 		gj++;
- 		gjj++;
- 		gk++;
- 		gkk++;
- 	}
+		gj++;
+		gjj++;
+		gk++;
+		gkk++;
+	}
 
- 	return;
- }
+	return;
+}
 
 void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
- 	//Load
+ 	// Load
  	int rank = object->rank;
  	long int *sizeProd = object->sizeProd;
 
@@ -266,14 +266,14 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
 	long int end = sizeProd[rank] - 2*g;
 
- 	//Laplacian
+ 	// Laplacian
  	for(int q = 0; q < end; q++){
  		resultVal[g] = -6.*objectVal[g];
  		resultVal[g] += objectVal[gj] + objectVal[gjj]
  						+objectVal[gk] + objectVal[gkk]
  						+objectVal[gl] + objectVal[gll];
 
- 		//Increment indexes
+ 		// Increment indices
  		g++;
  		gj++;
  		gjj++;

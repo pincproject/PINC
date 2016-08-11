@@ -725,9 +725,16 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	int nSpecies, nDims;
 	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",&nSpecies);
+
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
+
+	// Multiply charge and mass by multiplicity
+	adMul(charge,multiplicity,charge,nSpecies);
+	adMul(mass,multiplicity,mass,nSpecies);
+
 
 	/*
 	 * DEBUG
@@ -746,16 +753,19 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	msg(STATUS|ONCE,"V=%li, Q=%f",V,Q);
 	adSet(debugQ,2,Q,-Q);
 
-	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1]/debugQM[1]);
+	msg(STATUS|ONCE,"multiplicity=%f",Q/(-1.0));
 
-	adPrint(debugQM,2);
-	adPrint(debugQ,2);
-	adPrint(debugM,2);
+	adSet(debugM,2,debugQ[0]/debugQM[0],debugQ[1]/debugQM[1]);
 
 	pop->debugQ = debugQ;
 	pop->debugQM = debugQM;
 	pop->debugM = debugM;
 
+	// adPrint(debugQM,2);
+	// adPrint(debugQ,2);
+	// adPrint(debugM,2);
+	// adPrint(charge,2);
+	// adPrint(mass,2);
 
 	/*
 	 * Normalizing charge and mass (used in energy computations)
@@ -777,15 +787,18 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	for(int s=0;s<nSpecies-1;s++){
 		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
 		renormRho[s] = chargeBar[s]/chargeBar[s+1];
+		// renormRho[s] = charge[s]/charge[s+1];
 	}
 	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
-	renormRho[nSpecies-1] = chargeBar[nSpecies-1];
+	// renormRho[nSpecies-1] = chargeBar[nSpecies-1];
+	renormRho[nSpecies-1] = pow(timeStep,2)*(charge[0]/mass[0])*charge[nSpecies-1];
 
 	pop->renormE = renormE;
 	pop->renormRho = renormRho;
 
 	free(charge);
 	free(mass);
+	free(multiplicity);
 	free(stepSize);
 
 }

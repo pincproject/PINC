@@ -149,11 +149,12 @@ void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
 
 	double dx = E->stepSize[1];
 
-	gMul(E,dt*dt/dx);
+	// gMul(E,dt*dt/dx);
+	// gMul(E,debugQM[0]);
 
 	for(int s=0;s<nSpecies;s++){
 
-		gMul(E,debugQM[s]);
+		// gMul(E,debugQM[s]);
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
@@ -174,13 +175,12 @@ void puAcc3D1KEDebug(Population *pop, Grid *E, double dt){
 		// kinEnergy[s]*=mass[s];
 		kinEnergy[s]*=0.5*debugM[s]*pow(dx/dt,2);
 
-		gMul(E,1.0/debugQM[s]);
-
 		// Specie-specific re-normalization
-		// gMul(E,pop->renormE[s]);
+		// gMul(E,1.0/debugQM[s]);
+		gMul(E,pop->renormE[s]);
 	}
 
-	gMul(E,dx/(dt*dt));
+	// gMul(E,dx/(dt*dt));
 }
 
 
@@ -403,18 +403,18 @@ void puDistr3D1Debug(const Population *pop, Grid *rho){
 			// if(pjkl>=sizeProd[4])
 			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
 
-			val[p] 		+= q*xcomp*ycomp*zcomp;
-			val[pj]		+= q*x    *ycomp*zcomp;
-			val[pk]		+= q*xcomp*y    *zcomp;
-			val[pjk]	+= q*x    *y    *zcomp;
-			val[pl]     += q*xcomp*ycomp*z    ;
-			val[pjl]	+= q*x    *ycomp*z    ;
-			val[pkl]	+= q*xcomp*y    *z    ;
-			val[pjkl]	+= q*x    *y    *z    ;
+			val[p] 		+= xcomp*ycomp*zcomp;
+			val[pj]		+= x    *ycomp*zcomp;
+			val[pk]		+= xcomp*y    *zcomp;
+			val[pjk]	+= x    *y    *zcomp;
+			val[pl]     += xcomp*ycomp*z    ;
+			val[pjl]	+= x    *ycomp*z    ;
+			val[pkl]	+= xcomp*y    *z    ;
+			val[pjkl]	+= x    *y    *z    ;
 
 		}
 
-//		gMul(rho,pop->renormRho[s]);
+		gMul(rho,pop->renormRho[s]);
 
 	}
 
