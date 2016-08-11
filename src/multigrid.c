@@ -555,7 +555,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		}
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
-		gBnd(phi, mpiInfo);
+		// gBnd(phi, mpiInfo);
 
 		/*********************
 		 *	Black pass
@@ -584,7 +584,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		 }
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
-		gBnd(phi, mpiInfo);
+		// gBnd(phi, mpiInfo);
 	}
 
 
@@ -1165,12 +1165,9 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
 		gNeutralizeGrid(mgPhi->grids[level], mpiInfo);
  		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
-		// msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
 
  		return;
  	}
-
-
 
  	//Gathering info
  	int nPreSmooth = mgRho->nPreSmooth;
@@ -1182,40 +1179,30 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, 0);
-	msg(STATUS|ONCE, "Bnd Starts");
  	gNeutralizeGrid(rho,mpiInfo);
-	msg(STATUS|ONCE, "Bnd Fails?");
 
  	//Prepare to go down
-	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS, "Solving at lvl = %d", level);
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
-	MPI_Barrier(MPI_COMM_WORLD);
-
-
-	msg(STATUS|ONCE, "Restricting from lvl %d -> %d", level, level+1);
-
  	mgResidual(res, rho, phi, mpiInfo);
-
  	gHaloOp(setSlice, res, mpiInfo, 0);
 
-	// msg(STATUS|ONCE, "Restricting to lvl: %d", level+1);
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
+
+	//Repeat
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
-	//
+
  	//Prepare to go up
  	gSubFrom( phi, res );
-	// gAddTo(phi, res);
+
  	gHaloOp(setSlice, phi,mpiInfo, 0);
  	gBnd(phi,mpiInfo);
  	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
-	gNeutralizeGrid(phi, mpiInfo);
+	gBnd(phi, mpiInfo);
 
  	//Go up
  	if(level >top){
-		// msg(STATUS|ONCE, "Prolongating to lvl: %d", level-1);
- 		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
+		mgRho->prolongator(mgRes->grids[level-1], phi, mpiInfo);
  	}
 
  	return;
@@ -1256,7 +1243,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	//Restriction/Prolongators
 	void (*restrictor)(const Grid *fine, Grid *coarse) = mgRho->restrictor;
 	void (*prolongator)(Grid *fine, const Grid *coarse,
-		const MpiInfo *mpiInfo) = mgRho->prolongator;
+						const MpiInfo *mpiInfo) = mgRho->prolongator;
 
 	//Down to coarsest level
 	for(int current = level; current < bottom; current ++){

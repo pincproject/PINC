@@ -316,9 +316,9 @@ void mgRoutine(dictionary *ini){
 		tStop(t);
 		//
 		// //Compute error
-		// mgCompError(phi,sol,error);
-		// errSquared = mgSumTrueSquared(error, mpiInfo);
-		// resSquared = mgSumTrueSquared(res, mpiInfo);
+		mgCompError(phi,sol,error);
+		errSquared = mgSumTrueSquared(error, mpiInfo);
+		resSquared = mgSumTrueSquared(res, mpiInfo);
 
 
 		// Compute residual and mass
@@ -348,9 +348,9 @@ void mgRoutine(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-
 	//(Re)Compute E, error and residual
 	gHaloOp(setSlice, phi, mpiInfo, 0);
+	gNeutralizeGrid(phi, mpiInfo);
 	gBnd(phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	mgCompError(phi,sol,error);

@@ -334,7 +334,6 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	int lowerSubdomain = firstElem
 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	MPI_Request	sendRequest;
 	MPI_Status 	status;
 
 	// TBD: Ommitting this seems to yield race condition between consecutive
@@ -342,25 +341,19 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	// investigated further.
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Send upper (tag 1)
+	// Send and recieve upper (tag 1)
 	getSlice(sendSlice, grid, d, offsetUpperTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1, MPI_COMM_WORLD, &sendRequest);
-
-	// Recieve lower (upper on neighbor, hence tag 1)
-	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
+                 recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
+                 MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetLowerPlace);
 
-	MPI_Wait(&sendRequest, &status);
-
-	// Send lower (tag 0)
+	// Send and recieve lower (tag 0)
 	getSlice(sendSlice, grid, d, offsetLowerTake);
-	MPI_Isend(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0, MPI_COMM_WORLD, &sendRequest);
-
-	// Recieve upper (lower on neighbor, hence tag 0)
-	MPI_Recv(recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
+                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
+                 MPI_COMM_WORLD, &status);
 	sliceOp(recvSlice, grid, d, offsetUpperPlace);
-
-	MPI_Wait(&sendRequest, &status);
 
 }
 
@@ -930,11 +923,17 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 
+	//If periodic neutralize phi
+	int periodic = 0;
+	for(int d = 1; d < rank; d++){
+		if(bnd[d] == PERIODIC)	periodic = 1;
+	}
+	if(periodic)	gPeriodic(grid, mpiInfo);
+
 	//Lower edge
 	for(int d = 1; d < rank; d++){
 		if(subdomain[d-1] == 0){
-			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
 			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
@@ -942,9 +941,8 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == PERIODIC)	gPeriodic(grid, mpiInfo);
-			else if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
-			else if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
 
@@ -1324,14 +1322,16 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 			   }
 		   }
 	   }
-	//Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
-	//    double *slice = grid->sendSlice;
-	//    for(int j = 0; j < size[1]; j++)	slice[j] = 0;
-	//    if(subdomain[0] == 0)	setSlice(slice, grid, 1, 1);
-	//    if(subdomain[0] == nSubdomains[0])	setSlice(slice, grid, 1, 1);
+	// Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
+	   double *slice = grid->sendSlice;
+	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = 0.;
+	   if(subdomain[0] == 0)	setSlice(slice, grid, 1, 1);
+
+	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = -0.;
+	   if(subdomain[0] == nSubdomains[0]/2)	setSlice(slice, grid, 1, 1);
    }
 
-
+	gHaloOp(setSlice, grid, mpiInfo, 0);
 
    // msg(STATUS, "%f", adSum(val, sizeProd[4]));
 
@@ -1356,7 +1356,7 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
-				   msg(STATUS|ONCE, "Not implemented for 1 domain");
+				   msg(WARNING, "Not implemented for 1 domain");
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
@@ -1368,16 +1368,22 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   //Multi core
 	   long int J;	//Total domain position
 	   int half = nSubdomains[0]/2 * trueSize[1];
+	   msg(STATUS|ONCE, "Half = %d", half);
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(subdomain[0]<nSubdomains[0]/2){
-					   J = j  + subdomain[0]*trueSize[1];
+					   J = j-1  + subdomain[0]*trueSize[1];
 					   val[ind] = -0.5*(half - J)*J;
+					   if(subdomain[0]==0 && k == 2 && l==2){
+						//    msg(STATUS, "J = %d", J);
+						//    msg(STATUS, "half = %d", half);
+						//    msg(STATUS, "");
+					   }
 				   }
 				   else{
-					   J = j + trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
+					   J = j-1 + trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
 					   val[ind] = -0.5*(J - half)*J;
 				   }
 			   }
@@ -1385,6 +1391,7 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   }
    }
 
+   gHaloOp(setSlice, grid, mpiInfo, 0);
    return;
 }
 
@@ -1412,8 +1419,6 @@ void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
    return;
 
 }
-
-
 
 void fillPointCharge(Grid *grid , const MpiInfo *mpiInfo){
 

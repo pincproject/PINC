@@ -5,7 +5,6 @@ import numpy as np
 import pylab as plt
 # from mayavi import mlab
 
-
 # def plotPlanesOfGrid(name, grid):
 # 	mlab.figure()
 # 	im = mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(grid),
@@ -50,21 +49,13 @@ def plot2DSlice(name, grid, saveStr):
 	return
 
 
-# def plotEField(field):
-# 	mlab.figure()
-# 	im = mlab.quiver3d(field[:,:,:,0], field[:,:,:,1], field[:,:,:,2])
-#
-# 	mlab.axes()
-#
-# 	return
-
-
 #Loading data/Shaving of last dimension
 rho = transformData(h5py.File('../../test_rho_0.grid.h5','r'),0)
 phi = transformData(h5py.File('../../test_phi_0.grid.h5','r'),0)
 res = transformData(h5py.File('../../test_res_0.grid.h5','r'),0)
 E = transformData(h5py.File('../../test_E_0.grid.h5','r'),0)
 sol = transformData(h5py.File('../../test_sol_0.grid.h5','r'),0)
+
 
 # print E.shape
 # exit()

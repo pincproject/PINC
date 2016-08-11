@@ -24,13 +24,12 @@ def transformData(dataset, timestep):
 	if len(grid.shape)==4:
 		grid = grid[:,:,:,0]
 	if grid.shape[0] > 1:
-		grid = np.average(grid, axis = 0)
-		# grid = grid[10,:,:]
+		# grid = np.average(grid, axis = 0)
+		grid = grid[1,:,:]
 	if grid.shape[1] > 1:
-		grid = np.average(grid, axis = 0)
-		# grid = grid[10,:]
+		# grid = np.average(grid, axis = 0)
+		grid = grid[1,:]
 	return grid
-
 
 def plot1DSubgrid(name, grid, ax):
 	length= grid.shape[0]
@@ -38,8 +37,13 @@ def plot1DSubgrid(name, grid, ax):
 	ax.plot(x,grid)
 	# ax.set_title(str(grid.shape[0]), 'right')
 	ax.set_xlim([0,length-1])
-	ax.text(length/5, 0, " Max = " + str(np.round(np.max(grid))) + "\n L=" + str(length))
-	ax.locator_params(axis='y',nbins=3)
+	ax.text(length/5, 0, " Max = " + str(np.round(np.max(grid))) + "\n Min = " +
+		str(np.round(np.min(grid))) + "\n L=" + str(length))
+	ax.locator_params(axis='y',nbins=16)
+	ax.locator_params(axis='x',nbins=16)
+	ax.grid()
+
+	print name + "\t=" + str(grid[0])
 
 
 def plotAllGrids(name, nLevels, totLevels , savePath = 'figures/'):
@@ -69,12 +73,28 @@ if len(sys.argv) > 1:
 else:
 	totLevels = 0
 
-plotAllGrids("phi", nLevels, totLevels)
-# plotAllGrids("rho", nLevels, totLevels)
-plotAllGrids("res", nLevels, totLevels)
+
 if nLevels ==1:
-	plotAllGrids("sol", nLevels, totLevels)
-	plotAllGrids("E", nLevels, totLevels)
-	plotAllGrids("error", nLevels, totLevels)
+	n = 0
+	m = 0
+	f, ax = plt.subplots(3,2)
+	for name in ("phi", "sol", "E", "rho", "res", "error"):
+		path = '../../test_'+name+'_'+ str(0) +'.grid.h5'
+		grid = transformData(h5py.File(path,'r'),0)
+		plot1DSubgrid(name, grid, ax[n%3,m%2])
+		ax[n%3,m%2].set_title(name)
+		m+=1
+		n+=1-(m%2)
+	rho = h5py.File('../../test_rho_'+ str(0) +'.grid.h5','r')
+	rho	= rho['/n=%.1f'%0]
+	rho = np.squeeze(rho)
+	print rho
+
+
+else:
+	plotAllGrids("phi", nLevels, totLevels)
+	plotAllGrids("rho", nLevels, totLevels)
+	plotAllGrids("res", nLevels, totLevels)
+
 
 plt.show()
