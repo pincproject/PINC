@@ -555,7 +555,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		}
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
-		// gBnd(phi, mpiInfo);
+		gBnd(phi, mpiInfo);
 
 		/*********************
 		 *	Black pass
@@ -584,7 +584,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		 }
 
 		gHaloOp(setSlice, phi, mpiInfo, 0);
-		// gBnd(phi, mpiInfo);
+		gBnd(phi, mpiInfo);
 	}
 
 
@@ -1172,7 +1172,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, 0);
 		gNeutralizeGrid(mgRho->grids[level], mpiInfo);
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
-		gNeutralizeGrid(mgPhi->grids[level], mpiInfo);
+		gBnd(mgPhi->grids[level], mpiInfo);
  		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
 
  		return;
