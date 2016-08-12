@@ -49,6 +49,39 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
+// typedef void (*accType)(Population *pop, Grid *E);
+// accType puAuto(dictionary *ini){
+// 	msg(STATUS|ONCE,"puAuto was called");
+// 	return puAcc3D1KE;
+// }
+
+void myTestFunc(){
+	msg(STATUS|ONCE,"ignoring input params");
+}
+
+void (*puAuto(dictionary *ini))(){
+	msg(STATUS|ONCE,"puAuto was called");
+	return myTestFunc;
+}
+
+#define s(fName) fName,#fName	// allows writing, func(s(fName1),s(fName2),...) to get every other argument stringified
+//#define select(ini,nArgs,...) selectInner(ini,nArgs,__VA_ARGS__,__VA_ARGS__);
+//#define select(ini,nArgs,...)
+#define select(ini,key,fun) selectInner(ini,key,fun,#fun)
+
+typedef void (*funPtr)();
+
+funPtr selectInner(dictionary *ini, const char *key, funPtr fun, const char *funName){
+	char *value = iniGetStr(ini,key);
+	if(!strcmp(value,funName)) return fun;
+	else return NULL;
+	free(value);
+}
+
+//void (*selectInner(dictionary *ini, int nArgs, ...))(){
+//
+//}
+
 void regularRoutine(dictionary *ini){
 
 	// Random number seeds
@@ -107,6 +140,75 @@ void regularRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
+	void (*acc)() = SELECT(ini,"modules:pusher",3,	SCASE(puAcc3D1),
+													SCASE(puAcc3D1KE));
+
+	// Using recursion, prefix makes it usable for other functions as well.
+	void (*acc)() = SELECT(ini,"modules:pusher","init",puAcc3D1KE);
+
+	void (*acc)() = SELECT(ini){
+		SCASE(puAcc3D1KE);
+		SCASE(puAcc3D1);
+	}
+
+	char *s = iniGetStr(ini,"modules:pusher");
+	void (*acc)();
+	{
+		void (*temp)();
+		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
+		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
+		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
+	}
+
+	void (*acc)() = NULL;
+	char *value = iniGetStr(ini,"modules:pusher");					// SWITCH(ini,"modules:pusher")
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);		// CASE(ini,acc,puAcc3D1)
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);
+	if(acc==NULL) msg(ERROR|ONCE,"Invalid modules:pusher");		// ENDSWITCH(acc)
+	free(value);
+
+
+
+
+	void (*acc)();										// void (*acc)() = SWITCH("modules:pusher")
+	acc = select(ini,"modules:pusher",puAcc1KE);		// CASE
+	acc = select(ini,"modules:pusher",puAcc3D1);
+
+	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
+	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
+	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
+	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
+
+	void (*acc)() = select(ini,"modules:pusher",2,puAcc3D1KE,puAcc3D1);
+
+	if(acc==NULL)...
+
+	void (*acc)() = select(ini,"modules:pusher",puAcc3D1,puAcc3D1KE);
+	void (*initPusher)() = select(ini,"modules:pusher","yo",puAcc3D1,puAcc3D1KE);
+
+	asdlfkjaslkfd										// SWTICH(...)
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();	// CASE(...)
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
+	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
+	lkajdsflkjdsaf										// ENDSWITCH(...)
+
+	// // void (*acc)(Population pop, Grid E) = SELECT(ini,"modules:accelerator",2,puAcc3D1,puAcc3D1KE);
+	// char *pusher = iniGetStr(ini,"modules:pusher");
+	// // void (*acc)(Population *pop, Grid *E);
+	// void (*acc)();
+	// if(!strcmp(pusher,"puAcc3D1")) acc = puAcc3D1;
+	// else if(!strcmp(pusher,"auto")) acc = puAuto(ini);
+	// else {
+	// 	acc = puAcc3D1;
+	// 	msg(ERROR|ONCE,"no such function");
+	// }
+	// free(pusher);
+
+
+
 	/***************************************************************
 	 *		ACTUAL simulation stuff
 	 **************************************************************/
@@ -135,8 +237,10 @@ void regularRoutine(dictionary *ini){
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+	acc(pop, E);		// Includes kinetic energy for step n
 	gMul(E, 2.0);
+
+	puInit();
 
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
@@ -177,7 +281,7 @@ void regularRoutine(dictionary *ini){
 		// gAddTo(Ext);
 
 		// Accelerate particle and compute kinetic energy for step n
-		puAcc3D1KE(pop, E);
+		acc(pop, E);
 
 		// Sum energy for all species
 		pSumKinEnergy(pop);
