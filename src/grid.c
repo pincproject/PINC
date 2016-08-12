@@ -1315,8 +1315,6 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				//    val[ind] = 1.;
-				//    msg(STATUS|ONCE, "%d", ind);
 				   if(subdomain[0]<nSubdomains[0]/2) val[ind] = 1.0;
 				   else val[ind] = -1.;
 			   }
@@ -1332,8 +1330,6 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
    }
 
 	gHaloOp(setSlice, grid, mpiInfo, 0);
-
-   // msg(STATUS, "%f", adSum(val, sizeProd[4]));
 
    return;
 }
@@ -1368,7 +1364,6 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   //Multi core
 	   long int J;	//Total domain position
 	   int half = nSubdomains[0]/2 * trueSize[1];
-	   msg(STATUS|ONCE, "Half = %d", half);
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
@@ -1377,9 +1372,6 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 					   J = j-1  + subdomain[0]*trueSize[1];
 					   val[ind] = -0.5*(half - J)*J;
 					   if(subdomain[0]==0 && k == 2 && l==2){
-						//    msg(STATUS, "J = %d", J);
-						//    msg(STATUS, "half = %d", half);
-						//    msg(STATUS, "");
 					   }
 				   }
 				   else{
@@ -1412,7 +1404,6 @@ void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
 		   // val[ind] = 1.;
 
 		   }
-		   // msg(STATUS, "j = %d, k =%d", j,k);
 	   }
    }
 

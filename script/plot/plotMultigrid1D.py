@@ -85,10 +85,10 @@ if nLevels ==1:
 		ax[n%3,m%2].set_title(name)
 		m+=1
 		n+=1-(m%2)
-	rho = h5py.File('../../test_rho_'+ str(0) +'.grid.h5','r')
-	rho	= rho['/n=%.1f'%0]
-	rho = np.squeeze(rho)
-	print rho
+	# rho = h5py.File('../../test_rho_'+ str(0) +'.grid.h5','r')
+	# rho	= rho['/n=%.1f'%0]
+	# rho = np.squeeze(rho)
+	# print rho
 
 
 else:
