@@ -17,15 +17,18 @@ import subprocess
 
 
 class PINC:
-	def __init__(self, pincPath = "../../mpinc.sh", iniPath = "../../input.ini"):
+	def __init__(self, pincPath = "../../mpinc.sh", iniPath = "../../local.ini"):
 		self.nTimeSteps = 100
 		self.pincPath = pincPath
 		self.iniPath = iniPath
+		self.trueSize = [32,16,16]
 		self.preCycles = 1
 		self.postCycles = 1
 		self.coarseCycles = 1
 		self.mgLevels = 4
-		self.mgCycles = 3
+		self.mgCycles = 1
+		self.routine = "regular"
+		self.startTime = 0
 
 	def runCommand(self, cmd):
 		subprocess.call(cmd,shell=True)
@@ -35,5 +38,13 @@ class PINC:
 
 	def runMG(self):
 		cmd = self.pincPath + " " + self.iniPath
+		cmd += " main:routine=" + self.routine
+		cmd += " time:startTime=" + str(self.startTime)
+		cmd += " grid:trueSize=" + str(self.trueSize[0]) + "," + str(self.trueSize[1]) + "," + str(self.trueSize[2])
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
+		cmd += " multigrid:mgCycles=" + str(self.mgCycles)
+		cmd += " multigrid:nPreSmooth=" + str(self.preCycles)
+		cmd += " multigrid:nPostSmooth=" + str(self.postCycles)
+		cmd += " multigrid:nCoarseSolve=" + str(self.coarseCycles)
+
 		self.runCommand(cmd)

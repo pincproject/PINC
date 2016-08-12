@@ -54,6 +54,7 @@ void tStart(Timer *t);
  */
 void tStop(Timer *t);
 
+
 /**
  * @brief	Resets the timer
  * @param	timer 	Pointer to Timer struct

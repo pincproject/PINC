@@ -741,20 +741,13 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	double totCharge = 0;
 
-	// return;
 	MPI_Barrier(MPI_COMM_WORLD);
-	// msg(STATUS, "Hello before");
 	MPI_Allreduce(&myCharge, &totCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	// msg(STATUS, "HELLO AFTER");
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	// msg(STATUS|ONCE, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
 	gSub(grid, avgCharge);
 
-	// avgCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	return;
 }
 

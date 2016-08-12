@@ -109,7 +109,6 @@ void tMsg(long long int nanoSec, const char *string){
 
 }
 
-
 /****************************************************************************
  *	Outdated Timer functions (Some functionality is lost in new)
  ****************************************************************************/

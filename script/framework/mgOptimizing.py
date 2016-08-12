@@ -17,17 +17,26 @@
 
 from pincClass import *
 import subprocess
+import h5py
+
 
 pinc = PINC()
-
 # pinc.clean()
-#
-# data = open("mgOptData.txt", "wr")
-#
-# data.write("Hello moron brothers")
-#
-# data.close()
+#Setting up wanted needed ini file
+pinc.routine = "mgRoutine"
+pinc.trueSize = [64,32,32]
+pinc.preCycles = 100
+pinc.postCycles = 100
+pinc.coarseCycles = 1000
+pinc.clean()
 
-for i in range(3):
+for i in range(2,6):
+	pinc.mgLevels = i
 	pinc.runMG()
-	# pinc.clean()
+	pinc.startTime = pinc.startTime+1
+
+
+
+time = h5py.File('test_timer.xy.h5','r')
+time = time['time']
+print time[:,:]

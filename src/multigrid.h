@@ -281,8 +281,17 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
   * @return error
   */
 
+/**
+ * @brief Computes avg error, returns in a percentage
+ * @param  numerical           Numerical solution
+ * @param  analytical          Analytical solution
+ * @param  error               Difference between solutions
+ * @return error
+ */
 void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
 
+
+double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo);
 
 /**
  * @brief Returns the square of the error on the true grid

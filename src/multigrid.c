@@ -1119,6 +1119,15 @@ double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 	return mass;
 }
 
+double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo){
+
+	mgCompError(phi, sol, error);
+	double avgError = mgSumTrueSquared(error, mpiInfo);
+
+	return avgError;
+}
+
+
 
 void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error){
 
@@ -1189,7 +1198,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
 
-	//Repeat
+	//Repeat level + 1
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
 
  	//Prepare to go up

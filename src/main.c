@@ -234,6 +234,7 @@ void regularRoutine(dictionary *ini){
 
 void mgRoutine(dictionary *ini){
 
+	// msg(STATUS, "Hello");
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -292,49 +293,32 @@ void mgRoutine(dictionary *ini){
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
-	double tol = 10000;
-	double errSquared = 10001;
-	double resSquared = 10001;
-	double counter = tol+1;
+	double tol = 0.001;
+	double avgError = 1;
+	double errSquared;
+	double resSquared;
+	int run = 1;
 
-	while(counter>tol){
-		counter--;
+	while(avgError>tol){
+		avgError--;
 		// Run solver
 		gZero(res);
 		tStart(t);
 		mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-		// for(int n = 0; n < mgRho->nMGCycles; n++){
-		// // // 	// mgGS3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
-		// // // 	// mgGS3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
-		// // // 	// mgJacob3D(phi, rho, mgRho->nPreSmooth, mpiInfo);
-		// // // 	// mgJacob3D(phi, rho, mgRho->nPostSmooth, mpiInfo);
-		// 	mgRho->preSmooth(phi, rho, mgRho->nPreSmooth, mpiInfo);
-		// 	mgRho->postSmooth(phi, rho, mgRho->nPreSmooth, mpiInfo);
-		// // //
-		// }
 
 		tStop(t);
-		//
-		// //Compute error
-		mgCompError(phi,sol,error);
-		errSquared = mgSumTrueSquared(error, mpiInfo);
-		resSquared = mgSumTrueSquared(res, mpiInfo);
-
-
-		// Compute residual and mass
-		// gZero(res);
-		// gHaloOp(setSlice, rho, mpiInfo, 0);
-		// gHaloOp(setSlice, phi,mpiInfo, 0);
-		// gBnd(phi, mpiInfo);
-		// mgResidual(res,rho, phi, mpiInfo);
-		// gHaloOp(setSlice, res, mpiInfo, 0);
-		// err = mgResMass3D(res,mpiInfo);
-		msg(STATUS|ONCE, "Error squared (e^2) = %f", errSquared);
-		msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
-			// The res squared (res^2) = %f", errSquared, resSquared);
+		if(!(run%1)){
+			//Compute error
+			mgCompError(phi, sol, error);
+			// avgError = mgAvgError(error, mpiInfo);
+			resSquared = mgSumTrueSquared(res, mpiInfo);
+			errSquared = mgSumTrueSquared(error, mpiInfo);
+			msg(STATUS|ONCE, "Error squared (e^2) = %f", errSquared);
+		}
+		run++;
 	}
 
-
+	msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 
@@ -354,7 +338,7 @@ void mgRoutine(dictionary *ini){
 	gBnd(phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	mgCompError(phi,sol,error);
-	mgResidual(res,rho, phi, mpiInfo);
+	// mgResidual(res,rho, phi, mpiInfo);
 
 
 	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
@@ -396,9 +380,21 @@ void mgRoutine(dictionary *ini){
 
 	}
 
-
 	free(denorm);
 	free(dimen);
+
+	/**************************************************************
+	 *		Store time spent
+	 *************************************************************/
+
+	 hid_t timer = xyOpenH5(ini,"timer");
+	 int runNumber = iniGetInt(ini, "time:startTime");
+	 if(runNumber == 0)	xyCreateDataset(timer,"time");
+	//  xyCreateDataset(timer,"time");
+	 xyWrite(timer,"time",(double) runNumber,(double) t->total,MPI_MAX);
+	 xyCloseH5(timer);
+
+	//  if(mpiInfo->mpiRank == 0)	aiPrint(&rho->size[1], 3);
 
 
 	tFree(t);
