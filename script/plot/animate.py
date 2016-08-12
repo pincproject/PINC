@@ -7,7 +7,7 @@ import pylab as plt
 
 h5 = h5py.File('../../test_rho.grid.h5','r')
 
-for i in range(1,400,5):
+for i in range(1,2000,4):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
 	data = np.average(data,axis=0)
@@ -21,4 +21,4 @@ for i in range(1,400,5):
 		p.set_data(data)
 		plt.title("Charge density, t=%i"%i);
 
-	plt.pause(0.01)
+	plt.pause(0.02)

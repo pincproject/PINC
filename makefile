@@ -96,15 +96,18 @@ $(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TSDI
 doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
 	@echo "Making documentation (run \"make pdf\" to get pdf)"
 	@cd $(DDIR)/doxygen && doxygen doxyfile.mk > /dev/null 2>&1
+	@ln -sf doc/html/index.html doc.html
 
 pdf: doc
 	@echo "Making PDF"
-	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
+#	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
+	cd $(DDIR)/latex && $(MAKE)	# Intentionally verbose to spot LaTeX errors
 
 cleandoc:
 	@echo "Cleaning documentation"
 	@rm -f $(DDIR)/doxygen/doxyfile.inc
 	@rm -fr $(DDIR)/html $(DDIR)/latex
+	@rm -f doc.html
 
 cleantestdata:
 	@echo "Cleaning test data"

@@ -52,6 +52,8 @@ void pFree(Population *pop);
  */
 void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rngSync);
 
+void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
+
 /**
  * @brief	Assign particles artificial positions suitable for debugging
  * @param			ini		Dictionary to input file

@@ -53,6 +53,7 @@ void regularRoutine(dictionary *ini){
 
 	// Random number seeds
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+//	gsl_rng_set(rng,2);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -81,6 +82,9 @@ void regularRoutine(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+	//Set mgSolver
+	MgAlgo mgAlgo = getMgAlgo(ini);
 
 
 
@@ -111,8 +115,10 @@ void regularRoutine(dictionary *ini){
 	 **************************************************************/
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 
+
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rng);
+//	pPosUniform(ini, pop, mpiInfo, rng);
+	pPosLattice(ini, pop, mpiInfo);
 	pVelZero(pop);
 
 	// Perturb particles
@@ -126,65 +132,60 @@ void regularRoutine(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
 	// Get initial E-field
-	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
-	// msg(STATUS, "Hello");
+	mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	//Norm E (random attempts)
-	double normE = 1./1836.;
-	gMul(E, normE);
-	gHaloOp(setSlice, E, mpiInfo, 0);
+	gHaloOp(setSlice, E, mpiInfo, 0);	// ?? What does this do?
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	puAcc3D1(pop, E);
+	puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
 	gMul(E, 2.0);
-
-	// adPrint(pop->renormRho,3);
-
-	// aiPrint(rho->size,4);
-	// alPrint(rho->sizeProd,4);
-	// adPrint(mpiInfo->thresholds,6);
 
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
-
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS|ONCE,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		pVelAssertMax(pop,32.0);		// Just for catching errors while debugging
+		// Check that no particle moves beyond a cell (mostly for debugging)
+		pVelAssertMax(pop,1.0);
 
 		// Move particles
 		puMove(pop);
 
+		// Migrate particles (periodic boundaries)
 		puExtractEmigrants3D(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-		pPosAssertInLocalFrame(pop, rho);	// Just for catching errors while debugging
+		// Check that no particle resides out-of-bounds (just for debugging)
+		pPosAssertInLocalFrame(pop, rho);
 
 		// Compute charge density
 		puDistr3D1(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
-		// Compute E-field
+		// Compute electric potential phi
 		gZero(phi);
 		gZero(res);
-		mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
-		// gMul(phi,-1.0);
+		// Compute E-field
 		gFinDiff1st(phi, E);
-		gMul(E, normE);
+		// gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
 
-		// Accelerate
-		puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+		// Accelerate particle and compute kinetic energy for step n
+		puAcc3D1KE(pop, E);
+
+		// Sum energy for all species
 		pSumKinEnergy(pop);
 
+		// Compute potential energy for step n
 		gPotEnergy(rho,phi,pop);
 
 		// Example of writing another dataset to history.xy.h5
@@ -195,7 +196,6 @@ void regularRoutine(dictionary *ini){
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-
 		pWriteEnergy(history,pop,(double)n);
 
 	}

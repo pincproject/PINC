@@ -522,6 +522,7 @@ void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop);
  * trueSize*nSubdomains-1 for all dimension.
  */
 int *gGetGlobalSize(const dictionary *ini);
+long int gGetGlobalVolume(const dictionary *ini);
 
 void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);
