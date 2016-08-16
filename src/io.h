@@ -10,6 +10,8 @@
 #ifndef IO_H
 #define IO_H
 
+funPtr selectInner(dictionary *ini, const char *key, const char *string,...);
+
 /**
  * @brief	The PINC equivalent of printf().
  * @param	kind	STATUS, WARNING or ERROR depending on what to output.

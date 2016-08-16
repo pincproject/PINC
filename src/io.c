@@ -101,6 +101,45 @@ void iniAssertExistence(const dictionary *ini, const char* key);
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
+funPtr selectInner(dictionary *ini, const char *key, const char *list,...){
+
+	va_list args;
+	va_start(args,list);
+	char *value = iniGetStr(ini,key);
+
+	// strArr contains all variadic arguments stringified. see innner().
+	char **strArr = listToStrArr(list);
+	char **strTemp = strArr;
+	funPtr2 setFunction = NULL;
+
+	for(char *str=*strTemp; str!=NULL; str=*(++strTemp) ){
+		strtok(str,"_");
+
+		funPtr2 fun = va_arg(args,funPtr2);
+
+		if(!strcmp(str,value)){
+			msg(WARNING|ONCE,"%s==%s",str,value);
+			setFunction = fun;
+		} else {
+			msg(WARNING|ONCE,"%s!=%s",str,value);
+		}
+
+	}
+
+	freeStrArr(strArr);
+	va_end(args);
+
+	if(setFunction==NULL){
+		msg(ERROR,"invalid argument to %s. Valid arguments are %s",key,list);
+		return NULL;
+	} else {
+		return setFunction(ini);
+	}
+
+	msg(ERROR|ONCE,"DONE");
+
+}
+
 void msg(msgKind kind, const char* restrict format,...){
 
 	// Retrieve argument list

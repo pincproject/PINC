@@ -30,6 +30,10 @@ int main(int argc, char *argv[]){
 	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 
+
+	select(ini,"modules:pusher",puAcc3D1_set,puAcc3D1KE_set);
+
+
 	/*
 	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
 	 */
@@ -54,7 +58,7 @@ int main(int argc, char *argv[]){
 // 	msg(STATUS|ONCE,"puAuto was called");
 // 	return puAcc3D1KE;
 // }
-
+/*
 void myTestFunc(){
 	msg(STATUS|ONCE,"ignoring input params");
 }
@@ -77,7 +81,7 @@ funPtr selectInner(dictionary *ini, const char *key, funPtr fun, const char *fun
 	else return NULL;
 	free(value);
 }
-
+*/
 //void (*selectInner(dictionary *ini, int nArgs, ...))(){
 //
 //}
@@ -139,7 +143,7 @@ void regularRoutine(dictionary *ini){
 
 	free(denorm);
 	free(dimen);
-
+/*
 	void (*acc)() = SELECT(ini,"modules:pusher",3,	SCASE(puAcc3D1),
 													SCASE(puAcc3D1KE));
 
@@ -195,6 +199,8 @@ void regularRoutine(dictionary *ini){
 	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
 	lkajdsflkjdsaf										// ENDSWITCH(...)
 
+*/
+
 	// // void (*acc)(Population pop, Grid E) = SELECT(ini,"modules:accelerator",2,puAcc3D1,puAcc3D1KE);
 	// char *pusher = iniGetStr(ini,"modules:pusher");
 	// // void (*acc)(Population *pop, Grid *E);
@@ -237,10 +243,8 @@ void regularRoutine(dictionary *ini){
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	acc(pop, E);		// Includes kinetic energy for step n
+//	acc(pop, E);		// Includes kinetic energy for step n
 	gMul(E, 2.0);
-
-	puInit();
 
 	// Time loop
 	// n should start at 1 since that's the timestep we have after the first
@@ -281,7 +285,7 @@ void regularRoutine(dictionary *ini){
 		// gAddTo(Ext);
 
 		// Accelerate particle and compute kinetic energy for step n
-		acc(pop, E);
+//		acc(pop, E);
 
 		// Sum energy for all species
 		pSumKinEnergy(pop);
