@@ -59,10 +59,10 @@ void regular(dictionary *ini){
 	 */
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, 3);
-	Grid *rho = gAlloc(ini, 1);
-	Grid *res = gAlloc(ini, 1);
-	Grid *phi = gAlloc(ini, 1);
+	Grid *E   = gAlloc(ini, VECTOR);
+	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *res = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR);
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
@@ -125,12 +125,12 @@ void regular(dictionary *ini){
 
 	// Get initial charge density
 	distr(pop, rho);
-	gHaloOp(addSlice, rho, mpiInfo, 1);
+	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
 	mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, 0);
+	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -164,7 +164,7 @@ void regular(dictionary *ini){
 
 		// Compute charge density
 		distr(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo, 1);
+		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 		// Compute electric potential phi
 		gZero(phi);
@@ -173,7 +173,7 @@ void regular(dictionary *ini){
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo, 0);
+		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 
 		// Apply external E
 		// gAddTo(Ext);
