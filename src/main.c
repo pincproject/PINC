@@ -13,12 +13,11 @@
 #include "pusher.h"
 #include "multigrid.h"
 
-/*
- * MAIN ROUTINES (RUN MODES PERHAPS A BETTER NAME?)
- */
-void regularRoutine(dictionary *ini);
-void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo);
+void regular(dictionary *ini);
+funPtr regular_set(dictionary *ini){ return regular; }
+
 void mgRoutine(dictionary *ini);
+funPtr mgRoutine_set(dictionary *ini){ return mgRoutine; }
 
 int main(int argc, char *argv[]){
 
@@ -31,12 +30,10 @@ int main(int argc, char *argv[]){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	/*
-	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
+	 * CHOOSE PINC RUN MODE
 	 */
-	char *routine = iniGetStr(ini,"main:routine");
-	if(!strcmp(routine, "regular"))		regularRoutine(ini);
-	if(!strcmp(routine, "mgRoutine"))	mgRoutine(ini);
-	free(routine);
+	void (*run)() = select(ini,"methods:mode",regular_set,mgRoutine_set);
+	run(ini);
 
 	/*
 	 * FINALIZE PINC
@@ -49,46 +46,42 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void regularRoutine(dictionary *ini){
+void regular(dictionary *ini){
 
-	// Random number seeds
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-//	gsl_rng_set(rng,2);
+	/*
+	 * SELECT METHODS
+	 */
+	void (*acc)()   = select(ini,"methods:acc",  puAcc3D1_set,puAcc3D1KE_set);
+	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-
-
-	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-
-	 // Setting up particles.
 	Population *pop = pAlloc(ini);
-
-	// Allocating grids
 	Grid *E   = gAlloc(ini, 3);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi);
 
-	// Creating a neighbourhood in the rho Grid variable to handle migrants
+	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
 	// Setting Boundary slices
 	gSetBndSlices(phi, mpiInfo);
 
-	// Alloc multigrids
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-
 	//Set mgSolver
 	MgAlgo mgAlgo = getMgAlgo(ini);
 
+	// Random number seeds
+	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 
-
-	// Alloc h5 files
+	/*
+	 * PREPARE FILES FOR WRITING
+	 */
 	int rank = phi->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
@@ -110,40 +103,47 @@ void regularRoutine(dictionary *ini){
 	free(denorm);
 	free(dimen);
 
-	/***************************************************************
-	 *		ACTUAL simulation stuff
-	 **************************************************************/
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-
+	/*
+	 * INITIAL CONDITIONS
+	 */
 
 	// Initalize particles
-//	pPosUniform(ini, pop, mpiInfo, rng);
+	// pPosUniform(ini, pop, mpiInfo, rngSync);
 	pPosLattice(ini, pop, mpiInfo);
 	pVelZero(pop);
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
 
+	// Migrate those out-of-bounds due to perturbation
 	puExtractEmigrants3D(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
+	/*
+	 * INITIALIZATION (E.g. half-step)
+	 */
+
 	// Get initial charge density
-	puDistr3D1(pop, rho);
+	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
 	// Get initial E-field
 	mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, 0);	// ?? What does this do?
+	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	puAcc3D1KE(pop, E);		// Includes kinetic energy for step n
+	acc(pop, E);
 	gMul(E, 2.0);
 
-	// Time loop
+	/*
+	 * TIME LOOP
+	 */
+
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
+	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS|ONCE,"Computing time-step %i",n);
@@ -163,7 +163,7 @@ void regularRoutine(dictionary *ini){
 		pPosAssertInLocalFrame(pop, rho);
 
 		// Compute charge density
-		puDistr3D1(pop, rho);
+		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
 		// Compute electric potential phi
@@ -173,14 +173,13 @@ void regularRoutine(dictionary *ini){
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
-		// gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
 
 		// Accelerate particle and compute kinetic energy for step n
-		puAcc3D1KE(pop, E);
+		acc(pop, E);
 
 		// Sum energy for all species
 		pSumKinEnergy(pop);
@@ -201,7 +200,7 @@ void regularRoutine(dictionary *ini){
 	}
 
 
-	 /*
+	/*
 	 * FINALIZE PINC VARIABLES
 	 */
 	gFreeMpi(mpiInfo);
@@ -223,10 +222,7 @@ void regularRoutine(dictionary *ini){
 	gFree(E);
 	pFree(pop);
 
-	/*
-	 * FINALIZE THIRD PARTY LIBRARIES
-	 */
-	gsl_rng_free(rng);
+	gsl_rng_free(rngSync);
 
 }
 
@@ -408,70 +404,3 @@ void mgRoutine(dictionary *ini){
 
 	return;
 }
-
-
-/*****************************************************************
- *			Blueprint
- ****************************************************************/
-
-/*
- * INITIALIZE PINC VARIABLES
- */
-
-// -2. Sanitize
-
-// -1. Allocate all datatypes
-
-// 0. Specify all function pointers from ini
-
-// 1. Specify phase space distribution
-// 2. rho: puDistr3D1(); (distribute)
-// 3. phi: linearMG();
-// 4. E: gFinDiff1rd();
-
-// Accelerate half-step
-// gMul(E,0.5);
-// puAcc3D1(pop,E); // (accelerate)
-// gMul(E,2);
-
-/*
- *	TEST AREA
- */
-
-// for(long int n=1;n<=N;n++){
-//
-// 	// Everything in here is function pointers
-//
-// 	// Move
-// 	move();
-// 	migrate();			// Including boundaries and safety testing
-//
-// 	// Weighting
-// 	distribute();
-// 	interactAdd();		// Fix boundaries for rho
-//
-// 	// Field solver
-// 	solver();			// Including boundaries
-// 	finDiff();
-// 	swapHalo();
-//
-// 	imposeExternal();	// To add external field
-// 	potentialEnergy();	// Calculate potential energy for step n
-//
-// 	// Accelerate
-// 	accelerate();		// Including total kinetic energy for step n
-//
-// 	// Diagnostics
-// 	if(n%a==0) savePop();
-// 	if(n%b==0) saveGrid();
-// 	if(n%c==0) saveVelocityDistr();
-//
-// }
-
-/*
- * FINALIZE PINC VARIABLES
- */
-
-/*
- * FINALIZE THIRD PARTY LIBRARIES
- */

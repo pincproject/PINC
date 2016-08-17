@@ -11,6 +11,116 @@
 #define IO_H
 
 /**
+ * @brief	Function selector for assigning function pointers
+ * @param	ini		Input file dictionary
+ * @param	key		Key to method parameter ("section:key")
+ * @param	...		Addresses to set-functions to select from
+ * @return 	Function pointer as specified by set-function
+ *
+ * The select() macro enables the developer to let a method be selectable by
+ * the user through the input files. This is best described through an example.
+ * Consider that two different numerical methods may be used for the same thing,
+ * each represented by its own function:
+ *
+ * @code
+ *	void fun1(const char *str){
+ *		msg(STATUS|ONCE,"Function 1 called with input: %s",str);
+ *	}
+ *
+ *	void fun2(const char *str1, const char *str2){
+ *		msg(STATUS|ONCE,"Function 2 called with inputs: %s, %s",str1,str2);
+ *	}
+ * @endcode
+ *
+ * Both of these functions _must_ return void, but they can have any kind of
+ * input parameters. fun() may then be a function pointer, selected to point to
+ * either of these two functions, and subsequently used as a normal function:
+ *
+ * @code
+ *	void (*fun)() = select(ini,"method:fun",fun1_set,fun2_set);
+ *	fun("Input 1","Input 2");
+ * @endcode
+ *
+ * If "method:fun" in the ini-file equals "fun1", the output will read
+ *
+ * @code
+ *	Function 1 called with input: Input 1
+ * @endcode
+ *
+ * whereas if it reads "fun2", the output reads
+ *
+ * @code
+ *	Function 2 called with inputs: Input 1, Input 2
+ * @endcode
+ *
+ * Notice that the number of arguments in fun1() and fun2() may be different.
+ * Unused arguments are simply ignored. However, overlapping arguments must be
+ * the same kind since fun() is invoked the same way each time.
+ *
+ * Finally, notice that select() do not actually return the addresses to fun1()
+ * and fun2() itself, but instead calls a _set()-function (internally) to do it.
+ * These can be defined as follows:
+ *
+ * @code
+ *	funPtr fun1_set(dictionary *ini){
+ *		return fun1;
+ *	}
+ *
+ *	funPtr fun2_set(dictionary *ini){
+ *
+ *		int nDims = iniGetInt(ini,"grid:nDims");
+ *		if(nDims!=3) msg(ERROR|ONCE, "fun2() requires nDims=3");
+ *
+ *		return &fun2; // Ampersand optional
+ *	}
+ * @endcode
+ *
+ * Thus, when you write "fun1_set" in the select() call, fun1_set is the address
+ * of the function being called when select finds a matching value "fun1" in the
+ * input file. Underscore merely acts as a syntactical delimeter, and select()
+ * matches only the first part with the input file.
+ *
+ * The purpose of having _set()-functions rather than just setting the function
+ * pointers directly is that the developer of each method can (and should)
+ * attach sanity checks to the methods inside the _set() functions. Thus every
+ * time a new, selectable method is developed, the developer must also make a
+ * _set() function specifying/checking the circumstances under which the method
+ * works. In our example, it is assumed that the fun2() method only works for
+ * 3-dimensional problems. It may not be beneficial to read the ini file and
+ * test for 3-dimensionality inside fun2() since it may run inside a time
+ * critical loop. The _set() functions, however, are only called once. The
+ * _set() functions must always be made with one input, the ini-file, and with
+ * return type funPtr (which is just a pointer to a function returning void).
+ *
+ * In some cases, the numerical methods pointed to by e.g. fun() may need to be
+ * initialized, and in different ways depending on which method is being used.
+ * Then, since underscore acts merely as a delimeter, one may create
+ * _init()-functions which trigger on the same key in the ini-file. E.g.
+ *
+ * @code
+ *	void (*fun)()     = select(ini,"method:fun",fun1_set ,fun2_set );
+ *	void (*initFun)() = select(ini,"method:fun",fun1_init,fun2_init);
+ *	initFun();
+ *	fun();
+ * @endcode
+ */
+#define select(ini,key,...) selectInner(ini,key,#__VA_ARGS__,__VA_ARGS__)
+
+/**
+ * @brief	Function selector for assigning function pointers
+ * @param	ini		Input file dictionary
+ * @param	key		Key to method parameter ("section:key")
+ * @param	string	Variadic arguments stringified by select() macro
+ * @param	...		Addresses to set-functions to select from
+ * @return 	Function pointer as specified by set-function
+ *
+ * Merely a wrapper which stringifies the function pointers in the variadic
+ * arguments to make the selectInner() function able to match function names by
+ * values in the ini-file.
+ */
+funPtr selectInner(dictionary *ini, const char *key, const char *string,...);
+
+/**
  * @brief	The PINC equivalent of printf().
  * @param	kind	STATUS, WARNING or ERROR depending on what to output.
  * @param	format	printf-like format specifier

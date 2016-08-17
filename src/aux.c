@@ -18,20 +18,34 @@
 /******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
-//
-// /**
-//  * @brief Automatically formats a TimeSpec into a string
-//  * @param[out]		str		Formatted string
-//  * @param			len		Allocated length in str
-//  * @param			time	TimeSpec to format
-//  *
-//  * Used in tMsg().
-//  */
-// static void tFormat(char *str, int len, const TimeSpec *time);
-//
-// /******************************************************************************
-//  * TIMING FUNCTIONS
-//  *****************************************************************************/
+
+#if _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK) // Linux
+
+	unsigned long long int getNanoSec(void){
+
+		struct timespec time;
+		clock_gettime(CLOCK_MONOTONIC, &time);
+
+		return time.tv_sec*1e9 + time.tv_nsec;
+	}
+
+#elif defined(__APPLE__) // Mac
+
+	#include <mach/mach_time.h>
+
+    unsigned long long int getNanoSec(void){
+
+		// needed to convert mach_absolute time to something meaningful
+	    mach_timebase_info_data_t timebase;
+	    mach_timebase_info(&timebase);
+
+		uint64_t clock = mach_absolute_time();
+		uint64_t nanosecs = clock * (uint64_t)timebase.numer / (uint64_t)timebase.denom;
+
+		return nanosecs;
+	}
+
+#endif
 
 Timer *tAlloc(){
 
@@ -44,43 +58,6 @@ Timer *tAlloc(){
 void tFree(Timer *t){
 	free(t);
 }
-
-//Linux or mac implementation to getNanoSec (Local function)
-#if _POSIX_TIMERS>0 && defined(_POSIX_MONOTONIC_CLOCK)
-
-	unsigned long long int getNanoSec(void){
-
-		struct timespec time;
-		clock_gettime(CLOCK_MONOTONIC, &time);
-
-		return time.tv_sec*1e9 + time.tv_nsec;
-	}
-
-#elif	defined(__APPLE__)
-
-         unsigned long long int getNanoSec(void){
-		//TBD
-		//msg(WARNING, "Timer function for macOS is not completed.");
-
-                #include <mach/mach_time.h> // mach_absolute_time
-
-	   //#define BILLION 1000000000L
-
-	   //struct timespec time; // represent the elapsed time,
-	        mach_timebase_info_data_t timebase; // needed to convert mach_absolute time to something meaningful
-	        mach_timebase_info(&timebase); // needed to convert mach_absolute time to something meaningful
-
-		uint64_t clock = mach_absolute_time(); // capture the current time
-		uint64_t nanosecs = clock * (uint64_t)timebase.numer / (uint64_t)timebase.denom; // convert to nanoseconds
-
-		//time.tv_sec = nanosecs / BILLION; // convert to timespec
-		//time.tv_nsec = nanosecs % BILLION; // convert to timespec
-
-		return nanosecs; //time.tv_sec*1e9 + time.tv_nsec;
-
-	}
-
-#endif
 
 
 void tStart(Timer *t){
@@ -108,57 +85,6 @@ void tMsg(long long int nanoSec, const char *string){
 	}
 
 }
-
-
-/****************************************************************************
- *	Outdated Timer functions (Some functionality is lost in new)
- ****************************************************************************/
-
-
-// void tMsg(Timer *timer, const char *restrict format, ...){
-//
-// 	if(timer->rank>=0){
-// 		TimeSpec now, diff;
-// 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
-//
-// 		if(format!=NULL){
-//
-// 			// Take difference
-// 			diff.tv_sec = now.tv_sec-timer->previous.tv_sec;
-// 			diff.tv_nsec = now.tv_nsec-timer->previous.tv_nsec;
-//
-// 			// Borrow from tv_sec if necessary
-// 			if(diff.tv_nsec<0){
-// 				diff.tv_sec-=1;
-// 				diff.tv_nsec+=1e9;
-// 			}
-//
-// 			// Format time
-// 			const int strSize = 16;
-// 			char nowStr[strSize];
-// 			char diffStr[strSize];
-// 			tFormat(nowStr,strSize,&now);
-// 			tFormat(diffStr,strSize,&diff);
-//
-// 			// Get message
-// 			const int bufferSize = 132;
-// 			char msg[bufferSize];
-// 			va_list args;
-// 			va_start(args,format);
-// 			vsnprintf(msg,bufferSize,format,args);
-// 			va_end(args);
-//
-// 			// Print
-// 			char buffer[bufferSize];
-// 			snprintf(buffer,bufferSize,"TIMER (%i): [tot=%s, diff=%s] %s",timer->rank,nowStr,diffStr,msg);
-// 			fprintf(stdout,"%s\n",buffer);
-// 		}
-//
-// 		// Store time of this call
-// 		//timer->previous = now;
-// 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &timer->previous);
-// 	}
-// }
 
 /******************************************************************************
  * STRING FUNCTIONS
@@ -498,46 +424,46 @@ void alPrintInner(long int *a, long int inc, long int end, char *varName){
  *			Debug help
  ***************************************************************************/
 
- void dumpTrueGrid(dictionary *ini, Grid *grid){
+void dumpTrueGrid(dictionary *ini, Grid *grid){
 
- 	int *size = grid->size;
- 	long int *sizeProd = grid->sizeProd;
- 	int nDims = grid->rank -1;
+	int *size = grid->size;
+	long int *sizeProd = grid->sizeProd;
+	int nDims = grid->rank -1;
 
- 	msg(STATUS|ONCE, "Dumps grid to parsefile");
- 	if(nDims == 3){
- 		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+	msg(STATUS|ONCE, "Dumps grid to parsefile");
+	if(nDims == 3){
+		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
  		 			size[1], size[2], size[3]);
- 		//Cycles trough and prints the grid (not optimized)
- 		int p;
- 		for(int l = 1; l < size[3]-1; l++){
- 			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
- 			for(int k = size[2] - 2; k > 0; k--){ //y-rows
- 				for(int j = 1; j < size[1]-1; j++){ //x-rows
- 					p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
- 					fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
- 				}
- 				fMsg(ini,"parsedump", "\n\n");
- 			}
- 		}
- 	} else if(nDims==2) {
- 		fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
- 		 			size[1], size[2]);
- 		int p;
- 		for(int k = size[2] - 2; k > 0; k--){ //y-rows
- 			for(int j = 1; j < size[1]-1; j++){ //x-rows
- 				p = j*size[0] + k*size[1];
- 				fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
- 			}
- 			fMsg(ini,"parsedump", "\n");
- 		}
+		//Cycles trough and prints the grid (not optimized)
+		int p;
+		for(int l = 1; l < size[3]-1; l++){
+			fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
+			for(int k = size[2] - 2; k > 0; k--){ //y-rows
+				for(int j = 1; j < size[1]-1; j++){ //x-rows
+					p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+					fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
+				}
+				fMsg(ini,"parsedump", "\n\n");
+			}
+		}
+	} else if(nDims==2) {
+		fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
+		 			size[1], size[2]);
+		int p;
+		for(int k = size[2] - 2; k > 0; k--){ //y-rows
+			for(int j = 1; j < size[1]-1; j++){ //x-rows
+				p = j*size[0] + k*size[1];
+				fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
+			}
+			fMsg(ini,"parsedump", "\n");
+		}
 
- 	}
+	}
 
- 	return;
- }
+	return;
+}
 
- void dumpWholeGrid(dictionary *ini, Grid *grid){
+void dumpWholeGrid(dictionary *ini, Grid *grid){
 
     int *size = grid->size;
     long int *sizeProd = grid->sizeProd;
@@ -545,33 +471,33 @@ void alPrintInner(long int *a, long int inc, long int end, char *varName){
 
     msg(STATUS|ONCE, "Dumps grid to parsefile");
     if(nDims == 3){
- 	   fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
+	   fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
  				   size[1], size[2], size[3]);
- 	   //Cycles trough and prints the grid (not optimized)
- 	   int p;
- 	   for(int l = 0; l < size[3]; l++){
- 		   fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
- 		   for(int k = size[2] - 1; k > -1; k--){ //y-rows
- 			   for(int j = 0; j < size[1]; j++){ //x-rows
- 				   p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
- 				   fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
- 			   }
- 			   fMsg(ini,"parsedump", "\n\n");
- 		   }
- 	   }
-    } else if(nDims==2) {
- 	   fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
- 				   size[1], size[2]);
- 	   int p;
- 	   for(int k = size[2] - 1; k > -1; k--){ //y-rows
- 		   for(int j = 0; j < size[1]; j++){ //x-rows
- 			   p = j*size[0] + k*size[1];
- 			   fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
- 		   }
- 		   fMsg(ini,"parsedump", "\n");
- 	   }
+	   //Cycles trough and prints the grid (not optimized)
+	   int p;
+	   for(int l = 0; l < size[3]; l++){
+		   fMsg(ini, "parsedump", "\t\t\t l = %d \n", l);
+		   for(int k = size[2] - 1; k > -1; k--){ //y-rows
+			   for(int j = 0; j < size[1]; j++){ //x-rows
+				   p = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+				   fMsg(ini,"parsedump", "%3.1f, ",  grid->val[p]);
+			   }
+			   fMsg(ini,"parsedump", "\n\n");
+		   }
+	   }
+	} else if(nDims==2) {
+	   fMsg(ini,"parsedump", "2D grid: (%dx%d): \n",
+				   size[1], size[2]);
+	   int p;
+	   for(int k = size[2] - 1; k > -1; k--){ //y-rows
+		   for(int j = 0; j < size[1]; j++){ //x-rows
+			   p = j*size[0] + k*size[1];
+			   fMsg(ini,"parsedump", "%3.1f \t", grid->val[p]);
+		   }
+		   fMsg(ini,"parsedump", "\n");
+	   }
 
     }
 
-    return;
- }
+	return;
+}

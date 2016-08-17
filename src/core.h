@@ -341,6 +341,8 @@ typedef enum{
  */
 typedef void (*SliceOpPointer)(const double *slice, Grid *grid, int d, int offset);
 
+typedef void (*funPtr)();
+
 /******************************************************************************
  * INCLUDING CORE MODULES
  *****************************************************************************/
