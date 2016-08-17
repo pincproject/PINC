@@ -342,9 +342,6 @@ typedef enum{
 typedef void (*SliceOpPointer)(const double *slice, Grid *grid, int d, int offset);
 
 typedef void (*funPtr)();
-typedef funPtr (*funPtr2)();
-
-#define select(ini,key,...) selectInner(ini,key,#__VA_ARGS__,__VA_ARGS__)
 
 /******************************************************************************
  * INCLUDING CORE MODULES

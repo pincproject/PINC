@@ -105,39 +105,55 @@ funPtr selectInner(dictionary *ini, const char *key, const char *list,...){
 
 	va_list args;
 	va_start(args,list);
+
 	char *value = iniGetStr(ini,key);
+	funPtr (*setFunction)() = NULL;
 
-	// strArr contains all variadic arguments stringified. see innner().
+	// "list" is all variadic arguments stringified by select() macro, e.g.
+	// "fun1_set,fun2_set". Separate it into a string array.
 	char **strArr = listToStrArr(list);
+
+	/*
+	 * MATCHING FUNCTION POINTER TO VALUE IN INI-FILE
+	 */
 	char **strTemp = strArr;
-	funPtr2 setFunction = NULL;
-
 	for(char *str=*strTemp; str!=NULL; str=*(++strTemp) ){
-		strtok(str,"_");
 
-		funPtr2 fun = va_arg(args,funPtr2);
+		strtok(str,"_"); // Trim _set part
+		funPtr (*fun)() = va_arg(args,funPtr (*)());
 
 		if(!strcmp(str,value)){
-			msg(WARNING|ONCE,"%s==%s",str,value);
 			setFunction = fun;
-		} else {
-			msg(WARNING|ONCE,"%s!=%s",str,value);
+		}
+	}
+
+	/*
+	 * ERROR HANDLING (Print list of valid values in case of error)
+	 */
+	if(setFunction==NULL){
+
+		char *valid = malloc(strlen(list+1)*sizeof(*valid));
+		valid[0] = '\0';
+
+		char **strTemp = strArr; // _set already trimmed
+		for(char *str=*strTemp; str!=NULL; str=*(++strTemp) ){
+			strcat(valid," ");
+			strcat(valid,str);
 		}
 
+		msg(ERROR|ONCE,"%s=%s invalid. Valid arguments:%s.",key,value,valid);
+		free(valid);
 	}
+
+	/*
+	 * EXECUTING _set()-FUNCTION
+	 */
 
 	freeStrArr(strArr);
+	free(value);
 	va_end(args);
 
-	if(setFunction==NULL){
-		msg(ERROR,"invalid argument to %s. Valid arguments are %s",key,list);
-		return NULL;
-	} else {
-		return setFunction(ini);
-	}
-
-	msg(ERROR|ONCE,"DONE");
-
+	return setFunction(ini);
 }
 
 void msg(msgKind kind, const char* restrict format,...){
@@ -286,7 +302,7 @@ void iniClose(dictionary *ini){
 void iniAssertExistence(const dictionary *ini, const char* key){
 
 	if(!iniparser_find_entry((dictionary*)ini,key))
-		msg(ERROR,"Key \"%s\" not found in input file",key);
+		msg(ERROR|ONCE,"Key \"%s\" not found in input file",key);
 
 }
 

@@ -13,12 +13,11 @@
 #include "pusher.h"
 #include "multigrid.h"
 
-/*
- * MAIN ROUTINES (RUN MODES PERHAPS A BETTER NAME?)
- */
-void regularRoutine(dictionary *ini);
-void debugFillHeaviside(Grid *grid, MpiInfo *mpiInfo);
+void regular(dictionary *ini);
+funPtr regular_set(dictionary *ini){ return regular; }
+
 void mgRoutine(dictionary *ini);
+funPtr mgRoutine_set(dictionary *ini){ return mgRoutine; }
 
 int main(int argc, char *argv[]){
 
@@ -30,17 +29,11 @@ int main(int argc, char *argv[]){
 	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 
-
-	select(ini,"modules:pusher",puAcc3D1_set,puAcc3D1KE_set);
-
-
 	/*
-	 * CHOOSE PINC MAIN ROUTINE (RUN MODE PERHAPS A BETTER NAME?)
+	 * CHOOSE PINC RUN MODE
 	 */
-	char *routine = iniGetStr(ini,"main:routine");
-	if(!strcmp(routine, "regular"))		regularRoutine(ini);
-	if(!strcmp(routine, "mgRoutine"))	mgRoutine(ini);
-	free(routine);
+	void (*run)() = select(ini,"methods:mode",regular_set,mgRoutine_set);
+	run(ini);
 
 	/*
 	 * FINALIZE PINC
@@ -53,76 +46,39 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-// typedef void (*accType)(Population *pop, Grid *E);
-// accType puAuto(dictionary *ini){
-// 	msg(STATUS|ONCE,"puAuto was called");
-// 	return puAcc3D1KE;
-// }
-/*
-void myTestFunc(){
-	msg(STATUS|ONCE,"ignoring input params");
-}
+void regular(dictionary *ini){
 
-void (*puAuto(dictionary *ini))(){
-	msg(STATUS|ONCE,"puAuto was called");
-	return myTestFunc;
-}
-
-#define s(fName) fName,#fName	// allows writing, func(s(fName1),s(fName2),...) to get every other argument stringified
-//#define select(ini,nArgs,...) selectInner(ini,nArgs,__VA_ARGS__,__VA_ARGS__);
-//#define select(ini,nArgs,...)
-#define select(ini,key,fun) selectInner(ini,key,fun,#fun)
-
-typedef void (*funPtr)();
-
-funPtr selectInner(dictionary *ini, const char *key, funPtr fun, const char *funName){
-	char *value = iniGetStr(ini,key);
-	if(!strcmp(value,funName)) return fun;
-	else return NULL;
-	free(value);
-}
-*/
-//void (*selectInner(dictionary *ini, int nArgs, ...))(){
-//
-//}
-
-void regularRoutine(dictionary *ini){
-
-	// Random number seeds
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-//	gsl_rng_set(rng,2);
+	/*
+	 * SELECT METHODS
+	 */
+	void (*acc)()   = select(ini,"methods:acc",  puAcc3D1_set,puAcc3D1KE_set);
+	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-
-
-	// MPI struct
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-
-	 // Setting up particles.
 	Population *pop = pAlloc(ini);
-
-	// Allocating grids
 	Grid *E   = gAlloc(ini, 3);
 	Grid *rho = gAlloc(ini, 1);
 	Grid *res = gAlloc(ini, 1);
 	Grid *phi = gAlloc(ini, 1);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi);
 
-	// Creating a neighbourhood in the rho Grid variable to handle migrants
+	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
 	// Setting Boundary slices
 	gSetBndSlices(phi, mpiInfo);
 
-	// Alloc multigrids
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
+	// Random number seeds
+	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 
-
-
-	// Alloc h5 files
+	/*
+	 * PREPARE FILES FOR WRITING
+	 */
 	int rank = phi->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
@@ -143,112 +99,48 @@ void regularRoutine(dictionary *ini){
 
 	free(denorm);
 	free(dimen);
-/*
-	void (*acc)() = SELECT(ini,"modules:pusher",3,	SCASE(puAcc3D1),
-													SCASE(puAcc3D1KE));
 
-	// Using recursion, prefix makes it usable for other functions as well.
-	void (*acc)() = SELECT(ini,"modules:pusher","init",puAcc3D1KE);
-
-	void (*acc)() = SELECT(ini){
-		SCASE(puAcc3D1KE);
-		SCASE(puAcc3D1);
-	}
-
-	char *s = iniGetStr(ini,"modules:pusher");
-	void (*acc)();
-	{
-		void (*temp)();
-		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
-		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
-		if(!strcmp(value,"puAcc3D1")) temp = puAcc3D1yo();
-	}
-
-	void (*acc)() = NULL;
-	char *value = iniGetStr(ini,"modules:pusher");					// SWITCH(ini,"modules:pusher")
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);		// CASE(ini,acc,puAcc3D1)
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1Init(ini);
-	if(acc==NULL) msg(ERROR|ONCE,"Invalid modules:pusher");		// ENDSWITCH(acc)
-	free(value);
-
-
-
-
-	void (*acc)();										// void (*acc)() = SWITCH("modules:pusher")
-	acc = select(ini,"modules:pusher",puAcc1KE);		// CASE
-	acc = select(ini,"modules:pusher",puAcc3D1);
-
-	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
-	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
-	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
-	acc = selectInner(ini,"modules:pusher",puAcc3D1,"puAcc3D1");
-
-	void (*acc)() = select(ini,"modules:pusher",2,puAcc3D1KE,puAcc3D1);
-
-	if(acc==NULL)...
-
-	void (*acc)() = select(ini,"modules:pusher",puAcc3D1,puAcc3D1KE);
-	void (*initPusher)() = select(ini,"modules:pusher","yo",puAcc3D1,puAcc3D1KE);
-
-	asdlfkjaslkfd										// SWTICH(...)
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();	// CASE(...)
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
-	if(!strcmp(value,"puAcc3D1")) acc = puAcc3D1yo();
-	lkajdsflkjdsaf										// ENDSWITCH(...)
-
-*/
-
-	// // void (*acc)(Population pop, Grid E) = SELECT(ini,"modules:accelerator",2,puAcc3D1,puAcc3D1KE);
-	// char *pusher = iniGetStr(ini,"modules:pusher");
-	// // void (*acc)(Population *pop, Grid *E);
-	// void (*acc)();
-	// if(!strcmp(pusher,"puAcc3D1")) acc = puAcc3D1;
-	// else if(!strcmp(pusher,"auto")) acc = puAuto(ini);
-	// else {
-	// 	acc = puAcc3D1;
-	// 	msg(ERROR|ONCE,"no such function");
-	// }
-	// free(pusher);
-
-
-
-	/***************************************************************
-	 *		ACTUAL simulation stuff
-	 **************************************************************/
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-
+	/*
+	 * INITIAL CONDITIONS
+	 */
 
 	// Initalize particles
-//	pPosUniform(ini, pop, mpiInfo, rng);
+	// pPosUniform(ini, pop, mpiInfo, rngSync);
 	pPosLattice(ini, pop, mpiInfo);
 	pVelZero(pop);
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
 
+	// Migrate those out-of-bounds due to perturbation
 	puExtractEmigrants3D(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
+	/*
+	 * INITIALIZATION (E.g. half-step)
+	 */
+
 	// Get initial charge density
-	puDistr3D1(pop, rho);
+	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, 1);
 
 	// Get initial E-field
 	mgSolver(mgVRegular, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, 0);	// ?? What does this do?
+	gHaloOp(setSlice, E, mpiInfo, 0);
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
-//	acc(pop, E);		// Includes kinetic energy for step n
+	acc(pop, E);
 	gMul(E, 2.0);
 
-	// Time loop
+	/*
+	 * TIME LOOP
+	 */
+
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
+	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS|ONCE,"Computing time-step %i",n);
@@ -268,7 +160,7 @@ void regularRoutine(dictionary *ini){
 		pPosAssertInLocalFrame(pop, rho);
 
 		// Compute charge density
-		puDistr3D1(pop, rho);
+		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, 1);
 
 		// Compute electric potential phi
@@ -278,14 +170,13 @@ void regularRoutine(dictionary *ini){
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
-		// gMul(E, normE);
 		gHaloOp(setSlice, E, mpiInfo, 0);
 
 		// Apply external E
 		// gAddTo(Ext);
 
 		// Accelerate particle and compute kinetic energy for step n
-//		acc(pop, E);
+		acc(pop, E);
 
 		// Sum energy for all species
 		pSumKinEnergy(pop);
@@ -306,7 +197,7 @@ void regularRoutine(dictionary *ini){
 	}
 
 
-	 /*
+	/*
 	 * FINALIZE PINC VARIABLES
 	 */
 	gFreeMpi(mpiInfo);
@@ -328,10 +219,7 @@ void regularRoutine(dictionary *ini){
 	gFree(E);
 	pFree(pop);
 
-	/*
-	 * FINALIZE THIRD PARTY LIBRARIES
-	 */
-	gsl_rng_free(rng);
+	gsl_rng_free(rngSync);
 
 }
 
@@ -466,70 +354,3 @@ void mgRoutine(dictionary *ini){
 
 	return;
 }
-
-
-/*****************************************************************
- *			Blueprint
- ****************************************************************/
-
-/*
- * INITIALIZE PINC VARIABLES
- */
-
-// -2. Sanitize
-
-// -1. Allocate all datatypes
-
-// 0. Specify all function pointers from ini
-
-// 1. Specify phase space distribution
-// 2. rho: puDistr3D1(); (distribute)
-// 3. phi: linearMG();
-// 4. E: gFinDiff1rd();
-
-// Accelerate half-step
-// gMul(E,0.5);
-// puAcc3D1(pop,E); // (accelerate)
-// gMul(E,2);
-
-/*
- *	TEST AREA
- */
-
-// for(long int n=1;n<=N;n++){
-//
-// 	// Everything in here is function pointers
-//
-// 	// Move
-// 	move();
-// 	migrate();			// Including boundaries and safety testing
-//
-// 	// Weighting
-// 	distribute();
-// 	interactAdd();		// Fix boundaries for rho
-//
-// 	// Field solver
-// 	solver();			// Including boundaries
-// 	finDiff();
-// 	swapHalo();
-//
-// 	imposeExternal();	// To add external field
-// 	potentialEnergy();	// Calculate potential energy for step n
-//
-// 	// Accelerate
-// 	accelerate();		// Including total kinetic energy for step n
-//
-// 	// Diagnostics
-// 	if(n%a==0) savePop();
-// 	if(n%b==0) saveGrid();
-// 	if(n%c==0) saveVelocityDistr();
-//
-// }
-
-/*
- * FINALIZE PINC VARIABLES
- */
-
-/*
- * FINALIZE THIRD PARTY LIBRARIES
- */

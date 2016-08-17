@@ -149,6 +149,7 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
  * first.
  */
 void puDistr3D1(const Population *pop, Grid *rho);
+funPtr puDistr3D1_set(dictionary *ini);
 
 // EVERYTHING BELOW THIS SHOULD MOVE TO SEPARATE MIGRATION.H MODULE.
 
