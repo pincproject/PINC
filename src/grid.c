@@ -290,16 +290,16 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse){
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
 
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++){
-		gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
+		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir);
 	}
 
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
 
  	//Load MpiInfo
  	int mpiRank = mpiInfo->mpiRank;
@@ -314,12 +314,12 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	double *sendSlice = grid->sendSlice;
 	double *recvSlice = grid->recvSlice;
 
-	// Normal operation: take 2nd outermost layer and place it outermost
-	// Inverse operation: take outermost layer and place it 2nd outermost
-	int offsetUpperTake  = size[d]-2+inverse;
-	int offsetUpperPlace = size[d]-1-inverse;
-	int offsetLowerTake  =         1-inverse;
-	int offsetLowerPlace =           inverse;
+	// dir=TOHALO=0: take 2nd outermost layer and place it outermost
+	// dir=FROMHALO=1: take outermost layer and place it 2nd outermost
+	int offsetUpperTake  = size[d]-2+dir;
+	int offsetUpperPlace = size[d]-1-dir;
+	int offsetLowerTake  =         1-dir;
+	int offsetLowerPlace =           dir;
 
 	//Dimension used for subdomains, 1 less entry than grid dimensions
 	int dd = d - 1;

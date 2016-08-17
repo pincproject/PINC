@@ -19,6 +19,14 @@ enum{
 };
 
 /**
+ * @brief Defines direction of operation in gHaloOp(), gHaloOpDim()
+ */
+typedef enum{
+	TOHALO = 0,
+	FROMHALO = 1
+} opDirection;
+
+/**
  * @brief Allocates a Grid object as specified in the input file
  * @param	ini			Input file
  * @param	nValues		Number of values per grid point (use SCALAR or VECTOR)
@@ -128,10 +136,8 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
  */
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int reverse);
-
-void gHaloOpDim2(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
@@ -147,7 +153,7 @@ void gHaloOpDim2(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int
  * @see gHaloOpDim
  * @see SliceOpPointer
  */
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse);
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
@@ -171,7 +177,7 @@ void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int rev
  * 10   11   12   13   14
  *
  *  5    6    7    8    9
-
+ *
  *  0    1    2    3    4
  * @endcode
  *

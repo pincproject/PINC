@@ -125,12 +125,12 @@ void regular(dictionary *ini){
 
 	// Get initial charge density
 	distr(pop, rho);
-	gHaloOp(addSlice, rho, mpiInfo, 1);
+	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
 	mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, 0);
+	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -164,7 +164,7 @@ void regular(dictionary *ini){
 
 		// Compute charge density
 		distr(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo, 1);
+		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 		// Compute electric potential phi
 		gZero(phi);
@@ -173,7 +173,7 @@ void regular(dictionary *ini){
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo, 0);
+		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 
 		// Apply external E
 		// gAddTo(Ext);
