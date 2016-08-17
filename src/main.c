@@ -59,10 +59,10 @@ void regular(dictionary *ini){
 	 */
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, 3);
-	Grid *rho = gAlloc(ini, 1);
-	Grid *res = gAlloc(ini, 1);
-	Grid *phi = gAlloc(ini, 1);
+	Grid *E   = gAlloc(ini, VECTOR);
+	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *res = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR);
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);

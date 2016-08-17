@@ -10,15 +10,23 @@
 #ifndef GRID_H
 #define GRID_H
 
-
+/**
+ * @brief Defines valid values to use with gAlloc()
+ */
+enum{
+	SCALAR = 1,
+	VECTOR = -1
+};
 
 /**
  * @brief Allocates a Grid object as specified in the input file
  * @param	ini			Input file
- * @param	nValues		Number of values per grid point
+ * @param	nValues		Number of values per grid point (use SCALAR or VECTOR)
  * @return				Pointer to Grid
  *
- * Use nValues=1 for scalar field, nValues=3 for 3D vector field and so on.
+ * nValues=1 for scalars or the number of dimensions for vectors. For
+ * convenience, use SCALAR and VECTOR rather than specifying the numbers
+ * manually.
  *
  * Remember to free using gFree().
  *

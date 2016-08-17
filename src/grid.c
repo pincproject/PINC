@@ -396,6 +396,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	double *stepSize	= malloc(rank*sizeof(*stepSize));
 	int *nGhostLayers 	= malloc(2*rank*sizeof(*nGhostLayers));
 
+	if(nValues==VECTOR) nValues = nDims; // VECTOR equals -1
+
 	size[0] = nValues;
 	trueSize[0] = nValues;
 	stepSize[0] = 1;
