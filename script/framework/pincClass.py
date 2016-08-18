@@ -22,6 +22,7 @@ class PINC:
 		self.pincPath = pincPath
 		self.iniPath = iniPath
 		self.trueSize = [32,16,16]
+		self.nSubdomains = [4,1,1]
 		self.preCycles = 1
 		self.postCycles = 1
 		self.coarseCycles = 1
@@ -41,6 +42,7 @@ class PINC:
 		cmd += " main:routine=" + self.routine
 		cmd += " time:startTime=" + str(self.startTime)
 		cmd += " grid:trueSize=" + str(self.trueSize[0]) + "," + str(self.trueSize[1]) + "," + str(self.trueSize[2])
+		cmd += " grid:nSubdomains=" + str(self.nSubdomains[0]) + "," + str(self.nSubdomains[1]) + "," + str(self.nSubdomains[2])
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
 		cmd += " multigrid:mgCycles=" + str(self.mgCycles)
 		cmd += " multigrid:nPreSmooth=" + str(self.preCycles)

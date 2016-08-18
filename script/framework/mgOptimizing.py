@@ -24,16 +24,18 @@ pinc = PINC()
 # pinc.clean()
 #Setting up wanted needed ini file
 pinc.routine = "mgRoutine"
-pinc.trueSize = [64,32,32]
+pinc.trueSize = [128,32,32]
 pinc.preCycles = 100
 pinc.postCycles = 100
 pinc.coarseCycles = 1000
+pinc.nSubdomains = [4,1,1]
 pinc.clean()
 
 for i in range(2,6):
 	pinc.mgLevels = i
 	pinc.runMG()
 	pinc.startTime = pinc.startTime+1
+
 
 
 

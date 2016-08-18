@@ -293,31 +293,32 @@ void mgRoutine(dictionary *ini){
 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
 	gNeutralizeGrid(rho, mpiInfo);
 
-	double tol = 0.001;
+	double tol = 0.1;
 	double avgError = 1;
 	double errSquared;
 	double resSquared;
 	int run = 1;
 
 	while(avgError>tol){
-		avgError--;
+		// avgError--;
 		// Run solver
-		gZero(res);
+		// gZero(res);
 		tStart(t);
 		mgSolver(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 		tStop(t);
-		if(!(run%1)){
-			//Compute error
-			mgCompError(phi, sol, error);
-			// avgError = mgAvgError(error, mpiInfo);
-			resSquared = mgSumTrueSquared(res, mpiInfo);
-			errSquared = mgSumTrueSquared(error, mpiInfo);
-			msg(STATUS|ONCE, "Error squared (e^2) = %f", errSquared);
-		}
+		//Compute error
+		mgCompError(phi, sol, error);
+		// avgError = mgAvgError(error, mpiInfo);
+		errSquared = mgSumTrueSquared(error, mpiInfo);
+		avgError = errSquared/gTotTruesize(error, mpiInfo);
+
+		if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
 		run++;
 	}
 
+	resSquared = mgSumTrueSquared(res, mpiInfo);
+	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
 	msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
@@ -325,63 +326,63 @@ void mgRoutine(dictionary *ini){
 	/*********************************************************************
 	 *			STORE GRIDS
 	 ********************************************************************/
-
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-
-	//(Re)Compute E, error and residual
-	gHaloOp(setSlice, phi, mpiInfo, 0);
-	gNeutralizeGrid(phi, mpiInfo);
-	gBnd(phi, mpiInfo);
-	gFinDiff1st(phi, E);
-	mgCompError(phi,sol,error);
-	// mgResidual(res,rho, phi, mpiInfo);
-
-
-	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
-	gWriteH5(E, mpiInfo, 0.);
-	gCloseH5(E);
-
-	gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
-	gWriteH5(sol, mpiInfo, 0.);
-	gCloseH5(sol);
-
-	gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
-	gWriteH5(error, mpiInfo, 0.);
-	gCloseH5(error);
-
-
-	//Saving lvl of grids
-	char fName[12];
-	for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
-
-		rho = mgRho->grids[lvl];
-		phi = mgPhi->grids[lvl];
-		res = mgRes->grids[lvl];
-
-		sprintf(fName, "rho_%d", lvl);
-		gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
-		sprintf(fName, "phi_%d", lvl);
-		gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
-		sprintf(fName, "res_%d", lvl);
-		gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
-
-
-		gWriteH5(rho,mpiInfo,0.);
-		gWriteH5(phi,mpiInfo,0.);
-		gWriteH5(res,mpiInfo,0.);
-
-		gCloseH5(phi);
-		gCloseH5(rho);
-		gCloseH5(res);
-
-	}
-
-	free(denorm);
-	free(dimen);
+	//
+	// double *denorm = malloc((rank-1)*sizeof(*denorm));
+	// double *dimen = malloc((rank-1)*sizeof(*dimen));
+	//
+	// for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+	// for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+	//
+	// //(Re)Compute E, error and residual
+	// gHaloOp(setSlice, phi, mpiInfo, 0);
+	// gNeutralizeGrid(phi, mpiInfo);
+	// gBnd(phi, mpiInfo);
+	// gFinDiff1st(phi, E);
+	// mgCompError(phi,sol,error);
+	// // mgResidual(res,rho, phi, mpiInfo);
+	//
+	//
+	// gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
+	// gWriteH5(E, mpiInfo, 0.);
+	// gCloseH5(E);
+	//
+	// gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
+	// gWriteH5(sol, mpiInfo, 0.);
+	// gCloseH5(sol);
+	//
+	// gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
+	// gWriteH5(error, mpiInfo, 0.);
+	// gCloseH5(error);
+	//
+	//
+	// //Saving lvl of grids
+	// char fName[12];
+	// for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
+	//
+	// 	rho = mgRho->grids[lvl];
+	// 	phi = mgPhi->grids[lvl];
+	// 	res = mgRes->grids[lvl];
+	//
+	// 	sprintf(fName, "rho_%d", lvl);
+	// 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+	// 	sprintf(fName, "phi_%d", lvl);
+	// 	gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
+	// 	sprintf(fName, "res_%d", lvl);
+	// 	gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+	//
+	//
+	// 	gWriteH5(rho,mpiInfo,0.);
+	// 	gWriteH5(phi,mpiInfo,0.);
+	// 	gWriteH5(res,mpiInfo,0.);
+	//
+	// 	gCloseH5(phi);
+	// 	gCloseH5(rho);
+	// 	gCloseH5(res);
+	//
+	// }
+	//
+	// free(denorm);
+	// free(dimen);
 
 	/**************************************************************
 	 *		Store time spent

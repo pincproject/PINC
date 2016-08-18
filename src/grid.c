@@ -847,6 +847,20 @@ double gSumTruegrid(const Grid *grid){
 
 }
 
+long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo){
+
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int *trueSize = grid->trueSize;
+	int rank = grid->rank;
+
+	long int totTruesize = 1;
+
+	for(int r = 1; r < rank; r++) 	totTruesize *= nSubdomains[r-1]*trueSize[r];
+
+	return totTruesize;
+}
+
+
 
 
 /****************************************************************

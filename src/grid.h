@@ -285,6 +285,15 @@ void gSub(Grid *grid, double num);
 void gSquare(Grid *grid);
 
 /**
+ * @brief   Returns total number of true grid points for all subdomains
+ * @param	grid	Grid
+ * @param   mpiInfo MpiInfo
+ * @return	double	Number of total true nodes in simulation
+ */
+
+long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo);
+
+/**
  * @brief Performs a central space finite difference on a grid
  * @param 	scalar 	Value to do the finite differencing on
  * @return	field	Field returned after derivating
