@@ -184,6 +184,7 @@ static int *getSubdomain(const dictionary *ini){
 	// Performs first order centered finite difference on scalar and returns a field
 
 	int rank = scalar->rank;
+	// int *size = scalar->size;
 	long int *sizeProd = scalar->sizeProd;
 	long int *fieldSizeProd = field->sizeProd;
 
@@ -195,14 +196,19 @@ static int *getSubdomain(const dictionary *ini){
 	long int f;
 	int fNext = fieldSizeProd[1];
 
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+
 	// Centered Finite difference
 	for(int d = 1; d < rank; d++){
-		sNext = sizeProd[d];
-		sPrev = -sizeProd[d];
-		f = d-1;
+		sNext = start + sizeProd[d];
+		sPrev = start - sizeProd[d];
+		f = start*fieldSizeProd[1] + (d-1);
 
 
-		for(int g = 0; g < sizeProd[rank]; g++){
+
+		for(int g = start; g < end; g++){
 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
 			sNext++;
 			sPrev++;
