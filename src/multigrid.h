@@ -94,18 +94,70 @@ void mgFree(Multigrid *multigrid);
 
 MgAlgo getMgAlgo(const dictionary *ini);
 
+
+/**
+ * @brief Performs a Multigrid run on a test case, used to optimize
+ * @param 	ini
+ *
+ *  This run performs Multigrid runs and times how long it takes to
+ *  reach a certain error of the solution. The time spent is saved as a history
+ *  file. It is mainly used in the multigrid parameter optimizer, mgOptimize.py,
+ *  found in the script folder.
+ *
+ */
+void mgRun(dictionary *ini);
+
+
+/**
+ * @brief Performs a multigrid V cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo);
-
+/**
+ * @brief Performs a recursive multigrid V cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
 
-
+/**
+ * @brief Performs a Full multigrid cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
-
+/**
+ * @brief Performs a multigrid W cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
 
 
 /**
@@ -119,7 +171,9 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
  */
 
-void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+funPtr mgSolve_set(dictionary *ini);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
