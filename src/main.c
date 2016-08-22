@@ -55,6 +55,15 @@ void regular(dictionary *ini){
 	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
+
+	// char *str;
+	//
+	// str = iniGetStr("methods:acc");
+	// void (*acc)() = NULL;
+	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
+	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
+	// if(acc==NULL) msg(ERROR|ONCE,"methods:acc=%s is an invalid option")
+
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
@@ -168,8 +177,6 @@ void regular(dictionary *ini){
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 		// Compute electric potential phi
-		gZero(phi);
-		gZero(res);
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 		// Compute E-field
