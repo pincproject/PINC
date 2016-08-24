@@ -52,6 +52,8 @@ void pFree(Population *pop);
  */
 void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rngSync);
 
+void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
+
 /**
  * @brief	Assign particles artificial positions suitable for debugging
  * @param			ini		Dictionary to input file
@@ -66,12 +68,22 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
  */
 void pPosDebug(const dictionary *ini, Population *pop);
 
+
+void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
+
 /**
  * @brief Set the same velocity to all particles
  * @param[in,out]	pop		Population
  * @param			vel		Velocity to set (expected to be pop->nDims long)
  */
 void pVelSet(Population *pop, const double *vel);
+
+void pVelZero(Population *pop);
+
+void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
+void pVelAssertMax(const Population *pop, double max);
+void pSumPotEnergy(Population *pop);
+void pSumKinEnergy(Population *pop);
 
 /**
  * @brief	Assign particles Maxwellian distributed velocities

@@ -158,11 +158,11 @@ void adAdd(const double *a, const double *b, double *res, long int n);
 void aiAdd(const int *a, const int *b, int *res, long int n);
 ///@brief Adds two arrays
 void alAdd(const long int *a, const long int *b, long int *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void adMul(const double *a, const double *b, double *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void aiMul(const int *a, const int *b, int *res, long int n);
-///@brief Multiplies two arrays element-wise (Hadamard).
+///@brief Multiplies two arrays element-wise (Hadamard)
 void alMul(const long int *a, const long int *b, long int *res, long int n);
 ///@brief Shifts an array by a constant value
 void adShift(double *a, long int n, double value);
@@ -170,6 +170,12 @@ void adShift(double *a, long int n, double value);
 void aiShift(int *a, long int n, int value);
 ///@brief Shifts an array by a constant value
 void alShift(long int *a, long int n, long int value);
+///@brief Scales an array by a constant value
+void adScale(double *a, long int n, double value);
+///@brief Scales an array by a constant value
+void aiScale(int *a, long int n, int value);
+///@brief Scales an array by a constant value
+void alScale(long int *a, long int n, int value);
 ///@brief Returns maximum value in an array
 double adMax(const double *a, long int n);
 ///@brief Returns maximum value in an array
@@ -257,17 +263,23 @@ void aiSet(int *a, long int n, ...);
 ///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
 void alSet(long int *a, long int n, ...);
 ///@brief See adPrint(). varName is the name to output for the variable.
-void adPrintInner(double *a, long int n, char *varName);
+void adPrintInner(double *a, long int inc, long int end, char *varName);
 ///@brief See aiPrint(). varName is the name to output for the variable.
-void aiPrintInner(int *a, long int n, char *varName);
+void aiPrintInner(int *a, long int inc, long int end, char *varName);
 ///@brief See alPrint(). varName is the name to output for the variable.
-void alPrintInner(long int *a, long int n, char *varName);
+void alPrintInner(long int *a, long int inc, long int end, char *varName);
 ///@brief Prints an array in a nice format (for debugging only).
-#define adPrint(a,n) do { adPrintInner(a,n,#a); } while (0)
+#define adPrint(a,n) do { adPrintInner(a,1,n,#a); } while (0)
 ///@brief Prints an array in a nice format (for debugging only).
-#define aiPrint(a,n) do { aiPrintInner(a,n,#a); } while (0)
+#define aiPrint(a,n) do { aiPrintInner(a,1,n,#a); } while (0)
 ///@brief Prints an array in a nice format (for debugging only).
-#define alPrint(a,n) do { alPrintInner(a,n,#a); } while (0)
+#define alPrint(a,n) do { alPrintInner(a,1,n,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define adPrintSpaced(a,inc,end) do { adPrintInner(a,inc,end,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define aiPrintSpaced(a,inc,end) do { aiPrintInner(a,inc,end,#a); } while (0)
+///@brief Prints an array in a nice format (for debugging only).
+#define alPrintSpaced(a,inc,end) do { alPrintInner(a,inc,end,#a); } while (0)
 ///@}
 
 #endif // AUX_H

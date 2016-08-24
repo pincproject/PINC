@@ -10,15 +10,31 @@
 #ifndef GRID_H
 #define GRID_H
 
+/**
+ * @brief Defines valid values to use with gAlloc()
+ */
+enum{
+	SCALAR = 1,
+	VECTOR = -1
+};
 
+/**
+ * @brief Defines direction of operation in gHaloOp(), gHaloOpDim()
+ */
+typedef enum{
+	TOHALO = 0,
+	FROMHALO = 1
+} opDirection;
 
 /**
  * @brief Allocates a Grid object as specified in the input file
  * @param	ini			Input file
- * @param	nValues		Number of values per grid point
+ * @param	nValues		Number of values per grid point (use SCALAR or VECTOR)
  * @return				Pointer to Grid
  *
- * Use nValues=1 for scalar field, nValues=3 for 3D vector field and so on.
+ * nValues=1 for scalars or the number of dimensions for vectors. For
+ * convenience, use SCALAR and VECTOR rather than specifying the numbers
+ * manually.
  *
  * Remember to free using gFree().
  *
@@ -33,6 +49,23 @@ Grid *gAlloc(const dictionary *ini, int nValues);
  * @return	void
  */
 void gFree(Grid *grid);
+
+/**
+ * @brief Set boundary slices
+ * @param   grid    Grid
+ * @param   mpiInfo Mpi Info
+ * @return  void
+ *
+ *  Set the boundary slices. With Dirichlet and Neumann bnd conditions the values
+ *  which corresponds to phi and the gradient of phi is set here.
+ *
+ *  For now it only has the capability of constant boundaries, but it could
+ *  later be expanded without too much trouble.
+ *
+ *
+ */
+
+void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo);
 
 /**
  * @brief Allocates the memory for an MpiInfo struct according to input file
@@ -103,7 +136,8 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
  */
- void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse);
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
+
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
@@ -119,7 +153,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * @see gHaloOpDim
  * @see SliceOpPointer
  */
- void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int inverse);
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
@@ -143,7 +177,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * 10   11   12   13   14
  *
  *  5    6    7    8    9
-
+ *
  *  0    1    2    3    4
  * @endcode
  *
@@ -223,12 +257,46 @@ void gZero(Grid *grid);
 void gSet(Grid *grid, const double *value);
 
 /**
+ * @brief Copy a grid
+ * @param	original	 Original grid
+ * @param	copy	     Copied grid
+ *
+ * Each grid point is set to have the vector value specified by 'value'. Hence
+ * value is expected to have length grid->size[0]
+ */
+void gCopy(const Grid *original, Grid *copy);
+
+/**
  * @brief Multiply all values in grid by a number
  * @param	grid	Grid
  * @param	num		Number to multiply by
  * @return			void
  */
 void gMul(Grid *grid, double num);
+
+/**
+ * @brief Add all values in grid by a number
+ * @param	grid	Grid
+ * @param	num		Number to multiply by
+ * @return			void
+ */
+void gAdd(Grid *grid, double num);
+
+/**
+ * @brief Add all values in grid by a number
+ * @param	grid	Grid
+ * @param	num		Number to multiply by
+ * @return			void
+ */
+void gSub(Grid *grid, double num);
+
+/**
+ * @brief   Square a grid
+ * @param	grid	Grid
+ * @return			void
+ */
+
+void gSquare(Grid *grid);
 
 /**
  * @brief Performs a central space finite difference on a grid
@@ -266,6 +334,16 @@ void gFinDiff2nd2D(Grid *phi,const Grid *rho);
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
 
+/**
+ * @brief Set total rho to 0
+ * @param rho	rho-field
+ *
+ *	Sets total charge density to 0. This can be useful to avoid infinite potential
+ *	when using periodic boundary conditions.
+ *
+ */
+
+void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 
 /**
 * @brief Adds a grid to another.
@@ -286,7 +364,17 @@ void gAddTo(Grid *result, Grid *addition);
 *
 */
 
-void gSubFrom(Grid *result, Grid *subtraction);
+void gSubFrom(Grid *result, const Grid *subtraction);
+
+/**
+* @brief Sums up the values in the true grid
+* @param	grid       Grid
+* @param	mpiInfo	   MpiInfo
+*
+*	Sums the true grid, uses a NDimensional algorithm
+*
+*/
+double gSumTruegrid(const Grid *grid);
 
 
 /**
@@ -439,6 +527,16 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo);
  * NB: Assumes electrostatic approximation.
  */
 void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop);
+
+/**
+ * @brief Returns normalized size of global domain
+ * @param	ini		Input file dictionary
+ * @return	Array of normalized dimensions.
+ *
+ * trueSize*nSubdomains-1 for all dimension.
+ */
+int *gGetGlobalSize(const dictionary *ini);
+long int gGetGlobalVolume(const dictionary *ini);
 
 void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);

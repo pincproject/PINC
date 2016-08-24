@@ -19,3 +19,7 @@ local.mk
 **.mp4
 **.pyc
 **.txt
+**.nfs**
+**.eps
+doc.html
+

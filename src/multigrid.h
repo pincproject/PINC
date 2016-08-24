@@ -38,6 +38,7 @@
     void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
 	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
 	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
+
 } Multigrid;
 
 /**
@@ -46,6 +47,8 @@
  */
 typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 									Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+
 
 /**
  * @brief Allocates multigrid struct
@@ -89,11 +92,73 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
+MgAlgo getMgAlgo(const dictionary *ini);
+
+
+/**
+ * @brief Performs a Multigrid run on a test case, used to optimize
+ * @param 	ini
+ *
+ *  This run performs Multigrid runs and times how long it takes to
+ *  reach a certain error of the solution. The time spent is saved as a history
+ *  file. It is mainly used in the multigrid parameter optimizer, mgOptimize.py,
+ *  found in the script folder.
+ *
+ */
+void mgRun(dictionary *ini);
+
+
+/**
+ * @brief Performs a multigrid V cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo);
-
+/**
+ * @brief Performs a recursive multigrid V cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
 void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+/**
+ * @brief Performs a Full multigrid cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
+void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+/**
+ * @brief Performs a multigrid W cycle
+ * @param   level       Grid level the V cycle starts on
+ * @param   bottom      Grid level at the bottom of the cycle
+ * @param   top         Grid level at the top of the cycle
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mgRho       MgGrid struct containing rho
+ * @param   mpiInfo     MpiInfo struct containing subdomain information
+ */
+void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+ 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+
 
 /**
  * @brief Solves Poissons equation for electric potential, with multigrid V cycles
@@ -106,7 +171,9 @@ void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *m
  *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
  */
 
-void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+
+funPtr mgSolve_set(dictionary *ini);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -213,11 +280,22 @@ void mgBilinProl2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  * @param	mpiInfo	Subdomain information
  * @return	fine
  *
- *	Implementation of a bilnear interpolation scheme, interpolating the coarse
+ *	Implementation of a bilnear interpolation scheme, instructterpolating the coarse
  *	grid onto the fine grid.
  *
  */
 void mgBilinProl3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+
+
+/*
+ * @brief Restrict boundary conditions down to coarser grids
+ * @param mgGrid   Multigrid struct
+ *
+ *  OBS, WARNING!
+ *  INJECTION PROBABLY ONLY WORKS FOR CONSTANT DIRICHLET AND NEUMANN CONDITIONS
+ */
+void mgRestrictBnd(Multigrid *mgGrid);
+
 
 /**
  * @brief Computes residual
@@ -248,6 +326,28 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
  */
  double mgResMass3D(Grid *grid, MpiInfo *mpiInfo);
 
+
+ /**
+  * @brief Compares numerical solution to an analytical solution
+  * @param  numerical           Numerical solution
+  * @param  analytical          Analytical solution
+  * @param  error               Difference between solutions
+  * @return error
+  */
+
+void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
+
+
+/**
+ * @brief Returns the square of the error on the true grid
+ * @param  error               Difference between solutions
+ * @param  mpiInfo             MpiInfo
+ * @return error
+ *
+ *  WARNING!    Stores the squared values on the original grid
+ *              Recompute error if needed
+ */
+double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo);
 
  /**
   * @brief Writes out information about the MG cycles, used when optimizing the number of cycles
