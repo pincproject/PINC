@@ -41,39 +41,9 @@ void puMove(Population *pop){
 	}
 }
 
-// DEPRECATED, DOESN'T HANDLE MULTIPLE DOMAINS
-// IS NOW INTRINSICALLY HANDLED BY MIGRATION FUNCTIONS
-void puBndPeriodic(Population *pop, const Grid *grid){
-
-	int nSpecies = pop->nSpecies;
-	int nDims = pop->nDims;
-	double *pos = pop->pos;
-	int *size = grid->size;
-
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-
-		for(long int i=iStart;i<iStop;i++){
-			for(int d=0;d<nDims;d++){
-				if(pos[i*nDims+d]>size[d+1])	pos[i*nDims+d] -= size[d+1];
-				if(pos[i*nDims+d]<0)			pos[i*nDims+d] += size[d+1];
-			}
-		}
-	}
-}
-// void puBndPeriodicDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
-// void puBndOpen(); // DEPRECATED, BELONGS TO MIGRATION MODULE
-// void puBndOpenDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
-
-// LEAPFROG ACCELERATION, FIXED TO 3D 1st ORDER WEIGHTING
-
-//void (*puAcc3D1_set(dictionary *ini))(){
 funPtr puAcc3D1_set(dictionary *ini){
 	return puAcc3D1;
 }
-
 void puAcc3D1(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -100,11 +70,9 @@ void puAcc3D1(Population *pop, Grid *E){
 	}
 }
 
-// SAME AS puAcc3D1 BUT COMPUTES KINETIC ENERGY
 funPtr puAcc3D1KE_set(dictionary *ini){
 	return puAcc3D1KE;
 }
-
 void puAcc3D1KE(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -141,10 +109,32 @@ void puAcc3D1KE(Population *pop, Grid *E){
 		gMul(E,pop->renormE[s]);
 	}
 }
+void puAccND1KE(Population *pop, Grid *E){
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
 
-//double vlength(double *vel){
-//	return sqrt(pow(vel[0],2)+pow(vel[1],2)+pow(vel[2],2));
-//}
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3];
+			puInterpND1(dv,&pos[p],val,sizeProd);
+puInterpND1(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){
+			for(int d=0;d<nDims;d++) vel[p+d] += dv[d];
+		}
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+}
+
 
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 
@@ -720,6 +710,37 @@ static inline void puInterp3D1(double *result, const double *pos, const double *
 							+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
 
 }
+
+static inline double puInterpND1(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){
+
+
+	long int p = 0;
+	for(int d=0;d<nDims;d++){
+		integer[d] = (int)pos[d];
+		decimal[d] = pos[d]-integer[d];
+		complement[d] = 1-decimal[d];
+		p += nGPointsProd[d] * integer[d];
+	}
+
+	return inner2(val,&nGPointsProd[nDims-1],p,&decimal[nDims-1],&complement[nDims-1]);
+
+}
+
+static double puInterpND1Inner(const double *val, const long int *mul, long int p, double *decimal, double *complement){
+
+	double result;
+	if(*mul==1){
+		result  = *complement*val[p];		// stay
+		result += *decimal   *val[p+1];		// incr.
+	} else {
+		result  = *complement*puInterpND1Inner(val,mul-1,p     ,decimal-1,complement-1);	// stay
+		result += *decimal   *puInterpND1Inner(val,mul-1,p+*mul,decimal-1,complement-1);	// incr.
+	}
+	return result;
+
+}
+
+
 
 int puNeighborToReciprocal(int neighbor, int nDims){
 
