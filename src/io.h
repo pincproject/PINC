@@ -264,6 +264,8 @@ int iniGetNElements(const dictionary* ini, const char* key);
  */
 void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const double *mul, int mulLen);
 
+void parseIndirectInput(dictionary *ini);
+
 ///@}
 
 /**
