@@ -304,9 +304,9 @@ void iniClose(dictionary *ini){
 
 void iniAssertExistence(const dictionary *ini, const char* key){
 
-	if(!iniparser_find_entry((dictionary*)ini,key))
+	if(!iniparser_find_entry((dictionary*)ini,key)){
 		msg(ERROR|ONCE,"Key \"%s\" not found in input file",key);
-
+	}
 }
 
 int iniGetNElements(const dictionary* ini, const char* key){
@@ -320,22 +320,23 @@ int iniGetNElements(const dictionary* ini, const char* key){
 int iniGetInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
-	return iniparser_getint((dictionary*)ini,key,0);
-
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return (int)atof(res); // Parses scientific notation
 }
 
 long int iniGetLongInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
 	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
-	return strtol(res,NULL,0);
+	return (long int)atof(res); // Parses scientific notation
 
 }
 
 double iniGetDouble(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
-	return iniparser_getdouble((dictionary*)ini,key,0.0);
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return atof(res); // Parses scientific notation
 
 }
 
@@ -357,11 +358,10 @@ char* iniGetStr(const dictionary *ini, const char *key){
 
 int* iniGetIntArr(const dictionary *ini, const char *key, int nElements){
 
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
 	int *result = malloc(nElements*sizeof(*result));
-	for(int i=0;i<nElements;i++) result[i] = (int)strtol(strArr[i],NULL,0);
+	for(int i=0;i<nElements;i++) result[i] = (int)atof(strArr[i]);
 
 	freeStrArr(strArr);
 
@@ -371,11 +371,10 @@ int* iniGetIntArr(const dictionary *ini, const char *key, int nElements){
 
 long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements){
 
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
 	long int *result = malloc(nElements*sizeof(*result));
-	for(int i=0;i<nElements;i++) result[i] = strtol(strArr[i],NULL,0);
+	for(int i=0;i<nElements;i++) result[i] = (long int)atof(strArr[i]);
 
 	freeStrArr(strArr);
 
@@ -385,11 +384,10 @@ long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements
 
 double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements){
 
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
 	double *result = malloc(nElements*sizeof(double));
-	for(int i=0;i<nElements;i++) result[i] = strtod(strArr[i],NULL);
+	for(int i=0;i<nElements;i++) result[i] = atof(strArr[i]);
 
 	freeStrArr(strArr);
 
