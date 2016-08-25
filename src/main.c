@@ -16,6 +16,8 @@
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
 
+void parseIndirectInput(dictionary *ini);
+
 void mgRun(dictionary *ini);
 funPtr mgRun_set(dictionary *ini){ return mgRun; }
 
@@ -28,6 +30,7 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
 	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+	parseIndirectInput(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE
@@ -231,4 +234,18 @@ void regular(dictionary *ini){
 
 	gsl_rng_free(rngSync);
 
+}
+
+void parseIndirectInput(dictionary *ini){
+	double V = (double)gGetGlobalVolume(ini);
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *L = gGetGlobalSize(ini);
+	double *mul = malloc(nDims*sizeof(nDims));
+	for(int i=0;i<nDims;i++) mul[i] = 1.0/L[i];
+
+	iniApplySuffix(ini,"population:nParticles","pc",&V,1);
+	iniApplySuffix(ini,"population:nAlloc","pc",&V,1);
+	iniApplySuffix(ini,"grid:stepSize","tot",mul,nDims);
+
+	free(mul);
 }

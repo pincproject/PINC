@@ -420,6 +420,32 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 
 }
 
+void iniApplySuffix(	dictionary *ini, const char *key,
+						const char *suffix, const double *mul, int mulLen){
+
+	int nElements = iniGetNElements(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+	num[0] = '\0';
+	list[0] = '\0';
+
+	double *arr = malloc(nElements*sizeof(*arr));
+	for(int i=0;i<nElements;i++){
+		double val = atof(strArr[i]); // ignores suffix
+		if(strstr(strArr[i],suffix)) val *= mul[i%mulLen];
+		snprintf(num,numSize,",%a",val);
+		strcat(list,num);
+	}
+	iniparser_set(ini,key,&list[1]);
+
+	freeStrArr(strArr);
+
+}
+
 /******************************************************************************
  * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
  *****************************************************************************/

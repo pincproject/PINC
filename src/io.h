@@ -247,6 +247,23 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Get the number of elements in an array/comma-separated list
 int iniGetNElements(const dictionary* ini, const char* key);
 
+/**
+ * @brief Apply multiplicator to entries in ini-file with suffix.
+ * @param[in,out]	ini			Dictionary to search
+ * @param			key			Key string to look for
+ * @param			suffix		Suffix string to look for
+ * @param			mul			Multiplier(s)
+ * @param			mulLen		Length of mul
+ * @return			void
+ *
+ * Changes the dictionary for later use. Searches through elements in a list
+ * specified by key and, and if suffix is present, multiplies each entry by
+ * a multiplier. Entry i in the list is multiplied by mul[i%mulLen]. Notice
+ * that this is purely a "parsing" feature. I.e. it does not know how to expand
+ * a single element into three, that is done on a later stage by get-functions.
+ */
+void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const double *mul, int mulLen);
+
 ///@}
 
 /**
