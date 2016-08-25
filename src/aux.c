@@ -420,6 +420,58 @@ void alPrintInner(long int *a, long int inc, long int end, char *varName){
 
 }
 
+
+void parseIndirectInput(dictionary *ini){
+
+	/*
+	 * APPLIES MULTIPLIERS TO ELEMENTS WITH SUFFICES
+	 */
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+
+	double V = (double)gGetGlobalVolume(ini);
+
+	int *L = gGetGlobalSize(ini);
+	double *mul = malloc(nDims*sizeof(nDims));
+	for(int i=0;i<nDims;i++) mul[i] = 1.0/L[i];
+
+	iniApplySuffix(ini,"population:nParticles","pc",&V,1);
+	iniApplySuffix(ini,"population:nAlloc","pc",&V,1);
+	iniApplySuffix(ini,"grid:nEmigrantsAlloc","pc",&V,1);
+	iniApplySuffix(ini,"grid:stepSize","tot",mul,nDims);
+
+	free(mul);
+
+	/*
+	 * COMPUTES MULTIPLICITY TO GET NICE NON-DIMENSIONALIZING
+	 */
+
+	char *mulStr = iniGetStr(ini,"population:multiplicity");
+	if(!strcmp(mulStr,"auto")){
+
+		int nSpecies = iniGetInt(ini,"population:nSpecies");
+		double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+		double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+		double *nParticles = iniGetDoubleArr(ini,"population:nParticles",nSpecies);
+
+		// Set multiplicity such that true charge of first specie is
+		// such that plasma frequency of that specie is 1
+
+		double trueCharge = ((V/nParticles[0])*(mass[0]/charge[0]));
+		double multiplicity = trueCharge/charge[0];
+		char buff[32];
+		snprintf(buff,32,"%a",multiplicity);
+		iniparser_set(ini,"population:multiplicity",buff);
+
+		free(charge);
+		free(mass);
+		free(nParticles);
+
+	}
+	free(mulStr);
+
+}
+
 /***************************************************************************
  *			Debug help
  ***************************************************************************/

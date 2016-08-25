@@ -97,6 +97,9 @@ static int listGetNElements(const char* list);
  */
 void iniAssertExistence(const dictionary *ini, const char* key);
 
+
+char **strArrExpand(char **strArr, int nElements);
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
@@ -248,8 +251,8 @@ dictionary* iniOpen(int argc, char *argv[]){
 
 	for(int i=2;i<argc;i++){
 		if(!strcmp(argv[i],"getnp")){	// Just returning number of processes
-			int nDims;
-			int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+			int nDims = iniGetInt(ini,"grid:nDims");
+			int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
 			int np = aiProd(nSubdomains,nDims);
 			printf("%i\n",np);
 			free(nSubdomains);
@@ -301,45 +304,15 @@ void iniClose(dictionary *ini){
 
 void iniAssertExistence(const dictionary *ini, const char* key){
 
-	if(!iniparser_find_entry((dictionary*)ini,key))
+	if(!iniparser_find_entry((dictionary*)ini,key)){
 		msg(ERROR|ONCE,"Key \"%s\" not found in input file",key);
-
-}
-
-int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...){
-
-	// iniGetNElements() asserts the existence of the keys
-
-	va_list args;
-	va_start(args,nKeys);
-
-	char buffer[BUFFSIZE] = "";
-	char *key = va_arg(args,char*);
-	sprintf(buffer,"%s%s ",buffer,key);
-	int nElements = iniGetNElements(ini,key);
-	int equal = 1;
-	for(int i=1;i<nKeys;i++){
-		key = va_arg(args,char*);
-		sprintf(buffer,"%s%s ",buffer,key);
-		int temp = iniGetNElements(ini,key);
-		if(temp!=nElements) equal=0;
 	}
-
-	va_end(args);
-
-	if(!equal){
-		sprintf(buffer,"%smust have equal length.",buffer);
-		msg(ERROR,buffer);
-	}
-
-	return nElements;
-
 }
 
 int iniGetNElements(const dictionary* ini, const char* key){
 
 	iniAssertExistence(ini,key);
-	char *list = iniparser_getstring((dictionary*)ini,key,"");
+	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free
 	return listGetNElements(list);
 
 }
@@ -347,22 +320,23 @@ int iniGetNElements(const dictionary* ini, const char* key){
 int iniGetInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
-	return iniparser_getint((dictionary*)ini,key,0);
-
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return (int)atof(res); // Parses scientific notation
 }
 
 long int iniGetLongInt(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
 	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
-	return strtol(res,NULL,0);
+	return (long int)atof(res); // Parses scientific notation
 
 }
 
 double iniGetDouble(const dictionary* ini, const char *key){
 
 	iniAssertExistence(ini,key);
-	return iniparser_getdouble((dictionary*)ini,key,0.0);
+	char *res = iniparser_getstring((dictionary*)ini,key,0);	// don't free
+	return atof(res); // Parses scientific notation
 
 }
 
@@ -382,27 +356,12 @@ char* iniGetStr(const dictionary *ini, const char *key){
 
 }
 
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements){
+int* iniGetIntArr(const dictionary *ini, const char *key, int nElements){
 
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
-	int *result = malloc(*nElements*sizeof(int));
-	for(int i=0;i<*nElements;i++) result[i] = (int)strtol(strArr[i],NULL,0);
-
-	freeStrArr(strArr);
-
-	return result;
-
-}
-
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements){
-
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
-
-	long int *result = malloc(*nElements*sizeof(long int));
-	for(int i=0;i<*nElements;i++) result[i] = strtol(strArr[i],NULL,10);
+	int *result = malloc(nElements*sizeof(*result));
+	for(int i=0;i<nElements;i++) result[i] = (int)atof(strArr[i]);
 
 	freeStrArr(strArr);
 
@@ -410,13 +369,12 @@ long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElement
 
 }
 
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements){
 
-	iniAssertExistence(ini,key);
-	char **strArr = iniGetStrArr(ini,key,nElements);
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
-	double *result = malloc(*nElements*sizeof(double));
-	for(int i=0;i<*nElements;i++) result[i] = strtod(strArr[i],NULL);
+	long int *result = malloc(nElements*sizeof(*result));
+	for(int i=0;i<nElements;i++) result[i] = (long int)atof(strArr[i]);
 
 	freeStrArr(strArr);
 
@@ -424,15 +382,67 @@ double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements){
 
 }
 
-char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements){
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements){
+
+	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
+
+	double *result = malloc(nElements*sizeof(double));
+	for(int i=0;i<nElements;i++) result[i] = atof(strArr[i]);
+
+	freeStrArr(strArr);
+
+	return result;
+
+}
+
+char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 
 	iniAssertExistence(ini,key);
+
 	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free
+
+	int nListElements = listGetNElements(list);
+
+	if(nElements<nListElements){
+		int nIgnored = nListElements - nElements;
+		if(nIgnored==1){
+			msg(WARNING|ONCE, "Ignoring last element in %s",key);
+		} else {
+			msg(WARNING|ONCE, "Ignoring last %d elements in %s",nIgnored,key);
+		}
+	}
+
 	char **strArr = listToStrArr(list);
+	char **strArrExpanded = strArrExpand(strArr,nElements);
+	freeStrArr(strArr);
 
-	*nElements = listGetNElements(list);
+	return strArrExpanded;
 
-	return strArr;
+}
+
+void iniApplySuffix(	dictionary *ini, const char *key,
+						const char *suffix, const double *mul, int mulLen){
+
+	int nElements = iniGetNElements(ini,key);
+	char **strArr = iniGetStrArr(ini,key,nElements);
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+	num[0] = '\0';
+	list[0] = '\0';
+
+	double *arr = malloc(nElements*sizeof(*arr));
+	for(int i=0;i<nElements;i++){
+		double val = atof(strArr[i]); // ignores suffix
+		if(strstr(strArr[i],suffix)) val *= mul[i%mulLen];
+		snprintf(num,numSize,",%a",val);
+		strcat(list,num);
+	}
+	iniparser_set(ini,key,&list[1]);
+
+	freeStrArr(strArr);
 
 }
 
@@ -621,7 +631,7 @@ void xyCloseH5(hid_t h5){
 
 static int listGetNElements(const char* list){
 
-	if(list[0]=='\0') return 0;	// key not found
+	if(list[0]=='\0') return 0;
 
 	// Count elements
 	int nElements = 1;
@@ -633,11 +643,11 @@ static int listGetNElements(const char* list){
 
 static char** listToStrArr(const char* restrict list){
 
-	// Count elements in list (including NULL-element)
+	// Count elements in list
 	int nElements = 2;				// first element and NULL
 	char *temp = (char*)list;
 	while(*temp){
-		if(*temp==',') nElements++;	// one more element per delimeter
+		if(*temp==',') nElements++;
 		temp++;
 	}
 
@@ -685,6 +695,34 @@ static char** listToStrArr(const char* restrict list){
 
 	result[nElements]=NULL;
 
+	return result;
+
+}
+
+int strArrLen(char **strArr){
+
+	int nElements=0;
+	for(; *strArr != NULL; strArr++, nElements++){}
+	return nElements;
+
+}
+
+char **strArrExpand(char **strArr, int nElements){
+
+	int nElementsOld = strArrLen(strArr);
+
+	char **result = malloc((nElements+1)*sizeof(result));
+
+	for(int i=0;i<nElements;i++){
+		
+		int len = strlen(strArr[i%nElementsOld]);
+		result[i] = malloc((len+1)*sizeof(char));
+		strcpy(result[i],strArr[i%nElementsOld]);
+
+	}
+
+	result[nElements]=NULL;
+	
 	return result;
 
 }
