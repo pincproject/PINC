@@ -334,8 +334,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	// double err = tol+1.;
 
  	//Compute stuff
- 	fillHeaviside(rho, mpiInfo);
- 	fillHeaviSol(sol, mpiInfo);
+ 	fillHeaviside(rho, 3, mpiInfo);
+ 	fillHeaviSol(sol, 3, mpiInfo);
  	// fillPointCharge(rho, mpiInfo);
  	// fillPolynomial(rho, mpiInfo);
  	// fillPointSol(sol, mpiInfo);

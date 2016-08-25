@@ -547,8 +547,8 @@ void dumpTrueGrid(dictionary *ini, Grid *grid);
 
  #define PI 3.14159265
 
-void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo);
-void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo);
+void fillHeaviside(Grid *grid, int dim,const MpiInfo *mpiInfo);
+void fillHeaviSol(Grid *grid, int rank, const MpiInfo *mpiInfo);
 void fillPointCharge(Grid *grid, const MpiInfo *mpiInfo);
 void fillPointSol(Grid *grid, const MpiInfo *mpiInfo);
 void fillSin(Grid *grid, const MpiInfo *mpiInfo);

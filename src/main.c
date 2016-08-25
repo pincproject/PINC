@@ -168,8 +168,6 @@ void regular(dictionary *ini){
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 		// Compute electric potential phi
-		gZero(phi);
-		gZero(res);
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 		// Compute E-field
