@@ -472,7 +472,7 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 
 	// Load data from ini
 	int nDims = iniGetInt(ini, "grid:nDims");
-	int nSpecies = iniGetNElements(ini, "population:nParticles");
+	int nSpecies = iniGetInt(ini, "population:nSpecies");
 	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", nDims);
 	int *nGhostLayers = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
 	int *trueSize = iniGetIntArr(ini, "grid:trueSize", nDims);
