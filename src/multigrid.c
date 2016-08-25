@@ -23,6 +23,11 @@
  * 				Local functions
  *****************************************************************************/
 
+funPtr mgSolve_set(dictionary *ini){
+	return mgSolve;
+}
+
+
 void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
 	char *preSmoothName = iniGetStr(ini, "multigrid:preSmooth");
@@ -262,7 +267,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  		gkk	+=kEdgeInc;
  		gl	+=kEdgeInc;
  		gll	+=kEdgeInc;
- 		}
+	}
  	g	+=lEdgeInc;
  	gj	+=lEdgeInc;
  	gjj	+=lEdgeInc;
@@ -280,6 +285,193 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 /*************************************************
  *		DEFINITIONS
  ************************************************/
+
+/*************************************************
+ *		RUNS
+ ************************************************/
+
+
+ void mgRun(dictionary *ini){
+
+ 	//Mpi
+ 	MpiInfo *mpiInfo = gAllocMpi(ini);
+
+ 	//Rand Seed
+ 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+
+ 	//Grids
+ 	Grid *phi = gAlloc(ini, 1);
+ 	Grid *rho = gAlloc(ini, 1);
+ 	Grid *res= gAlloc(ini, 1);
+ 	Grid *sol = gAlloc(ini, 1);
+ 	Grid *E = gAlloc(ini, 3);
+ 	Grid *error =gAlloc(ini, 1);
+
+ 	//Multilevel grids
+ 	Multigrid *mgPhi = mgAlloc(ini, phi);
+ 	Multigrid *mgRho = mgAlloc(ini, rho);
+ 	Multigrid *mgRes = mgAlloc(ini, res);
+
+ 	MgAlgo mgAlgo = getMgAlgo(ini);
+
+ 	//Sets the boudary slices
+ 	gSetBndSlices(phi, mpiInfo);
+ 	mgRestrictBnd(mgPhi);
+
+ 	// gBnd(phi, mpiInfo);
+ 	// gBnd(mgPhi->grids[1], mpiInfo);
+
+ 	// dumpWholeGrid(ini, phi);
+ 	// dumpWholeGrid(ini, mgPhi->grids[1]);
+ 	//
+ 	// return;
+
+
+ 	int rank = rho->rank;
+ 	Timer *t = tAlloc(rank);
+
+ 	// double tol = 77000.;
+ 	// double err = tol+1.;
+
+ 	//Compute stuff
+ 	fillHeaviside(rho, 1, mpiInfo);
+ 	fillHeaviSol(sol, 1, mpiInfo);
+ 	// fillPointCharge(rho, mpiInfo);
+ 	// fillPolynomial(rho, mpiInfo);
+ 	// fillPointSol(sol, mpiInfo);
+ 	// fillExp(sol, mpiInfo);
+ 	// fillSin(rho, mpiInfo);
+ 	// fillSinSol(sol, mpiInfo);
+ 	// fillCst(rho, mpiInfo);
+ 	// fillRng(rho, mpiInfo, rng);
+
+ 	// gHaloOp(setSlice, sol, mpiInfo);
+ 	// gFinDiff2nd3D(rho, sol);
+
+ 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
+ 	gNeutralizeGrid(rho, mpiInfo);
+
+	double tol = 0.1;
+	double avgError = 1;
+	double errSquared;
+	double resSquared;
+	int run = 1;
+
+	while(avgError>tol){
+		// avgError--;
+		// Run solver
+		// gZero(res);
+		tStart(t);
+		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		tStop(t);
+		//Compute error
+		mgCompError(phi, sol, error);
+		// avgError = mgAvgError(error, mpiInfo);
+		errSquared = mgSumTrueSquared(error, mpiInfo);
+		avgError = errSquared/gTotTruesize(error, mpiInfo);
+
+		if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %.2e", errSquared);
+		run++;
+	}
+
+	resSquared = mgSumTrueSquared(res, mpiInfo);
+	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
+	msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
+	msg(STATUS|ONCE, "Number of Cycles: %d", run);
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+
+
+ 	/*********************************************************************
+ 	 *			STORE GRIDS
+ 	 ********************************************************************/
+	int runNumber = iniGetInt(ini, "time:startTime");
+
+	if(runNumber == 0){
+		double *denorm = malloc((rank-1)*sizeof(*denorm));
+		double *dimen = malloc((rank-1)*sizeof(*dimen));
+
+		for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+		//(Re)Compute E, error and residual
+		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gNeutralizeGrid(phi, mpiInfo);
+		gBnd(phi, mpiInfo);
+		gFinDiff1st(phi, E);
+		mgCompError(phi,sol,error);
+		mgResidual(res,rho, phi, mpiInfo);
+
+
+		gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
+		gWriteH5(E, mpiInfo, 0.);
+		gCloseH5(E);
+
+		gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
+		gWriteH5(sol, mpiInfo, 0.);
+		gCloseH5(sol);
+
+		gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
+		gWriteH5(error, mpiInfo, 0.);
+		gCloseH5(error);
+
+
+		//Saving lvl of grids
+		char fName[12];
+		for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
+
+			rho = mgRho->grids[lvl];
+			phi = mgPhi->grids[lvl];
+			res = mgRes->grids[lvl];
+
+			sprintf(fName, "rho_%d", lvl);
+			gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+			sprintf(fName, "phi_%d", lvl);
+			gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
+			sprintf(fName, "res_%d", lvl);
+			gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+
+
+			gWriteH5(rho,mpiInfo,0.);
+			gWriteH5(phi,mpiInfo,0.);
+			gWriteH5(res,mpiInfo,0.);
+
+			gCloseH5(phi);
+			gCloseH5(rho);
+			gCloseH5(res);
+
+		}
+
+
+		free(denorm);
+		free(dimen);
+
+	}
+
+	/**************************************************************
+	*		Store time spent
+	*************************************************************/
+
+	hid_t timer = xyOpenH5(ini,"timer");
+	if(runNumber == 0)	xyCreateDataset(timer,"time");
+	if(runNumber == 0)	xyCreateDataset(timer, "cycles");
+	//  xyCreateDataset(timer,"time");
+	xyWrite(timer,"time",(double) runNumber,(double) t->total,MPI_MAX);
+	xyWrite(timer,"cycles",(double) runNumber,(double) run,MPI_MAX);
+	xyCloseH5(timer);
+
+
+
+ 	tFree(t);
+ 	gFreeMpi(mpiInfo);
+
+ 	gsl_rng_free(rng);
+
+ 	return;
+ }
+
+
+
 /*************************************************
  * 		ALLOCATIONS
  * 		DESTRUCTORS
@@ -385,7 +577,7 @@ void mgJacob2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 
 	}
 
@@ -437,7 +629,7 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 
 	}
 
@@ -477,7 +669,7 @@ void mgGS2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		g = nGhostLayers[1] + 1 + 2*sizeProd[2];
 		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g);
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		// gBnd(rho,mpiInfo);
 		// gBnd(phi,mpiInfo);
 
@@ -494,7 +686,7 @@ void mgGS2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		loopRedBlack2D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, g);
 
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		// gBnd(rho,mpiInfo);
 		// gBnd(phi,mpiInfo);
 
@@ -554,7 +746,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 			// g -= -1 + 2*(l%2);
 		}
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 
 		/*********************
@@ -583,7 +775,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 			// g -= -1 + 2*(l%2);
 		 }
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 	}
 
@@ -633,7 +825,7 @@ void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		g = (nGhostLayers[1] + 1)*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
 		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,	g);
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 
 		/***********************************
 		 *	Black pass
@@ -654,7 +846,7 @@ void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
  		g = (nGhostLayers[1]+1)*sizeProd[1] + (nGhostLayers[2]+1)*sizeProd[2] + (nGhostLayers[3]+1)*sizeProd[3];
  		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,	g);
 
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	}
 
 
@@ -827,7 +1019,7 @@ void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	}
 
 	//Filling ghostlayer
-	gHaloOpDim(setSlice, fine, mpiInfo, 3, 0);
+	gHaloOpDim(setSlice, fine, mpiInfo, 3, TOHALO);
 
 	//Interpolation 3rd Dim
 	f = fSizeProd[1] + fSizeProd[2] + 2*fSizeProd[3];
@@ -851,7 +1043,7 @@ void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 		fPrev 	+=fSizeProd[3];
 	}
 
-	gHaloOpDim(setSlice, fine, mpiInfo, 2, 0);
+	gHaloOpDim(setSlice, fine, mpiInfo, 2, TOHALO);
 
 	//Interpolation 2nd Dim
 	f = fSizeProd[1] + 2*fSizeProd[2] + fSizeProd[3];
@@ -872,7 +1064,7 @@ void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 		}
 	}
 
-	gHaloOpDim(setSlice, fine, mpiInfo, 1, 0);
+	gHaloOpDim(setSlice, fine, mpiInfo, 1, TOHALO);
 
 	//Interpolation 2nd Dim
 	f = 2*fSizeProd[1] + fSizeProd[2] + fSizeProd[3];
@@ -933,7 +1125,7 @@ void mgBilinProl2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 	}
 
 	//Filling ghost cells
-	gHaloOpDim(setSlice, fine, mpiInfo, 2, 0);
+	gHaloOpDim(setSlice, fine, mpiInfo, 2, TOHALO);
 
  	f= fSizeProd[1];
 	fNext = f + fSizeProd[2];
@@ -952,7 +1144,7 @@ void mgBilinProl2D(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo){
 	}
 
 	//Filling ghost cells
-	gHaloOpDim(setSlice, fine, mpiInfo, 1, 0);
+	gHaloOpDim(setSlice, fine, mpiInfo, 1, TOHALO);
 
 	//Even numbered columns, interpolating horizontally
 	f = 0;
@@ -1168,8 +1360,8 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Solve and return at coarsest level
  	if(level == bottom){
- 		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, 0);
-		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, 0);
+ 		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, TOHALO);
+		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, TOHALO);
 		gNeutralizeGrid(mgRho->grids[level], mpiInfo);
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
 		gBnd(mgPhi->grids[level], mpiInfo);
@@ -1187,13 +1379,13 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	Grid *res = mgRes->grids[level];
 
  	//Boundary
- 	gHaloOp(setSlice, rho, mpiInfo, 0);
+ 	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
  	gNeutralizeGrid(rho,mpiInfo);
 
  	//Prepare to go down
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
  	mgResidual(res, rho, phi, mpiInfo);
- 	gHaloOp(setSlice, res, mpiInfo, 0);
+ 	gHaloOp(setSlice, res, mpiInfo, TOHALO);
 
  	//Go down
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
@@ -1204,7 +1396,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	//Prepare to go up
  	gSubFrom( phi, res );
 
- 	gHaloOp(setSlice, phi,mpiInfo, 0);
+ 	gHaloOp(setSlice, phi,mpiInfo, TOHALO);
  	gBnd(phi,mpiInfo);
  	mgRho->postSmooth(phi, rho, nPostSmooth, mpiInfo);
 	gBnd(phi, mpiInfo);
@@ -1262,20 +1454,20 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		res = mgRes->grids[current];
 
 		//Boundary
-		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 		gNeutralizeGrid(rho, mpiInfo);
 
 
 		preSmooth(phi, rho, nPreSmooth, mpiInfo);
 
-		gHaloOp(setSlice, rho, mpiInfo, 0);
+		gHaloOp(setSlice, rho, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 
 		gZero(res);
 		mgResidual(res, rho, phi, mpiInfo);
 
-		gHaloOp(setSlice, res, mpiInfo, 0);
+		gHaloOp(setSlice, res, mpiInfo, TOHALO);
 
 		restrictor(res, mgRho->grids[current + 1]);
 		msg(STATUS|ONCE, "Restricting from lvl %d -> %d", current, current+1);
@@ -1290,11 +1482,11 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	gNeutralizeGrid(rho, mpiInfo);
 
 	//Solve at coarsest
-	gHaloOp(setSlice, rho, mpiInfo, 0);
+	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
 	coarseSolv(phi, rho, nCoarseSolv, mpiInfo);
 
 	//Send up
-	gHaloOp(setSlice, phi, mpiInfo, 0);
+	gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	gBnd(phi,mpiInfo);
 	prolongator(mgRes->grids[bottom-1], phi, mpiInfo);
 	msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", bottom, bottom-1);
@@ -1311,7 +1503,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		//Prepare to go up
 		gSubFrom( phi, res );
 
-		gHaloOp(setSlice, phi,mpiInfo, 0);
+		gHaloOp(setSlice, phi,mpiInfo, TOHALO);
 		gBnd(phi,mpiInfo);
 
 		postSmooth(phi, rho, nPostSmooth, mpiInfo);
@@ -1336,7 +1528,7 @@ void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 	for(int current = 0; current < bottom; current ++){
 		rhoNext = &mgRho->grids[current+1];
 
-		gHaloOp(setSlice, *rho, mpiInfo,0);
+		gHaloOp(setSlice, *rho, mpiInfo,TOHALO);
 		restrictor(*rho, *rhoNext);
 
 		*rho = *rhoNext;
@@ -1361,7 +1553,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 
 
-void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
+void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
@@ -1378,7 +1570,7 @@ void mgSolver(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRe
 
 			Grid *phi = mgPhi->grids[0];
 			Grid *rho = mgRho->grids[0];
-			gHaloOp(setSlice, rho, mpiInfo, 0);
+			gHaloOp(setSlice, rho, mpiInfo, TOHALO);
 			gBnd(rho, mpiInfo);
 			mgRho->coarseSolv(phi, rho,
 								mgRho->nPreSmooth+mgRho->nPostSmooth, mpiInfo);

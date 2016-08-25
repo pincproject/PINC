@@ -68,6 +68,12 @@ void puBndPeriodic(Population *pop, const Grid *grid){
 // void puBndOpenDD(); // DEPRECATED, BELONGS TO MIGRATION MODULE
 
 // LEAPFROG ACCELERATION, FIXED TO 3D 1st ORDER WEIGHTING
+
+//void (*puAcc3D1_set(dictionary *ini))(){
+funPtr puAcc3D1_set(dictionary *ini){
+	return puAcc3D1;
+}
+
 void puAcc3D1(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -95,6 +101,10 @@ void puAcc3D1(Population *pop, Grid *E){
 }
 
 // SAME AS puAcc3D1 BUT COMPUTES KINETIC ENERGY
+funPtr puAcc3D1KE_set(dictionary *ini){
+	return puAcc3D1KE;
+}
+
 void puAcc3D1KE(Population *pop, Grid *E){
 
 	int nSpecies = pop->nSpecies;
@@ -247,6 +257,10 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 	}
 }
 
+
+funPtr puDistr3D1_set(dictionary *ini){
+	return puDistr3D1;
+}
 void puDistr3D1(const Population *pop, Grid *rho){
 
 	gZero(rho);

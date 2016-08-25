@@ -184,6 +184,7 @@ static int *getSubdomain(const dictionary *ini){
 	// Performs first order centered finite difference on scalar and returns a field
 
 	int rank = scalar->rank;
+	// int *size = scalar->size;
 	long int *sizeProd = scalar->sizeProd;
 	long int *fieldSizeProd = field->sizeProd;
 
@@ -195,14 +196,19 @@ static int *getSubdomain(const dictionary *ini){
 	long int f;
 	int fNext = fieldSizeProd[1];
 
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+
 	// Centered Finite difference
 	for(int d = 1; d < rank; d++){
-		sNext = sizeProd[d];
-		sPrev = -sizeProd[d];
-		f = d-1;
+		sNext = start + sizeProd[d];
+		sPrev = start - sizeProd[d];
+		f = start*fieldSizeProd[1] + (d-1);
 
 
-		for(int g = 0; g < sizeProd[rank]; g++){
+
+		for(int g = start; g < end; g++){
 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
 			sNext++;
 			sPrev++;
@@ -290,16 +296,16 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int reverse){
+void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
 
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++){
-		gHaloOpDim(sliceOp, grid, mpiInfo, d, reverse);
+		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir);
 	}
 
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, int inverse){
+void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
 
  	//Load MpiInfo
  	int mpiRank = mpiInfo->mpiRank;
@@ -314,12 +320,12 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	double *sendSlice = grid->sendSlice;
 	double *recvSlice = grid->recvSlice;
 
-	// Normal operation: take 2nd outermost layer and place it outermost
-	// Inverse operation: take outermost layer and place it 2nd outermost
-	int offsetUpperTake  = size[d]-2+inverse;
-	int offsetUpperPlace = size[d]-1-inverse;
-	int offsetLowerTake  =         1-inverse;
-	int offsetLowerPlace =           inverse;
+	// dir=TOHALO=0: take 2nd outermost layer and place it outermost
+	// dir=FROMHALO=1: take outermost layer and place it 2nd outermost
+	int offsetUpperTake  = size[d]-2+dir;
+	int offsetUpperPlace = size[d]-1-dir;
+	int offsetLowerTake  =         1-dir;
+	int offsetLowerPlace =           dir;
 
 	//Dimension used for subdomains, 1 less entry than grid dimensions
 	int dd = d - 1;
@@ -395,6 +401,8 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	int *trueSize 		= malloc(rank*sizeof(*trueSize));
 	double *stepSize	= malloc(rank*sizeof(*stepSize));
 	int *nGhostLayers 	= malloc(2*rank*sizeof(*nGhostLayers));
+
+	if(nValues==VECTOR) nValues = nDims; // VECTOR equals -1
 
 	size[0] = nValues;
 	trueSize[0] = nValues;
@@ -1303,7 +1311,7 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 *			TEMP, to reading of h5 files are ready
 *************************************************************/
 
-void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
+void fillHeaviside(Grid *grid, int rank, const MpiInfo *mpiInfo){
 
    //Load
    int *size = grid->size;
@@ -1318,13 +1326,13 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[0]==0){
+   if(nSubdomains[rank-1]==0){
 	   //One core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
+				   if(j < (trueSize[rank-1]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
 				   else val[ind] = -1.;
 			   }
@@ -1336,7 +1344,7 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(subdomain[0]<nSubdomains[0]/2) val[ind] = 1.0;
+				   if(subdomain[rank-1]<nSubdomains[rank-1]/2) val[ind] = 1.0;
 				   else val[ind] = -1.;
 			   }
 		   }
@@ -1344,10 +1352,10 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
 	// Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
 	   double *slice = grid->sendSlice;
 	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = 0.;
-	   if(subdomain[0] == 0)	setSlice(slice, grid, 1, 1);
+	   if(subdomain[rank-1] == 0)	setSlice(slice, grid, rank, 1);
 
 	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = -0.;
-	   if(subdomain[0] == nSubdomains[0]/2)	setSlice(slice, grid, 1, 1);
+	   if(subdomain[rank-1] == nSubdomains[rank-1]/2)	setSlice(slice, grid, rank, 1);
    }
 
 	gHaloOp(setSlice, grid, mpiInfo, 0);
@@ -1355,7 +1363,7 @@ void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo){
    return;
 }
 
-void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
+void fillHeaviSol(Grid *grid, int rank ,const MpiInfo *mpiInfo){
 
 	//Load
     int *size = grid->size;
@@ -1366,14 +1374,15 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 
 	double *val = grid->val;
 
+
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[0]==0){
+   if(nSubdomains[rank-1]==0){
 	   //One core
+	   msg(WARNING, "Not implemented for 1 domain");
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
-				   msg(WARNING, "Not implemented for 1 domain");
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
 				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
 				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
@@ -1383,21 +1392,22 @@ void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo){
 	   }
    } else {
 	   //Multi core
-	   long int J;	//Total domain position
-	   int half = nSubdomains[0]/2 * trueSize[1];
+	   long int advance;	//Total domain position
+	   int half = nSubdomains[rank-1]/2 * trueSize[rank];
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(subdomain[0]<nSubdomains[0]/2){
-					   J = j-1  + subdomain[0]*trueSize[1];
-					   val[ind] = -0.5*(half - J)*J;
-					   if(subdomain[0]==0 && k == 2 && l==2){
-					   }
+				   if(subdomain[rank-1]<nSubdomains[rank-1]/2){
+					   //Rewrite to use rank
+					   advance = (j*(rank==1) + k*(rank==2) + l*(rank==3))-1
+					   			+ subdomain[rank-1]*trueSize[rank];
+					   val[ind] = -0.5*(half - advance)*advance;
 				   }
 				   else{
-					   J = j-1 + trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
-					   val[ind] = -0.5*(J - half)*J;
+					   advance = (j*(rank==1) + k*(rank==2) + l*(rank==3))-1
+					    		+ trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
+					   val[ind] = -0.5*(advance - half)*advance;
 				   }
 			   }
 		   }

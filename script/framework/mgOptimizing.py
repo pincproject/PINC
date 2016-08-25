@@ -18,16 +18,16 @@
 from pincClass import *
 import subprocess
 import h5py
-
+import numpy as np
 
 pinc = PINC()
 # pinc.clean()
 #Setting up wanted needed ini file
 pinc.routine = "mgRoutine"
-pinc.trueSize = [128,32,32]
+pinc.trueSize = [32,8,8]
 pinc.preCycles = 100
 pinc.postCycles = 100
-pinc.coarseCycles = 1000
+pinc.coarseCycles = 100
 pinc.nSubdomains = [4,1,1]
 pinc.clean()
 
@@ -37,8 +37,10 @@ for i in range(2,6):
 	pinc.startTime = pinc.startTime+1
 
 
+data = h5py.File('test_timer.xy.h5','r')
+time= data['time']
+cycles= data['cycles']
 
+data = np.concatenate((time, cycles[:,0].T), axis = 1)
 
-time = h5py.File('test_timer.xy.h5','r')
-time = time['time']
-print time[:,:]
+print data

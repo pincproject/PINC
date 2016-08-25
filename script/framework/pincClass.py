@@ -37,11 +37,16 @@ class PINC:
 	def clean(self):
 		self.runCommand("rm *.h5")
 
+	def arrToStr(self, array):
+		string = str(array[0]) + "," + str(array[1]) + "," + str(array[2])
+
+		return string
+
 	def runMG(self):
 		cmd = self.pincPath + " " + self.iniPath
 		cmd += " main:routine=" + self.routine
 		cmd += " time:startTime=" + str(self.startTime)
-		cmd += " grid:trueSize=" + str(self.trueSize[0]) + "," + str(self.trueSize[1]) + "," + str(self.trueSize[2])
+		cmd += " grid:trueSize=" + self.arrToStr((self.trueSize))
 		cmd += " grid:nSubdomains=" + str(self.nSubdomains[0]) + "," + str(self.nSubdomains[1]) + "," + str(self.nSubdomains[2])
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
 		cmd += " multigrid:mgCycles=" + str(self.mgCycles)
