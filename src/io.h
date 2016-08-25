@@ -226,11 +226,11 @@ double iniGetDouble(const dictionary* ini, const char *key);
 char* iniGetStr(const dictionary *ini, const char *key);
 
 ///@brief Allocate and get array of integers (remember to free)
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
+int* iniGetIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of long ints (remember to free)
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements);
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of doubles (remember to free)
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements);
 
 /**
  * @brief Get the array of strings associated to a key.
@@ -242,28 +242,10 @@ double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
  * Output is similar to listToStrArr(). Remember to free resulting string array
  * using freeStrArr().
  */
-char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements);
+char** iniGetStrArr(const dictionary *ini, const char *key, int nElements);
 
 ///@brief Get the number of elements in an array/comma-separated list
 int iniGetNElements(const dictionary* ini, const char* key);
-
-/**
- * @brief Assert that a number of entries are arrays of equal length.
- * @param			ini			Dictionary to search
- * @param			nKey		Number of keys to search for
- * @param			...			Keys to search for
- * @return			Number of elements in arrays
- * @see				iniGetNElements()
- *
- * Example:
- * @code
- *	iniAssertEqualNElements(ini,3,"mySec:a","mySec:b","mySec:c");
- * @endcode
- *
- * This code does nothing if the specified entries have equal length. Unequal
- * lengths will lead to an error.
- */
-int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
 
 ///@}
 

@@ -55,7 +55,6 @@ void regular(dictionary *ini){
 	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
-
 	// char *str;
 	//
 	// str = iniGetStr("methods:acc");

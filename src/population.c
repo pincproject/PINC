@@ -40,19 +40,15 @@ static void pSetNormParams(const dictionary *ini, Population *pop);
 
 Population *pAlloc(const dictionary *ini){
 
-	// Sanity check
-	iniAssertEqualNElements(ini,4,"population:nParticles","population:nAlloc","population:charge","population:mass");
-
 	// Get MPI info
 	int size, rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);	// Presumes sanity check on nSubdomains by allocGrid()
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	// Load data
-	int nSpecies;
-	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",&nSpecies);	// This is for all computing nodes
-	int nDims = iniGetNElements(ini,"grid:trueSize");
-	if(nDims==0) msg(ERROR,"grid:trueSize not found");
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
+	int nDims = iniGetInt(ini,"grid:nDims");
+	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",nSpecies);	// This is for all computing nodes
 
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
@@ -111,9 +107,10 @@ void pFree(Population *pop){
 void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
 
 	// Read from ini
-	int nSpecies, nDims;
-	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
@@ -170,9 +167,10 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
 
 	// Read from ini
-	int nSpecies, nDims;
-	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpecies;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
@@ -236,16 +234,12 @@ void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 
 void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
 
-	iniAssertEqualNElements(ini,2,"population:perturbAmplitude","population:perturbMode");
-
-	int nElements;
-	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",&nElements);
-	double *mode = iniGetDoubleArr(ini,"population:perturbMode",&nElements);
-
 	int nDims = pop->nDims;
 	int nSpecies = pop->nSpecies;
-	if(nElements!=nDims*nSpecies)
-		msg(ERROR|ONCE,"population:perturbMode neeeds to have nDims*nSpecies elements");
+
+	int nElements = nDims *nSpecies;
+	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",nElements);
+	double *mode = iniGetDoubleArr(ini,"population:perturbMode",nElements);
 
 	int *L = gGetGlobalSize(ini);
 	double *pos = pop->pos;
@@ -274,8 +268,8 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 
 void pPosDebug(const dictionary *ini, Population *pop){
 
-	int nSpecies;
-	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",&nSpecies);
+	int nSpecies = pop->nSpecies;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
 
 	int mpiRank, mpiSize;
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
@@ -366,11 +360,9 @@ void pVelAssertMax(const Population *pop, double max){
 
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
-	iniAssertEqualNElements(ini,3,"population:temperature","population:drift","population:nParticles");
-
-	int nSpecies;
-	double *temp = iniGetDoubleArr(ini,"population:temperature",&nSpecies);
-	double *velDrift = iniGetDoubleArr(ini,"population:drift",&nSpecies);
+	int nSpecies = pop->nSpecies;
+	double *temp = iniGetDoubleArr(ini,"population:temperature",nSpecies);
+	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
 
 	int nDims = pop->nDims;
 
@@ -502,12 +494,12 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	 * CREATE ATTRIBUTES
 	 */
 
-	int nDims;
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
+	int nDims = pop->nDims;
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double debye = iniGetDouble(ini,"grid:debye");
-	double *T = iniGetDoubleArr(ini,"population:temperature",&nDims);
-	double *mass = iniGetDoubleArr(ini,"population:mass",&nDims);
+	double *T = iniGetDoubleArr(ini,"population:temperature",nDims);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nDims);
 
 	double vThermal = sqrt(BOLTZMANN*T[0]/(mass[0]*ELECTRON_MASS));
 
@@ -722,12 +714,13 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 
 static void pSetNormParams(const dictionary *ini, Population *pop){
 
-	int nSpecies, nDims;
-	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
-	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
-	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",&nSpecies);
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",nSpecies);
 
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double cellVolume = adProd(stepSize,nDims);
 
