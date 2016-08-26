@@ -27,8 +27,11 @@ class PINC:
 		self.postCycles = 1
 		self.coarseCycles = 1
 		self.mgLevels = 4
-		self.mgCycles = 1
+		self.mgCycles = 100
 		self.routine = "regular"
+		self.preSmooth = "jacobian"
+		self.postSmooth= "jacobian"
+		self.coarseSolver="jacobian"
 		self.startTime = 0
 
 	def runCommand(self, cmd):
@@ -36,6 +39,8 @@ class PINC:
 
 	def clean(self):
 		self.runCommand("rm *.h5")
+		self.runCommand("rm *.txt")
+
 
 	def arrToStr(self, array):
 		string = str(array[0]) + "," + str(array[1]) + "," + str(array[2])
@@ -47,11 +52,15 @@ class PINC:
 		cmd += " main:routine=" + self.routine
 		cmd += " time:startTime=" + str(self.startTime)
 		cmd += " grid:trueSize=" + self.arrToStr((self.trueSize))
-		cmd += " grid:nSubdomains=" + str(self.nSubdomains[0]) + "," + str(self.nSubdomains[1]) + "," + str(self.nSubdomains[2])
+		cmd += " grid:nSubdomains=" + self.arrToStr((self.nSubdomains))
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
 		cmd += " multigrid:mgCycles=" + str(self.mgCycles)
 		cmd += " multigrid:nPreSmooth=" + str(self.preCycles)
 		cmd += " multigrid:nPostSmooth=" + str(self.postCycles)
 		cmd += " multigrid:nCoarseSolve=" + str(self.coarseCycles)
+		cmd += " multigrid:coarseSolver=" + str(self.coarseSolver)
+		cmd += " multigrid:preSmooth=" + str(self.preSmooth)
+		cmd += " multigrid:postSmooth=" + str(self.postSmooth)
+
 
 		self.runCommand(cmd)

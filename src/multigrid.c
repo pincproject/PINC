@@ -32,40 +32,50 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
 	char *preSmoothName = iniGetStr(ini, "multigrid:preSmooth");
     char *postSmoothName = iniGetStr(ini, "multigrid:postSmooth");
-    char *coarseSolverName = iniGetStr(ini, "multigrid:coarseSolv");
+    char *coarseSolverName = iniGetStr(ini, "multigrid:coarseSolver");
 
 	int nDims = multigrid->grids[0]->rank-1;
 
-	if(!strcmp(preSmoothName,"mgGS")){
+	if(!strcmp(preSmoothName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->preSmooth = &mgGS2D;
 		else if(nDims == 3) multigrid->preSmooth = &mgGS3D;
-		else msg(ERROR, "No Presmoothing algorithm set for dimensions %d", nDims);
-    } else if (!strcmp(preSmoothName, "mgJacob")){
-		if(nDims == 2) multigrid->preSmooth = &mgJacob2D;
-		else if(nDims == 3) multigrid->preSmooth = &mgJacob3D;
-		else msg(ERROR, "No Presmoothing algorithm set for dimensions %d", nDims);
- 	} else {
+    } else if (!strcmp(preSmoothName, "jacobian")){
+		if(nDims == 3) multigrid->preSmooth = &mgJacob3D;
+		else multigrid->preSmooth = &mgJacobND;
+ 	} else if ((!strcmp(preSmoothName, "jacobianND"))){
+		multigrid->preSmooth = &mgJacobND;
+	} else if ((!strcmp(preSmoothName, "gaussSeidelRBND"))){
+		multigrid->preSmooth = &mgGSND;
+	} else {
     	msg(ERROR, "No Presmoothing algorithm specified");
     }
 
-    if(!strcmp(postSmoothName,"mgGS")){
+    if(!strcmp(postSmoothName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->postSmooth = &mgGS2D;
 		else if(nDims == 3) multigrid->postSmooth = &mgGS3D;
 		else msg(ERROR, "No postsmoothing algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(postSmoothName, "mgJacob")){
-		if(nDims == 2) multigrid->postSmooth = &mgJacob2D;
-		else if(nDims == 3) multigrid->postSmooth = &mgJacob3D;
-	} else {
+	} else if (!strcmp(postSmoothName, "jacobian")){
+		if(nDims == 3) multigrid->postSmooth = &mgJacob3D;
+		else multigrid->postSmooth = &mgJacobND;
+	} else if ((!strcmp(postSmoothName, "jacobianND"))){
+		multigrid->postSmooth = &mgJacobND;
+	} else if ((!strcmp(postSmoothName, "gaussSeidelRBND"))){
+		multigrid->postSmooth = &mgGSND;
+ 	} else {
     	msg(ERROR, "No Postsmoothing algorithm specified");
     }
 
-    if(!strcmp(coarseSolverName,"mgGS")){
+    if(!strcmp(coarseSolverName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->coarseSolv = &mgGS2D;
 		else if(nDims == 3) multigrid->coarseSolv = &mgGS3D;
 		else msg(ERROR, "No coarsesolver algorithm set for dimensions %d", nDims);
-	} else if (!strcmp(coarseSolverName, "mgJacob")){
-		if(nDims == 2) multigrid->coarseSolv = &mgJacob2D;
-		else if(nDims == 3) multigrid->coarseSolv = &mgJacob3D;
+	} else if (!strcmp(coarseSolverName, "jacobian")){
+		if(nDims == 3) multigrid->coarseSolv = &mgJacob3D;
+		else multigrid->coarseSolv = &mgJacobND;
+	} else if ((!strcmp(coarseSolverName, "jacobianND"))){
+		multigrid->coarseSolv = &mgJacobND;
+	} else if ((!strcmp(coarseSolverName, "gaussSeidelRBND"))){
+		multigrid->coarseSolv = &mgGSND;
  	} else {
     	msg(ERROR, "No coarse Grid Solver algorithm specified");
     }
@@ -357,12 +367,20 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 	double resSquared;
 	int run = 1;
 
-	while(avgError>tol){
+	// while(avgError>tol){
 		// avgError--;
 		// Run solver
 		// gZero(res);
 		tStart(t);
 		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		// for(int r = 0; r < 2; r++){
+		// 	MPI_Barrier(MPI_COMM_WORLD);
+		// 	if(mpiInfo->mpiRank==r) dumpTrueGrid(ini, mgPhi->grids[0]);
+		// }
+		// MPI_Barrier(MPI_COMM_WORLD);
+		// if(mpiInfo->mpiRank==0) dumpWholeGridIndex(ini, mgPhi->grids[0]);
+
 
 		tStop(t);
 		//Compute error
@@ -371,9 +389,9 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		errSquared = mgSumTrueSquared(error, mpiInfo);
 		avgError = errSquared/gTotTruesize(error, mpiInfo);
 
-		if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %.2e", errSquared);
+		// if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %.2e", errSquared);
 		run++;
-	}
+	// }
 
 	resSquared = mgSumTrueSquared(res, mpiInfo);
 	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
@@ -542,11 +560,8 @@ void mgFree(Multigrid *multigrid){
  *		Iterative Solvers
  *****************************************************/
 
-
-void mgJacob2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
-	//Warning not optimzed
-
-	// msg(STATUS, "Hello");
+void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+	// Warning not optimized
 	//Common variables
 	int rank = phi->rank;
 	long int *sizeProd = phi->sizeProd;
@@ -558,26 +573,31 @@ void mgJacob2D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 	//Temporary value
 	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
 
+	//Indexes for how to increase and domain of trueGrid
+	long int gStep;
+	//This is not valid for more Halo layers
+	long int gStart = alSum(&sizeProd[1], rank-1 );
+	long int gEnd 	= sizeProd[rank]-gStart;
+
+	double coeff = 1./(2*(rank-1));
+
+	msg(STATUS|ONCE, "coeff %f, cycles %d", coeff, nCycles);
+
 	for(int c = 0; c < nCycles; c++){
-		// Index of neighboring nodes
-		int gj = sizeProd[1];
-		int gjj= -sizeProd[1];
-		int gk = sizeProd[2];
-		int gkk= -sizeProd[2];
-
-		for(long int g = 0; g < sizeProd[rank]; g++){
-			tempVal[g] = 0.25*(	phiVal[gj] + phiVal[gjj] +
-								phiVal[gk] + phiVal[gkk] - rhoVal[g]);
-
-			gj++;
-			gjj++;
-			gk++;
-			gkk++;
+		adSetAll(tempVal, sizeProd[rank], 0.);
+		for(int r = 1; r < rank; r++){
+			gStep = sizeProd[r];
+			for(long int g = gStart; g < gEnd; g++){
+				tempVal[g] += (	phiVal[g+gStep] + phiVal[g-gStep]);
+				}
 		}
 
-		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
+		for(long int g = gStart; g < gEnd; g++) tempVal[g] -= rhoVal[g];
+		adScale(tempVal, sizeProd[rank], coeff);
+		for(long int g = gStart; g < gEnd; g++) phiVal[g] = tempVal[g];
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+		gBnd(phi, mpiInfo);
 
 	}
 
@@ -630,12 +650,82 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 		for(long int q = 0; q < sizeProd[rank]; q++) phiVal[q] = tempVal[q];
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+		gBnd(phi, mpiInfo);
 
 	}
 
 	return;
 }
 
+static inline void mgGSNDInner(double *phiVal, const double *rhoVal, double *coeff, long int *g,
+	const int *rank,const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+	const int *trueSize, const long int *sizeProd){
+
+	if(*sizeProd==1){
+		//proceed x direction
+		int q;
+		for(q = 0; q < *trueSize; q+=2){
+			int gStep;
+			phiVal[*g] = 0;
+			for(int r = 0; r < *rank-1; r++){
+				gStep 	= *(sizeProd+r);
+				phiVal[*g] += phiVal[*g+gStep] + phiVal[*g-gStep];
+			}
+			phiVal[*g] -= rhoVal[*g];
+			phiVal[*g] *= *coeff;
+			*g += 2;
+		}
+		*g += *nGhostLayersBefore + *nGhostLayersAfter + (2*(*g%2)-1);
+	} else {
+		//Go down a dimension
+		int q;
+		for(q = 0; q < *trueSize; q++){
+			mgGSNDInner(phiVal, rhoVal, coeff, g, rank, nGhostLayersBefore-1, nGhostLayersAfter-1, trueSize-1, sizeProd-1);
+		}
+		*g += *(sizeProd)*(*nGhostLayersBefore + *nGhostLayersAfter)+ (2*(*g%2)-1);
+	}
+
+	return;
+}
+
+void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
+	// Warning not optimized
+	//Common variables
+	int rank = phi->rank;
+	long int *sizeProd = phi->sizeProd;
+	int *trueSize = phi->trueSize;
+	int *nGhostLayers = phi->nGhostLayers;
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	//Index
+	long int gStart = alSum(&sizeProd[1], rank-1 );
+	double coeff = 1./(2*(rank-1));
+
+	for(int c = 0; c < nCycles; c++){
+		//Black pass
+		long int g  = gStart;
+		mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+			&trueSize[rank-1], &sizeProd[rank-1]);
+
+			gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+			gBnd(phi, mpiInfo);
+
+			//Red pass
+			g = gStart +1;
+			mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+				&trueSize[rank-1], &sizeProd[rank-1]);
+
+			gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+			gBnd(phi, mpiInfo);
+
+	}
+
+	return;
+
+}
 
 
 void mgGS2D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
@@ -1573,7 +1663,7 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 			gHaloOp(setSlice, rho, mpiInfo, TOHALO);
 			gBnd(rho, mpiInfo);
 			mgRho->coarseSolv(phi, rho,
-								mgRho->nPreSmooth+mgRho->nPostSmooth, mpiInfo);
+								mgRho->nCoarseSolve, mpiInfo);
 		}
 	}
 

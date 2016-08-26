@@ -746,7 +746,8 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 
 
 
-	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	double myCharge = gNeutralizeGridInner(&val,&nGhostLayers[rank-1],
+					&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
 	double totCharge = 0;
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -759,7 +760,7 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 	return;
 }
 
-static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static inline double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd){
 
 	double charge = 0.;

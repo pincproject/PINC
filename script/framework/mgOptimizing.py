@@ -24,14 +24,26 @@ pinc = PINC()
 # pinc.clean()
 #Setting up wanted needed ini file
 pinc.routine = "mgRoutine"
-pinc.trueSize = [32,8,8]
-pinc.preCycles = 100
-pinc.postCycles = 100
+pinc.trueSize = [16,4,4]
+pinc.mgCycles = 1
+pinc.preCycles = 1
+pinc.postCycles = 1
 pinc.coarseCycles = 100
-pinc.nSubdomains = [4,1,1]
+pinc.nSubdomains = [2,1,1]
+pinc.preSmooth = 	"jacobianND"
+pinc.postSmooth= 	"jacobianND"
+# pinc.coarseSolver=	"jacobianND"
+# pinc.preSmooth = 	"gaussSeidelRB"
+# pinc.postSmooth= 	"gaussSeidelRB"
+pinc.coarseSolver=	"gaussSeidelRBND"
+
+
+
+
+
 pinc.clean()
 
-for i in range(2,6):
+for i in range(1,2):
 	pinc.mgLevels = i
 	pinc.runMG()
 	pinc.startTime = pinc.startTime+1
@@ -39,8 +51,8 @@ for i in range(2,6):
 
 data = h5py.File('test_timer.xy.h5','r')
 time= data['time']
-cycles= data['cycles']
+cycles= np.array([data['cycles'][:,1]])
 
-data = np.concatenate((time, cycles[:,0].T), axis = 1)
+data = np.concatenate((time, cycles.T), axis = 1)
 
 print data

@@ -424,6 +424,23 @@ void alPrintInner(long int *a, long int inc, long int end, char *varName){
  *			Debug help
  ***************************************************************************/
 
+ void dumpWholeGridIndex(dictionary *ini, Grid *grid){
+
+ 	msg(WARNING, "Grid is replaced with indexes");
+
+ 	long int *sizeProd = grid->sizeProd;
+ 	int rank = grid->rank;
+ 	double *val = grid->val;
+
+ 	for(long int g = 0; g < sizeProd[rank]; g++){
+ 		val[g] = (double) g;
+ 	}
+
+ 	dumpWholeGrid(ini, grid);
+
+ 	return;
+ }
+
 void dumpTrueGrid(dictionary *ini, Grid *grid){
 
 	int *size = grid->size;
