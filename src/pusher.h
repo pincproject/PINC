@@ -120,11 +120,15 @@ void puMove(Population *pop);
 ///@{
 void puAcc3D1(Population *pop, Grid *E);
 void puAcc3D1KE(Population *pop, Grid *E);
+void puAccND1(Population *pop, Grid *E);
+void puAccND1KE(Population *pop, Grid *E);
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S);
 void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S);
 
 funPtr puAcc3D1_set(dictionary *ini);
 funPtr puAcc3D1KE_set(dictionary *ini);
+funPtr puAccND1_set(dictionary *ini);
+funPtr puAccND1KE_set(dictionary *ini);
 ///@}
 
 /**
@@ -149,7 +153,10 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
  * first.
  */
 void puDistr3D1(const Population *pop, Grid *rho);
+void puDistrND1(const Population *pop, Grid *rho);
+
 funPtr puDistr3D1_set(dictionary *ini);
+funPtr puDistrND1_set(dictionary *ini);
 
 // EVERYTHING BELOW THIS SHOULD MOVE TO SEPARATE MIGRATION.H MODULE.
 
