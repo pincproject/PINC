@@ -169,8 +169,6 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  *
  * Comma-separated lists (using "," as delimeter) is interpreted as arrays.
  *
- * Remember to free returned arrays.
- *
  * Example of use:
  *
  * @code
@@ -179,9 +177,17 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  *	iniClose(ini);
  * @endcode
  *
+ *
+ * In the case of fetching arrays the returned array will have as many elements
+ * as specified by nElements. If the entry in the ini-file has fewer elements
+ * than specified they will be repeated, e.g. if 5 elements is read from the
+ * entry "1,2" the elements 1,2,1,2,1 will be returned.
+ *
+ * Remember to free returned arrays.
+ *
  * @param		ini			ini-file dictionary
  * @param		key			Key to get value from ("section:key")
- * @param[out]	nElements	Number of elements in returned array
+ * @param		nElements	Number of elements to fetch (in case of arrays)
  */
 ///@{
 
@@ -236,7 +242,7 @@ double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements);
  * @brief Get the array of strings associated to a key.
  * @param			ini			Dictionary to search
  * @param			key			Key string to look for
- * @param[out]		nElements	Number of elements in returned array
+ * @param[out]		nElements	Number of elements to get
  * @return			NULL-terminated array of NULL-terminated strings
  *
  * Output is similar to listToStrArr(). Remember to free resulting string array

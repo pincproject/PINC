@@ -97,7 +97,17 @@ static int listGetNElements(const char* list);
  */
 void iniAssertExistence(const dictionary *ini, const char* key);
 
-
+/**
+ * @brief Expands/repeats a string array
+ * @param	strArr		String array to expand
+ * @param	nElements	Elements to expand to
+ * @return	Expanded string array
+ *
+ * Allocates a new string array and repeats the values of strArr until the new
+ * array is filled. E.g. if strArr= {"a","b"} and nElements = 5 then the result
+ * will be {"a","b","a","b","a"}. Remember to free this newly allocated array
+ * using freeStrArr().
+ */
 char **strArrExpand(char **strArr, int nElements);
 
 /******************************************************************************
