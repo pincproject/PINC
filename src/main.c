@@ -52,7 +52,7 @@ void regular(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",  puAcc3D1_set,puAcc3D1KE_set);
+	void (*acc)()   = select(ini,"methods:acc",  puAcc3D1_set,puAcc3D1KE_set,puAccND1KE_set);
 	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 

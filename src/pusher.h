@@ -120,11 +120,13 @@ void puMove(Population *pop);
 ///@{
 void puAcc3D1(Population *pop, Grid *E);
 void puAcc3D1KE(Population *pop, Grid *E);
+void puAccND1KE(Population *pop, Grid *E);
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S);
 void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S);
 
 funPtr puAcc3D1_set(dictionary *ini);
 funPtr puAcc3D1KE_set(dictionary *ini);
+funPtr puAccND1KE_set(dictionary *ini);
 ///@}
 
 /**

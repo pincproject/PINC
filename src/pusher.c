@@ -17,6 +17,14 @@
  *****************************************************************************/
 
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd);
+static inline void puInterpND1(	double *result, const double *pos,
+								const double *val, const long int *sizeProd,
+								int nDims, int *integer, double *decimal,
+								double *complement);
+static void puInterpND1Inner(	double *result, const double *val, long int p, 
+								const long int *mul, long int lastMul,
+								int nDims, double *decimal, double *complement,
+								double factor);
 static inline void addCross(const double *a, const double *b, double *res);
 
 /******************************************************************************
@@ -109,30 +117,54 @@ void puAcc3D1KE(Population *pop, Grid *E){
 		gMul(E,pop->renormE[s]);
 	}
 }
+funPtr puAccND1KE_set(dictionary *ini){
+	return puAccND1KE;
+}
 void puAccND1KE(Population *pop, Grid *E){
+
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 	double *pos = pop->pos;
 	double *vel = pop->vel;
+	double *mass = pop->mass;
+	double *kinEnergy = pop->kinEnergy;
 
 	long int *sizeProd = E->sizeProd;
 	double *val = E->val;
+
+	double *dv = malloc(nDims*sizeof(*dv));
+	int *integer = malloc(nDims*sizeof(*integer));
+	double *decimal = malloc(nDims*sizeof(*decimal));
+	double *complement = malloc(nDims*sizeof(*complement));
 
 	for(int s=0;s<nSpecies;s++){
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
+		kinEnergy[s]=0;
+
 		for(long int p=pStart;p<pStop;p+=nDims){
-			double dv[3];
-			puInterpND1(dv,&pos[p],val,sizeProd);
-puInterpND1(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){
-			for(int d=0;d<nDims;d++) vel[p+d] += dv[d];
+
+			puInterpND1(dv,&pos[p],val,sizeProd,nDims,integer,decimal,complement);
+			double velSquared=0;
+			for(int d=0;d<nDims;d++){
+				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
+				vel[p+d] += dv[d];
+			}
+			kinEnergy[s]+=velSquared;
 		}
+
+		kinEnergy[s]*=mass[s];
 
 		// Specie-specific re-normalization
 		gMul(E,pop->renormE[s]);
 	}
+
+	free(dv);
+	free(integer);
+	free(decimal);
+	free(complement);
 }
 
 
@@ -712,32 +744,42 @@ static inline void puInterp3D1(double *result, const double *pos, const double *
 
 }
 
-static inline double puInterpND1(const double *val, const double *pos, const long int *nGPointsProd, int nDims, int *integer, double *decimal, double *complement){
-
+static inline void puInterpND1(	double *result, const double *pos,
+								const double *val, const long int *sizeProd,
+								int nDims, int *integer, double *decimal,
+								double *complement){
 
 	long int p = 0;
 	for(int d=0;d<nDims;d++){
+
 		integer[d] = (int)pos[d];
 		decimal[d] = pos[d]-integer[d];
 		complement[d] = 1-decimal[d];
-		p += nGPointsProd[d] * integer[d];
+
+		int dd = d+1;
+		p += sizeProd[dd] * integer[d];
+
+		result[d] = 0;
 	}
 
-	return inner2(val,&nGPointsProd[nDims-1],p,&decimal[nDims-1],&complement[nDims-1]);
+	puInterpND1Inner(result,val,p,&sizeProd[nDims],sizeProd[1],nDims,&decimal[nDims-1],&complement[nDims-1],1);
 
 }
 
-static double puInterpND1Inner(const double *val, const long int *mul, long int p, double *decimal, double *complement){
+static void puInterpND1Inner(	double *result, const double *val, long int p, 
+								const long int *mul, long int lastMul,
+								int nDims, double *decimal, double *complement,
+								double factor){
 
-	double result;
-	if(*mul==1){
-		result  = *complement*val[p];		// stay
-		result += *decimal   *val[p+1];		// incr.
+	if(*mul==lastMul){
+		for(int d=0;d<nDims;d++){
+			result[d] += *complement*factor*val[p+d];			// stay
+			result[d] += *decimal   *factor*val[p+d+*mul];		// incr.
+		}
 	} else {
-		result  = *complement*puInterpND1Inner(val,mul-1,p     ,decimal-1,complement-1);	// stay
-		result += *decimal   *puInterpND1Inner(val,mul-1,p+*mul,decimal-1,complement-1);	// incr.
+		puInterpND1Inner(result,val,p     ,mul-1,lastMul,nDims,decimal-1,complement-1,*complement*factor);	// stay
+		puInterpND1Inner(result,val,p+*mul,mul-1,lastMul,nDims,decimal-1,complement-1,*decimal*factor);		// incr.
 	}
-	return result;
 
 }
 
