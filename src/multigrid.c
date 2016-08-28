@@ -348,7 +348,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	// gHaloOp(setSlice, sol, mpiInfo);
  	// gFinDiff2nd3D(rho, sol);
 
- 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
+ 	msg(STATUS, "mgLevels = %d", mgRho->nLevels);
  	gNeutralizeGrid(rho, mpiInfo);
 
  	double tol = 10000;
@@ -388,8 +388,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  		// mgResidual(res,rho, phi, mpiInfo);
  		// gHaloOp(setSlice, res, mpiInfo, 0);
  		// err = mgResMass3D(res,mpiInfo);
- 		msg(STATUS|ONCE, "Error squared (e^2) = %f", errSquared);
- 		msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
+ 		msg(STATUS, "Error squared (e^2) = %f", errSquared);
+ 		msg(STATUS, "Residual squared (res^2) = %f", resSquared);
  			// The res squared (res^2) = %f", errSquared, resSquared);
  	}
 
@@ -491,7 +491,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	//Sanity checks
 	if(nLevels<1) msg(ERROR, "Multi Grid levels is 0, need 1 grid level \n");
-	if(nLevels==1) msg(WARNING|ONCE, "Multi Grid levels is 1, using Gauss-Seidel Red'Black \n");
+	if(nLevels==1) msg(WARNING, "Multi Grid levels is 1, using Gauss-Seidel Red'Black \n");
 
 	if(!nMGCycles) msg(ERROR, "MG cycles is 0 \n");
 
@@ -1410,7 +1410,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
-	msg(STATUS|ONCE, "Running mgV; start = %d, bottom = %d, top = %d",level, bottom, top);
+	msg(STATUS, "Running mgV; start = %d, bottom = %d, top = %d",level, bottom, top);
 
 	//Gathering info
 	int nPreSmooth = mgRho->nPreSmooth;
@@ -1459,7 +1459,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		gHaloOp(setSlice, res, mpiInfo, TOHALO);
 
 		restrictor(res, mgRho->grids[current + 1]);
-		msg(STATUS|ONCE, "Restricting from lvl %d -> %d", current, current+1);
+		msg(STATUS, "Restricting from lvl %d -> %d", current, current+1);
 	}
 
 	rho = mgRho->grids[bottom];
@@ -1478,7 +1478,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	gBnd(phi,mpiInfo);
 	prolongator(mgRes->grids[bottom-1], phi, mpiInfo);
-	msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", bottom, bottom-1);
+	msg(STATUS, "Interpolating from lvl %d -> %d", bottom, bottom-1);
 
 
 	//Up to finest
@@ -1498,7 +1498,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		postSmooth(phi, rho, nPostSmooth, mpiInfo);
 		gBnd(phi, mpiInfo);
 
-		msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", current, current-1);
+		msg(STATUS, "Interpolating from lvl %d -> %d", current, current-1);
 
 		if(current > top) prolongator(mgRes->grids[current-1], phi, mpiInfo);
 	}
@@ -1551,7 +1551,7 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	// gZero(mgPhi->grids[0]);
 	if(nLevels >1){
 		for(int c = 0; c < nMGCycles; c++){
-			// msg(STATUS|ONCE, "Cycle = %d", c);
+			// msg(STATUS, "Cycle = %d", c);
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 		}
 	}	else {

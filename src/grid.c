@@ -150,14 +150,14 @@ static int *getSubdomain(const dictionary *ini){
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Get ini info
-	int nDims;
-	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
 
 
 	// Sanity check
 	int totalNSubdomains = aiProd(nSubdomains,nDims);
 	if(totalNSubdomains!=mpiSize)
-		msg(ERROR|ONCE,"The product of grid:nSubdomains does not match the number of MPI processes");
+		msg(ERROR,"The product of grid:nSubdomains does not match the number of MPI processes");
 
 	// Determine subdomain of this MPI node
 	int *subdomain = malloc(nDims*sizeof(*subdomain));
@@ -370,30 +370,17 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 
 Grid *gAlloc(const dictionary *ini, int nValues){
 
-	//Sanity check
-	iniAssertEqualNElements(ini, 2, "grid:trueSize", "grid:stepSize");
-
 	// Get MPI info
 	int mpiSize, mpiRank;
 	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Load data from ini
-	int nDims, nBnd, nBoundaries;
-	int *trueSizeTemp = iniGetIntArr(ini, "grid:trueSize", &nDims);
-	int *nGhostLayersTemp = iniGetIntArr(ini, "grid:nGhostLayers", &nBoundaries);
-	double *stepSizeTemp = iniGetDoubleArr(ini, "grid:stepSize", &nDims);
-	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , &nBnd);
-
-	//Sanity check
-	if(!(nBnd==(nDims)*2) && !(nBnd == 1)){
-		msg(ERROR, "%d boundary edges specified, need %d, or 1",nBnd, nDims*2 );
-	}
-
-	//More sanity check
-	if(nBoundaries != 2*nDims){
-		msg(ERROR|ONCE, "Need ghost cells depth for all the boundaries: 2*nDims");
-	}
+	int nDims = iniGetInt(ini, "grid:nDims");
+	int *trueSizeTemp = iniGetIntArr(ini, "grid:trueSize", nDims);
+	int *nGhostLayersTemp = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
+	double *stepSizeTemp = iniGetDoubleArr(ini, "grid:stepSize", nDims);
+	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , 2*nDims);
 
 	// Calculate the number of grid points (True points + ghost points)
 	int rank = nDims+1;
@@ -436,41 +423,26 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 
-	//Memory for values and a slice
+	// Memory for values and a slice
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
-	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice)); //Maybe seek
-	//a different solution where it is only stored where needed
+	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+	// Maybe seek a different solution where it is only stored where needed
 
-	//Set boundary conditions, should be cleaned up
-	int inc = 1;
 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
-
-	if(nBnd==1){
-		for(int b = 0; b<2*rank; b++){
-			if(!strcmp(boundaries[0], "PERIODIC")){
-				bnd[b] = PERIODIC;
-			} else if(!strcmp(boundaries[0], "DIRICHLET")){
-				bnd[b] = DIRICHLET;
-			} else if(!strcmp(boundaries[0], "NEUMANN")){
-				bnd[b] = NEUMANN;
-			}
-		}
-	} else {
-		for(int b = 0; b < nBnd; b++){
-			if(!strcmp(boundaries[b], "PERIODIC")){
-				bnd[b+inc] = PERIODIC;
-			} else if(!strcmp(boundaries[b], "DIRICHLET")){
-				bnd[b+inc] = DIRICHLET;
-			} else if(!strcmp(boundaries[b], "NEUMANN")){
-				bnd[b+inc] = NEUMANN;
-			}
-			if(b == rank-2) inc = 2;
+	int b = 0;
+	for(int r=0; r<2*rank; r++){
+		if(r%rank==0){
+			bnd[r] = NONE;
+		} else {
+			if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+			else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+			else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+			else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+			b++;
 		}
 	}
-	bnd[0] = NONE;
-	bnd[rank] = NONE;
 
 	/* Store in Grid */
 	Grid *grid = malloc(sizeof(*grid));
@@ -492,8 +464,6 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 }
 
 MpiInfo *gAllocMpi(const dictionary *ini){
-	//Sanity check
-	iniAssertEqualNElements(ini, 2,"grid:nSubdomains","grid:trueSize");
 
 	// Get MPI info
 	int mpiSize, mpiRank;
@@ -501,11 +471,11 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	// Load data from ini
-	int nDims, temp;
-	int nSpecies = iniGetNElements(ini, "population:nParticles");
-	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", &nDims);
-	int *nGhostLayers = iniGetIntArr(ini, "grid:nGhostLayers", &temp);
-	int *trueSize = iniGetIntArr(ini, "grid:trueSize", &nDims);
+	int nDims = iniGetInt(ini, "grid:nDims");
+	int nSpecies = iniGetInt(ini, "population:nSpecies");
+	int *nSubdomains = iniGetIntArr(ini, "grid:nSubdomains", nDims);
+	int *nGhostLayers = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
+	int *trueSize = iniGetIntArr(ini, "grid:trueSize", nDims);
 	int *nSubdomainsProd = malloc((nDims+1)*sizeof(*nSubdomainsProd));
 	aiCumProd(nSubdomains,nSubdomainsProd,nDims);
 
@@ -566,9 +536,9 @@ void gFree(Grid *grid){
 
 int *gGetGlobalSize(const dictionary *ini){
 
-	int nDims;
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
-	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",&nDims);
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
 	char *bnd = iniGetStr(ini,"grid:boundaries");
 
 	int *L = malloc(nDims*sizeof(*L));
@@ -588,8 +558,8 @@ int *gGetGlobalSize(const dictionary *ini){
 
 long int gGetGlobalVolume(const dictionary *ini){
 
-	int nDims;
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",&nDims);
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
 	free(trueSize);
 
 	int *L = gGetGlobalSize(ini);
@@ -723,11 +693,12 @@ void gCopy(const Grid *original, Grid *copy){
 
 void gNormalizeE(const dictionary *ini, Grid *E){
 
-	int nSpecies, nDims;
-	double *q = iniGetDoubleArr(ini,"population:charge",&nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
+	int nDims = iniGetInt(ini,"grid:nDims");
+	double *q = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:mass",nSpecies);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",&nDims);
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	gMul(E,pow(timeStep,2)*(q[0]/m[0]));
 	for(int p=0;p<E->sizeProd[E->rank];p++){
 		E->val[p] /= stepSize[p%E->size[0]];
@@ -757,7 +728,7 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// msg(STATUS|ONCE, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	// msg(STATUS, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
 	gSub(grid, avgCharge);
@@ -991,11 +962,12 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 
 	// ALLOCATE FOR MIGRANTS AND FIND NUMBER TO ALLOCATE FOR
 
-	int nTest;
-	long int *nEmigrantsAllocTemp = iniGetLongIntArr(ini,"grid:nEmigrantsAlloc",&nTest);
+	int nTest = iniGetNElements(ini,"grid:nEmigrantsAlloc");
 	if(nTest!=nNeighbors && nTest!=1 && nTest!=nDims){
-		msg(ERROR|ONCE,"grid:nEmigrantsAlloc must consist of 1, nDims=%i or 3^nDims=%i elements",nDims,nNeighbors);
+		msg(ERROR,"grid:nEmigrantsAlloc must consist of 1, nDims=%i or 3^nDims=%i elements",nDims,nNeighbors);
 	}
+
+	long int *nEmigrantsAllocTemp = iniGetLongIntArr(ini,"grid:nEmigrantsAlloc",nTest);
 	long int *nEmigrantsAlloc = malloc(nNeighbors*sizeof(*nEmigrantsAlloc));
 
 	// Set all migrant-buffers to the same size
@@ -1039,18 +1011,15 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 			emigrants[i] = malloc(2*nDims*nEmigrantsAlloc[i]*sizeof(*emigrants));
 		}
 
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",&nTest);
-	if(nTest!=2*nDims){
-		msg(ERROR|ONCE,"grid:threshold must be 2*nDims=%i elements", 2*nDims);
-	}
-	for(int i=0;i<2*nDims;i++){
-		// if(thresholds[i]<0) thresholds[i] = size[i%nDims+1] + thresholds[i];
-		if(thresholds[i]<0) thresholds[i] += (size[i%nDims+1]-1);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
+
+	// upper thresholds should be counted from upper edge
+	for(int i=nDims;i<2*nDims;i++){
+		thresholds[i] = (size[i%nDims+1]-1) - thresholds[i];
 	}
 
 	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT
 
-	//long int *nMigrants = malloc(nNeighbors*nSpecies*sizeof(*nMigrants));
 	long int *nEmigrants = malloc(nNeighbors*nSpecies*sizeof(*nEmigrants));
 	long int *nImmigrants = malloc(nNeighbors*nSpecies*sizeof(*nImmigrants));
 

@@ -227,10 +227,11 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 
-	int nDims, nSpecies;
-	double *BExt = iniGetDoubleArr(ini,"fields:BExt",&nDims);
-	double *charge = iniGetDoubleArr(ini,"population:charge",&nSpecies);
-	double *mass = iniGetDoubleArr(ini,"population:mass",&nSpecies);
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int nSpecies = iniGetInt(ini,"grid:nSpecies");
+	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
+	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 	double halfTimeStep = 0.5*iniGetDouble(ini,"time:timeStep");
 
 	for(int s=0;s<nSpecies;s++){
@@ -451,7 +452,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
 			// if(p==371*3)
-			// 	msg(STATUS|ONCE,"x1: %f",x);
+			// 	msg(STATUS,"x1: %f",x);
 
 			if(ne!=neighborhoodCenter){
 				*(emigrants[ne]++) = x;
@@ -470,7 +471,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 				vel[p+2] = vel[pStop-1];
 
 				// if(p==371*3)
-				// 	msg(STATUS|ONCE,"x2: %f",pos[p]);
+				// 	msg(STATUS,"x2: %f",pos[p]);
 
 				pStop -= 3;
 				p -= 3;
@@ -479,7 +480,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 			}
 		}
-		// msg(STATUS|ONCE,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
+		// msg(STATUS,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
 	}
 }
 

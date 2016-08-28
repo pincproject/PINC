@@ -24,11 +24,11 @@
  *
  * @code
  *	void fun1(const char *str){
- *		msg(STATUS|ONCE,"Function 1 called with input: %s",str);
+ *		msg(STATUS,"Function 1 called with input: %s",str);
  *	}
  *
  *	void fun2(const char *str1, const char *str2){
- *		msg(STATUS|ONCE,"Function 2 called with inputs: %s, %s",str1,str2);
+ *		msg(STATUS,"Function 2 called with inputs: %s, %s",str1,str2);
  *	}
  * @endcode
  *
@@ -69,7 +69,7 @@
  *	funPtr fun2_set(dictionary *ini){
  *
  *		int nDims = iniGetInt(ini,"grid:nDims");
- *		if(nDims!=3) msg(ERROR|ONCE, "fun2() requires nDims=3");
+ *		if(nDims!=3) msg(ERROR, "fun2() requires nDims=3");
  *
  *		return &fun2; // Ampersand optional
  *	}
@@ -132,9 +132,9 @@ funPtr selectInner(dictionary *ini, const char *key, const char *string,...);
  * In the case of an ERROR, the program is terminated. Appends end-of-line
  * automatically at the end.
  *
- * The message will by default be printed by all nodes calling msg(), however
- * kind can be bitwise ORed with ONCE to only allow the master to display this
- * message, e.g. STATUS|ONCE.
+ * The message will by default be printed only once. However, the message
+ * kind can be bitwise ORed with ALL, e.g. STATUS|ALL, to print on all MPI
+ * nodes.
  */
 void msg(msgKind kind, const char* restrict format,...);
 
@@ -169,8 +169,6 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  *
  * Comma-separated lists (using "," as delimeter) is interpreted as arrays.
  *
- * Remember to free returned arrays.
- *
  * Example of use:
  *
  * @code
@@ -179,9 +177,17 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  *	iniClose(ini);
  * @endcode
  *
+ *
+ * In the case of fetching arrays the returned array will have as many elements
+ * as specified by nElements. If the entry in the ini-file has fewer elements
+ * than specified they will be repeated, e.g. if 5 elements is read from the
+ * entry "1,2" the elements 1,2,1,2,1 will be returned.
+ *
+ * Remember to free returned arrays.
+ *
  * @param		ini			ini-file dictionary
  * @param		key			Key to get value from ("section:key")
- * @param[out]	nElements	Number of elements in returned array
+ * @param		nElements	Number of elements to fetch (in case of arrays)
  */
 ///@{
 
@@ -226,44 +232,45 @@ double iniGetDouble(const dictionary* ini, const char *key);
 char* iniGetStr(const dictionary *ini, const char *key);
 
 ///@brief Allocate and get array of integers (remember to free)
-int* iniGetIntArr(const dictionary *ini, const char *key, int *nElements);
+int* iniGetIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of long ints (remember to free)
-long int* iniGetLongIntArr(const dictionary *ini, const char *key, int *nElements);
+long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of doubles (remember to free)
-double* iniGetDoubleArr(const dictionary *ini, const char *key, int *nElements);
+double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements);
 
 /**
  * @brief Get the array of strings associated to a key.
  * @param			ini			Dictionary to search
  * @param			key			Key string to look for
- * @param[out]		nElements	Number of elements in returned array
+ * @param[out]		nElements	Number of elements to get
  * @return			NULL-terminated array of NULL-terminated strings
  *
  * Output is similar to listToStrArr(). Remember to free resulting string array
  * using freeStrArr().
  */
-char** iniGetStrArr(const dictionary *ini, const char *key, int *nElements);
+char** iniGetStrArr(const dictionary *ini, const char *key, int nElements);
 
 ///@brief Get the number of elements in an array/comma-separated list
 int iniGetNElements(const dictionary* ini, const char* key);
 
 /**
- * @brief Assert that a number of entries are arrays of equal length.
- * @param			ini			Dictionary to search
- * @param			nKey		Number of keys to search for
- * @param			...			Keys to search for
- * @return			Number of elements in arrays
- * @see				iniGetNElements()
+ * @brief Apply multiplicator to entries in ini-file with suffix.
+ * @param[in,out]	ini			Dictionary to search
+ * @param			key			Key string to look for
+ * @param			suffix		Suffix string to look for
+ * @param			mul			Multiplier(s)
+ * @param			mulLen		Length of mul
+ * @return			void
  *
- * Example:
- * @code
- *	iniAssertEqualNElements(ini,3,"mySec:a","mySec:b","mySec:c");
- * @endcode
- *
- * This code does nothing if the specified entries have equal length. Unequal
- * lengths will lead to an error.
+ * Changes the dictionary for later use. Searches through elements in a list
+ * specified by key and, and if suffix is present, multiplies each entry by
+ * a multiplier. Entry i in the list is multiplied by mul[i%mulLen]. Notice
+ * that this is purely a "parsing" feature. I.e. it does not know how to expand
+ * a single element into three, that is done on a later stage by get-functions.
  */
-int iniAssertEqualNElements(const dictionary *ini, int nKeys, ...);
+void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const double *mul, int mulLen);
+
+void parseIndirectInput(dictionary *ini);
 
 ///@}
 
