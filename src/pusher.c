@@ -462,7 +462,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
 			// if(p==371*3)
-			// 	msg(STATUS|ONCE,"x1: %f",x);
+			// 	msg(STATUS,"x1: %f",x);
 
 			if(ne!=neighborhoodCenter){
 				*(emigrants[ne]++) = x;
@@ -481,7 +481,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 				vel[p+2] = vel[pStop-1];
 
 				// if(p==371*3)
-				// 	msg(STATUS|ONCE,"x2: %f",pos[p]);
+				// 	msg(STATUS,"x2: %f",pos[p]);
 
 				pStop -= 3;
 				p -= 3;
@@ -490,7 +490,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 			}
 		}
-		// msg(STATUS|ONCE,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
+		// msg(STATUS,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
 	}
 }
 

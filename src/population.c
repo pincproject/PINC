@@ -55,7 +55,7 @@ Population *pAlloc(const dictionary *ini){
 	for(int s=0;s<nSpecies;s++){
 		nAlloc[s] = ceil((double)nAllocTotal[s]/size);
 		if(nAlloc[s]*size!=nAllocTotal[s])
-			msg(WARNING|ONCE,"increased number of allocated particles from %i to %i to get integer per computing node",
+			msg(WARNING,"increased number of allocated particles from %i to %i to get integer per computing node",
 				nAllocTotal[s],nAlloc[s]*size);
 	}
 
@@ -593,7 +593,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 			H5Sclose(memSpace);
 
 		} else {
-			msg(WARNING|ONCE,"No particles to store in .h5-file");
+			msg(WARNING,"No particles to store in .h5-file");
 		}
 	}
  	free(offsetAllSubdomains);

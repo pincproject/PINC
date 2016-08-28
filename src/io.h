@@ -24,11 +24,11 @@
  *
  * @code
  *	void fun1(const char *str){
- *		msg(STATUS|ONCE,"Function 1 called with input: %s",str);
+ *		msg(STATUS,"Function 1 called with input: %s",str);
  *	}
  *
  *	void fun2(const char *str1, const char *str2){
- *		msg(STATUS|ONCE,"Function 2 called with inputs: %s, %s",str1,str2);
+ *		msg(STATUS,"Function 2 called with inputs: %s, %s",str1,str2);
  *	}
  * @endcode
  *
@@ -69,7 +69,7 @@
  *	funPtr fun2_set(dictionary *ini){
  *
  *		int nDims = iniGetInt(ini,"grid:nDims");
- *		if(nDims!=3) msg(ERROR|ONCE, "fun2() requires nDims=3");
+ *		if(nDims!=3) msg(ERROR, "fun2() requires nDims=3");
  *
  *		return &fun2; // Ampersand optional
  *	}
@@ -132,9 +132,9 @@ funPtr selectInner(dictionary *ini, const char *key, const char *string,...);
  * In the case of an ERROR, the program is terminated. Appends end-of-line
  * automatically at the end.
  *
- * The message will by default be printed by all nodes calling msg(), however
- * kind can be bitwise ORed with ONCE to only allow the master to display this
- * message, e.g. STATUS|ONCE.
+ * The message will by default be printed only once. However, the message
+ * kind can be bitwise ORed with ALL, e.g. STATUS|ALL, to print on all MPI
+ * nodes.
  */
 void msg(msgKind kind, const char* restrict format,...);
 

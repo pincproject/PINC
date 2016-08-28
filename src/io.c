@@ -154,7 +154,7 @@ funPtr selectInner(dictionary *ini, const char *key, const char *list,...){
 			strcat(valid,str);
 		}
 
-		msg(ERROR|ONCE,"%s=%s invalid. Valid arguments:%s.",key,value,valid);
+		msg(ERROR,"%s=%s invalid. Valid arguments:%s.",key,value,valid);
 		free(valid);
 	}
 
@@ -181,14 +181,14 @@ void msg(msgKind kind, const char* restrict format,...){
 	FILE *stream = stdout;
 	switch(kind&0x0F){
 		case STATUS:
-			strcpy(prefix,"STATUS");
+			strcpy(prefix, "STATUS");
 			break;
 		case WARNING:
-			strcpy(prefix,"WARNING");
+			strcpy(prefix, "WARNING");
 			stream = stderr;
 			break;
 		case ERROR:
-			strcpy(prefix,"ERROR");
+			strcpy(prefix, "ERROR");
 			stream = stderr;
 			break;
 	    case TIMER:
@@ -205,7 +205,7 @@ void msg(msgKind kind, const char* restrict format,...){
 	va_end(args);
 
 	// Print message
-	if(!(kind&ONCE) || rank==0){
+	if((kind&ALL) || rank==0){
 		fprintf(stream,"%s\n",buffer);
 	}
 
@@ -285,17 +285,17 @@ dictionary* iniOpen(int argc, char *argv[]){
 
 		// Make file empty (unless using stdout or stderr)
 		if(strcmp(fName,"")==0){
-			msg(WARNING|ONCE,"%s not specified. Using stdout.",keys[i]);
+			msg(WARNING,"%s not specified. Using stdout.",keys[i]);
 		} else if(strcmp(fName,"stdout")!=0 && strcmp(fName,"stderr")!=0) {
 
 			if(makePath(fName))
-				msg(ERROR|ONCE,"Could not open or create path of '%s'",fName);
+				msg(ERROR,"Could not open or create path of '%s'",fName);
 
 			// // check whether file exists
 			// FILE *fh = fopen(fName,"r");
 			// if(fh!=NULL){
 			// 	fclose(fh);
-			// 	msg(ERROR|ONCE,"'%s' already exists.",fName);
+			// 	msg(ERROR,"'%s' already exists.",fName);
 			// }
 		}
 
@@ -315,7 +315,7 @@ void iniClose(dictionary *ini){
 void iniAssertExistence(const dictionary *ini, const char* key){
 
 	if(!iniparser_find_entry((dictionary*)ini,key)){
-		msg(ERROR|ONCE,"Key \"%s\" not found in input file",key);
+		msg(ERROR,"Key \"%s\" not found in input file",key);
 	}
 }
 
@@ -416,9 +416,9 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 	if(nElements<nListElements){
 		int nIgnored = nListElements - nElements;
 		if(nIgnored==1){
-			msg(WARNING|ONCE, "Ignoring last element in %s",key);
+			msg(WARNING, "Ignoring last element in %s",key);
 		} else {
-			msg(WARNING|ONCE, "Ignoring last %d elements in %s",nIgnored,key);
+			msg(WARNING, "Ignoring last %d elements in %s",nIgnored,key);
 		}
 	}
 
@@ -479,7 +479,7 @@ hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
 
 	// Make sure parent folder exist
 	if(makePath(fName))
-		msg(ERROR|ONCE,"Could not open or create folder for '%s'.",fTotName);
+		msg(ERROR,"Could not open or create folder for '%s'.",fTotName);
 
 	hid_t file;	// h5 file handle
 
@@ -508,7 +508,7 @@ void setH5Attr(hid_t h5, const char *name, const double *value, int size){
 		char fName[fNameSize];
 		H5Fget_name(h5,fName,fNameSize);
 
-		msg(WARNING|ONCE,"overwriting attribute \"%s\" in %s",name,fName);
+		msg(WARNING,"overwriting attribute \"%s\" in %s",name,fName);
 
 		H5Adelete(h5,name);
 

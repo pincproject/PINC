@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
 	 */
 	MPI_Init(&argc,&argv);
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
-	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
+	msg(STATUS, "PINC started.");    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 	parseIndirectInput(ini);
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;
@@ -62,7 +62,7 @@ void regular(dictionary *ini){
 	// void (*acc)() = NULL;
 	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
 	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR|ONCE,"methods:acc=%s is an invalid option")
+	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -156,7 +156,7 @@ void regular(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-		msg(STATUS|ONCE,"Computing time-step %i",n);
+		msg(STATUS,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)

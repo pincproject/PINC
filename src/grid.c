@@ -157,7 +157,7 @@ static int *getSubdomain(const dictionary *ini){
 	// Sanity check
 	int totalNSubdomains = aiProd(nSubdomains,nDims);
 	if(totalNSubdomains!=mpiSize)
-		msg(ERROR|ONCE,"The product of grid:nSubdomains does not match the number of MPI processes");
+		msg(ERROR,"The product of grid:nSubdomains does not match the number of MPI processes");
 
 	// Determine subdomain of this MPI node
 	int *subdomain = malloc(nDims*sizeof(*subdomain));
@@ -728,7 +728,7 @@ void gNeutralizeGrid(Grid *grid, const MpiInfo *mpiInfo){
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// msg(STATUS|ONCE, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	// msg(STATUS, "DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	double avgCharge = totCharge/((double)aiProd(&trueSize[1] , rank-1)*mpiSize);
 
 	gSub(grid, avgCharge);

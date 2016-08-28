@@ -75,13 +75,13 @@ void tReset(Timer *t){
 void tMsg(long long int nanoSec, const char *string){
 
 	if(nanoSec >= 1e9){
-		msg(TIMER|ONCE, "%s %6.2fs ", string, (double) nanoSec/1e9);
+		msg(TIMER, "%s %6.2fs ", string, (double) nanoSec/1e9);
 	} else if(nanoSec>1e6) {
-		msg(TIMER|ONCE, "%s %6.2fms ", string, (double) nanoSec/1e6);
+		msg(TIMER, "%s %6.2fms ", string, (double) nanoSec/1e6);
 	} else if(nanoSec>1e3) {
-		msg(TIMER|ONCE, "%s %6.2fus ", string, (double) nanoSec/1e3);
+		msg(TIMER, "%s %6.2fus ", string, (double) nanoSec/1e3);
 	} else {
-		msg(TIMER|ONCE, "%s %6.2fns ", string, (double) nanoSec);
+		msg(TIMER, "%s %6.2fns ", string, (double) nanoSec);
 	}
 
 }
@@ -482,7 +482,7 @@ void dumpTrueGrid(dictionary *ini, Grid *grid){
 	long int *sizeProd = grid->sizeProd;
 	int nDims = grid->rank -1;
 
-	msg(STATUS|ONCE, "Dumps grid to parsefile");
+	msg(STATUS, "Dumps grid to parsefile");
 	if(nDims == 3){
 		fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
  		 			size[1], size[2], size[3]);
@@ -521,7 +521,7 @@ void dumpWholeGrid(dictionary *ini, Grid *grid){
     long int *sizeProd = grid->sizeProd;
     int nDims = grid->rank -1;
 
-    msg(STATUS|ONCE, "Dumps grid to parsefile");
+    msg(STATUS, "Dumps grid to parsefile");
     if(nDims == 3){
 	   fMsg(ini,"parsedump", "\nDump of 3D grid: (%dx%dx%d) \n \n",
  				   size[1], size[2], size[3]);
