@@ -25,6 +25,9 @@ static void puInterpND1Inner(	double *result, const double *val, long int p,
 								const long int *mul, long int lastMul,
 								int nDims, double *decimal, double *complement,
 								double factor);
+static void puDistrND1Inner(	double *val, long int p, const long int *mul,
+								long int lastMul, double *decimal,
+								double *complement, double factor);
 static inline void addCross(const double *a, const double *b, double *res);
 
 /******************************************************************************
@@ -50,6 +53,29 @@ void puMove(Population *pop){
 }
 
 funPtr puAcc3D1_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(nDims!=3)
+		msg(ERROR,"puAcc3D1 only supports grid:nDims=3");
+
+	if(minLayers<1)
+		msg(ERROR,"puAcc3D1 requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puAcc3D1 requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puAcc3D1 is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
 	return puAcc3D1;
 }
 void puAcc3D1(Population *pop, Grid *E){
@@ -79,6 +105,29 @@ void puAcc3D1(Population *pop, Grid *E){
 }
 
 funPtr puAcc3D1KE_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(nDims!=3)
+		msg(ERROR,"puAcc3D1KE only supports grid:nDims=3");
+
+	if(minLayers<1)
+		msg(ERROR,"puAcc3D1KE requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puAcc3D1KE requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puAcc3D1KE is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
 	return puAcc3D1KE;
 }
 void puAcc3D1KE(Population *pop, Grid *E){
@@ -118,6 +167,26 @@ void puAcc3D1KE(Population *pop, Grid *E){
 	}
 }
 funPtr puAccND1KE_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(minLayers<1)
+		msg(ERROR,"puAccND1KE requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puAccND1KE requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puAccND1KE is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
 	return puAccND1KE;
 }
 void puAccND1KE(Population *pop, Grid *E){
@@ -156,6 +225,69 @@ void puAccND1KE(Population *pop, Grid *E){
 		}
 
 		kinEnergy[s]*=mass[s];
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+
+	free(dv);
+	free(integer);
+	free(decimal);
+	free(complement);
+}
+
+funPtr puAccND1_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(minLayers<1)
+		msg(ERROR,"puAccND1 requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puAccND1 requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puAccND1 is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
+	return puAccND1;
+}
+void puAccND1(Population *pop, Grid *E){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	double *dv = malloc(nDims*sizeof(*dv));
+	int *integer = malloc(nDims*sizeof(*integer));
+	double *decimal = malloc(nDims*sizeof(*decimal));
+	double *complement = malloc(nDims*sizeof(*complement));
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+
+			puInterpND1(dv,&pos[p],val,sizeProd,nDims,integer,decimal,complement);
+			for(int d=0;d<nDims;d++){
+				vel[p+d] += dv[d];
+			}
+		}
+
 
 		// Specie-specific re-normalization
 		gMul(E,pop->renormE[s]);
@@ -282,6 +414,30 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 
 
 funPtr puDistr3D1_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(nDims!=3)
+		msg(ERROR,"puDistr3D1 only supports grid:nDims=3");
+
+	if(minLayers<1)
+		msg(ERROR,"puDistr3D1 requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puDistr3D1 requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puDistr3D1 is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
+
 	return puDistr3D1;
 }
 void puDistr3D1(const Population *pop, Grid *rho){
@@ -340,6 +496,89 @@ void puDistr3D1(const Population *pop, Grid *rho){
 
 		gMul(rho,pop->renormRho[s]);
 
+	}
+
+}
+
+funPtr puDistrND1_set(dictionary *ini){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	int minThreshold = aiMin(thresholds,2*nDims);
+
+	if(minLayers<1)
+		msg(ERROR,"puDistrND1 requires grid:nGhostLayers at least 1");
+
+	if(minThreshold<0)
+		msg(ERROR,"puDistrND1 requires positive grid:thresholds");
+
+	if(minThreshold==0)
+		msg(WARNING,"puDistrND1 is not very well tested for grid:thresholds of exactly 0");
+
+	free(nGhostLayers);
+	free(thresholds);
+
+	return puDistrND1;
+}
+void puDistrND1(const Population *pop, Grid *rho){
+
+	gZero(rho);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	int *integer = malloc(nDims*sizeof(*integer));
+	double *decimal = malloc(nDims*sizeof(*decimal));
+	double *complement = malloc(nDims*sizeof(*complement));
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				integer[d] = (int) pos[d];
+				decimal[d] = pos[d] - integer[d];
+				complement[d] = 1 - decimal[d];
+
+				p += integer[d]*sizeProd[d+1];
+			}
+
+			puDistrND1Inner(val,p,&sizeProd[nDims],sizeProd[1],&decimal[nDims-1],&complement[nDims-1],1);
+
+		}
+
+		gMul(rho,pop->renormRho[s]);
+
+	}
+
+	free(integer);
+	free(decimal);
+	free(complement);
+}
+
+static void puDistrND1Inner(	double *val, long int p, const long int *mul,
+								long int lastMul, double *decimal,
+								double *complement, double factor){
+
+	if(*mul==lastMul){
+		val[p     ] += *complement*factor;
+		val[p+*mul] += *decimal*factor;
+	} else {
+		puDistrND1Inner(val,p     ,mul-1,lastMul,decimal-1,complement-1,*complement*factor);
+		puDistrND1Inner(val,p+*mul,mul-1,lastMul,decimal-1,complement-1,*decimal   *factor);
 	}
 
 }
