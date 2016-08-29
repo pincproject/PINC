@@ -56,10 +56,10 @@ funPtr puAcc3D1_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(nDims!=3)
 		msg(ERROR,"puAcc3D1 only supports grid:nDims=3");
@@ -108,10 +108,10 @@ funPtr puAcc3D1KE_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(nDims!=3)
 		msg(ERROR,"puAcc3D1KE only supports grid:nDims=3");
@@ -170,10 +170,10 @@ funPtr puAccND1KE_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(minLayers<1)
 		msg(ERROR,"puAccND1KE requires grid:nGhostLayers at least 1");
@@ -240,10 +240,10 @@ funPtr puAccND1_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(minLayers<1)
 		msg(ERROR,"puAccND1 requires grid:nGhostLayers at least 1");
@@ -417,10 +417,10 @@ funPtr puDistr3D1_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(nDims!=3)
 		msg(ERROR,"puDistr3D1 only supports grid:nDims=3");
@@ -436,7 +436,6 @@ funPtr puDistr3D1_set(dictionary *ini){
 
 	free(nGhostLayers);
 	free(thresholds);
-
 
 	return puDistr3D1;
 }
@@ -504,10 +503,10 @@ funPtr puDistrND1_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	int *thresholds = iniGetIntArr(ini,"grid:thresholds",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
 
 	int minLayers = aiMin(nGhostLayers,2*nDims);
-	int minThreshold = aiMin(thresholds,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
 
 	if(minLayers<1)
 		msg(ERROR,"puDistrND1 requires grid:nGhostLayers at least 1");
