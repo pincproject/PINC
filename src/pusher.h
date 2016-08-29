@@ -149,7 +149,7 @@ funPtr puAccND0KE_set(dictionary *ini);
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
 
 
-/** @name Accelerators (with interpolation)
+/** @name Distributors
  * These functions distributes or deposits charges onto the charge densty grid
  * by interpolating the charges onto the nearest grid points. They are named
  * puDistrXDY() where X signifies the dimensionality and Y the order of
