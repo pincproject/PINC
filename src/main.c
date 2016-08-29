@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
 	 */
 	MPI_Init(&argc,&argv);
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
-	msg(STATUS, "PINC started.");    // Needs MPI
+	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 	parseIndirectInput(ini);
 

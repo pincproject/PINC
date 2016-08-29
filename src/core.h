@@ -21,6 +21,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <gsl/gsl_rng.h>
+#include "version.h"
 
 /******************************************************************************
  * DEFINING PHYSICAL CONSTANTS (following SI standard)

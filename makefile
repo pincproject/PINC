@@ -49,11 +49,11 @@ LIBHEAD_= iniparser/src/iniparser.h
 LIBOBJ = $(patsubst %,$(LDIR)/%,$(LIBOBJ_))
 LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
-all: $(EXEC) cleantestdata doc
+all: version $(EXEC) cleantestdata doc
 
-local: $(EXEC).local cleantestdata doc
+local: version $(EXEC).local cleantestdata doc
 
-test: $(EXEC).test cleantestdata doc
+test: version $(EXEC).test cleantestdata doc
 	@echo "Running Unit Tests"
 	@echo $(TEST)
 	@./$(EXEC) input.ini
@@ -89,6 +89,11 @@ $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
 	@cd $(LDIR)/iniparser && $(MAKE) libiniparser.a > /dev/null 2>&1
 
+.phony: version
+version:
+	@echo "Embedding git version"
+	@echo "#define VERSION \"$(shell git describe --abbrev=4 --dirty --always --tags)\"" > $(SDIR)/version.h
+
 $(DDIR)/doxygen/doxyfile.inc: $(DDIR)/doxygen/doxyfile.mk $(THDIR)/test.h $(TSDIR)/test.c $(DDIR)/doxygen/$(DOC_)
 	@echo INPUT	= ../../$(SDIR) ../../$(HDIR) ../../$(TSDIR) ../../$(THDIR) ../../$(DDIR)/doxygen > $(DDIR)/doxygen/doxyfile.inc
 	@echo FILE_PATTERNS	= $(HEAD_) $(SRC_) $(DOC_) test.h test.c  >> $(DDIR)/doxygen/doxyfile.inc
@@ -100,7 +105,6 @@ doc: $(HEAD) $(SRC) $(DDIR)/doxygen/doxyfile.inc
 
 pdf: doc
 	@echo "Making PDF"
-#	@cd $(DDIR)/latex && $(MAKE) > /dev/null 2>&1
 	cd $(DDIR)/latex && $(MAKE)	# Intentionally verbose to spot LaTeX errors
 
 cleandoc:
