@@ -17,6 +17,9 @@
  *****************************************************************************/
 
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd);
+static inline void puInterpND0(	double *result, const double *pos,
+								const double *val, const long int *sizeProd,
+								int nDims);
 static inline void puInterpND1(	double *result, const double *pos,
 								const double *val, const long int *sizeProd,
 								int nDims, int *integer, double *decimal,
@@ -217,6 +220,88 @@ void puAccND1(Population *pop, Grid *E){
 	free(integer);
 	free(decimal);
 	free(complement);
+}
+
+funPtr puAccND0KE_set(dictionary *ini){
+	puSanity(ini,"puAccND0KE",0,0);
+	return puAccND0KE;
+}
+void puAccND0KE(Population *pop, Grid *E){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+	double *mass = pop->mass;
+	double *kinEnergy = pop->kinEnergy;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	double *dv = malloc(nDims*sizeof(*dv));
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		kinEnergy[s]=0;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+
+			puInterpND0(dv,&pos[p],val,sizeProd,nDims);
+			double velSquared=0;
+			for(int d=0;d<nDims;d++){
+				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
+				vel[p+d] += dv[d];
+			}
+			kinEnergy[s]+=velSquared;
+		}
+
+		kinEnergy[s]*=mass[s];
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+
+	free(dv);
+}
+
+funPtr puAccND0_set(dictionary *ini){
+	puSanity(ini,"puAccND0",0,0);
+	return puAccND0KE;
+}
+void puAccND0(Population *pop, Grid *E){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	double *dv = malloc(nDims*sizeof(*dv));
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		for(long int p=pStart;p<pStop;p+=nDims){
+
+			puInterpND0(dv,&pos[p],val,sizeProd,nDims);
+			for(int d=0;d<nDims;d++){
+				vel[p+d] += dv[d];
+			}
+		}
+
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+	}
+
+	free(dv);
 }
 
 
@@ -459,6 +544,44 @@ static void puDistrND1Inner(	double *val, long int p, const long int *mul,
 		puDistrND1Inner(val,p+*mul,mul-1,lastMul,decimal-1,complement-1,*decimal   *factor);
 	}
 
+}
+
+funPtr puDistrND0_set(dictionary *ini){
+	puSanity(ini,"puDistrND0",0,0);
+	return puDistrND0;
+}
+void puDistrND0(const Population *pop, Grid *rho){
+
+	gZero(rho);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				int integer = (int)(pos[d]+0.5);
+				p += integer*sizeProd[d+1];
+			}
+			val[p]++;
+
+		}
+
+		gMul(rho,pop->renormRho[s]);
+
+	}
 }
 
 /******************************************************************************
@@ -820,13 +943,6 @@ void puReflect(){
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
 
-// static inline void puInterp3D0();
-// static inline void puInterp3D1(); // IMPLEMENTED
-// static inline void puInterp3D2();
-// static inline void puInterpND0();
-// static inline void puInterpND1();
-// static inline void puInterpND2();
-
 static void puSanity(dictionary *ini, const char* name, int dim, int order){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
@@ -855,10 +971,10 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order){
 	if(order==2) reqMinThreshold = 0.5;
 
 	if(minThreshold<reqMinThreshold)
-		msg(ERROR,"%s requires grid:thresholds >=%.1f",name,reqThreshold);
+		msg(ERROR,"%s requires grid:thresholds >=%.1f",name,reqMinThreshold);
 
 	if(minThreshold==reqMinThreshold)
-		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly %.1f",name,reqThreshold);
+		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly %.1f",name,reqMinThreshold);
 
 	double reqMaxThreshold = minLayers-0.5;
 
@@ -946,6 +1062,21 @@ static void puInterpND1Inner(	double *result, const double *val, long int p,
 
 }
 
+static inline void puInterpND0(	double *result, const double *pos,
+								const double *val, const long int *sizeProd,
+								int nDims){
+
+	long int p = 0;
+	for(int d=0;d<nDims;d++){
+		int integer = (int)(pos[d]+0.5);
+		p += sizeProd[d+1] * integer;
+	}
+
+	for(int d=0;d<nDims;d++){
+		result[d] = val[p+d];
+	}
+
+}
 
 
 int puNeighborToReciprocal(int neighbor, int nDims){
