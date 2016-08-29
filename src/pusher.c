@@ -21,7 +21,7 @@ static inline void puInterpND1(	double *result, const double *pos,
 								const double *val, const long int *sizeProd,
 								int nDims, int *integer, double *decimal,
 								double *complement);
-static void puInterpND1Inner(	double *result, const double *val, long int p, 
+static void puInterpND1Inner(	double *result, const double *val, long int p,
 								const long int *mul, long int lastMul,
 								int nDims, double *decimal, double *complement,
 								double factor);
@@ -29,6 +29,8 @@ static void puDistrND1Inner(	double *val, long int p, const long int *mul,
 								long int lastMul, double *decimal,
 								double *complement, double factor);
 static inline void addCross(const double *a, const double *b, double *res);
+
+static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
@@ -53,29 +55,7 @@ void puMove(Population *pop){
 }
 
 funPtr puAcc3D1_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(nDims!=3)
-		msg(ERROR,"puAcc3D1 only supports grid:nDims=3");
-
-	if(minLayers<1)
-		msg(ERROR,"puAcc3D1 requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puAcc3D1 requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puAcc3D1 is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puAcc3D1",3,1);
 	return puAcc3D1;
 }
 void puAcc3D1(Population *pop, Grid *E){
@@ -105,29 +85,7 @@ void puAcc3D1(Population *pop, Grid *E){
 }
 
 funPtr puAcc3D1KE_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(nDims!=3)
-		msg(ERROR,"puAcc3D1KE only supports grid:nDims=3");
-
-	if(minLayers<1)
-		msg(ERROR,"puAcc3D1KE requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puAcc3D1KE requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puAcc3D1KE is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puAcc3D1KE",3,1);
 	return puAcc3D1KE;
 }
 void puAcc3D1KE(Population *pop, Grid *E){
@@ -167,26 +125,7 @@ void puAcc3D1KE(Population *pop, Grid *E){
 	}
 }
 funPtr puAccND1KE_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(minLayers<1)
-		msg(ERROR,"puAccND1KE requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puAccND1KE requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puAccND1KE is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puAccND1KE",0,1);
 	return puAccND1KE;
 }
 void puAccND1KE(Population *pop, Grid *E){
@@ -237,26 +176,7 @@ void puAccND1KE(Population *pop, Grid *E){
 }
 
 funPtr puAccND1_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(minLayers<1)
-		msg(ERROR,"puAccND1 requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puAccND1 requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puAccND1 is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puAccND1",0,1);
 	return puAccND1;
 }
 void puAccND1(Population *pop, Grid *E){
@@ -414,29 +334,7 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 
 
 funPtr puDistr3D1_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(nDims!=3)
-		msg(ERROR,"puDistr3D1 only supports grid:nDims=3");
-
-	if(minLayers<1)
-		msg(ERROR,"puDistr3D1 requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puDistr3D1 requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puDistr3D1 is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puDistr3D1",3,1);
 	return puDistr3D1;
 }
 void puDistr3D1(const Population *pop, Grid *rho){
@@ -500,26 +398,7 @@ void puDistr3D1(const Population *pop, Grid *rho){
 }
 
 funPtr puDistrND1_set(dictionary *ini){
-
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
-
-	int minLayers = aiMin(nGhostLayers,2*nDims);
-	double minThreshold = adMin(thresholds,2*nDims);
-
-	if(minLayers<1)
-		msg(ERROR,"puDistrND1 requires grid:nGhostLayers at least 1");
-
-	if(minThreshold<0)
-		msg(ERROR,"puDistrND1 requires positive grid:thresholds");
-
-	if(minThreshold==0)
-		msg(WARNING,"puDistrND1 is not very well tested for grid:thresholds of exactly 0");
-
-	free(nGhostLayers);
-	free(thresholds);
-
+	puSanity(ini,"puDistrND1",0,1);
 	return puDistrND1;
 }
 void puDistrND1(const Population *pop, Grid *rho){
@@ -948,6 +827,52 @@ void puReflect(){
 // static inline void puInterpND1();
 // static inline void puInterpND2();
 
+static void puSanity(dictionary *ini, const char* name, int dim, int order){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
+
+	// TBD: can be improved by checking dimensions separately
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
+	double maxThreshold = adMax(thresholds,2*nDims);
+
+	if(nDims!=dim && dim!=0)
+		msg(ERROR,"%s only supports grid:nDims=%d",name,dim);
+
+	int reqLayers = 0;
+	if(order==0) reqLayers = 0;
+	if(order==1) reqLayers = 1;
+	if(order==2) reqLayers = 1;
+
+	if(minLayers<1)
+		msg(ERROR,"%s requires grid:nGhostLayers >=%d",name,reqLayers);
+
+	double reqMinThreshold = 0;
+	if(order==0) reqMinThreshold = -0.5;
+	if(order==1) reqMinThreshold = 0;
+	if(order==2) reqMinThreshold = 0.5;
+
+	if(minThreshold<reqMinThreshold)
+		msg(ERROR,"%s requires grid:thresholds >=%.1f",name,reqThreshold);
+
+	if(minThreshold==reqMinThreshold)
+		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly %.1f",name,reqThreshold);
+
+	double reqMaxThreshold = minLayers-0.5;
+
+	if(maxThreshold>reqMaxThreshold)
+		msg(ERROR,"%s requires grid:thresholds <= grid:nGhostLayers - 0.5",name);
+
+	if(minThreshold==reqMaxThreshold)
+		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly equal to grid:nGhostLayers - 0.5",name);
+
+	free(nGhostLayers);
+	free(thresholds);
+
+}
+
 static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd){
 
 	// Integer parts of position
@@ -1004,7 +929,7 @@ static inline void puInterpND1(	double *result, const double *pos,
 
 }
 
-static void puInterpND1Inner(	double *result, const double *val, long int p, 
+static void puInterpND1Inner(	double *result, const double *val, long int p,
 								const long int *mul, long int lastMul,
 								int nDims, double *decimal, double *complement,
 								double factor){
