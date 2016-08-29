@@ -263,6 +263,21 @@ void mgHalfRestrict2D(const Grid *fine, Grid *coarse);
 void mgHalfRestrict3D(const Grid *fine, Grid *coarse);
 
 /**
+ * @brief Half weight restriction, ND
+ * @param	fine	Source term
+ * @param	coarse	Solution term
+ * @return	coarse
+ *
+ *	Implementation of a half weight restriction scheme, copying the fine
+ *	down to the coarser grid.
+ *
+ */
+
+void mgHalfRestrictND(const Grid *fine, Grid *coarse);
+
+
+
+/**
  * @brief Bilinear interpolation, 2D
  * @param	fine	Fine grid
  * @param	coarse	Coarse grid
@@ -288,7 +303,19 @@ void mgBilinProl2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  *
  */
 void mgBilinProl3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+/**
+ * @brief Bilinear interpolation, ND
+ * @param	fine	Fine grid
+ * @param	coarse	Coarse grid
+ * @param	mpiInfo	Subdomain information
+ * @return	fine
+ *
+ *	Implementation of a bilnear interpolation scheme, instructterpolating the coarse
+ *	grid onto the fine grid.
+ *
+ */
 
+void mgBilinProlND(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo);
 
 /*
  * @brief Restrict boundary conditions down to coarser grids

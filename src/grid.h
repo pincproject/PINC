@@ -549,7 +549,7 @@ long int gGetGlobalVolume(const dictionary *ini);
 
 void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);
-void dumpWholeGridIndex(dictionary *ini, Grid *grid);
+void fillGridIndexes(Grid *grid);
 
 
 /**

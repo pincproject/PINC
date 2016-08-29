@@ -95,9 +95,10 @@ void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 		if(rank == 3)	multigrid->restrictor = &mgHalfRestrict2D;
 		else if(rank == 4) multigrid->restrictor = &mgHalfRestrict3D;
 		else msg(ERROR, "No restricting algorithm for D%d", rank-1);
-	} else {
-		msg(ERROR, "No restrict stencil specified");
-	}
+	} else if(!strcmp(restrictor, "halfWeightND")){
+		multigrid->restrictor = & mgHalfRestrictND;
+	} else msg(ERROR, "No restrict stencil specified");
+
 	if(!strcmp(prolongator, "bilinear")){
 		if(rank == 3)	multigrid->prolongator = &mgBilinProl2D;
 		else if(rank==4)	multigrid->prolongator = &mgBilinProl3D;
@@ -310,12 +311,12 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
  	//Grids
- 	Grid *phi = gAlloc(ini, 1);
- 	Grid *rho = gAlloc(ini, 1);
- 	Grid *res= gAlloc(ini, 1);
- 	Grid *sol = gAlloc(ini, 1);
- 	Grid *E = gAlloc(ini, 3);
- 	Grid *error =gAlloc(ini, 1);
+ 	Grid *phi = gAlloc(ini, SCALAR);
+ 	Grid *rho = gAlloc(ini, SCALAR);
+ 	Grid *res= gAlloc(ini, SCALAR);
+ 	Grid *sol = gAlloc(ini, SCALAR);
+ 	Grid *E = gAlloc(ini, VECTOR);
+ 	Grid *error =gAlloc(ini, SCALAR);
 
  	//Multilevel grids
  	Multigrid *mgPhi = mgAlloc(ini, phi);
@@ -325,17 +326,23 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	MgAlgo mgAlgo = getMgAlgo(ini);
 
  	//Sets the boudary slices
- 	gSetBndSlices(phi, mpiInfo);
- 	mgRestrictBnd(mgPhi);
+ // 	gSetBndSlices(phi, mpiInfo);
+ // 	mgRestrictBnd(mgPhi);
+	//
+ // 	gBnd(phi, mpiInfo);
+ // 	gBnd(mgPhi->grids[1], mpiInfo);
 
- 	// gBnd(phi, mpiInfo);
- 	// gBnd(mgPhi->grids[1], mpiInfo);
+	fillGridIndexes(mgRho->grids[1]);
+	if(mpiInfo->mpiRank==0)	dumpWholeGrid(ini, mgRho->grids[1]);
 
- 	// dumpWholeGrid(ini, phi);
- 	// dumpWholeGrid(ini, mgPhi->grids[1]);
- 	//
- 	// return;
+	fillGridIndexes(rho);
+	if(mpiInfo->mpiRank==0) dumpWholeGrid(ini, mgRho->grids[0]);
 
+	mgBilinProlND(rho,mgRho->grids[1], mpiInfo);
+	if(mpiInfo->mpiRank==0) dumpWholeGrid(ini, mgRho->grids[0]);
+
+
+	return;
 
  	int rank = rho->rank;
  	Timer *t = tAlloc(rank);
@@ -358,6 +365,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	// gHaloOp(setSlice, sol, mpiInfo);
  	// gFinDiff2nd3D(rho, sol);
 
+
  	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
  	gNeutralizeGrid(rho, mpiInfo);
 
@@ -367,7 +375,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 	double resSquared;
 	int run = 1;
 
-	// while(avgError>tol){
+	while(avgError>tol){
 		// avgError--;
 		// Run solver
 		// gZero(res);
@@ -391,7 +399,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 		// if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %.2e", errSquared);
 		run++;
-	// }
+	}
 
 	resSquared = mgSumTrueSquared(res, mpiInfo);
 	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
@@ -571,7 +579,8 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 	double *rhoVal = rho->val;
 
 	//Temporary value
-	double *tempVal = malloc (sizeProd[rank]*sizeof(*tempVal));
+	static double *tempVal = NULL;
+	if(tempVal==NULL) tempVal = malloc(sizeProd[rank]*sizeof(*tempVal));
 
 	//Indexes for how to increase and domain of trueGrid
 	long int gStep;
@@ -581,7 +590,7 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	double coeff = 1./(2*(rank-1));
 
-	msg(STATUS|ONCE, "coeff %f, cycles %d", coeff, nCycles);
+	// msg(STATUS|ONCE, "coeff %f, cycles %d", coeff, nCycles);
 
 	for(int c = 0; c < nCycles; c++){
 		adSetAll(tempVal, sizeProd[rank], 0.);
@@ -596,10 +605,14 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 		adScale(tempVal, sizeProd[rank], coeff);
 		for(long int g = gStart; g < gEnd; g++) phiVal[g] = tempVal[g];
 
+
+
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 
 	}
+
+	free(tempVal);
 
 	return;
 }
@@ -653,6 +666,8 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 		gBnd(phi, mpiInfo);
 
 	}
+
+	free(tempVal);
 
 	return;
 }
@@ -710,16 +725,16 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
 			&trueSize[rank-1], &sizeProd[rank-1]);
 
-			gHaloOp(setSlice, phi, mpiInfo, TOHALO);
-			gBnd(phi, mpiInfo);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+		gBnd(phi, mpiInfo);
 
-			//Red pass
-			g = gStart +1;
-			mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
-				&trueSize[rank-1], &sizeProd[rank-1]);
+		//Red pass
+		g = gStart +1;
+		mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+			&trueSize[rank-1], &sizeProd[rank-1]);
 
-			gHaloOp(setSlice, phi, mpiInfo, TOHALO);
-			gBnd(phi, mpiInfo);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+		gBnd(phi, mpiInfo);
 
 	}
 
@@ -947,6 +962,7 @@ void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
  *			RESTRICTORS/PROLONGATORS
  **********************************************************/
 
+
 void mgHalfRestrict3D(const Grid *fine, Grid *coarse){
 
 	//Load fine grid
@@ -1064,6 +1080,178 @@ void mgHalfRestrict2D(const Grid *fine, Grid *coarse){
 	return;
 }
 
+static void mgHalfRestrictNDInner(const double **fVal, double **cVal, const int *rank,
+		const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+		const int *cTrueSize, const long int *cSizeProd, const long int *fSizeProd){
+
+	if(*cSizeProd==1){
+
+		*fVal += *fSizeProd**nGhostLayersBefore;
+		*cVal += *cSizeProd**nGhostLayersBefore;
+
+		double coeff = 2.*(*rank-1);
+		// msg(STATUS|ONCE, "Coeff = %f", coeff);
+		for(int c = 0; c < *cTrueSize; c++){
+			msg(STATUS|ONCE, "*fVal = %f", **fVal);
+			// **cVal = 0.;
+			**cVal = coeff*(**fVal);
+			for(int r = 0; r < *rank-1; r++){
+				**cVal += *(*fVal + *(fSizeProd+r)) + *(*fVal- *(fSizeProd+r));
+			}
+			*fVal += 2;
+			(*cVal)++;
+		}
+
+		*fVal += *fSizeProd**nGhostLayersAfter;
+		*cVal += *cSizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*fVal += *fSizeProd**nGhostLayersBefore;
+		*cVal += *cSizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*cTrueSize;j++){
+			mgHalfRestrictNDInner(fVal, cVal, rank, nGhostLayersBefore-1, nGhostLayersAfter-1,
+				cTrueSize-1, cSizeProd-1, fSizeProd-1);
+			*fVal += *fSizeProd;
+		}
+
+		*fVal += *fSizeProd**nGhostLayersAfter;
+		*cVal += *cSizeProd**nGhostLayersAfter;
+
+	}
+
+	return;
+}
+
+void mgHalfRestrictND(const Grid *fine, Grid *coarse){
+
+	msg(WARNING|ONCE, "NOT WORKING YET!");
+	//Load fine grid
+	const double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+	int *cTrueSize = coarse->trueSize;
+
+	double coeff = 1./((rank-1)*4);
+
+	mgHalfRestrictNDInner(&fVal, &cVal, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+			&cTrueSize[rank-1], &cSizeProd[rank-1], &fSizeProd[rank-1] );
+
+	//Note! cVal is incremented through, start at index 0
+	adScale(coarse->val, coarse->sizeProd[rank], coeff);
+}
+
+static void mgInjectionCtoFND(double **fVal, const double **cVal,
+		const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+		const int *cTrueSize, const long int *cSizeProd, const long int *fSizeProd){
+
+	if(*cSizeProd==1){
+
+		*fVal += *fSizeProd**nGhostLayersBefore;
+		*cVal += *cSizeProd**nGhostLayersBefore;
+
+		for(int c = 0; c < *cTrueSize; c++){
+
+			**fVal = **cVal;
+			*fVal += 2;
+			(*cVal)++;
+
+		}
+
+		*fVal += *fSizeProd**nGhostLayersAfter;
+		*cVal += *cSizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*fVal += *fSizeProd**nGhostLayersBefore;
+		*cVal += *cSizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*cTrueSize;j++){
+			mgInjectionCtoFND(fVal, cVal, nGhostLayersBefore-1, nGhostLayersAfter-1,
+				cTrueSize-1, cSizeProd-1, fSizeProd-1);
+			*fVal += *fSizeProd;
+		}
+
+		*fVal += *fSizeProd**nGhostLayersAfter;
+		*cVal += *cSizeProd**nGhostLayersAfter;
+
+	}
+
+	return;
+}
+
+static void mgProlInner(double **val, int r,
+			const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+		 	const int *trueSize, const int *size, const long int *sizeProd){
+
+
+	if(*sizeProd==1){
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j = 0; j<*trueSize; j+=2){
+			msg(STATUS|ONCE, "val=%f", **(val));
+			**val = 0.;
+			(*val)+=2;
+		}
+
+		*val += *sizeProd**nGhostLayersAfter;
+
+
+	} else {
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			mgProlInner(val, r, nGhostLayersBefore-1,nGhostLayersAfter-1,
+				trueSize-1,size-1, sizeProd-1);
+
+		*val += *sizeProd**nGhostLayersAfter;
+	}
+
+	return;
+}
+
+void mgBilinProlND(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
+	//Load fine grid
+	double *fVal = fine->val;
+	long int *fSizeProd = fine->sizeProd;
+	int *fSize = fine->size;
+	int *fTrueSize = fine->trueSize;
+	int rank = fine->rank;
+	int *nGhostLayers = fine->nGhostLayers;
+
+	//Load coarse grid
+	const double *cVal = coarse->val;
+	long int *cSizeProd = coarse->sizeProd;
+	int *cTrueSize = coarse->trueSize;
+
+	// //Direct insertion of coarse grid
+	// mgInjectionCtoFND(&fVal, &cVal, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+	// 		&cTrueSize[rank-1], &cSizeProd[rank-1], &fSizeProd[rank-1]);
+
+	//Reset *fVal
+	fVal = fine->val;
+
+	adPrint(fVal, 5);
+
+	//Interpolating from high -> low dimension
+	for(int r = rank-1; r > rank-2; r--){
+		// gHaloOpDim(setSlice, fine, mpiInfo, r, TOHALO);
+
+		mgProlInner(&fVal, r, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+					&fTrueSize[rank-1],&fSize[rank-1], &fSizeProd[rank-1]);
+
+	}
+
+}
+
+
 void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 
 	//Load fine grid
@@ -1073,8 +1261,6 @@ void mgBilinProl3D(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo){
 	int *fTrueSize =fine->trueSize;
 	int rank = fine->rank;
 	int *nGhostLayers = fine->nGhostLayers;
-
-	// aiPrint(fTrueSize, rank);
 
 	//Load coarse grid
 	double *cVal = coarse->val;

@@ -26,8 +26,8 @@ pinc = PINC()
 pinc.routine = "mgRoutine"
 pinc.trueSize = [16,4,4]
 pinc.mgCycles = 1
-pinc.preCycles = 1
-pinc.postCycles = 1
+pinc.preCycles = 10
+pinc.postCycles = 10
 pinc.coarseCycles = 100
 pinc.nSubdomains = [2,1,1]
 pinc.preSmooth = 	"jacobianND"
@@ -43,10 +43,15 @@ pinc.coarseSolver=	"gaussSeidelRBND"
 
 pinc.clean()
 
-for i in range(1,2):
-	pinc.mgLevels = i
-	pinc.runMG()
-	pinc.startTime = pinc.startTime+1
+for levels in range(1,5):
+	for cycles in range(1,100,10):
+		pinc.mgLevels = levels
+		pinc.preCycles = cycles
+		pinc.postCycles = cycles
+		pinc coarseCycles = cycles
+		pinc.runMG()
+		pinc.startTime = pinc.startTime+1
+
 
 
 data = h5py.File('test_timer.xy.h5','r')

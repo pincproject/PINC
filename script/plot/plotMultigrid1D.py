@@ -73,7 +73,8 @@ if len(sys.argv) > 1:
 else:
 	totLevels = 0
 
-dataPath = "../framework/"
+# dataPath = "../framework/"
+dataPath = "../../"
 if nLevels ==1:
 	n = 0
 	m = 0
