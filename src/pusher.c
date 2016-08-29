@@ -16,7 +16,28 @@
  * DECLARING LOCAL FUNCTIONS
  *****************************************************************************/
 
-static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd);
+/** @name Interpolators (used in accelerators)
+ * @brief	Interpolates field on grid to position of particle
+ * @param[out]		result		Vector value at position
+ * @param			pos			Position of particle
+ * @param			val			Grid values (e.g. E->val)
+ * @param			sizeProd	sizeProd of grid (e.g. E->sizeProd)
+ * @param			nDims		Number of dimensions (if not fixed)
+ * @param[in,out]	integer		Integer part of particle position
+ * @param[in,out]	decimal		Decimal part of particle position
+ * @param[in,out]	complement	One minus decimal part of particle position
+ * @param			mul			Multiple in order to increment one in a certain direction (from sizeProd, used in recursive algorithm)
+ * @param			lastMul		Last mul to use in recursive algorithm (equals sizeProd[1])
+ * @param			factor		Multiplicative factor propagated forward in recursion
+ * @param			p			Index of lower corner node
+ * @return	void
+ *
+ * Please, just trust me, they work! Go have a look at the functions in
+ * pusher.h.
+ */
+///@{
+static inline void puInterp3D1(	double *result, const double *pos,
+								const double *val, const long int *sizeProd);
 static inline void puInterpND0(	double *result, const double *pos,
 								const double *val, const long int *sizeProd,
 								int nDims);
@@ -31,8 +52,28 @@ static void puInterpND1Inner(	double *result, const double *val, long int p,
 static void puDistrND1Inner(	double *val, long int p, const long int *mul,
 								long int lastMul, double *decimal,
 								double *complement, double factor);
+///@}
+/**
+ * @brief	Adds cross product of a and b to res
+ * @param	a		Vector (of length 3)
+ * @param	b		Vector (of length 3)
+ * @param	res		Resulting vector (of length 3)
+ * @return	void
+ */
 static inline void addCross(const double *a, const double *b, double *res);
 
+/**
+ * @brief	Sanity check of accelerator and distributor functions
+ * @param	ini		Input file
+ * @param	name	Name of function to check for (for use in errors)
+ * @param	dim		Dimensionality function works for (0 for all)
+ * @param	order	Order of interpolation used
+ * @return	void
+ *
+ * To be used in _set() functions to test validity of ini-file (since this is
+ * the same for all accelerator/distributor functions, only depending on
+ * order and dimensionality)
+ */
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
 /******************************************************************************

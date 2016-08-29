@@ -57,13 +57,15 @@ void puMove(Population *pop);
  *	puBorisInhXDYKE()	| Same as above but computes kinetic energy for each specie at the mid-step
  *
  * Where X indicates the dimensionality and Y the order of interpolation used
- * in wheighting the field(s) from the grid nodes to the particles. The
+ * in wheighting the field(s) from the grid nodes to the particles, e.g. Y=0
+ * for the NGP method and Y=1 for the PIC/CIC method. The
  * interpolation is carried out by the underlying functions named
  * puInterpXDY() according to the same convention. Functions with X=N works on
  * configurations of arbitrary dimensionality, which is commonplace in PINC.
  * However, since N-dimensional interpolation is significantly more
- * time-consuming than algorithms with fixed dimensionality both are included.
- * For instance, puInterp3D1() is about twice as fast as puInterpND1().
+ * time-consuming than algorithms with fixed dimensionality (at least for order
+ * higher than 0) some fixed dimensionality algorithms are included. For
+ * instance, puInterp3D1() is much faster than puInterpND1().
  *
  * Remember that Boris and leapfrog methods require the velocities to be
  * located at half-integer steps. This initialization of the velocities can be
@@ -146,16 +148,22 @@ funPtr puAccND0KE_set(dictionary *ini);
  */
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
 
-/**
- * @brief Distributes charge density on grid using 1st order interpolation. Fixed to 3D.
+
+/** @name Accelerators (with interpolation)
+ * These functions distributes or deposits charges onto the charge densty grid
+ * by interpolating the charges onto the nearest grid points. They are named
+ * puDistrXDY() where X signifies the dimensionality and Y the order of
+ * interpolation (similart to puInterpXDY() and the accelerator functions).
+ *
+ * These functions will crash ungracefully if particles are placed
+ * out-of-bounds or out-of-threshold area. Make sure to migrate particles to
+ * other subdomains before calling.
+ *
  * @param			pop		Population
  * @param[in,out]	rho		Charge density
  * @return					void
- *
- * Assuming particles are correctly placed prior to calling this function.
- * puMove() and some boundary enforcing function should therefore be called
- * first.
  */
+///@{
 void puDistr3D1(const Population *pop, Grid *rho);
 void puDistrND1(const Population *pop, Grid *rho);
 void puDistrND0(const Population *pop, Grid *rho);
@@ -163,6 +171,7 @@ void puDistrND0(const Population *pop, Grid *rho);
 funPtr puDistr3D1_set(dictionary *ini);
 funPtr puDistrND1_set(dictionary *ini);
 funPtr puDistrND0_set(dictionary *ini);
+///@}
 
 // EVERYTHING BELOW THIS SHOULD MOVE TO SEPARATE MIGRATION.H MODULE.
 
