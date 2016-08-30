@@ -261,7 +261,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	for(int l = 0; l<trueSize[3]; l+=2){
  		for(int k = 0; k < trueSize[2]; k+=2){
  			for(int j = 0; j < trueSize[1]; j+=2){
- 				// msg(STATUS, "g=%d", g);
  				phiVal[g] = 0.125*(phiVal[gj] + phiVal[gjj] +
  								phiVal[gk] + phiVal[gkk] +
  								phiVal[gl] + phiVal[gll] + rhoVal[g]);
@@ -367,8 +366,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	// gHaloOp(setSlice, sol, mpiInfo);
  	// gFinDiff2nd3D(rho, sol);
 
-
- 	msg(STATUS|ONCE, "mgLevels = %d", mgRho->nLevels);
+ 	msg(STATUS, "mgLevels = %d", mgRho->nLevels);
  	gNeutralizeGrid(rho, mpiInfo);
 
 	double tol = 0.1;
@@ -399,14 +397,14 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		errSquared = mgSumTrueSquared(error, mpiInfo);
 		avgError = errSquared/gTotTruesize(error, mpiInfo);
 
-		// if(!(run%10))	msg(STATUS|ONCE, "Avg e^2 = %.2e", errSquared);
+		// if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
 		run++;
 	}
 
 	resSquared = mgSumTrueSquared(res, mpiInfo);
-	msg(STATUS|ONCE, "Avg e^2 = %f", errSquared);
-	msg(STATUS|ONCE, "Residual squared (res^2) = %f", resSquared);
-	msg(STATUS|ONCE, "Number of Cycles: %d", run);
+	msg(STATUS, "Avg e^2 = %f", errSquared);
+	msg(STATUS, "Residual squared (res^2) = %f", resSquared);
+	msg(STATUS, "Number of Cycles: %d", run);
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 
@@ -521,7 +519,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	//Sanity checks
 	if(nLevels<1) msg(ERROR, "Multi Grid levels is 0, need 1 grid level \n");
-	if(nLevels==1) msg(WARNING|ONCE, "Multi Grid levels is 1, using Gauss-Seidel Red'Black \n");
+	if(nLevels==1) msg(WARNING, "Multi Grid levels is 1, using Gauss-Seidel Red'Black \n");
 
 	if(!nMGCycles) msg(ERROR, "MG cycles is 0 \n");
 
@@ -592,8 +590,6 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	double coeff = 1./(2*(rank-1));
 
-	// msg(STATUS|ONCE, "coeff %f, cycles %d", coeff, nCycles);
-
 	for(int c = 0; c < nCycles; c++){
 		adSetAll(tempVal, sizeProd[rank], 0.);
 		for(int r = 1; r < rank; r++){
@@ -620,8 +616,6 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 }
 
 void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
-
-	// msg(STATUS, "Hello");
 
 	//Common variables
 	int rank = phi->rank;
@@ -1062,7 +1056,6 @@ void mgHalfRestrict2D(const Grid *fine, Grid *coarse){
 	//Cycle Coarse grid
 	for(int k = nGhostLayers[2]; k < cSize[2]-nGhostLayers[rank + 2]; k++){
 		for(int j = nGhostLayers[1]; j < cSize[1]-nGhostLayers[rank+1]; j++){
-			// msg(STATUS, "c=%d, f = [%d] (%d %d %d %d)", c, f , fj, fjj, fk, fkk);
 			cVal[c] = 0.125*(4*fVal[f] + fVal[fj] + fVal[fjj] + fVal[fk] + fVal[fkk]);
 			c++;
 			f  +=2;
@@ -1092,9 +1085,7 @@ static void mgHalfRestrictNDInner(const double **fVal, double **cVal, const int 
 		*cVal += *cSizeProd**nGhostLayersBefore;
 
 		double coeff = 2.*(*rank-1);
-		// msg(STATUS|ONCE, "Coeff = %f", coeff);
 		for(int c = 0; c < *cTrueSize; c++){
-			// msg(STATUS|ONCE, "*fVal = %f", **fVal);
 
 			**cVal = coeff*(**fVal);
 			for(int r = 0; r < *rank-1; r++){
@@ -1481,9 +1472,6 @@ void mgRestrictBnd(Multigrid *mgGrid){
 		}
 
 
-		// msg(STATUS, "Fineslice = %d", nFineSlice);
-		// msg(STATUS, "CoarseSlice = %d", nCoarseSlice);
-
 		/**************************************************
 		 *		This is probably not correct for nonconstant
 		 * 		boundaries
@@ -1502,12 +1490,6 @@ void mgRestrictBnd(Multigrid *mgGrid){
 			}
 		}
 
-
-		//Restriction by injection
-		// for(int s = 0; s < nSliceMax*2*rank; s++){
-		// 	coarseBnd[s/2] = fineBnd[s];
-		// }
-		// adPrint(coarseBnd, 72*2*rank);
 
 	}
 
@@ -1696,8 +1678,6 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
-	msg(STATUS|ONCE, "Running mgV; start = %d, bottom = %d, top = %d",level, bottom, top);
-
 	//Gathering info
 	int nPreSmooth = mgRho->nPreSmooth;
 	int nPostSmooth= mgRho->nPostSmooth;
@@ -1745,7 +1725,6 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		gHaloOp(setSlice, res, mpiInfo, TOHALO);
 
 		restrictor(res, mgRho->grids[current + 1]);
-		msg(STATUS|ONCE, "Restricting from lvl %d -> %d", current, current+1);
 	}
 
 	rho = mgRho->grids[bottom];
@@ -1764,7 +1743,6 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	gBnd(phi,mpiInfo);
 	prolongator(mgRes->grids[bottom-1], phi, mpiInfo);
-	msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", bottom, bottom-1);
 
 
 	//Up to finest
@@ -1783,8 +1761,6 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 
 		postSmooth(phi, rho, nPostSmooth, mpiInfo);
 		gBnd(phi, mpiInfo);
-
-		msg(STATUS|ONCE, "Interpolating from lvl %d -> %d", current, current-1);
 
 		if(current > top) prolongator(mgRes->grids[current-1], phi, mpiInfo);
 	}
@@ -1837,7 +1813,6 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	// gZero(mgPhi->grids[0]);
 	if(nLevels >1){
 		for(int c = 0; c < nMGCycles; c++){
-			// msg(STATUS|ONCE, "Cycle = %d", c);
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 		}
 	}	else {

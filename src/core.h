@@ -21,6 +21,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <gsl/gsl_rng.h>
+#include "version.h"
 
 /******************************************************************************
  * DEFINING PHYSICAL CONSTANTS (following SI standard)
@@ -332,7 +333,7 @@ typedef enum{
 	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
 	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
 	TIMER = 0x03,		///< Printing out formatted timing result
-	ONCE = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
+	ALL = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
 } msgKind;
 
 /**

@@ -26,8 +26,9 @@ int main(int argc, char *argv[]){
 	 */
 	MPI_Init(&argc,&argv);
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
-	msg(STATUS|ONCE, "PINC started.");    // Needs MPI
+	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
+	parseIndirectInput(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE
@@ -40,7 +41,7 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS|ONCE,"PINC completed successfully!"); // Needs MPI
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;
@@ -51,9 +52,24 @@ void regular(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",  puAcc3D1_set,puAcc3D1KE_set);
-	void (*distr)() = select(ini,"methods:distr",puDistr3D1_set);
+	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
+												puAcc3D1KE_set,
+												puAccND1_set,
+												puAccND1KE_set,
+												puAccND0_set,
+												puAccND0KE_set);
+	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
+													puDistrND1_set,
+													puDistrND0_set);
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
+
+	// char *str;
+	//
+	// str = iniGetStr("methods:acc");
+	// void (*acc)() = NULL;
+	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
+	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
+	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -142,16 +158,20 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
+	Timer *t = tAlloc(rank);
+
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-		msg(STATUS|ONCE,"Computing time-step %i",n);
+		msg(STATUS,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,1.0);
+
+		tStart(t);
 
 		// Move particles
 		puMove(pop);
@@ -180,6 +200,8 @@ void regular(dictionary *ini){
 		// Accelerate particle and compute kinetic energy for step n
 		acc(pop, E);
 
+		tStop(t);
+
 		// Sum energy for all species
 		pSumKinEnergy(pop);
 
@@ -197,6 +219,8 @@ void regular(dictionary *ini){
 		pWriteEnergy(history,pop,(double)n);
 
 	}
+
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 
 	/*
