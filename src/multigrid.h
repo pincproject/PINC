@@ -217,6 +217,9 @@ void mgGS3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInf
  */
 void mgGS2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
+
+void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
+
 /**
  * @brief mgJacob method
  * @param	rho		Source term
@@ -228,7 +231,7 @@ void mgGS2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInf
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void mgJacob2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgJacobND(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 
@@ -260,6 +263,21 @@ void mgHalfRestrict2D(const Grid *fine, Grid *coarse);
 void mgHalfRestrict3D(const Grid *fine, Grid *coarse);
 
 /**
+ * @brief Half weight restriction, ND
+ * @param	fine	Source term
+ * @param	coarse	Solution term
+ * @return	coarse
+ *
+ *	Implementation of a half weight restriction scheme, copying the fine
+ *	down to the coarser grid.
+ *
+ */
+
+void mgHalfRestrictND(const Grid *fine, Grid *coarse);
+
+
+
+/**
  * @brief Bilinear interpolation, 2D
  * @param	fine	Fine grid
  * @param	coarse	Coarse grid
@@ -285,7 +303,19 @@ void mgBilinProl2D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
  *
  */
 void mgBilinProl3D(Grid *fine,const Grid *coarse, const MpiInfo *mpiInfo);
+/**
+ * @brief Bilinear interpolation, ND
+ * @param	fine	Fine grid
+ * @param	coarse	Coarse grid
+ * @param	mpiInfo	Subdomain information
+ * @return	fine
+ *
+ *	Implementation of a bilnear interpolation scheme, instructterpolating the coarse
+ *	grid onto the fine grid.
+ *
+ */
 
+void mgBilinProlND(Grid *fine, const Grid *coarse,const  MpiInfo *mpiInfo);
 
 /*
  * @brief Restrict boundary conditions down to coarser grids
@@ -335,8 +365,17 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
   * @return error
   */
 
+/**
+ * @brief Computes avg error, returns in a percentage
+ * @param  numerical           Numerical solution
+ * @param  analytical          Analytical solution
+ * @param  error               Difference between solutions
+ * @return error
+ */
 void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
 
+
+double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo);
 
 /**
  * @brief Returns the square of the error on the true grid

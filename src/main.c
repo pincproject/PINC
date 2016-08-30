@@ -158,6 +158,8 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
+	Timer *t = tAlloc(rank);
+
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
@@ -168,6 +170,8 @@ void regular(dictionary *ini){
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,1.0);
+
+		tStart(t);
 
 		// Move particles
 		puMove(pop);
@@ -196,6 +200,8 @@ void regular(dictionary *ini){
 		// Accelerate particle and compute kinetic energy for step n
 		acc(pop, E);
 
+		tStop(t);
+
 		// Sum energy for all species
 		pSumKinEnergy(pop);
 
@@ -213,6 +219,8 @@ void regular(dictionary *ini){
 		pWriteEnergy(history,pop,(double)n);
 
 	}
+
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 
 	/*

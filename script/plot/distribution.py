@@ -31,6 +31,10 @@ def timer(text):
 	prev = time()
 	return
 
+
+
+
+
 # Loading file
 file = h5py.File('../test_pop.pop.h5','r')
 pos = file['/pos/specie 0/n=0.0']
@@ -51,7 +55,7 @@ timer("computig particle speed")
 
 # Analytical distributions
 v = linspace(0,6,100)
-v2 = linspace(-6,6,100) 
+v2 = linspace(-6,6,100)
 vth = 1
 dv = 1
 if Nd==2: dv = 2*pi*v

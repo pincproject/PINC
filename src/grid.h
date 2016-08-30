@@ -299,6 +299,15 @@ void gSub(Grid *grid, double num);
 void gSquare(Grid *grid);
 
 /**
+ * @brief   Returns total number of true grid points for all subdomains
+ * @param	grid	Grid
+ * @param   mpiInfo MpiInfo
+ * @return	double	Number of total true nodes in simulation
+ */
+
+long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo);
+
+/**
  * @brief Performs a central space finite difference on a grid
  * @param 	scalar 	Value to do the finite differencing on
  * @return	field	Field returned after derivating
@@ -540,6 +549,8 @@ long int gGetGlobalVolume(const dictionary *ini);
 
 void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);
+void fillGridIndexes(Grid *grid);
+
 
 /**
  * @brief Initial grid configurations, temporary untill a read hdf5 method is available
@@ -547,8 +558,8 @@ void dumpTrueGrid(dictionary *ini, Grid *grid);
 
  #define PI 3.14159265
 
-void fillHeaviside(Grid *grid, const MpiInfo *mpiInfo);
-void fillHeaviSol(Grid *grid, const MpiInfo *mpiInfo);
+void fillHeaviside(Grid *grid, int dim,const MpiInfo *mpiInfo);
+void fillHeaviSol(Grid *grid, int rank, const MpiInfo *mpiInfo);
 void fillPointCharge(Grid *grid, const MpiInfo *mpiInfo);
 void fillPointSol(Grid *grid, const MpiInfo *mpiInfo);
 void fillSin(Grid *grid, const MpiInfo *mpiInfo);

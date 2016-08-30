@@ -7,7 +7,7 @@ import pylab as plt
 
 h5 = h5py.File('../../test_rho.grid.h5','r')
 
-for i in range(1,2000,4):
+for i in range(1,2000,1):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
 	data = np.average(data,axis=0)

@@ -476,6 +476,21 @@ void parseIndirectInput(dictionary *ini){
  *			Debug help
  ***************************************************************************/
 
+ void fillGridIndexes(Grid *grid){
+
+ 	msg(WARNING, "Grid is replaced with indexes");
+
+ 	long int *sizeProd = grid->sizeProd;
+ 	int rank = grid->rank;
+ 	double *val = grid->val;
+
+ 	for(long int g = 0; g < sizeProd[rank]; g++){
+ 		val[g] = (double) g;
+ 	}
+
+ 	return;
+ }
+
 void dumpTrueGrid(dictionary *ini, Grid *grid){
 
 	int *size = grid->size;
