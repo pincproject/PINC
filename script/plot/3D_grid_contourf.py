@@ -48,7 +48,7 @@ def plot2DSlice(name, grid, saveStr):
 
 	return
 
-path = "../framework/"
+path = "../../"
 #Loading data/Shaving of last dimension
 rho = transformData(h5py.File(path +'test_rho_0.grid.h5','r'),0)
 phi = transformData(h5py.File(path +'test_phi_0.grid.h5','r'),0)
