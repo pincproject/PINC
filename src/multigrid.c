@@ -352,8 +352,8 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	// double err = tol+1.;
 
  	//Compute stuff
- 	fillHeaviside(rho, 2, mpiInfo);
- 	fillHeaviSol(sol, 2, mpiInfo);
+ 	fillHeaviside(rho, 1, mpiInfo);
+ 	fillHeaviSol(sol, 1, mpiInfo);
  	// fillPointCharge(rho, mpiInfo);
  	// fillPolynomial(rho, mpiInfo);
  	// fillPointSol(sol, mpiInfo);
@@ -375,8 +375,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 	double resSquared;
 	int run = 1;
 
-	while(avgError>tol){
-		// avgError--;
+	// while(avgError>tol){
 		// Run solver
 		// gZero(res);
 		tStart(t);
@@ -399,7 +398,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 		// if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
 		run++;
-	}
+	// }
 
 	resSquared = mgSumTrueSquared(res, mpiInfo);
 	msg(STATUS, "Avg e^2 = %f", errSquared);

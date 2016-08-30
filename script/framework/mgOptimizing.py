@@ -24,33 +24,33 @@ pinc = PINC()
 # pinc.clean()
 #Setting up wanted needed ini file
 pinc.routine = "mgRoutine"
-pinc.trueSize = [16,4,4]
-pinc.mgCycles = 1
+pinc.trueSize = [32,16,16]
+pinc.mgCycles = 10
 pinc.preCycles = 10
 pinc.postCycles = 10
-pinc.coarseCycles = 100
-pinc.nSubdomains = [2,1,1]
-pinc.preSmooth = 	"jacobianND"
-pinc.postSmooth= 	"jacobianND"
+pinc.coarseCycles = 10
+pinc.nSubdomains = [2,2,1]
+# pinc.preSmooth = 	"jacobianND"
+# pinc.postSmooth= 	"jacobianND"
 # pinc.coarseSolver=	"jacobianND"
-# pinc.preSmooth = 	"gaussSeidelRB"
-# pinc.postSmooth= 	"gaussSeidelRB"
-pinc.coarseSolver=	"gaussSeidelRBND"
+pinc.preSmooth = 	"gaussSeidelRB"
+pinc.postSmooth= 	"gaussSeidelRB"
+pinc.coarseSolver=	"gaussSeidelRB"
 
 
 
 
-
+cycles = 10
 pinc.clean()
 
-for levels in range(1,5):
-	for cycles in range(1,100,10):
-		pinc.mgLevels = levels
-		pinc.preCycles = cycles
-		pinc.postCycles = cycles
-		pinc coarseCycles = cycles
-		pinc.runMG()
-		pinc.startTime = pinc.startTime+1
+for levels in range(2,6):
+	# for cycles in range(1,100,10):
+	pinc.mgLevels = levels
+	pinc.preCycles = cycles
+	pinc.postCycles = cycles
+	pinc.coarseCycles = cycles
+	pinc.runMG()
+	pinc.startTime = pinc.startTime+1
 
 
 
