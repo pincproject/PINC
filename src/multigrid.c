@@ -375,30 +375,21 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 	double resSquared;
 	int run = 1;
 
-	// while(avgError>tol){
+	while(avgError>tol){
 		// Run solver
-		// gZero(res);
 		tStart(t);
 		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-		// for(int r = 0; r < 2; r++){
-		// 	MPI_Barrier(MPI_COMM_WORLD);
-		// 	if(mpiInfo->mpiRank==r) dumpTrueGrid(ini, mgPhi->grids[0]);
-		// }
-		// MPI_Barrier(MPI_COMM_WORLD);
-		// if(mpiInfo->mpiRank==0) dumpWholeGridIndex(ini, mgPhi->grids[0]);
-
-
 		tStop(t);
+		
 		//Compute error
 		mgCompError(phi, sol, error);
 		// avgError = mgAvgError(error, mpiInfo);
 		errSquared = mgSumTrueSquared(error, mpiInfo);
 		avgError = errSquared/gTotTruesize(error, mpiInfo);
 
-		// if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
+		if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
 		run++;
-	// }
+	}
 
 	resSquared = mgSumTrueSquared(res, mpiInfo);
 	msg(STATUS, "Avg e^2 = %f", errSquared);
