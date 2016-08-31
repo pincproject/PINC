@@ -35,9 +35,9 @@ pinc.postSmooth		= 	"gaussSeidelRB"
 pinc.coarseSolver	=	"gaussSeidelRB"
 
 
-preCycles 		= (2*np.ones(5))*np.arange(1,6)
-postCycles 		= np.arange(0,100,10)
-coarseCycles 	= np.arange(0,100,10)
+preCycles 		= 2
+postCycles 		= 2
+coarseCycles 	= 2
 mgLevels 		= np.arange(2,6)
 
 size = mgLevels.shape[0]*preCycles.shape[0]*postCycles.shape[0]*coarseCycles.shape[0]
