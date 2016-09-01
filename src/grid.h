@@ -552,6 +552,8 @@ void dumpTrueGrid(dictionary *ini, Grid *grid);
 void fillGridIndexes(Grid *grid);
 
 
+void gRemoveHalo(Grid *grid);
+
 /**
  * @brief Initial grid configurations, temporary untill a read hdf5 method is available
  */

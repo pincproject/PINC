@@ -53,12 +53,17 @@ static int *getSubdomain(const dictionary *ini);
  * @see gHaloOpDim
  */
 
-static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
-								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd);
+static double gPotEnergyInner(	const double **rhoVal, const double **phiVal,
+								const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+								const int *trueSize, const long int *sizeProd);
 
-static double gNeutralizeGridInner(	const double **val, const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+static double gNeutralizeGridInner(	const double **val,
+									const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 									const int *trueSize, const long int *sizeProd);
 
+static void gContractInner(	const double **in, double **out,
+							const int *layersBefore, const int *layersAfter,
+	 						const int *trueSize, const long int *sizeProd);
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
@@ -168,6 +173,55 @@ static int *getSubdomain(const dictionary *ini){
 
 	free(nSubdomains);
 	return subdomain;
+
+}
+
+void gRemoveHalo(Grid *grid){
+
+	double *oldVal = grid->val;
+	int rank = grid->rank;
+	int *nGhostLayers = grid->nGhostLayers;
+	int *trueSize = grid->trueSize;
+
+	long int *oldSizeProd = grid->sizeProd;
+	long int *newSizeProd = malloc((rank+1)*sizeof(*newSizeProd));
+	ailCumProd(trueSize,newSizeProd,rank);
+
+	double *newVal = malloc(newSizeProd[rank]*sizeof(*newVal));
+	double *tempVal = newVal; // Address will change
+
+	gContractInner(	(const double **)&oldVal, &tempVal,
+					&nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+					&trueSize[rank-1], &oldSizeProd[rank-1]);
+
+	free(grid->val);
+	grid->val = newVal;
+
+	free(grid->sizeProd);
+	grid->sizeProd = newSizeProd;
+
+	memcpy(grid->size,trueSize,rank*sizeof(*trueSize));
+	aiSetAll(nGhostLayers,2*rank,0);
+
+}
+
+static void gContractInner(	const double **in, double **out,
+							const int *layersBefore, const int *layersAfter,
+	 						const int *trueSize, const long int *sizeProd){
+
+	*in += *sizeProd**layersBefore;
+	if(*sizeProd==1){
+		for(int j=0;j<*trueSize;j++){
+			*(*out)++ = *(*in)++;
+		}
+	} else {
+		for(int j=0;j<*trueSize;j++){
+			gContractInner(	in, out,
+							layersBefore-1, layersAfter-1,
+							trueSize-1, sizeProd-1);
+		}
+	}
+	*in += *sizeProd**layersAfter;
 
 }
 
@@ -1223,33 +1277,29 @@ void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop){
 
 }
 
-static double gPotEnergyInner(	const double **rhoVal, const double **phiVal, const int *nGhostLayersBefore,
-								const int *nGhostLayersAfter, const int *trueSize, const long int *sizeProd){
+static double gPotEnergyInner(	const double **rhoVal, const double **phiVal,
+								const int *nGhostLayersBefore, const int *nGhostLayersAfter,
+								const int *trueSize, const long int *sizeProd){
 
 	double energy = 0;
 
+	*rhoVal += *sizeProd**nGhostLayersBefore;
+	*phiVal += *sizeProd**nGhostLayersBefore;
+
 	if(*sizeProd==1){
-
-		*rhoVal += *sizeProd**nGhostLayersBefore;
-		*phiVal += *sizeProd**nGhostLayersBefore;
-
-		for(int j=0;j<*trueSize;j++)
+		for(int j=0;j<*trueSize;j++){
 			energy += (*(*rhoVal)++)*(*(*phiVal)++);
-
-		*rhoVal += *sizeProd**nGhostLayersAfter;
-		*phiVal += *sizeProd**nGhostLayersAfter;
-
+		}
 	} else {
-
-		*rhoVal += *sizeProd**nGhostLayersBefore;
-		*phiVal += *sizeProd**nGhostLayersBefore;
-
-		for(int j=0;j<*trueSize;j++)
-			energy += gPotEnergyInner(rhoVal,phiVal,nGhostLayersBefore-1,nGhostLayersAfter-1,trueSize-1,sizeProd-1);
-
-		*rhoVal += *sizeProd**nGhostLayersAfter;
-		*phiVal += *sizeProd**nGhostLayersAfter;
+		for(int j=0;j<*trueSize;j++){
+			energy += gPotEnergyInner(	rhoVal, phiVal,
+										nGhostLayersBefore-1, nGhostLayersAfter-1,
+										trueSize-1, sizeProd-1);
+		}
 	}
+
+	*rhoVal += *sizeProd**nGhostLayersAfter;
+	*phiVal += *sizeProd**nGhostLayersAfter;
 
 	return energy;
 }
