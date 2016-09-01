@@ -60,18 +60,21 @@ def formatTimeCycles(fileName, nRuns):
 
 	return time, mgCycles
 
+def nCoarse(nTries, nRun):
+	nRun
+
 bestRun = Settings()
-currentRun = Settings(10,10,10,2)
+currentRun = Settings(100,100,100,2)
 
 pinc.clean()
 nTries 	= 100
 nRun	= 0
+preInc 	= 1
 
-for i in range(0, 2):	#mgLevels
+for i in range(0, 3):	#mgLevels
 	# prevPreTime = float('Inf')
 	prevCoaTime = float('Inf')
 	# prevPosTime	= float('Inf')
-	preInc = 1
 	for j in range(0,nTries): #nCoarse
 		##Run, retrieve time and cycles used
 		currentRun.setPinc(pinc)
@@ -89,13 +92,15 @@ for i in range(0, 2):	#mgLevels
 				prevCoaTime = time
 				currentRun.nCoarse *= 2
 			else:
-				currentRun,nCoarse *= 0.5
+				currentRun.nCoarse *= 0.25
 				preInc = -1
 		else:
 			if(time < prevCoaTime):
-				prevPreTime = time
+				prevCoaTime = time
 				currentRun.nCoarse *= 0.5
 			else:
+				prevCoaTime = float('Inf')
+				preInce = 1
 				break
 
 		nRun += 1
@@ -103,7 +108,7 @@ for i in range(0, 2):	#mgLevels
 	currentRun.mgLevels += 1
 
 
-print "\nBest runtime \t= "	, bestRun.time, "ns"
+print "\nBest runtime \t= %e"	, bestRun.time, "ns"
 print "\nProposed run:"
 print "mgCycles \t= "		, bestRun.mgCycles
 print "mgLevels \t= "		, bestRun.mgLevels

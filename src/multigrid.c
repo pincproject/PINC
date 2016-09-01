@@ -328,10 +328,10 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 	msg(STATUS, "\nMultigrid settings: \n nLevels = %d \n nPreSmooth = %d \n nCoarseSolve = %d \n nPostSmooth = %d",
 		mgRho->nLevels, mgRho->nPreSmooth, mgRho->nCoarseSolve, mgRho->nPostSmooth);
-	if(mpiInfo->mpiRank == 0){
-		aiPrint(mpiInfo->nSubdomains, 3);
-		aiPrint(&rho->trueSize[1], 3);
-	}
+	// if(mpiInfo->mpiRank == 0){
+	// 	aiPrint(mpiInfo->nSubdomains, 3);
+	// 	aiPrint(&rho->trueSize[1], 3);
+	// }
 	msg(STATUS, "mgLevels = %d", mgRho->nLevels);
 
  	int rank = rho->rank;
