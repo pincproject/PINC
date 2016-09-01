@@ -65,6 +65,10 @@ static void gContractInner(	const double **in, double **out,
 							const int *layersBefore, const int *layersAfter,
 	 						const int *trueSize, const long int *sizeProd);
 
+static void gExpandInner(	const double **in, double **out,
+							const int *layersBefore, const int *layersAfter,
+	 						const int *trueSize, const long int *sizeProd);
+
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
@@ -205,6 +209,37 @@ void gRemoveHalo(Grid *grid){
 
 }
 
+void gInsertHalo(Grid *grid, const int *nGhostLayers){
+
+	double *oldVal = grid->val;
+	int rank = grid->rank;
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+
+	memcpy(grid->nGhostLayers, nGhostLayers, 2*rank*sizeof(*nGhostLayers));
+
+	for(int r=0;r<rank;r++){
+		size[r] += nGhostLayers[r] + nGhostLayers[r+rank];
+	}
+
+	long int *newSizeProd = malloc((rank+1)*sizeof(*newSizeProd));
+	ailCumProd(size,newSizeProd,rank);
+
+	double *newVal = malloc(newSizeProd[rank]*sizeof(*newVal));
+	double *tempVal = newVal; // Address will change
+
+	gExpandInner(	(const double **)&oldVal, &tempVal,
+					&nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
+					&trueSize[rank-1], &newSizeProd[rank-1]);
+
+	free(grid->val);
+	grid->val = newVal;
+
+	free(grid->sizeProd);
+	grid->sizeProd = newSizeProd;
+
+}
+
 static void gContractInner(	const double **in, double **out,
 							const int *layersBefore, const int *layersAfter,
 	 						const int *trueSize, const long int *sizeProd){
@@ -222,6 +257,26 @@ static void gContractInner(	const double **in, double **out,
 		}
 	}
 	*in += *sizeProd**layersAfter;
+
+}
+
+static void gExpandInner(	const double **in, double **out,
+							const int *layersBefore, const int *layersAfter,
+	 						const int *trueSize, const long int *sizeProd){
+
+	*out += *sizeProd**layersBefore;
+	if(*sizeProd==1){
+		for(int j=0;j<*trueSize;j++){
+			*(*out)++ = *(*in)++;
+		}
+	} else {
+		for(int j=0;j<*trueSize;j++){
+			gExpandInner(	in, out,
+							layersBefore-1, layersAfter-1,
+							trueSize-1, sizeProd-1);
+		}
+	}
+	*out += *sizeProd**layersAfter;
 
 }
 

@@ -553,6 +553,7 @@ void fillGridIndexes(Grid *grid);
 
 
 void gRemoveHalo(Grid *grid);
+void gInsertHalo(Grid *grid, const int *nGhostLayers);
 
 /**
  * @brief Initial grid configurations, temporary untill a read hdf5 method is available
