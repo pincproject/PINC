@@ -326,24 +326,13 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
  	MgAlgo mgAlgo = getMgAlgo(ini);
 
- 	//Sets the boudary slices
- // 	gSetBndSlices(phi, mpiInfo);
- // 	mgRestrictBnd(mgPhi);
-	//
- // 	gBnd(phi, mpiInfo);
- // 	gBnd(mgPhi->grids[1], mpiInfo);
-	//
-	// fillGridIndexes(mgRho->grids[0]);
-	// if(mpiInfo->mpiRank==0)	dumpWholeGrid(ini, mgRho->grids[0]);
-	//
-	// // fillGridIndexes(rho);
-	// // if(mpiInfo->mpiRank==0) dumpWholeGrid(ini, mgRho->grids[0]);
-	//
-	// mgHalfRestrictND(rho,mgRho->grids[1]);
-	// if(mpiInfo->mpiRank==0) dumpWholeGrid(ini, mgRho->grids[1]);
-	//
-	//
-	// return;
+	msg(STATUS, "\nMultigrid settings: \n nLevels = %d \n nPreSmooth = %d \n nCoarseSolve = %d \n nPostSmooth = %d",
+		mgRho->nLevels, mgRho->nPreSmooth, mgRho->nCoarseSolve, mgRho->nPostSmooth);
+	if(mpiInfo->mpiRank == 0){
+		aiPrint(mpiInfo->nSubdomains, 3);
+		aiPrint(&rho->trueSize[1], 3);
+	}
+	msg(STATUS, "mgLevels = %d", mgRho->nLevels);
 
  	int rank = rho->rank;
  	Timer *t = tAlloc(rank);
