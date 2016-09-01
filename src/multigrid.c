@@ -610,8 +610,6 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	}
 
-	free(tempVal);
-
 	return;
 }
 
