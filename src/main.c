@@ -63,6 +63,9 @@ void regular(dictionary *ini){
 													puDistrND0_set);
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
+	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
+																puExtractEmigrantsND_set);
+
 	// char *str;
 	//
 	// str = iniGetStr("methods:acc");
@@ -133,7 +136,7 @@ void regular(dictionary *ini){
 	pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
-	puExtractEmigrants3D(pop, mpiInfo);
+	extractEmigrants(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
 	/*
@@ -177,7 +180,7 @@ void regular(dictionary *ini){
 		puMove(pop);
 
 		// Migrate particles (periodic boundaries)
-		puExtractEmigrants3D(pop, mpiInfo);
+		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
@@ -221,7 +224,6 @@ void regular(dictionary *ini){
 	}
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
-
 
 	/*
 	 * FINALIZE PINC VARIABLES
