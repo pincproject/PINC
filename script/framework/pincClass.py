@@ -37,7 +37,7 @@ class PINC:
 
 	def runMG(self):
 		cmd = self.pincPath + " " + self.iniPath
-		cmd += " main:routine=" + self.routine
+		cmd += " methods:mode=" + self.mode
 		cmd += " time:startTime=" + str(self.startTime)
 		cmd += " multigrid:mgLevels=" + str(self.mgLevels)
 		cmd += " multigrid:mgCycles=" + str(self.mgCycles)

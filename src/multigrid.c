@@ -357,7 +357,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
  	gNeutralizeGrid(rho, mpiInfo);
 
-	double tol = 0.1;
+	double tol = 0.01;
 	double avgError = 1;
 	double errSquared;
 	double resSquared;

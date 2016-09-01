@@ -19,24 +19,29 @@ from pincClass import *
 import subprocess
 import h5py
 import numpy as np
+import sys as sys
 
-pinc = PINC(iniPath = "../../local.ini")
+if(len(sys.argv) > 1):
+	path = "../../" + sys.argv[1]
+else:
+	path = "../../local.ini"
+pinc = PINC(iniPath = path)
 
 #Setting up wanted needed ini file
-pinc.routine 		= "mgRun"
+pinc.mode 		= "mgRun"
 pinc.mgCycles 		= 1
 pinc.startTime		= -1
 
 class Settings:
 	def __init__(self, nPre = 10, nPost = 10,
 					nCoarse = 10, mgLevels = 3):
-		self.nPre    = nPre
-		self.nPost   = nPost
-		self.nCoarse = nCoarse
-		self.mgLevels	  = mgLevels
+		self.nPre    	= nPre
+		self.nPost   	= nPost
+		self.nCoarse 	= nCoarse
+		self.mgLevels	= mgLevels
 		#Store results
-		self.mgCycles 	  = 0
-		self.time 		  = float('Inf')
+		self.mgCycles 	= 0
+		self.time 		= float('Inf')
 
 	def copy(self, copy):
 		self.nPre 		= copy.nPre
@@ -60,21 +65,9 @@ def formatTimeCycles(fileName, nRuns):
 
 	return time, mgCycles
 
-def nCoarse(nTries, nRun):
-	nRun
-
-bestRun = Settings()
-currentRun = Settings(100,100,100,2)
-
-pinc.clean()
-nTries 	= 100
-nRun	= 0
-preInc 	= 1
-
-for i in range(0, 3):	#mgLevels
-	# prevPreTime = float('Inf')
-	prevCoaTime = float('Inf')
-	# prevPosTime	= float('Inf')
+def nPostOpt(nTries, nRun, bestRun, currentRun, pinc):
+	pTime = float('Inf')
+	preInc = 1
 	for j in range(0,nTries): #nCoarse
 		##Run, retrieve time and cycles used
 		currentRun.setPinc(pinc)
@@ -88,27 +81,105 @@ for i in range(0, 3):	#mgLevels
 			bestRun.mgCycles = mgCycles
 
 		if(preInc == 1):
-			if(time < prevCoaTime):
-				prevCoaTime = time
+			if(time < pTime):
+				pTime = time
+				currentRun.nPost *= 2
+			else:
+				currentRun.nPost *= 0.25
+				preInc = -1
+		else:
+			if(time < pTime):
+				pTime = time
+				currentRun.nPost *= 0.5
+			else:
+				break
+		nRun += 1
+	return nRun
+
+
+def nPreOpt(nTries, nRun, bestRun, currentRun, pinc):
+	pTime = float('Inf')
+	preInc = 1
+	for j in range(0,nTries): #nCoarse
+		# nRuns = nPostOpt(nTries, nRun, bestRun, currentRun, pinc)
+		##Run, retrieve time and cycles used
+		currentRun.setPinc(pinc)
+		pinc.runMG()
+		time, mgCycles = formatTimeCycles('test_timer.xy.h5',nRun)
+
+		#Check if best run
+		if(time < bestRun.time):
+			bestRun.copy(currentRun)
+			bestRun.time = time
+			bestRun.mgCycles = mgCycles
+
+		if(preInc == 1):
+			if(time < pTime):
+				pTime = time
+				currentRun.nPre *= 2
+			else:
+				currentRun.nPre *= 0.25
+				preInc = -1
+		else:
+			if(time < pTime):
+				pTime = time
+				currentRun.nPre *= 0.5
+			else:
+				break
+		nRun += 1
+	return nRun
+
+def nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc):
+	pTime = float('Inf')
+	preInc = 1
+	for j in range(0,nTries): #nCoarse
+		# print "Hello"
+		nRun = nPreOpt(nTries, nRun, bestRun, currentRun, pinc)
+		##Run, retrieve time and cycles used
+		currentRun.setPinc(pinc)
+		pinc.runMG()
+		time, mgCycles = formatTimeCycles('test_timer.xy.h5',nRun)
+
+		#Check if best run
+		if(time < bestRun.time):
+			bestRun.copy(currentRun)
+			bestRun.time = time
+			bestRun.mgCycles = mgCycles
+
+		if(preInc == 1):
+			if(time < pTime):
+				pTime = time
 				currentRun.nCoarse *= 2
 			else:
 				currentRun.nCoarse *= 0.25
 				preInc = -1
 		else:
-			if(time < prevCoaTime):
-				prevCoaTime = time
+			if(time < pTime):
+				pTime = time
 				currentRun.nCoarse *= 0.5
 			else:
-				prevCoaTime = float('Inf')
-				preInce = 1
 				break
-
 		nRun += 1
+	return nRun
+
+bestRun = Settings()
+currentRun = Settings(100,100,100,2)
+
+pinc.clean()
+nTries 	= 100
+nRun	= 0
+preInc 	= 1
+
+
+
+for i in range(0, 1):	#mgLevels
+
+	nRun = nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc)
 
 	currentRun.mgLevels += 1
 
 
-print "\nBest runtime \t= %e"	, bestRun.time, "ns"
+print "\nBest runtime \t= "	, bestRun.time*1.e-9, "s"
 print "\nProposed run:"
 print "mgCycles \t= "		, bestRun.mgCycles
 print "mgLevels \t= "		, bestRun.mgLevels
