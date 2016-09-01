@@ -551,8 +551,26 @@ void dumpWholeGrid(dictionary *ini, Grid *grid);
 void dumpTrueGrid(dictionary *ini, Grid *grid);
 void fillGridIndexes(Grid *grid);
 
-
+/**
+ * @brief Removes halo (ghost nodes) from grid quantity
+ * @param[in,out]	grid	Grid
+ * @return			void
+ */
 void gRemoveHalo(Grid *grid);
+
+/**
+ * @brief Inserts a halo (ghost nodes) on grid quantity
+ * @param[in,out]	grid			Grid
+ * @param			nGhostLayers	Number of ghost layers to insert
+ * @return			void
+ *
+ * To re-insert a halo previously removed by gRemoveHalo(), make a copy of
+ * nGhostLayers from Grid before removing halo, and use it with this function
+ * when inserting halo.
+ *
+ * This functoin assumes grid has no ghost layers from before (as if
+ * gRemoveHalo() has been called). Could be extended in future.
+ */
 void gInsertHalo(Grid *grid, const int *nGhostLayers);
 
 /**
