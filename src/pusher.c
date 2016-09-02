@@ -722,6 +722,9 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
+funPtr puExtractEmigrants3D_set(const dictionary *ini){
+	return puExtractEmigrants3D;
+}
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
@@ -799,6 +802,9 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
+funPtr puExtractEmigrantsND_set(const dictionary *ini){
+	return puExtractEmigrantsND;
+}
 void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;

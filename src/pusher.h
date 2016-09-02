@@ -180,6 +180,8 @@ void puIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
 
 void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo);
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo);
+funPtr puExtractEmigrantsND_set(const dictionary *ini);
+funPtr puExtractEmigrants3D_set(const dictionary *ini);
 
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid);
 
