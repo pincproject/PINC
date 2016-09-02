@@ -12,52 +12,133 @@
 #	This can be useful for dividing up the run into several parts, or to test the
 #	performance of parts of the program with different settings.
 #
-
-
+#	(Sorry about the nonsophisticated script)
+#
 
 from pincClass import *
 import subprocess
 import h5py
 import numpy as np
+import sys as sys
 
-pinc = PINC()
-# pinc.clean()
+if(len(sys.argv) > 1):
+	path = "../../" + sys.argv[1]
+else:
+	path = "../../local.ini"
+pinc = PINC(iniPath = path)
+
 #Setting up wanted needed ini file
-pinc.routine = "mgRoutine"
-pinc.trueSize = [16,4,4]
-pinc.mgCycles = 1
-pinc.preCycles = 10
-pinc.postCycles = 10
-pinc.coarseCycles = 100
-pinc.nSubdomains = [2,1,1]
-pinc.preSmooth = 	"jacobianND"
-pinc.postSmooth= 	"jacobianND"
-# pinc.coarseSolver=	"jacobianND"
-# pinc.preSmooth = 	"gaussSeidelRB"
-# pinc.postSmooth= 	"gaussSeidelRB"
-pinc.coarseSolver=	"gaussSeidelRBND"
+pinc.mode 		= "mgRun"
+pinc.mgCycles 		= 1
+pinc.startTime		= -1
+
+class Settings:
+	def __init__(self, nPre = 10, nPost = 10,
+					nCoarse = 10, mgLevels = 3):
+		self.nPre    	= nPre
+		self.nPost   	= nPost
+		self.nCoarse 	= nCoarse
+		self.mgLevels	= mgLevels
+		#Store results
+		self.mgCycles 	= 0
+		self.time 		= float('Inf')
+
+	def copy(self, copy):
+		self.nPre 		= copy.nPre
+		self.nPost		= copy.nPost
+		self.nCoarse	= copy.nCoarse
+		self.mgLevels 	= copy.mgLevels
+
+	def setPinc(self, pinc):
+		pinc.preCycles 			= self.nPre
+		pinc.postCycles			= self.nPost
+		pinc.coarseCycles		= self.nCoarse
+		pinc.mgLevels 			= self.mgLevels
+		pinc.startTime 			+= 1
 
 
+def formatTimeCycles(fileName, nRuns):
+	data = h5py.File(fileName,'r')
+	time = np.array(data['time'][nRuns,1])
+	mgCycles= np.array(data['cycles'][nRuns,1])
+	data.close()
+
+	return time, mgCycles
 
 
+def nCycleOptimize(count, nTries, nRun, bestRun, currentRun, pinc):
+	pTime = float('Inf')
+	preInc = 1
+	for j in range(0,nTries): #nCoarse
+		# print "Hello"
+		if(count>0):
+			nRun = nCycleOptimize(count -1, nTries, nRun, bestRun, currentRun, pinc)
+		##Run, retrieve time and cycles used
+		currentRun.setPinc(pinc)
+		pinc.runMG()
+		time, mgCycles = formatTimeCycles('test_timer.xy.h5',nRun)
+
+		#Check if best run
+		if(time < bestRun.time):
+			bestRun.copy(currentRun)
+			bestRun.time = time
+			bestRun.mgCycles = mgCycles
+
+		if(preInc == 1):
+			if(time < pTime):
+				pTime = time
+				if(count == 2):
+					currentRun.nCoarse *= 2
+				if(count == 1):
+					currentRun.nPre *= 2
+				if(count == 0):
+					currentRun.nPost *=2
+			else:
+				if(count == 2):
+					currentRun.nCoarse *= 0.5
+				if(count == 1):
+					currentRun.nPre *= 0.5
+				if(count == 0):
+					currentRun.nPost *=0.5
+				preInc = -1
+		else:
+			if(time < pTime):
+				pTime = time
+				if(count == 2):
+					currentRun.nCoarse *= 0.5
+				if(count == 1):
+					currentRun.nPre *= 0.5
+				if(count == 0):
+					currentRun.nPost *=0.5
+			else:
+				break
+		nRun += 1
+	return nRun
+
+
+bestRun = Settings()
+currentRun = Settings(10,10,10,5)
 
 pinc.clean()
-
-for levels in range(1,5):
-	for cycles in range(1,100,10):
-		pinc.mgLevels = levels
-		pinc.preCycles = cycles
-		pinc.postCycles = cycles
-		pinc coarseCycles = cycles
-		pinc.runMG()
-		pinc.startTime = pinc.startTime+1
+nTries 	= 100
+nRun	= 0
+preInc 	= 1
 
 
 
-data = h5py.File('test_timer.xy.h5','r')
-time= data['time']
-cycles= np.array([data['cycles'][:,1]])
+for i in range(1):	#mgLevels
 
-data = np.concatenate((time, cycles.T), axis = 1)
+	# nRun = nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc)
+	nRun = nCycleOptimize(2 ,nTries, nRun, bestRun, currentRun, pinc)
 
-print data
+
+	currentRun.mgLevels += 1
+
+
+print "\nBest runtime \t= "	, bestRun.time*1.e-9, "s"
+print "\nProposed run:"
+print "mgCycles \t= "		, bestRun.mgCycles
+print "mgLevels \t= "		, bestRun.mgLevels
+print "nPreSmooth \t= "		, bestRun.nPre
+print "nPostSmooth \t= "	, bestRun.nPost
+print "nCoarseSolve \t= "	, bestRun.nCoarse
