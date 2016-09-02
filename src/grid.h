@@ -555,6 +555,13 @@ void fillGridIndexes(Grid *grid);
  * @brief Removes halo (ghost nodes) from grid quantity
  * @param[in,out]	grid	Grid
  * @return			void
+ *
+ * Removes halo from grid by in-place operations. Grid can be accessed using
+ * grid->size and grid->sizeProd as usual after removal.
+ *
+ * Note: The memory for grid->val is not re-allocated to consume less memory.
+ * This is for optimization purposes. If a halo want to be temporarily removed,
+ * and later re-inserted, this can be done without reallocation operations.
  */
 void gRemoveHalo(Grid *grid);
 
@@ -564,11 +571,18 @@ void gRemoveHalo(Grid *grid);
  * @param			nGhostLayers	Number of ghost layers to insert
  * @return			void
  *
- * To re-insert a halo previously removed by gRemoveHalo(), make a copy of
- * nGhostLayers from Grid before removing halo, and use it with this function
- * when inserting halo.
+ * Inserts a helo to grid  by in-place operations.
  *
- * This functoin assumes grid has no ghost layers from before (as if
+ * To re-insert a halo previously removed by gRemoveHalo(), make a copy of
+ * nGhostLayers (e.g. using memcpy()) from grid before removing halo, and use
+ * it with this function when inserting halo.
+ *
+ * Note: The memory for grid->val is not re-allocated to get sufficient memory
+ * by this function. The developer must make sure grid->val has sufficient
+ * memory allocated prior to calling this function or segmentation fault will
+ * occur. This is for optimization purposes.
+ *
+ * This function assumes grid has no ghost layers from before (as if
  * gRemoveHalo() has been called). Could be extended in future.
  */
 void gInsertHalo(Grid *grid, const int *nGhostLayers);
