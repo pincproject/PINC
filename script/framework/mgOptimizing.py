@@ -162,8 +162,58 @@ def nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc):
 		nRun += 1
 	return nRun
 
+def nCycleOptimize(count, nTries, nRun, bestRun, currentRun, pinc):
+	pTime = float('Inf')
+	preInc = 1
+	for j in range(0,nTries): #nCoarse
+		# print "Hello"
+		if(count>0):
+			nRun = nCycleOptimize(count -1, nTries, nRun, bestRun, currentRun, pinc)
+		##Run, retrieve time and cycles used
+		currentRun.setPinc(pinc)
+		pinc.runMG()
+		time, mgCycles = formatTimeCycles('test_timer.xy.h5',nRun)
+
+		#Check if best run
+		if(time < bestRun.time):
+			bestRun.copy(currentRun)
+			bestRun.time = time
+			bestRun.mgCycles = mgCycles
+
+		if(preInc == 1):
+			if(time < pTime):
+				pTime = time
+				if(count == 2):
+					currentRun.nCoarse *= 2
+				if(count == 1):
+					currentRun.nPre *= 2
+				if(count == 0):
+					currentRun.nPost *=2
+			else:
+				if(count == 2):
+					currentRun.nCoarse *= 0.5
+				if(count == 1):
+					currentRun.nPre *= 0.5
+				if(count == 0):
+					currentRun.nPost *=0.5
+				preInc = -1
+		else:
+			if(time < pTime):
+				pTime = time
+				if(count == 2):
+					currentRun.nCoarse *= 0.5
+				if(count == 1):
+					currentRun.nPre *= 0.5
+				if(count == 0):
+					currentRun.nPost *=0.5
+			else:
+				break
+		nRun += 1
+	return nRun
+
+
 bestRun = Settings()
-currentRun = Settings(100,100,100,2)
+currentRun = Settings(10,10,10,5)
 
 pinc.clean()
 nTries 	= 100
@@ -172,9 +222,11 @@ preInc 	= 1
 
 
 
-for i in range(0, 1):	#mgLevels
+for i in range(1):	#mgLevels
 
-	nRun = nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc)
+	# nRun = nCoarseOpt(nTries, nRun, bestRun, currentRun, pinc)
+	nRun = nCycleOptimize(2 ,nTries, nRun, bestRun, currentRun, pinc)
+
 
 	currentRun.mgLevels += 1
 
