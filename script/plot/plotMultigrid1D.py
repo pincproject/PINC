@@ -79,16 +79,13 @@ if nLevels ==1:
 	m = 0
 	f, ax = plt.subplots(3,2)
 	for name in ("phi", "sol", "E", "rho", "res", "error"):
-		path = '../../test_'+name+'_'+ str(0) +'.grid.h5'
+		path = '../framework/test_'+name+'_'+ str(1) +'.grid.h5'
 		grid = transformData(h5py.File(path,'r'),0)
 		plot1DSubgrid(name, grid, ax[n%3,m%2])
 		ax[n%3,m%2].set_title(name)
 		m+=1
 		n+=1-(m%2)
-	# rho = h5py.File('../../test_rho_'+ str(0) +'.grid.h5','r')
-	# rho	= rho['/n=%.1f'%0]
-	# rho = np.squeeze(rho)
-	# print rho
+
 
 
 else:

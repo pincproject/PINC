@@ -107,6 +107,18 @@ MgAlgo getMgAlgo(const dictionary *ini);
  */
 void mgRun(dictionary *ini);
 
+/**
+ * @brief Performs a Multigrid run on a test case, used to optimize
+ * @param 	ini
+ *
+ * This run solves sinusoidal test case, then it compares the solution
+ * to a analytical solution. It is used by a framework routine to
+ * investigate the scaling of the error compared to the stepsize.
+ *
+ */
+
+void mgErrorScaling(dictionary *ini);
+
 
 /**
  * @brief Performs a multigrid V cycle

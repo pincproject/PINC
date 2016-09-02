@@ -19,6 +19,10 @@ funPtr regular_set(dictionary *ini){ return regular; }
 void mgRun(dictionary *ini);
 funPtr mgRun_set(dictionary *ini){ return mgRun; }
 
+void mgErrorScaling(dictionary *ini);
+funPtr mgErrorScaling_set(dictionary *ini){ return mgErrorScaling; }
+
+
 int main(int argc, char *argv[]){
 
 	/*
@@ -33,7 +37,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * CHOOSE PINC RUN MODE
 	 */
-	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set);
+	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set, mgErrorScaling_set);
 	run(ini);
 
 	/*

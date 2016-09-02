@@ -1384,11 +1384,11 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 *			TEMP, to reading of h5 files are ready
 *************************************************************/
 
-void fillHeaviside(Grid *grid, int rank, const MpiInfo *mpiInfo){
+void gFillHeavi(Grid *grid, int d, const MpiInfo *mpiInfo){
 
    //Load
    int *size = grid->size;
-   int *trueSize = grid->trueSize;
+   int rank = grid->rank;
    long int *sizeProd = grid->sizeProd;
    int *subdomain = mpiInfo->subdomain;
    int *nSubdomains = mpiInfo->nSubdomains;
@@ -1399,25 +1399,31 @@ void fillHeaviside(Grid *grid, int rank, const MpiInfo *mpiInfo){
 
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[rank-1]==0){
-	   //One core
-	   for(int j = 1; j < size[1]-1; j++){
-		   for (int k = 1; k<size[2]-1; k++) {
-			   for(int l = 1; l < size[3]-1; l++){
-				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(j < (trueSize[rank-1]+1)/2.) val[ind] = 1.;
-				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
-				   else val[ind] = -1.;
-			   }
-		   }
-	   }
+   if(nSubdomains[d-1]==1){
+	   //SetSlices
+	   double *slice = grid->sendSlice;
+
+	   int nSlicePoints = sizeProd[rank]/size[d];
+
+	   for(int j = 0; j < nSlicePoints; j++)
+	   		slice[j] = 1.;
+
+	   for(int j = 2; j < size[d]/2; j++)
+	   		setSlice(slice, grid, d, j);
+
+	   for(int j = 0; j < nSlicePoints; j++)
+	   		slice[j] = -1.;
+
+	   for(int j = size[d]/2 + 1; j < size[d]; j++)
+	   		setSlice(slice, grid, d, j);
+
    } else {
 	   //Multi core
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(subdomain[rank-1]<nSubdomains[rank-1]/2) val[ind] = 1.0;
+				   if(subdomain[d-1]<nSubdomains[d-1]/2) val[ind] = 1.0;
 				   else val[ind] = -1.;
 			   }
 		   }
@@ -1425,10 +1431,10 @@ void fillHeaviside(Grid *grid, int rank, const MpiInfo *mpiInfo){
 	// Set in 0 at between domains (sendSlice is safe to use, since it is reset every time it is used)
 	   double *slice = grid->sendSlice;
 	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = 0.;
-	   if(subdomain[rank-1] == 0)	setSlice(slice, grid, rank, 1);
+	   if(subdomain[d-1] == 0)	setSlice(slice, grid, d, 1);
 
 	   for(int j = 0; j < sizeProd[4]; j++)	slice[j] = -0.;
-	   if(subdomain[rank-1] == nSubdomains[rank-1]/2)	setSlice(slice, grid, rank, 1);
+	   if(subdomain[d-1] == nSubdomains[d-1]/2)	setSlice(slice, grid, d, 1);
    }
 
 	gHaloOp(setSlice, grid, mpiInfo, 0);
@@ -1436,11 +1442,12 @@ void fillHeaviside(Grid *grid, int rank, const MpiInfo *mpiInfo){
    return;
 }
 
-void fillHeaviSol(Grid *grid, int rank ,const MpiInfo *mpiInfo){
+void gFillHeaviSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 
 	//Load
     int *size = grid->size;
     int *trueSize = grid->trueSize;
+	int rank = grid->rank;
     long int *sizeProd = grid->sizeProd;
     int *subdomain = mpiInfo->subdomain;
     int *nSubdomains = mpiInfo->nSubdomains;
@@ -1450,35 +1457,44 @@ void fillHeaviSol(Grid *grid, int rank ,const MpiInfo *mpiInfo){
 
    //Hardcoding try
    long int ind = 0;
-   if(nSubdomains[rank-1]==0){
-	   //One core
-	   msg(WARNING, "Not implemented for 1 domain");
-	   for(int j = 1; j < size[1]-1; j++){
-		   for (int k = 1; k<size[2]-1; k++) {
-			   for(int l = 1; l < size[3]-1; l++){
-				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(j < (trueSize[1]+1)/2.) val[ind] = 1.;
-				   // else if (k == trueSize[2]/2 || k == trueSize[2]) val[ind] = 0.;
-				   else val[ind] = -1.;
-			   }
+   if(nSubdomains[d-1]==1){
+	   //Smart setSlice-use
+	   double half = 0.5*trueSize[2];
+	   double *sol = malloc(trueSize[d]*sizeof(*sol));
+	   double *slice = grid->sendSlice;
+	   long int nSlicePoints = sizeProd[rank]/size[d];
+
+	   //First half  f = -(a-x)*x/2
+	   for(int j = 0; j < trueSize[d]/2; j++)
+	   		sol[j] = -0.5*(half - j)*j;
+
+		//Second half	f = (a - x)*x/2
+ 	   for(int j = trueSize[d]/2; j < trueSize[d]; j++)
+			sol[j] = 0.5*(half - (j-half))*(j-half);
+
+	   for(int j = 1; j < trueSize[d] + 1; j++){
+		   for(int k = 0; k < nSlicePoints; k ++){
+			   slice[k] = sol[j-1];
 		   }
+		   setSlice(slice, grid, d, j);
 	   }
+
    } else {
 	   //Multi core
 	   long int advance;	//Total domain position
-	   int half = nSubdomains[rank-1]/2 * trueSize[rank];
+	   int half = nSubdomains[d-1]/2 * trueSize[d];
 	   for(int j = 1; j < size[1]-1; j++){
 		   for (int k = 1; k<size[2]-1; k++) {
 			   for(int l = 1; l < size[3]-1; l++){
 				   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-				   if(subdomain[rank-1]<nSubdomains[rank-1]/2){
-					   //Rewrite to use rank
-					   advance = (j*(rank==1) + k*(rank==2) + l*(rank==3))-1
-					   			+ subdomain[rank-1]*trueSize[rank];
+				   if(subdomain[d-1]<nSubdomains[d-1]/2){
+					   //Rewrite to use d
+					   advance = (j*(d==1) + k*(d==2) + l*(d==3))-1
+					   			+ subdomain[d-1]*trueSize[d];
 					   val[ind] = -0.5*(half - advance)*advance;
 				   }
 				   else{
-					   advance = (j*(rank==1) + k*(rank==2) + l*(rank==3))-1
+					   advance = (j*(d==1) + k*(d==2) + l*(d==3))-1
 					    		+ trueSize[1]* (subdomain[0]%(nSubdomains[0]/2));
 					   val[ind] = -0.5*(advance - half)*advance;
 				   }
@@ -1491,7 +1507,7 @@ void fillHeaviSol(Grid *grid, int rank ,const MpiInfo *mpiInfo){
    return;
 }
 
-void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
+void gFillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
 
    int *size = grid->size;
    long int *sizeProd = grid->sizeProd;
@@ -1515,7 +1531,7 @@ void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
 
 }
 
-void fillPointCharge(Grid *grid , const MpiInfo *mpiInfo){
+void gFillPoint(Grid *grid , const MpiInfo *mpiInfo){
 
    //Grid info
    int *size = grid->size;
@@ -1542,7 +1558,7 @@ void fillPointCharge(Grid *grid , const MpiInfo *mpiInfo){
 
 }
 
-void fillPointSol(Grid *grid, const MpiInfo *mpiInfo){
+void gFillPointSol(Grid *grid, const MpiInfo *mpiInfo){
 
    //Grid info
    int *size = grid->size;
@@ -1581,85 +1597,108 @@ void fillPointSol(Grid *grid, const MpiInfo *mpiInfo){
    return;
 }
 
-void fillSin(Grid *grid, const MpiInfo *mpiInfo){
+void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
 
-   //Load MPI stuff
-   int *subdomain = mpiInfo->subdomain;
-   int *nSubdomains = mpiInfo->nSubdomains;
+	//MPI
+	int *nSubdomains 	= mpiInfo->nSubdomains;
+	// int *subdomain 		= mpiInfo->subdomain;
 
-   //Load grid info
-   int *trueSize = grid->trueSize;
-   int *size = grid->size;
-   int *nGhostLayers = grid->nGhostLayers;
-   long int *sizeProd = grid->sizeProd;
-   double *val = grid->val;
+	//Load
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+	int rank = grid->rank;
+	long int *sizeProd = grid->sizeProd;
 
-   //Temp quick functions and constants
-   double sin(double);
+	double *sol = malloc(trueSize[d]*sizeof(*sol));
+	double *slice = grid->sendSlice;
+	long int nSlicePoints = sizeProd[rank]/size[d];
 
-   long int ind;
-   double coeffX = 2*PI/((trueSize[1])*nSubdomains[0]);
-   double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
-   // double coeffZ = PI/(size[3]*nSubdomains[2]);
+	//f = sin(x/2piL)
 
+	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
 
-   for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
-	   for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
-		   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
-			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
-			   // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
-			   val[ind] = 	sin( ( (j - nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
-						   *sin( ( (k - nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffY);
-						   // *sin((l+size[3]*subdomain[2])*coeffZ);
+	for(int j = 0; j < trueSize[d]; j++)
+		 sol[j] = sin(j*coeff);
 
-		   }
-	   }
-   }
+	for(int j = 1; j < trueSize[d] + 1; j++){
+		for(int k = 0; k < nSlicePoints; k ++){
+			slice[k] = sol[j-1];
+		}
+		setSlice(slice, grid, d, j);
+	}
 
 
-   return;
-}
 
-void fillSinSol(Grid *grid, const MpiInfo *mpiInfo){
-
-   //Load MPI stuff
-   int *subdomain = mpiInfo->subdomain;
-   int *nSubdomains = mpiInfo->nSubdomains;
-
-   //Load grid info
-   int *trueSize = grid->trueSize;
-   int *size = grid->size;
-   int *nGhostLayers = grid->nGhostLayers;
-   long int *sizeProd = grid->sizeProd;
-   double *val = grid->val;
-
-   //Temp quick functions and constants
-   double sin(double);
-
-   long int ind;
-   double coeffX = 2*PI/(trueSize[1]*nSubdomains[0]);
-   double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
-   // double coeffZ = PI/(size[3]*nSubdomains[2]);
-
-
-   for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
-	   for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
-		   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
-			   ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
-			   // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
-			   val[ind] = 	-1/(coeffX*coeffX)*sin( ( (j-nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
-						   -1/(coeffY*coeffY)*sin( ( (k-nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffX);
-						   // *sin((l+size[3]*subdomain[2])*coeffZ);
-
-		   }
-	   }
-   }
+   // //Load MPI stuff
+   // int *subdomain = mpiInfo->subdomain;
+   // int *nSubdomains = mpiInfo->nSubdomains;
+   //
+   // //Load grid info
+   // int *trueSize = grid->trueSize;
+   // int *size = grid->size;
+   // int *nGhostLayers = grid->nGhostLayers;
+   // long int *sizeProd = grid->sizeProd;
+   // double *val = grid->val;
+   //
+   // //Temp quick functions and constants
+   // double sin(double);
+   //
+   // long int ind;
+   // double coeffX = 2*PI/((trueSize[1])*nSubdomains[0]);
+   // double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
+   // // double coeffZ = PI/(size[3]*nSubdomains[2]);
+   //
+   //
+   // for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
+   //  for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
+   //   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
+   //    ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
+   //    // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
+   //    val[ind] = 	sin( ( (j - nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
+   // 			   *sin( ( (k - nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffY);
+   // 			   // *sin((l+size[3]*subdomain[2])*coeffZ);
+   //
+   //   }
+   //  }
+   // }
 
 
    return;
 }
 
-void fillExp(Grid *grid, const MpiInfo *mpiInfo){
+void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
+
+	//MPI
+	int *nSubdomains 	= mpiInfo->nSubdomains;
+	// int *subdomain 		= mpiInfo->subdomain;
+
+	//Load
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+	int rank = grid->rank;
+	long int *sizeProd = grid->sizeProd;
+
+	double *sol = malloc(trueSize[d]*sizeof(*sol));
+	double *slice = grid->sendSlice;
+	long int nSlicePoints = sizeProd[rank]/size[d];
+
+	//f = sin(x/2piL)
+	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+
+	for(int j = 0; j < trueSize[d]; j++)
+		 sol[j] = -1./(coeff*coeff)*sin(j*coeff);
+
+	for(int j = 1; j < trueSize[d] + 1; j++){
+		for(int k = 0; k < nSlicePoints; k ++){
+			slice[k] = sol[j-1];
+		}
+		setSlice(slice, grid, d, j);
+	}
+
+   return;
+}
+
+void gFillExp(Grid *grid, const MpiInfo *mpiInfo){
 
    //Load Mpi
    // int *subdomain = mpiInfo->subdomain;
@@ -1692,7 +1731,7 @@ void fillExp(Grid *grid, const MpiInfo *mpiInfo){
    return;
 }
 
-void fillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
+void gFillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
 
    //Load
    double *val = grid->val;
@@ -1703,7 +1742,7 @@ void fillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
    return;
 }
 
-void fillCst(Grid *grid, const MpiInfo *mpiInfo){
+void gFillCst(Grid *grid, const MpiInfo *mpiInfo){
 
    int rank = grid->rank;
    long int *sizeProd = grid->sizeProd;

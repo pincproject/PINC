@@ -12,7 +12,7 @@
 #	This can be useful for dividing up the run into several parts, or to test the
 #	performance of parts of the program with different settings.
 #
-#	(Sorry about the nonsophisticated script)
+#	(Update documentation)
 #
 
 from pincClass import *
