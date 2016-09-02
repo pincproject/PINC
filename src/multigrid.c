@@ -316,7 +316,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  	Grid *rho = gAlloc(ini, SCALAR);
  	Grid *res= gAlloc(ini, SCALAR);
  	Grid *sol = gAlloc(ini, SCALAR);
- 	Grid *E = gAlloc(ini, VECTOR);
  	Grid *error =gAlloc(ini, SCALAR);
 
  	//Multilevel grids
