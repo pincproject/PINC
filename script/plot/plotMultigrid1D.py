@@ -43,20 +43,20 @@ def plot1DSubgrid(name, grid, ax):
 	ax.locator_params(axis='x',nbins=16)
 	ax.grid()
 
-	print name + "\t=" + str(np.max(grid))
+	print name + "\t=" + str(grid[0])
 
 
 def plotAllGrids(name, nLevels, totLevels , savePath = 'figures/'):
 	#Plot all grids
 	f, ax = plt.subplots(nLevels,1)
 	if nLevels == 1:
-		path = dataPath + 'test_'+name+'_'+ str(0) +'.grid.h5'
+		path = '../../test_'+name+'_'+ str(0) +'.grid.h5'
 		grid = transformData(h5py.File(path,'r'),0)
 		plot1DSubgrid(name, grid, ax)
 
 	else:
 		for i in range(nLevels):
-			path = dataPath + 'test_'+name+'_'+ str(i) +'.grid.h5'
+			path = '../../test_'+name+'_'+ str(i) +'.grid.h5'
 			grid = transformData(h5py.File(path,'r'),0)
 			plot1DSubgrid(name, grid, ax[i])
 			plt.setp([a.get_xticklabels() for a in f.axes[:]], visible=False)
@@ -73,14 +73,13 @@ if len(sys.argv) > 1:
 else:
 	totLevels = 0
 
-# dataPath = "../framework/"
-dataPath = "../../"
+
 if nLevels ==1:
 	n = 0
 	m = 0
 	f, ax = plt.subplots(3,2)
 	for name in ("phi", "sol", "E", "rho", "res", "error"):
-		path = dataPath+'test_'+name+'_'+ str(0) +'.grid.h5'
+		path = '../../test_'+name+'_'+ str(0) +'.grid.h5'
 		grid = transformData(h5py.File(path,'r'),0)
 		plot1DSubgrid(name, grid, ax[n%3,m%2])
 		ax[n%3,m%2].set_title(name)
@@ -93,9 +92,9 @@ if nLevels ==1:
 
 
 else:
-	plotAllGrids("phi", nLevels, totLevels, dataPath)
-	plotAllGrids("rho", nLevels, totLevels, dataPath)
-	plotAllGrids("res", nLevels, totLevels, dataPath)
+	plotAllGrids("phi", nLevels, totLevels)
+	plotAllGrids("rho", nLevels, totLevels)
+	plotAllGrids("res", nLevels, totLevels)
 
 
 plt.show()
