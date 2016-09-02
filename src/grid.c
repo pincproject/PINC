@@ -204,10 +204,10 @@ static void gExpandInner(	const double **in, double **out,
 							const int *layersBefore, const int *layersAfter,
 	 						const int *trueSize, const long int *sizeProd){
 
-	*out += *sizeProd**layersBefore;
+	*out -= *sizeProd**layersAfter;
 	if(*sizeProd==1){
 		for(int j=0;j<*trueSize;j++){
-			*(*out)++ = *(*in)++;
+			*(*out)-- = *(*in)--;
 		}
 	} else {
 		for(int j=0;j<*trueSize;j++){
@@ -216,7 +216,7 @@ static void gExpandInner(	const double **in, double **out,
 							trueSize-1, sizeProd-1);
 		}
 	}
-	*out += *sizeProd**layersAfter;
+	*out -= *sizeProd**layersBefore;
 
 }
 
@@ -892,35 +892,26 @@ long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo){
 void gRemoveHalo(Grid *grid){
 
 	double *oldVal = grid->val;
+	double *newVal = grid->val;
 	int rank = grid->rank;
 	int *nGhostLayers = grid->nGhostLayers;
 	int *trueSize = grid->trueSize;
 
-	long int *oldSizeProd = grid->sizeProd;
-	long int *newSizeProd = malloc((rank+1)*sizeof(*newSizeProd));
-	ailCumProd(trueSize,newSizeProd,rank);
+	long int *sizeProd = grid->sizeProd;
 
-	double *newVal = malloc(newSizeProd[rank]*sizeof(*newVal));
-	double *tempVal = newVal; // Address will change
-
-	gContractInner(	(const double **)&oldVal, &tempVal,
+	gContractInner(	(const double **)&oldVal, &newVal,
 					&nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
-					&trueSize[rank-1], &oldSizeProd[rank-1]);
-
-	free(grid->val);
-	grid->val = newVal;
-
-	free(grid->sizeProd);
-	grid->sizeProd = newSizeProd;
+					&trueSize[rank-1], &sizeProd[rank-1]);
 
 	memcpy(grid->size,trueSize,rank*sizeof(*trueSize));
+	ailCumProd(trueSize,sizeProd,rank);
 	aiSetAll(nGhostLayers,2*rank,0);
 
 }
 
 void gInsertHalo(Grid *grid, const int *nGhostLayers){
 
-	double *oldVal = grid->val;
+	double *val = grid->val;
 	int rank = grid->rank;
 	int *size = grid->size;
 	int *trueSize = grid->trueSize;
@@ -931,21 +922,15 @@ void gInsertHalo(Grid *grid, const int *nGhostLayers){
 		size[r] += nGhostLayers[r] + nGhostLayers[r+rank];
 	}
 
-	long int *newSizeProd = malloc((rank+1)*sizeof(*newSizeProd));
-	ailCumProd(size,newSizeProd,rank);
+	double *lastOldVal = &val[grid->sizeProd[rank]-1];
+	ailCumProd(size,grid->sizeProd,rank);
+	double *lastNewVal = &val[grid->sizeProd[rank]-1];
 
-	double *newVal = malloc(newSizeProd[rank]*sizeof(*newVal));
-	double *tempVal = newVal; // Address will change
+	long int *sizeProd = grid->sizeProd;
 
-	gExpandInner(	(const double **)&oldVal, &tempVal,
+	gExpandInner(	(const double **)&lastOldVal, &lastNewVal,
 					&nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
-					&trueSize[rank-1], &newSizeProd[rank-1]);
-
-	free(grid->val);
-	grid->val = newVal;
-
-	free(grid->sizeProd);
-	grid->sizeProd = newSizeProd;
+					&trueSize[rank-1], &sizeProd[rank-1]);
 
 }
 
