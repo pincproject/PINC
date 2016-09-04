@@ -592,11 +592,11 @@ int *gGetGlobalSize(const dictionary *ini){
 
 	int *L = malloc(nDims*sizeof(*L));
 
-	if(!strcmp(bnd,"PERIODIC")){
+//	if(!strcmp(bnd,"PERIODIC")){
 		for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d];
-	} else {
-		msg(ERROR,"Only PERIODIC grid:boundaries supported yet");
-	}
+//	} else {
+//		msg(ERROR,"Only all PERIODIC grid:boundaries supported by gGetGlobalSize() yet");
+//	}
 
 	free(trueSize);
 	free(nSubdomains);
