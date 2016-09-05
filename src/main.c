@@ -194,13 +194,18 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
+		gAssertNeutralGrid(rho, mpiInfo);
+
 		// Compute electric potential phi
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		gAssertNeutralGrid(phi, mpiInfo);
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 
+		gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
 		// gAddTo(Ext);
 

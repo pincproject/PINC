@@ -6,9 +6,12 @@ import sys as sys
 
 if len(sys.argv) > 1:
     dim = int(sys.argv[1])
+    nPlots = int(sys.argv[2])
 else:
     dim = 0
-for i in range(1):
+
+
+for i in range(nPlots):
     n = 0
     m = 0
     f, ax = plt.subplots(3,2)

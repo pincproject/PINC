@@ -244,6 +244,7 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
 void mgJacobND(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
 
 

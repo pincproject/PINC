@@ -382,7 +382,7 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	//Temporary value
 	static double *tempVal = NULL;
-	if(tempVal==NULL) tempVal = malloc(sizeProd[rank]*sizeof(*tempVal));
+	if(tempVal==NULL)tempVal = malloc(sizeProd[rank]*sizeof(*tempVal));
 
 	//Indexes for how to increase and domain of trueGrid
 	long int gStep;
@@ -403,16 +403,50 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 		for(long int g = gStart; g < gEnd; g++) tempVal[g] -= rhoVal[g];
 		adScale(tempVal, sizeProd[rank], coeff);
-		for(long int g = gStart; g < gEnd; g++) phiVal[g] = tempVal[g];
+		// for(long int g = gStart; g < gEnd; g++) phiVal[g] = tempVal[g];
 
-
+		phi->val = tempVal;
+        tempVal = phiVal;
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 
+		phiVal = phi->val;
+
+
 	}
 
 	return;
+}
+
+void mgJacob1D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
+
+	//Seperate values
+	double *phiVal = phi->val;
+	double *rhoVal = rho->val;
+
+	int *size = phi->size;
+	long int *sizeProd = phi->sizeProd;
+
+	//Temporary value
+	static double *tempVal = NULL;
+	if(tempVal==NULL)tempVal = malloc(sizeProd[2]*sizeof(*tempVal));
+
+	for(int c = 0; c < nCycles; c++){
+		for(int g = 1; g <size[1]-2; g++){
+			tempVal[g] = 1./2.*(phiVal[g+1] + phiVal[g-1] - rhoVal[g]);
+		}
+		phi->val = tempVal;
+		gBnd(phi,mpiInfo);
+		tempVal = phiVal;
+		phiVal = phi->val;
+
+		phiVal[0] = phiVal[size[1]-2];
+		phiVal[ size[1]- 1] = phiVal[0];
+	}
+
+
+
 }
 
 void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpiInfo){
@@ -1648,31 +1682,26 @@ void mgErrorScaling(dictionary *ini){
 	Grid *res 	= gAlloc(ini, SCALAR);
 	Grid *E		= gAlloc(ini, VECTOR);
 
-	// //Multigrids
-	// Multigrid *mgRho =
+	//Cycles
+	int nCoarseSolve = iniGetInt(ini, "multigrid:nCoarseSolve");
 
 	//Compute stuff
-	// gFillHeavi(rho, 2, mpiInfo);
-	// gFillHeaviSol(sol, 2, mpiInfo);
+	// gFillHeavi(rho, 1, mpiInfo);
+	// gFillHeaviSol(sol, 1, mpiInfo);
 	gFillSin(rho, 1, mpiInfo);
 	gFillSinSol(sol, 1, mpiInfo);
 
-
 	if(mpiInfo->mpiRank == 0)	aiPrint(&rho->trueSize[1], 3);
+
 	//Solve
-	mgJacobND(phi, rho, 10000, mpiInfo);
+	mgJacobND(phi, rho, nCoarseSolve, mpiInfo);
+	// mgJacob1D(phi, rho, nCoarseSolve, mpiInfo);
+	// mgGSND(phi, rho,nCoarseSolve, mpiInfo);
+	// mgGS3D(phi, rho, nCoarseSolve, mpiInfo);
 
 	// //Print results
 	// msg(STATUS, "Avg e^2 = %f", avgError);
 	// msg(STATUS, "Residual squared (res^2) = %f", resSquared);
-
-	//(Re)Compute E, error and residual
-	gHaloOp(setSlice, phi, mpiInfo, 0);
-	gNeutralizeGrid(phi, mpiInfo);
-	gBnd(phi, mpiInfo);
-	gFinDiff1st(phi, E);
-	mgCompError(phi,sol,error);
-	mgResidual(res,rho, phi, mpiInfo);
 
 	//(Re)Compute E, error and residual
 	gHaloOp(setSlice, phi, mpiInfo, 0);

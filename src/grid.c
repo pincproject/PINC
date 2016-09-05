@@ -889,6 +889,18 @@ long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo){
 	return totTruesize;
 }
 
+void gAssertNeutralGrid(Grid *rho,MpiInfo *mpiInfo){
+
+	double sum = gSumTruegrid(rho);
+	double totSum = 1.;
+	MPI_Allreduce(&sum, &totSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+	if( totSum < -0.001 || totSum > 0.001) msg(ERROR, "Total charge is %f", totSum);
+
+	return;
+}
+
+
 void gRemoveHalo(Grid *grid){
 
 	double *oldVal = grid->val;
@@ -1459,7 +1471,7 @@ void gFillHeaviSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
    long int ind = 0;
    if(nSubdomains[d-1]==1){
 	   //Smart setSlice-use
-	   double half = 0.5*trueSize[2];
+	   double half = 0.5*trueSize[d];
 	   double *sol = malloc(trueSize[d]*sizeof(*sol));
 	   double *slice = grid->sendSlice;
 	   long int nSlicePoints = sizeProd[rank]/size[d];

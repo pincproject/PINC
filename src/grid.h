@@ -386,6 +386,8 @@ void gSubFrom(Grid *result, const Grid *subtraction);
 double gSumTruegrid(const Grid *grid);
 
 
+void gAssertNeutralGrid(Grid *rho, MpiInfo *mpiInfo);
+
 /**
  * @brief Applies boundary conditions to edge
  * @param 	grid		Grid to apply boundary conditions to

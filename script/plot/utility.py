@@ -2,20 +2,23 @@ import numpy as np
 
 # Takes a hf-data and transforms it into 1D - array
 # retains x axis.
-def transformData(dim,dataset, timestep):
+def transformData(dim,dataset, timestep, average = True):
     grid = dataset['/n=%.1f'%timestep]
     grid = np.squeeze(grid)
     if len(grid.shape)==4:
         grid = grid[:,:,:,0]
+
     grid = np.transpose(grid) #Accounting for reverse zyx order
     nDims = len(grid.shape)
-    for d in range(nDims):
-        if d!=dim:
-            if d<dim:
-                grid = np.average(grid, axis = 0)
-            else:
-                grid = np.average(grid, axis = 1)
+    if nDims > 1:
+        if(average):
 
+            for d in range(nDims):
+                if d!=dim:
+                    if d<dim:
+                        grid = np.average(grid, axis = 0)
+                    else:
+                        grid = np.average(grid, axis = 1)
 
     return grid
 
@@ -24,6 +27,7 @@ def transformData(dim,dataset, timestep):
 #           1D array    grid
 #           handle      ax
 def plot1DSubgrid( name, grid, ax):
+    print grid.shape
     length= grid.shape[0]
     x = np.arange(grid.shape[0])
     ax.plot(x,grid)
