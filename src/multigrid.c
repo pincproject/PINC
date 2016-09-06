@@ -432,20 +432,28 @@ void mgJacob1D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 	static double *tempVal = NULL;
 	if(tempVal==NULL)tempVal = malloc(sizeProd[2]*sizeof(*tempVal));
 
+	double sum = 0.;
+
 	for(int c = 0; c < nCycles; c++){
-		for(int g = 1; g <size[1]-2; g++){
+		for(int g = 1; g <size[1]-1; g++){
 			tempVal[g] = 1./2.*(phiVal[g+1] + phiVal[g-1] - rhoVal[g]);
 		}
+
+		//Periodic
+		tempVal[0] = tempVal[size[1]-2];
+		tempVal[size[1]-1] = tempVal[1];
+
+		//Check if total is varying from zero
+		sum = 0.;
+		for(int g = 1; g < size[1]-1; g++) sum += tempVal[g];
+		if(sum > 1. || sum < -1.)	msg(WARNING, "totSum to high: %f", sum);
+
+		//Swap stuff
 		phi->val = tempVal;
-		gBnd(phi,mpiInfo);
 		tempVal = phiVal;
 		phiVal = phi->val;
 
-		phiVal[0] = phiVal[size[1]-2];
-		phiVal[ size[1]- 1] = phiVal[0];
 	}
-
-
 
 }
 
@@ -1345,8 +1353,8 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 	//Should consider changing to function pointers
 	if(rank == 4){
 		gFinDiff2nd3D(res, phi);
-	} else if(rank == 3){
-		gFinDiff2nd2D(res,phi);
+	} else {
+		gFinDiff2ndND(res,phi);
 	}
 
 	for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] -= rhoVal[g];
@@ -1694,8 +1702,8 @@ void mgErrorScaling(dictionary *ini){
 	if(mpiInfo->mpiRank == 0)	aiPrint(&rho->trueSize[1], 3);
 
 	//Solve
-	mgJacobND(phi, rho, nCoarseSolve, mpiInfo);
-	// mgJacob1D(phi, rho, nCoarseSolve, mpiInfo);
+	// mgJacobND(phi, rho, nCoarseSolve, mpiInfo);
+	mgJacob1D(phi, rho, nCoarseSolve, mpiInfo);
 	// mgGSND(phi, rho,nCoarseSolve, mpiInfo);
 	// mgGS3D(phi, rho, nCoarseSolve, mpiInfo);
 
@@ -1704,7 +1712,7 @@ void mgErrorScaling(dictionary *ini){
 	// msg(STATUS, "Residual squared (res^2) = %f", resSquared);
 
 	//(Re)Compute E, error and residual
-	gHaloOp(setSlice, phi, mpiInfo, 0);
+	gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	gNeutralizeGrid(phi, mpiInfo);
 	gBnd(phi, mpiInfo);
 	gFinDiff1st(phi, E);

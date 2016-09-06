@@ -266,7 +266,8 @@ static void gExpandInner(	const double **in, double **out,
 	}
 }
 
-void gFinDiff2nd2D(Grid *result, const Grid *object){
+
+void gFinDiff2ndND(Grid *result, const Grid *object){
 
 	// Load
 	int rank = object->rank;
@@ -276,26 +277,23 @@ void gFinDiff2nd2D(Grid *result, const Grid *object){
 	double *objectVal = object->val;
 
 	// Index of neighboring nodes
-	long int g = sizeProd[1] + sizeProd[2];
-	long int gj = g + sizeProd[1];
-	long int gjj= g - sizeProd[1];
-	long int gk = g + sizeProd[2];
-	long int gkk= g - sizeProd[2];
-
+	long int g = alSum(&sizeProd[1], rank-1 );
 	long int end = sizeProd[rank] - 2*g;
+	int gStep;
+
+	double coeff = 2.*(rank-1);
 
 	// Laplacian
-	for(int q = 0; q < end; q++){
-		resultVal[g] = -4.*objectVal[g];
-		resultVal[g] += objectVal[gj] + objectVal[gjj]
-						+objectVal[gk] + objectVal[gkk];
+	for(int q = 0; q < end +1; q++){
+		resultVal[g] = -coeff*objectVal[g];
+		for(int r = 1; r < rank; r++){
+			gStep = sizeProd[r];
+			resultVal[g] += objectVal[g + gStep] + objectVal[g - gStep];
+		}
+
 
 		// Increment indices
 		g++;
-		gj++;
-		gjj++;
-		gk++;
-		gkk++;
 	}
 
 	return;
@@ -1674,6 +1672,8 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
    //  }
    // }
 
+   gHaloOp(setSlice, grid,mpiInfo, TOHALO);
+
 
    return;
 }
@@ -1706,6 +1706,8 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 		}
 		setSlice(slice, grid, d, j);
 	}
+
+	gHaloOp(setSlice, grid,mpiInfo, TOHALO);
 
    return;
 }

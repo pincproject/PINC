@@ -30,7 +30,7 @@ pinc = PINC(iniPath = ini)
 
 pinc.mode           = 'mgErrorScaling'
 pinc.nSubdomains    = np.array([1])
-pinc.trueSize       = np.array([32])
+pinc.trueSize       = np.array([8])
 pinc.nDims          = 1
 pinc.startTime      = 0
 
@@ -54,18 +54,7 @@ for n in range(nTest):
     del error
 
 
-plt.figure()
-plt.scatter(stepSize,maxError)
-plt.axis([-0.1*np.max(stepSize), (1.1*np.max(stepSize)), -0.1*np.max(maxError), (1.1*np.max(maxError))])
-plt.title('$E_{max}$')
-plt.savefig('sinusEMax.pdf')
-
-plt.figure()
-plt.scatter(stepSize,meanE2)
-plt.axis([-0.1*np.max(stepSize), (1.1*np.max(stepSize)), -0.1*np.max(meanE2), (1.1*np.max(meanE2))])
-plt.title('$\\bar{E}^2$')
-plt.savefig('sinusMeanE2.pdf')
+plotScatterLogLog('$E_{max}$', stepSize, maxError)
+plotScatterLogLog('$\\bar{E}^2$', stepSize, meanE2)
 
 plt.show()
-
-print maxError

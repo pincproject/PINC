@@ -1,4 +1,5 @@
 import numpy as np
+import pylab as plt
 
 # Takes a hf-data and transforms it into 1D - array
 # retains x axis.
@@ -40,3 +41,17 @@ def plot1DSubgrid( name, grid, ax):
     ax.grid()
 
     print name + "\t=" + str(np.max(grid))
+
+# Plots log log scatterplots
+def plotScatterLogLog(name, stepSize, values):
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.scatter(stepSize,values)
+    # plt.axis([0, 10, 0, 10])
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+    ax.grid(b=True, which='minor', color='black', linestyle='--')
+    ax.grid(b=True, which='major', color='black')
+    ax.set_title(name)
+    ax.grid()
+    # fig.savefig(name + '.pdf')

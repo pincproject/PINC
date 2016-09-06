@@ -331,7 +331,7 @@ void gFinDiff2nd3D(Grid *phi,const Grid *rho);
  *
  *
  */
-void gFinDiff2nd2D(Grid *phi,const Grid *rho);
+void gFinDiff2ndND(Grid *phi,const Grid *rho);
 
  /**
  * @brief Normalize E-field
