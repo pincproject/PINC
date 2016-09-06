@@ -1630,7 +1630,7 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
 	int J = subdomain[d-1]*trueSize[d];
 
 	for(int j = 0; j < trueSize[d]; j++){
-		sol[j] = sin(J*coeff);
+		sol[j] = (coeff*coeff)*sin(J*coeff);
 		J++;
 	}
 
@@ -1668,7 +1668,7 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	int J = subdomain[d-1]*trueSize[d];
 
 	for(int j = 0; j < trueSize[d]; j++){
-		sol[j] = -1./(coeff*coeff)*sin(J*coeff);
+		sol[j] = sin(J*coeff);
 		J++;
 	}
 

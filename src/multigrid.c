@@ -401,7 +401,7 @@ void mgJacobND(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 				}
 		}
 
-		for(long int g = gStart; g < gEnd; g++) tempVal[g] -= rhoVal[g];
+		for(long int g = gStart; g < gEnd; g++) tempVal[g] += rhoVal[g];
 		adScale(tempVal, sizeProd[rank], coeff);
 		// for(long int g = gStart; g < gEnd; g++) phiVal[g] = tempVal[g];
 
@@ -436,7 +436,7 @@ void mgJacob1D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	for(int c = 0; c < nCycles; c++){
 		for(int g = 1; g <size[1]-1; g++){
-			tempVal[g] = 0.5*(phiVal[g+1] + phiVal[g-1] - rhoVal[g]);
+			tempVal[g] = 0.5*(phiVal[g+1] + phiVal[g-1] + rhoVal[g]);
 		}
 
 		//Periodic
@@ -488,7 +488,7 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 			tempVal[g] = coeff*(phiVal[gj] + phiVal[gjj] +
 								phiVal[gk] + phiVal[gkk] +
 								phiVal[gl] + phiVal[gll] +
-								- rhoVal[g]);
+								+ rhoVal[g]);
 
 			gj++;
 			gjj++;
@@ -510,7 +510,7 @@ void mgJacob3D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 	return;
 }
 
-static inline void mgGSNDInner(double *phiVal, const double *rhoVal, double *coeff, long int *g,
+static void mgGSNDInner(double *phiVal, const double *rhoVal, double *coeff, long int *g,
 	const int *rank,const int *nGhostLayersBefore, const int *nGhostLayersAfter,
 	const int *trueSize, const long int *sizeProd){
 
@@ -524,7 +524,7 @@ static inline void mgGSNDInner(double *phiVal, const double *rhoVal, double *coe
 				gStep 	= *(sizeProd+r);
 				phiVal[*g] += phiVal[*g+gStep] + phiVal[*g-gStep];
 			}
-			phiVal[*g] -= rhoVal[*g];
+			phiVal[*g] += rhoVal[*g];
 			phiVal[*g] *= *coeff;
 			*g += 2;
 		}
@@ -672,7 +672,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 				for(int j = 0; j < size[1]; j+=2){
 					phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 										phiVal[g+gk] + phiVal[g-gk] +
-										phiVal[g+gl] + phiVal[g-gl] - rhoVal[g]);
+										phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
 					g	+=2;
 				}
 
@@ -701,7 +701,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		 		for(int j = 0; j < size[1]; j+=2){
 		 			phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 		 								phiVal[g+gk] + phiVal[g-gk] +
-		 								phiVal[g+gl] + phiVal[g-gl] - rhoVal[g]);
+		 								phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
 
 		 			g	+=2;
 		 		}
@@ -1690,22 +1690,25 @@ void mgErrorScaling(dictionary *ini){
 	Grid *res 	= gAlloc(ini, SCALAR);
 	Grid *E		= gAlloc(ini, VECTOR);
 
-	//Cycles
-	int nCoarseSolve = iniGetInt(ini, "multigrid:nCoarseSolve");
+	// //Multigrids
+	// Multigrid *mgPhi = mgAlloc(ini, phi);
+	// Multigrid *mgRho = mgAlloc(ini, rho);
+	// Multigrid *mgRes = mgAlloc(ini, res);
 
 	//Compute stuff
 	// gFillHeavi(rho, 1, mpiInfo);
+
 	// gFillHeaviSol(sol, 1, mpiInfo);
 	gFillSin(rho, 1, mpiInfo);
 	gFillSinSol(sol, 1, mpiInfo);
 
-	if(mpiInfo->mpiRank == 0)	aiPrint(&rho->trueSize[1], rho->rank-1);
+	aiPrint(&rho->trueSize[1], rho->rank-1);
+
+	MgAlgo mgAlgo = getMgAlgo(ini);
 
 	//Solve
-	// mgJacobND(phi, rho, nCoarseSolve, mpiInfo);
-	mgJacob1D(phi, rho, nCoarseSolve, mpiInfo);
-	// mgGSND(phi, rho,nCoarseSolve, mpiInfo);
-	// mgGS3D(phi, rho, nCoarseSolve, mpiInfo);
+	mgJacob1D(phi, rho, 100000, mpiInfo);
+	// mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 	// //Print results
 	// msg(STATUS, "Avg e^2 = %f", avgError);

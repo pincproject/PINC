@@ -155,6 +155,8 @@ void regular(dictionary *ini){
 	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
+	gMul(E, -1.);
+
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -204,6 +206,7 @@ void regular(dictionary *ini){
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
+		gMul(E, -1.);
 
 		gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
