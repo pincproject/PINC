@@ -436,7 +436,7 @@ void mgJacob1D(Grid *phi,const Grid *rho, const int nCycles, const  MpiInfo *mpi
 
 	for(int c = 0; c < nCycles; c++){
 		for(int g = 1; g <size[1]-1; g++){
-			tempVal[g] = 1./2.*(phiVal[g+1] + phiVal[g-1] - rhoVal[g]);
+			tempVal[g] = 0.5*(phiVal[g+1] + phiVal[g-1] - rhoVal[g]);
 		}
 
 		//Periodic
@@ -1699,7 +1699,7 @@ void mgErrorScaling(dictionary *ini){
 	gFillSin(rho, 1, mpiInfo);
 	gFillSinSol(sol, 1, mpiInfo);
 
-	if(mpiInfo->mpiRank == 0)	aiPrint(&rho->trueSize[1], 3);
+	if(mpiInfo->mpiRank == 0)	aiPrint(&rho->trueSize[1], rho->rank-1);
 
 	//Solve
 	// mgJacobND(phi, rho, nCoarseSolve, mpiInfo);

@@ -10,7 +10,6 @@ if len(sys.argv) > 1:
 else:
     dim = 0
 
-
 for i in range(nPlots):
     n = 0
     m = 0

@@ -1611,7 +1611,7 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
 
 	//MPI
 	int *nSubdomains 	= mpiInfo->nSubdomains;
-	// int *subdomain 		= mpiInfo->subdomain;
+	int *subdomain 		= mpiInfo->subdomain;
 
 	//Load
 	int *size = grid->size;
@@ -1627,53 +1627,21 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
 
 	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
 
-	for(int j = 0; j < trueSize[d]; j++)
-		 sol[j] = sin(j*coeff);
+	int J = subdomain[d-1]*trueSize[d];
 
-	for(int j = 1; j < trueSize[d] + 1; j++){
+	for(int j = 0; j < trueSize[d]; j++){
+		sol[j] = sin(J*coeff);
+		J++;
+	}
+
+	for(int j = 1; j < trueSize[d]+1; j++){
 		for(int k = 0; k < nSlicePoints; k ++){
 			slice[k] = sol[j-1];
 		}
 		setSlice(slice, grid, d, j);
 	}
 
-
-
-   // //Load MPI stuff
-   // int *subdomain = mpiInfo->subdomain;
-   // int *nSubdomains = mpiInfo->nSubdomains;
-   //
-   // //Load grid info
-   // int *trueSize = grid->trueSize;
-   // int *size = grid->size;
-   // int *nGhostLayers = grid->nGhostLayers;
-   // long int *sizeProd = grid->sizeProd;
-   // double *val = grid->val;
-   //
-   // //Temp quick functions and constants
-   // double sin(double);
-   //
-   // long int ind;
-   // double coeffX = 2*PI/((trueSize[1])*nSubdomains[0]);
-   // double coeffY = 2*PI/(trueSize[2]*nSubdomains[1]);
-   // // double coeffZ = PI/(size[3]*nSubdomains[2]);
-   //
-   //
-   // for(int j = 1; j < size[1]-nGhostLayers[5]; j++){
-   //  for (int k = 0; k<size[2]-nGhostLayers[4]; k++) {
-   //   for(int l = 0; l < size[3]-nGhostLayers[3]; l++){
-   //    ind = j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3]; //Position in subgrid
-   //    // ind += (size[1]*subdomain[0]) + (size[2]*subdomain[1]) + (size[3]*subdomain[2]); //Adding position in whole grid
-   //    val[ind] = 	sin( ( (j - nGhostLayers[1]) +trueSize[1]*subdomain[0] )*coeffX)
-   // 			   *sin( ( (k - nGhostLayers[2]) +trueSize[2]*subdomain[1] )*coeffY);
-   // 			   // *sin((l+size[3]*subdomain[2])*coeffZ);
-   //
-   //   }
-   //  }
-   // }
-
    gHaloOp(setSlice, grid,mpiInfo, TOHALO);
-
 
    return;
 }
@@ -1682,7 +1650,7 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 
 	//MPI
 	int *nSubdomains 	= mpiInfo->nSubdomains;
-	// int *subdomain 		= mpiInfo->subdomain;
+	int *subdomain 		= mpiInfo->subdomain;
 
 	//Load
 	int *size = grid->size;
@@ -1697,8 +1665,12 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	//f = sin(x/2piL)
 	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
 
-	for(int j = 0; j < trueSize[d]; j++)
-		 sol[j] = -1./(coeff*coeff)*sin(j*coeff);
+	int J = subdomain[d-1]*trueSize[d];
+
+	for(int j = 0; j < trueSize[d]; j++){
+		sol[j] = -1./(coeff*coeff)*sin(J*coeff);
+		J++;
+	}
 
 	for(int j = 1; j < trueSize[d] + 1; j++){
 		for(int k = 0; k < nSlicePoints; k ++){

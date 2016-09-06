@@ -36,7 +36,7 @@ pinc.startTime      = 0
 
 pinc.clean()
 
-nTest = 3
+nTest = 8
 
 maxError    = np.zeros(nTest)
 meanE2      = np.zeros(nTest)
@@ -53,7 +53,8 @@ for n in range(nTest):
     pinc.startTime      += 1
     del error
 
-
+print maxError
+print meanE2
 plotScatterLogLog('$E_{max}$', stepSize, maxError)
 plotScatterLogLog('$\\bar{E}^2$', stepSize, meanE2)
 
