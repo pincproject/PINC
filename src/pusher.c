@@ -87,13 +87,35 @@ void puMove(Population *pop){
 	double *pos = pop->pos;
 	double *vel = pop->vel;
 
-	for(int s=0;s<nSpecies;s++){
+	for(int s=0; s<nSpecies; s++){
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
 		for(long int p=pStart;p<pStop;p++){
 			pos[p] += vel[p];
+		}
+	}
+}
+
+void puPeriodic(Population *pop, Grid *grid){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *nGhostLayers = grid->nGhostLayers;
+	int *trueSize = grid->trueSize;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+
+		for(long int p=pStart;p<pStop;p++){
+			int d = (p%nDims)+1;
+			double lower = nGhostLayers[d];
+			double length = trueSize[d]-1;
+			pos[p] = fmod(pos[p]-lower+length,length)+lower;
 		}
 	}
 }

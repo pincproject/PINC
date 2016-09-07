@@ -13,10 +13,6 @@
 #ifndef PUSHER_H
 #define PUSHER_H
 
-/******************************************************************************
- * DECLARING DATATYPES
- *****************************************************************************/
-
 /**
  * @brief Moves particles one timestep forward
  * @param[in,out]	pop		Population
@@ -28,6 +24,8 @@
  * PINC may fail ungracefully.
  */
 void puMove(Population *pop);
+
+void puPeriodic(Population *pop, Grid *grid);
 
 /** @name Accelerators (with interpolation)
  * This group of functions accelerates the particles in a population by
