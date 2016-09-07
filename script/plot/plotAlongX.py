@@ -1,37 +1,33 @@
 import h5py
 import numpy as np
 import pylab as plt
+from utility import *
+import sys as sys
 
-rhoFile = h5py.File('../../test_rho.grid.h5','r')
-phiFile = h5py.File('../../test_phi.grid.h5','r')
-EFile = h5py.File('../../test_E.grid.h5','r')
+if len(sys.argv) > 1:
+    dim = int(sys.argv[1])
+    nPlots = int(sys.argv[2])
+else:
+    dim = 0
+# 
+# path = '../framework/test_sol_0.grid.h5'
+# sol = transformData(dim,h5py.File(path,'r'),0, average = False)
+#
+# print sol
+#
+# exit(0)
 
-dataset = '/n=1.0';
+for i in range(nPlots):
+    n = 0
+    m = 0
+    f, ax = plt.subplots(3,2)
+    for name in ("phi", "sol", "E", "rho", "res", "error"):
+        path = '../framework/test_'+name+'_'+ str(i) +'.grid.h5'
+        grid = transformData(dim,h5py.File(path,'r'),0, average = True)
+        plot1DSubgrid(name, grid, ax[n%3,m%2])
+        ax[n%3,m%2].set_title(name)
+        m+=1
+        n+=1-(m%2)
 
-rho = rhoFile[dataset]
-phi = phiFile[dataset]
-E = EFile[dataset]
 
-# Change order of axes to get (d,x,y,z) like in PINC, d is dimension (0, 1 or 2)
-rho = np.transpose(rho,(3,2,1,0))
-phi = np.transpose(phi,(3,2,1,0))
-E = np.transpose(E,(3,2,1,0))
-
-# Squeeze scalar quantities, and extract x-component of field. Result is 3D arrays.
-rho = np.squeeze(rho)
-phi = np.squeeze(phi)
-E = E[0,:,:,:]
-
-# Average away y-axis, then z-axis. Result is a 1D (averaged) array.
-rho = np.average(rho,axis=1)
-rho = np.average(rho,axis=1)
-phi = np.average(phi,axis=1)
-phi = np.average(phi,axis=1)
-E = np.average(E,axis=1);
-E = np.average(E,axis=1);
-
-plt.plot(rho,label='rho')
-plt.plot(phi,label='phi')
-plt.plot(E,label='E')
-plt.legend(loc='upper right')
 plt.show()

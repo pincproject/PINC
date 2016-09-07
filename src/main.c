@@ -19,6 +19,10 @@ funPtr regular_set(dictionary *ini){ return regular; }
 void mgRun(dictionary *ini);
 funPtr mgRun_set(dictionary *ini){ return mgRun; }
 
+void mgErrorScaling(dictionary *ini);
+funPtr mgErrorScaling_set(dictionary *ini){ return mgErrorScaling; }
+
+
 int main(int argc, char *argv[]){
 
 	/*
@@ -33,7 +37,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * CHOOSE PINC RUN MODE
 	 */
-	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set);
+	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set, mgErrorScaling_set);
 	run(ini);
 
 	/*
@@ -151,6 +155,8 @@ void regular(dictionary *ini){
 	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
+	gMul(E, -1.);
+
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -190,13 +196,19 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
+		gAssertNeutralGrid(rho, mpiInfo);
+
 		// Compute electric potential phi
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		gAssertNeutralGrid(phi, mpiInfo);
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
+		gMul(E, -1.);
 
+		gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
 		// gAddTo(Ext);
 

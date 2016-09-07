@@ -331,7 +331,7 @@ void gFinDiff2nd3D(Grid *phi,const Grid *rho);
  *
  *
  */
-void gFinDiff2nd2D(Grid *phi,const Grid *rho);
+void gFinDiff2ndND(Grid *phi,const Grid *rho);
 
  /**
  * @brief Normalize E-field
@@ -385,6 +385,8 @@ void gSubFrom(Grid *result, const Grid *subtraction);
 */
 double gSumTruegrid(const Grid *grid);
 
+
+void gAssertNeutralGrid(Grid *rho, MpiInfo *mpiInfo);
 
 /**
  * @brief Applies boundary conditions to edge
@@ -593,16 +595,17 @@ void gInsertHalo(Grid *grid, const int *nGhostLayers);
 
  #define PI 3.14159265
 
-void fillHeaviside(Grid *grid, int dim,const MpiInfo *mpiInfo);
-void fillHeaviSol(Grid *grid, int rank, const MpiInfo *mpiInfo);
-void fillPointCharge(Grid *grid, const MpiInfo *mpiInfo);
-void fillPointSol(Grid *grid, const MpiInfo *mpiInfo);
-void fillSin(Grid *grid, const MpiInfo *mpiInfo);
-void fillSinSol(Grid *grid, const MpiInfo *mpiInfo);
-void fillExp(Grid *grid, const MpiInfo *mpiInfo);
-void fillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng);
-void fillCst(Grid *grid, const MpiInfo *mpiInfo);
-void fillPolynomial(Grid *grid , const MpiInfo *mpiInfo);
+void gFillHeavi(Grid *grid, int dim,const MpiInfo *mpiInfo);
+void gFillHeaviSol(Grid *grid, int rank, const MpiInfo *mpiInfo);
+void gFillPoint(Grid *grid, const MpiInfo *mpiInfo);
+void gFillPointSol(Grid *grid, const MpiInfo *mpiInfo);
+void gFillSin(Grid *grid, int d, const MpiInfo *mpiInfo, int norm);
+void gFillSinSol(Grid *grid, int d, const MpiInfo *mpiInfo);
+void gFillSinESol(Grid *grid, int d ,const MpiInfo *mpiInfo);
+void gFillExp(Grid *grid, const MpiInfo *mpiInfo);
+void gFillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng);
+void gFillCst(Grid *grid, const MpiInfo *mpiInfo);
+void gFillPolynomial(Grid *grid , const MpiInfo *mpiInfo);
 
 
 #endif // GRID_H
