@@ -328,7 +328,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
 	for(int d = 0; d < nDims; d++){
-		if(trueSize[d+1] % (int) 2*nLevels){ //Sloppy and wrong
+		if(trueSize[d+1] % (int) 2*(nLevels-1)){ //Sloppy and wrong
 			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
 		}
 	}
@@ -1357,7 +1357,7 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 		gFinDiff2ndND(res,phi);
 	}
 
-	for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] -= rhoVal[g];
+	for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] += rhoVal[g];
 
 	return;
 }
@@ -1493,7 +1493,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	mgVRecursiveInner(level + 1, bottom, top, mgRho, mgPhi, mgRes, mpiInfo);
 
  	//Prepare to go up
- 	gSubFrom( phi, res );
+ 	gAddTo( phi, res );
 
  	gHaloOp(setSlice, phi,mpiInfo, TOHALO);
  	gBnd(phi,mpiInfo);
@@ -1685,30 +1685,36 @@ void mgErrorScaling(dictionary *ini){
 	//Grids
 	Grid *phi 	= gAlloc(ini, SCALAR);
 	Grid *rho 	= gAlloc(ini, SCALAR);
-	Grid *error = gAlloc(ini, SCALAR);
-	Grid *sol 	= gAlloc(ini, SCALAR);
 	Grid *res 	= gAlloc(ini, SCALAR);
 	Grid *E		= gAlloc(ini, VECTOR);
 
-	// //Multigrids
-	// Multigrid *mgPhi = mgAlloc(ini, phi);
-	// Multigrid *mgRho = mgAlloc(ini, rho);
-	// Multigrid *mgRes = mgAlloc(ini, res);
+	//Multigrids
+	Multigrid *mgPhi = mgAlloc(ini, phi);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+
+	//Error and solutions
+	Grid *error = gAlloc(ini, SCALAR);
+	Grid *errorE= gAlloc(ini, VECTOR);
+	Grid *sol 	= gAlloc(ini, SCALAR);
+	Grid *solE	= gAlloc(ini, VECTOR);
+
 
 	//Compute stuff
 	// gFillHeavi(rho, 1, mpiInfo);
 
 	// gFillHeaviSol(sol, 1, mpiInfo);
-	gFillSin(rho, 1, mpiInfo);
+	gFillSin(rho, 1, mpiInfo, 1);
 	gFillSinSol(sol, 1, mpiInfo);
+	gFillSinESol(solE, 1, mpiInfo);
+
 
 	aiPrint(&rho->trueSize[1], rho->rank-1);
 
 	MgAlgo mgAlgo = getMgAlgo(ini);
 
 	//Solve
-	mgJacob1D(phi, rho, 100000, mpiInfo);
-	// mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 	// //Print results
 	// msg(STATUS, "Avg e^2 = %f", avgError);
@@ -1719,7 +1725,9 @@ void mgErrorScaling(dictionary *ini){
 	gNeutralizeGrid(phi, mpiInfo);
 	gBnd(phi, mpiInfo);
 	gFinDiff1st(phi, E);
+	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	mgCompError(phi,sol,error);
+	mgCompError(E, solE, errorE);
 	mgResidual(res,rho, phi, mpiInfo);
 
 	/*********************************************************************
@@ -1764,6 +1772,16 @@ void mgErrorScaling(dictionary *ini){
 	gOpenH5(ini, error, mpiInfo, denorm, dimen, fName);
 	gWriteH5(error, mpiInfo, 0.);
 	gCloseH5(error);
+
+	sprintf(fName, "solE_%d", runNumber);
+	gOpenH5(ini, solE, mpiInfo, denorm, dimen, fName);
+	gWriteH5(solE, mpiInfo, 0.);
+	gCloseH5(solE);
+
+	sprintf(fName, "errorE_%d", runNumber);
+	gOpenH5(ini, errorE, mpiInfo, denorm, dimen, fName);
+	gWriteH5(errorE, mpiInfo, 0.);
+	gCloseH5(errorE);
 
 
 	//Freedom

@@ -110,7 +110,6 @@ static const double *setSliceInner(const double *nextGhost, double **valp, const
 				nextGhost = setSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
 		}
 		return nextGhost;
-
 }
 
 void setSlice(const double *slice, Grid *grid, int d, int offset){
@@ -1607,7 +1606,7 @@ void gFillPointSol(Grid *grid, const MpiInfo *mpiInfo){
    return;
 }
 
-void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
+void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo, int norm){
 
 	//MPI
 	int *nSubdomains 	= mpiInfo->nSubdomains;
@@ -1623,14 +1622,22 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo){
 	double *slice = grid->sendSlice;
 	long int nSlicePoints = sizeProd[rank]/size[d];
 
-	//f = sin(x/2piL)
-
+	//f = sin(x*2pi/L)
 	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+	double coeffNorm;
+
+	//If it should be normalized to give E or phi correct
+	if(norm){
+		coeffNorm = coeff;
+	} else {
+		coeffNorm = coeff*coeff;
+	}
+
 
 	int J = subdomain[d-1]*trueSize[d];
 
 	for(int j = 0; j < trueSize[d]; j++){
-		sol[j] = (coeff*coeff)*sin(J*coeff);
+		sol[j] = coeffNorm*sin(J*coeff);
 		J++;
 	}
 
@@ -1682,6 +1689,48 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	gHaloOp(setSlice, grid,mpiInfo, TOHALO);
 
    return;
+}
+
+void gFillSinESol(Grid *grid, int d ,const MpiInfo *mpiInfo){
+
+	//MPI
+	int *nSubdomains 	= mpiInfo->nSubdomains;
+	int *subdomain 		= mpiInfo->subdomain;
+
+	//Load
+	int *size = grid->size;
+	int *trueSize = grid->trueSize;
+	int rank = grid->rank;
+	long int *sizeProd = grid->sizeProd;
+
+	double *sol = calloc(sizeProd[1]*trueSize[d],sizeof(*sol));
+	double *slice = grid->sendSlice;
+	long int nSlicePoints = sizeProd[rank]/size[d];
+
+	//f = cos(x/2piL)
+	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+
+	int J = subdomain[d-1]*trueSize[d];
+
+	msg(STATUS, "sizeProd[1] = %d", sizeProd[1]);
+
+	for(int j = 0; j < trueSize[d]; j++){
+		sol[j] = cos(J*coeff);
+		J++;
+	}
+
+	for(int j = 1; j < trueSize[d] + 1; j++){
+		// int j = 1;
+		for(int k = 0; k <  nSlicePoints; k ++){
+			if((k+d-1)%3==0)	slice[k] = sol[j-1];
+			else slice[k] = 0;
+		}
+		setSlice(slice, grid, d, j);
+	}
+
+	gHaloOp(setSlice, grid,mpiInfo, TOHALO);
+
+	free(sol);
 }
 
 void gFillExp(Grid *grid, const MpiInfo *mpiInfo){

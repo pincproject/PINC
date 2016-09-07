@@ -30,13 +30,15 @@ pinc = PINC(iniPath = ini)
 
 pinc.mode           = 'mgErrorScaling'
 pinc.nSubdomains    = np.array([1])
-pinc.trueSize       = np.array([4])
-pinc.nDims          = 1
+pinc.trueSize       = np.array([8,8,8])
+pinc.nDims          = 3
 pinc.startTime      = 0
+
+dim = 0
 
 pinc.clean()
 
-nTest = 6
+nTest = 3
 
 maxError    = np.zeros(nTest)
 meanE2      = np.zeros(nTest)
@@ -44,12 +46,12 @@ stepSize    = np.zeros(nTest)
 
 for n in range(nTest):
     pinc.mgErrorScaling()
-    dataPath = 'test_error_' + str(n) + '.grid.h5'
-    error = transformData(0, h5py.File(dataPath,'r'), 0., average=False)
+    dataPath            = 'test_error_' + str(n) + '.grid.h5'
+    error               = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
     maxError[n]         = np.max(np.abs(error))
-    meanE2[n]           = np.sqrt(np.sum(error*error)/pinc.trueSize[0])
-    stepSize[n]         = 1./pinc.trueSize[0]
-    pinc.trueSize[0]    *= 2
+    meanE2[n]           = np.sqrt(np.sum(error*error)/pinc.trueSize[dim])
+    stepSize[n]         = 1./pinc.trueSize[dim]
+    pinc.trueSize[dim]  *= 2
     pinc.startTime      += 1
     del error
 

@@ -6,9 +6,11 @@ import pylab as plt
 def transformData(dim,dataset, timestep, average = True):
     grid = dataset['/n=%.1f'%timestep]
     grid = np.squeeze(grid)
+    # print grid.shape
     if len(grid.shape)==4:
-        grid = grid[:,:,:,0]
-
+        # print grid[0,0,0,:]
+        grid = grid[:,:,:,dim]
+    # return grid
     grid = np.transpose(grid) #Accounting for reverse zyx order
     nDims = len(grid.shape)
     if nDims > 1:
@@ -56,4 +58,4 @@ def plotScatterLogLog(name, stepSize, values):
 
     ax.set_title(name)
     ax.grid(True, which="both")
-    # fig.savefig(name + '.pdf')
+    fig.savefig(name + 'errorloglog.pdf')
