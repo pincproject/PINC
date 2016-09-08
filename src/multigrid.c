@@ -1704,12 +1704,12 @@ void mgErrorScaling(dictionary *ini){
 	// gFillHeavi(rho, 1, mpiInfo);
 
 	// gFillHeaviSol(sol, 1, mpiInfo);
-	gFillSin(rho, 1, mpiInfo, 1);
+	gFillSin(rho, 1, mpiInfo, 0);
 	gFillSinSol(sol, 1, mpiInfo);
 	gFillSinESol(solE, 1, mpiInfo);
 
 
-	aiPrint(&rho->trueSize[1], rho->rank-1);
+	if(mpiInfo->mpiRank==0)	aiPrint(&rho->trueSize[1], rho->rank-1);
 
 	MgAlgo mgAlgo = getMgAlgo(ini);
 
@@ -1813,7 +1813,7 @@ void mgRun(dictionary *ini){
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *res= gAlloc(ini, SCALAR);
 	Grid *sol = gAlloc(ini, SCALAR);
-	// Grid *E = gAlloc(ini, VECTOR);
+	Grid *E = gAlloc(ini, VECTOR);
 	Grid *error =gAlloc(ini, SCALAR);
 
 	//Multilevel grids
@@ -1834,14 +1834,14 @@ void mgRun(dictionary *ini){
 	// double err = tol+1.;
 
 	//Compute stuff
-	gFillHeavi(rho, 1, mpiInfo);
-	gFillHeaviSol(sol, 1, mpiInfo);
+	// gFillHeavi(rho, 1, mpiInfo);
+	// gFillHeaviSol(sol, 1, mpiInfo);
 	// gFillPoint(rho, mpiInfo);
 	// gFillPolynomial(rho, mpiInfo);
 	// gFillPointSol(sol, mpiInfo);
 	// gFillExp(sol, mpiInfo);
-	// gFillSin(rho, 1, mpiInfo);
-	// gFillSinSol(sol, 1,  mpiInfo);
+	gFillSin(rho, 3, mpiInfo, 0);
+	gFillSinSol(sol, 3,  mpiInfo);
 	// gFillCst(rho, mpiInfo);
 	// gFillRng(rho, mpiInfo, rng);
 
@@ -1849,13 +1849,13 @@ void mgRun(dictionary *ini){
 	// gFinDiff2nd3D(rho, sol);
 
 	gNeutralizeGrid(rho, mpiInfo);
-
+	//
 	double tol = 0.01;
 	double avgError = 1;
 	double errSquared;
 	double resSquared;
 	int run = 1;
-
+	//
 	while(avgError>tol){
 		// Run solver
 		tStart(t);
@@ -1868,7 +1868,7 @@ void mgRun(dictionary *ini){
 		errSquared = mgSumTrueSquared(error, mpiInfo);
 		avgError = errSquared/gTotTruesize(error, mpiInfo);
 
-		// if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
+		if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
 		run++;
 	}
 
@@ -1884,66 +1884,66 @@ void mgRun(dictionary *ini){
 	********************************************************************/
 	int runNumber = iniGetInt(ini, "time:startTime");
 
-	// if(runNumber == 0){
-	// 	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	// 	double *dimen = malloc((rank-1)*sizeof(*dimen));
-	//
-	// 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	// 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-	//
-	// 	//(Re)Compute E, error and residual
-	// 	gHaloOp(setSlice, phi, mpiInfo, 0);
-	// 	gNeutralizeGrid(phi, mpiInfo);
-	// 	gBnd(phi, mpiInfo);
-	// 	gFinDiff1st(phi, E);
-	// 	mgCompError(phi,sol,error);
-	// 	mgResidual(res,rho, phi, mpiInfo);
-	//
-	//
-	// 	gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
-	// 	gWriteH5(E, mpiInfo, 0.);
-	// 	gCloseH5(E);
-	//
-	// 	gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
-	// 	gWriteH5(sol, mpiInfo, 0.);
-	// 	gCloseH5(sol);
-	//
-	// 	gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
-	// 	gWriteH5(error, mpiInfo, 0.);
-	// 	gCloseH5(error);
-	//
-	//
-	// 	//Saving lvl of grids
-	// 	char fName[12];
-	// 	for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
-	//
-	// 		rho = mgRho->grids[lvl];
-	// 		phi = mgPhi->grids[lvl];
-	// 		res = mgRes->grids[lvl];
-	//
-	// 		sprintf(fName, "rho_%d", lvl);
-	// 		gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
-	// 		sprintf(fName, "phi_%d", lvl);
-	// 		gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
-	// 		sprintf(fName, "res_%d", lvl);
-	// 		gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
-	//
-	//
-	// 		gWriteH5(rho,mpiInfo,0.);
-	// 		gWriteH5(phi,mpiInfo,0.);
-	// 		gWriteH5(res,mpiInfo,0.);
-	//
-	// 		gCloseH5(phi);
-	// 		gCloseH5(rho);
-	// 		gCloseH5(res);
-	//
-	// 	}
-	//
-	//
-	// 	free(denorm);
-	// 	free(dimen);
-	//
-	// }
+	if(runNumber == 0){
+		double *denorm = malloc((rank-1)*sizeof(*denorm));
+		double *dimen = malloc((rank-1)*sizeof(*dimen));
+
+		for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+		//(Re)Compute E, error and residual
+		gHaloOp(setSlice, phi, mpiInfo, 0);
+		gNeutralizeGrid(phi, mpiInfo);
+		gBnd(phi, mpiInfo);
+		gFinDiff1st(phi, E);
+		mgCompError(phi,sol,error);
+		mgResidual(res,rho, phi, mpiInfo);
+
+
+		gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
+		gWriteH5(E, mpiInfo, 0.);
+		gCloseH5(E);
+
+		gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
+		gWriteH5(sol, mpiInfo, 0.);
+		gCloseH5(sol);
+
+		gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
+		gWriteH5(error, mpiInfo, 0.);
+		gCloseH5(error);
+
+
+		//Saving lvl of grids
+		char fName[12];
+		for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
+
+			rho = mgRho->grids[lvl];
+			phi = mgPhi->grids[lvl];
+			res = mgRes->grids[lvl];
+
+			sprintf(fName, "rho_%d", lvl);
+			gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+			sprintf(fName, "phi_%d", lvl);
+			gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
+			sprintf(fName, "res_%d", lvl);
+			gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+
+
+			gWriteH5(rho,mpiInfo,0.);
+			gWriteH5(phi,mpiInfo,0.);
+			gWriteH5(res,mpiInfo,0.);
+
+			gCloseH5(phi);
+			gCloseH5(rho);
+			gCloseH5(res);
+
+		}
+
+
+		free(denorm);
+		free(dimen);
+
+	}
 
 	/**************************************************************
 	*		Store time spent

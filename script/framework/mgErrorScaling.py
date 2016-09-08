@@ -29,7 +29,7 @@ else:
 pinc = PINC(iniPath = ini)
 
 pinc.mode           = 'mgErrorScaling'
-pinc.nSubdomains    = np.array([1])
+pinc.nSubdomains    = np.array([2,1,1])
 pinc.trueSize       = np.array([8,8,8])
 pinc.nDims          = 3
 pinc.startTime      = 0
@@ -38,26 +38,32 @@ dim = 0
 
 pinc.clean()
 
-nTest = 3
+nTest = 4
 
-maxError    = np.zeros(nTest)
-meanE2      = np.zeros(nTest)
-stepSize    = np.zeros(nTest)
+meanE2Phi      = np.zeros(nTest)
+meanE2E        = np.zeros(nTest)
+stepSize        = np.zeros(nTest)
+
+
 
 for n in range(nTest):
     pinc.mgErrorScaling()
     dataPath            = 'test_error_' + str(n) + '.grid.h5'
-    error               = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
-    maxError[n]         = np.max(np.abs(error))
-    meanE2[n]           = np.sqrt(np.sum(error*error)/pinc.trueSize[dim])
-    stepSize[n]         = 1./pinc.trueSize[dim]
+    errorPhi            = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
+    dataPath            = 'test_errorE_' + str(n) + '.grid.h5'
+    errorE              = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
+
+    meanE2E[n]           = np.sqrt(np.sum(errorE*errorE)/pinc.trueSize[dim])
+    meanE2Phi[n]         = np.sqrt(np.sum(errorPhi*errorPhi)/pinc.trueSize[dim])
+    stepSize[n]          = 1./np.product(pinc.trueSize)
     pinc.trueSize[dim]  *= 2
     pinc.startTime      += 1
-    del error
+    del errorPhi
+    del errorE
 
-print maxError
-print meanE2
-plotScatterLogLog('$E_{max}$', stepSize, maxError)
-plotScatterLogLog('$\\bar{E}^2$', stepSize, meanE2)
+print np.log(meanE2E[nTest-1]/meanE2E[nTest-2])/np.log(stepSize[nTest-1]/stepSize[nTest-2])
+print np.log(meanE2Phi[nTest-1]/meanE2Phi[nTest-2])/np.log(stepSize[nTest-1]/stepSize[nTest-2])
+# plotScatterLogLog('$E$', stepSize, meanE2E)
+plotScatterLogLog('$Phi$', stepSize, meanE2Phi)
 
 plt.show()

@@ -238,8 +238,11 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 	int nSpecies = pop->nSpecies;
 
 	int nElements = nDims *nSpecies;
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",nElements);
 	double *mode = iniGetDoubleArr(ini,"population:perturbMode",nElements);
+
+	for(int e = 0; e < nElements; e++) amplitude[e] /= stepSize[e%(nDims-1)];
 
 	int *L = gGetGlobalSize(ini);
 	double *pos = pop->pos;
