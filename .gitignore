@@ -19,8 +19,8 @@ local.mk
 **.mp4
 **.pyc
 **.txt
-**.nfs**
+**.nfs*
 **.eps
+**.png
 doc.html
-
 src/version.h

@@ -103,7 +103,7 @@ void puPeriodic(Population *pop, Grid *grid){
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 	double *pos = pop->pos;
-	double *nGhostLayers = grid->nGhostLayers;
+	int *nGhostLayers = grid->nGhostLayers;
 	int *trueSize = grid->trueSize;
 
 	for(int s=0; s<nSpecies; s++){
@@ -113,8 +113,8 @@ void puPeriodic(Population *pop, Grid *grid){
 
 		for(long int p=pStart;p<pStop;p++){
 			int d = (p%nDims)+1;
-			double lower = nGhostLayers[d];
-			double length = trueSize[d]-1;
+			double lower = (double)nGhostLayers[d];
+			double length = (double)trueSize[d]-1.0;
 			pos[p] = fmod(pos[p]-lower+length,length)+lower;
 		}
 	}

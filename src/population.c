@@ -322,13 +322,9 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
 					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]-1);
 				}
-
 			}
-
 		}
-
 	}
-
 }
 
 void pVelAssertMax(const Population *pop, double max){
@@ -349,13 +345,9 @@ void pVelAssertMax(const Population *pop, double max){
 				if(vel[i*nDims+d]>max){
 					msg(ERROR,"Particle i=%li (of specie %i) travels too fast in dimension %i: %f>%f",i,s,d,vel[i*nDims+d],max);
 				}
-
 			}
-
 		}
-
 	}
-
 }
 
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
@@ -593,7 +585,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 			H5Sclose(memSpace);
 
 		} else {
-			msg(WARNING,"No particles to store in .h5-file");
+			msg(WARNING,"No particles of specie %i to store in .h5-file",s);
 		}
 	}
  	free(offsetAllSubdomains);

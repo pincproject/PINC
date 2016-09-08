@@ -343,6 +343,8 @@ void gFinDiff2nd2D(Grid *phi,const Grid *rho);
  */
 void gNormalizeE(const dictionary *ini, Grid *E);
 
+void gNormalizePhi(const dictionary *ini, Grid *phi);
+
 /**
  * @brief Set total rho to 0
  * @param rho	rho-field
