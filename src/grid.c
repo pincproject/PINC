@@ -1460,11 +1460,11 @@ void gFillHeaviSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 
 	   //First half  f = -(a-x)*x/2
 	   for(int j = 0; j < trueSize[d]/2; j++)
-	   		sol[j] = -0.5*(half - j)*j;
+	   		sol[j] = 0.5*(half - j)*j;
 
 		//Second half	f = (a - x)*x/2
  	   for(int j = trueSize[d]/2; j < trueSize[d]; j++)
-			sol[j] = 0.5*(half - (j-half))*(j-half);
+			sol[j] = -0.5*(half - (j-half))*(j-half);
 
 	   for(int j = 1; j < trueSize[d] + 1; j++){
 		   for(int k = 0; k < nSlicePoints; k ++){

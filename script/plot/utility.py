@@ -58,4 +58,4 @@ def plotScatterLogLog(name, stepSize, values):
 
     ax.set_title(name)
     ax.grid(True, which="both")
-    fig.savefig(name + 'errorloglog.pdf')
+    fig.savefig('errorloglog.pdf')
