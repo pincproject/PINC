@@ -8,7 +8,7 @@ pot = hist['/energy/potential/total']
 kin = hist['/energy/kinetic/total']
 
 kin = kin[:,1];		# Extract y-axis
-pot = -pot[:,1];	# Extract y-axis and invert
+pot = pot[:,1];	# Extract y-axis and invert
 tot = pot+kin;		# Collect total energy
 
 avgEn = np.average(tot)

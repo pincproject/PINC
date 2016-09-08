@@ -31,7 +31,10 @@ class PINC:
 
 
 	def arrToStr(self, array):
-		string = str(array[0]) + "," + str(array[1]) + "," + str(array[2])
+		string = str(array[0])
+		if(len(array) > 1):
+			for l in range(1,len(array)):
+				string += "," + str(array[l])
 
 		return string
 
@@ -44,5 +47,15 @@ class PINC:
 		cmd += " multigrid:nPreSmooth=" + str(self.preCycles)
 		cmd += " multigrid:nPostSmooth=" + str(self.postCycles)
 		cmd += " multigrid:nCoarseSolve=" + str(self.coarseCycles)
+
+		self.runCommand(cmd)
+
+	def mgErrorScaling(self):
+		cmd = self.pincPath + " " + self.iniPath
+		cmd += " methods:mode=" + self.mode
+		cmd += " grid:nDims="	+ str(self.nDims)
+		cmd += " grid:trueSize=" + self.arrToStr(self.trueSize)
+		cmd += " grid:nSubdomains="	+self.arrToStr(self.nSubdomains)
+		cmd += " time:startTime=" + str(self.startTime)
 
 		self.runCommand(cmd)
