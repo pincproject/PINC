@@ -242,10 +242,13 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",nElements);
 	double *mode = iniGetDoubleArr(ini,"population:perturbMode",nElements);
 
-	for(int e = 0; e < nElements; e++) amplitude[e] /= stepSize[e%(nDims-1)];
-
+	for(int e = 0; e < nElements; e++) {
+		if (nDims > 1)	amplitude[e] /= stepSize[e%(nDims-1)];
+		else amplitude[e] /= stepSize[0];
+	}
 	int *L = gGetGlobalSize(ini);
 	double *pos = pop->pos;
+
 
 	pToGlobalFrame(pop,mpiInfo);
 
@@ -502,7 +505,7 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double debye = iniGetDouble(ini,"grid:debye");
 	double *T = iniGetDoubleArr(ini,"population:temperature",nDims);
-	double *mass = iniGetDoubleArr(ini,"population:mass",nDims);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 
 	double vThermal = sqrt(BOLTZMANN*T[0]/(mass[0]*ELECTRON_MASS));
 

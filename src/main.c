@@ -103,6 +103,7 @@ void regular(dictionary *ini){
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 
+
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */

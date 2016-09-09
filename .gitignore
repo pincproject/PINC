@@ -21,6 +21,7 @@ local.mk
 **.txt
 **.nfs**
 **.eps
+**.pdf
 doc.html
 
 src/version.h
