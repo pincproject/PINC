@@ -28,5 +28,6 @@ while read -r line; do
 done < $1
 
 if [ $((100*UNPREFLINES/NUM)) -gt $PREFFRACT ] ; then
-	echo $1: warning: More than $PREFFRACT% of the lines exceeds $PREFMAX columns
+	echo $1: warning: \
+	More than $PREFFRACT% of the lines exceeds $PREFMAX columns
 fi
