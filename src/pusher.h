@@ -189,4 +189,9 @@ int puNeighborToReciprocal(int neighbor, int nDims);
 void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
 void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
 
+funPtr puRunParticle_set(dictionary *ini);
+void puRunParticle(dictionary *ini);
+funPtr puRunInterp_set(dictionary *ini);
+void puRunInterp(dictionary *ini);
+
 #endif // PUSHER_H

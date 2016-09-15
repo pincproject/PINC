@@ -37,7 +37,11 @@ int main(int argc, char *argv[]){
 	/*
 	 * CHOOSE PINC RUN MODE
 	 */
-	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set, mgErrorScaling_set);
+	void (*run)() = select(ini,"methods:mode",	regular_set,
+												mgRun_set,
+												mgErrorScaling_set,
+												puRunParticle_set,
+												puRunInterp_set);
 	run(ini);
 
 	/*
@@ -62,9 +66,11 @@ void regular(dictionary *ini){
 												puAccND1KE_set,
 												puAccND0_set,
 												puAccND0KE_set);
+
 	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
 													puDistrND1_set,
 													puDistrND0_set);
+													
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,

@@ -1,6 +1,7 @@
 import h5py
 import pylab as plt
 import numpy as np
+from itertools import izip as zip, count
 
 import sys
 sys.path.append('../framework')
@@ -11,21 +12,29 @@ pinc = PINC(iniPath = ini)
 
 # ANALYTICAL TRAJECTORY
 
-timeSteps = 0.314*np.array([1,0.5,0.25,0.125,0.0625,0.03125,0.015625])
-# timeSteps = 0.314*np.array([0.125,0.0625,0.03125,0.015625])
+timeSteps = np.array([2**(-x) for x in range(3,16)])
+trueSizes = np.array([2**x    for x in range(3,16)])
+
+trueSizes[:] = 10
+# timeSteps[:] = 0.0001
+
+stepSizes = 2.0/trueSizes
+
+
 pinc.nTimeSteps = 100
-pinc.trueSize = np.array([10])
 omega = 1
 
 errorMax = np.zeros(timeSteps.shape)
 error2 = np.zeros(timeSteps.shape)
 
-for (it,timeStep) in enumerate(timeSteps):
+for (i,timeStep,trueSize,stepSize) in zip(count(),timeSteps,trueSizes,stepSizes):
 
 	pinc.timeStep = timeStep
+	pinc.trueSize = np.array([trueSize])
 
 	n = np.linspace(0,pinc.timeStep*pinc.nTimeSteps,pinc.nTimeSteps+1)
-	posAna = pinc.trueSize[0]*(0.5-0.25*np.cos(omega*n))
+	# posAna = pinc.trueSize[0]*(0.5-0.25*np.cos(omega*n))
+	posAna = pinc.trueSize[0]*(0.5+0.25*np.sin(omega*n))
 
 	pinc.runCommand("rm *.h5")
 	pinc.puErrorScaling()
@@ -43,24 +52,26 @@ for (it,timeStep) in enumerate(timeSteps):
 	pop = h5py.File('test_pop.pop.h5','r')
 	N = len(pop['/pos/specie 0/'])
 	pos = np.zeros(N)
-	for i in xrange(N):
-		pos[i]=pop['/pos/specie 0/n=%.1f'%i][:]
+	for j in xrange(N):
+		pos[j]=pop['/pos/specie 0/n=%.1f'%j][:]
 
 	# PLOTTING TRAJECTORIES
 
-	# plt.plot(pos,label='Numerical')
-	# plt.plot(posAna,label='Analytical')
-	# plt.legend()
-	# plt.show()
-	# plt.legend(loc='lower left')
+	if(i==-1):
+		plt.plot(pos,label='Numerical')
+		plt.plot(posAna,label='Analytical')
+		plt.legend()
+		plt.show()
+		plt.legend(loc='lower left')
 
 	diff = pos-posAna
-	errorMax[it] = np.max(abs(diff))
-	error2[it] = np.sqrt(np.sum(diff**2)/(pinc.nTimeSteps+1))
-
-	pinc.timeStep /= 2
+	errorMax[i] = np.max(abs(diff))
+	error2[i] = np.sqrt(np.sum(diff**2)/(pinc.nTimeSteps+1))
 
 print errorMax
+
+order = np.log(errorMax[-1]/errorMax[-2])/np.log(timeSteps[-1]/timeSteps[-2])
+print order
 
 plt.figure()
 plt.loglog(timeSteps,errorMax,'o-')
@@ -69,8 +80,15 @@ plt.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.5)
 plt.minorticks_on()
 plt.show()
 
-order = np.log(errorMax[-1]/errorMax[-2])/np.log(timeSteps[-1]/timeSteps[-2])
-print order
+# order = np.log(errorMax[-1]/errorMax[-2])/np.log(stepSizes[-1]/stepSizes[-2])
+# print order
+#
+# plt.figure()
+# plt.loglog(stepSizes,errorMax,'o-')
+# plt.grid(b=True, which='major', color='k', linestyle='-')
+# plt.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.5)
+# plt.minorticks_on()
+# plt.show()
 
 # PLOTTING ENERGY
 

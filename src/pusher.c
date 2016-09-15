@@ -77,6 +77,194 @@ static inline void addCross(const double *a, const double *b, double *res);
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
 /******************************************************************************
+ * RUN MODE FOR PROBING PUSHER
+ *****************************************************************************/
+
+funPtr puRunParticle_set(dictionary *ini){return puRunParticle;}
+void puRunParticle(dictionary *ini){
+
+		/*
+		 * SELECT METHODS
+		 */
+		void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
+													puAcc3D1KE_set,
+													puAccND1_set,
+													puAccND1KE_set,
+													puAccND0_set,
+													puAccND0KE_set);
+
+		/*
+		 * INITIALIZE PINC VARIABLES
+		 */
+		MpiInfo *mpiInfo = gAllocMpi(ini);
+		Population *pop = pAlloc(ini);
+		Grid *E   = gAlloc(ini, VECTOR);
+		Grid *Et  = gAlloc(ini, VECTOR);
+		Grid *rho = gAlloc(ini, SCALAR);
+		Grid *phi = gAlloc(ini, SCALAR);
+
+		// Random number seeds
+		gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
+
+		/*
+		 * PREPARE FILES FOR WRITING
+		 */
+		int rank = phi->rank;
+		double *denorm = malloc((rank-1)*sizeof(*denorm));
+		double *dimen = malloc((rank-1)*sizeof(*dimen));
+
+		for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+
+		pOpenH5(ini, pop, "pop");
+		gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+		gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
+		gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
+
+		hid_t history = xyOpenH5(ini,"history");
+		pCreateEnergyDatasets(history,pop);
+
+		// Add more time series to history if you want
+		// xyCreateDataset(history,"/group/group/dataset");
+
+		free(denorm);
+		free(dimen);
+
+		/*
+		 * INITIAL CONDITIONS
+		 */
+
+		double left = E->nGhostLayers[1];
+		int *L = gGetGlobalSize(ini);
+		double midway = L[0]/2.0;
+
+
+		double stepSize = E->stepSize[1];
+		double timeStep = iniGetDouble(ini,"time:timeStep");
+
+		// cos
+		// double pos[] = {0.5*midway+left};
+		// double vel[] = {0.0};
+
+		// sin
+		double pos[] =  {midway + left};
+		double vel[] = {0.5*timeStep/stepSize};
+
+		pNew(pop,0,pos,vel);
+
+		double slope =  1.0/midway;
+		msg(STATUS,"midway: %f, L: %i",midway,L[0]);
+
+		free(L);
+
+		for(int g=1; g<Et->trueSize[1]+1; g++){
+			phi->val[g] = -0.5*stepSize*slope*pow((double)g-midway-left,2);
+			Et->val[g] = slope*(g-midway-left);
+		}
+		// adPrint(Et->val, Et->size[1]);
+		gNormalizeE(ini, Et);
+		// adPrint(Et->val, Et->size[1]);
+		gNormalizePhi(ini, phi);
+		// adPrint(phi->val, phi->size[1]);
+		gHaloOp(setSlice,phi,mpiInfo,TOHALO);
+		// adPrint(phi->val, phi->size[1]);
+		gFinDiff1st(phi, E);
+		gMul(E,-1.0);
+		// adPrint(E->val, E->size[1]);
+		gHaloOp(setSlice,E,mpiInfo,TOHALO);
+		// adPrint(E->val, E->size[1]);
+
+		pWriteH5(pop, mpiInfo, 0.0, 0.0);
+
+		// Advance velocities half a step
+		gMul(E, 0.5);
+		acc(pop, E);
+		gMul(E, 2.0);
+
+		/*
+		 * TIME LOOP
+		 */
+
+
+
+		Timer *t = tAlloc(rank);
+
+		// n should start at 1 since that's the timestep we have after the first
+		// iteration (i.e. when storing H5-files).
+		int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
+		for(int n = 1; n <= nTimeSteps; n++){
+
+			// msg(STATUS,"Computing time-step %i",n);
+			MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
+			// Check that no particle moves beyond a cell (mostly for debugging)
+			pVelAssertMax(pop,1.0);
+
+			tStart(t);
+
+			// Move particles
+			// msg(STATUS,"n: %i, pos: %.2f",n,pop->pos[0]-1);
+			puMove(pop);
+			puPeriodic(pop,E);
+
+			pWriteH5(pop, mpiInfo, (double) n, (double)n-0.5);
+
+			// Check that no particle resides out-of-bounds (just for debugging)
+			pPosAssertInLocalFrame(pop, rho);
+
+			acc(pop, E);
+
+			tStop(t);
+
+			// Sum energy for all species
+			pSumKinEnergy(pop);
+
+			// Compute potential energy for step n
+			gPotEnergy(rho,phi,pop);
+
+			// Example of writing another dataset to history.xy.h5
+			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
+
+			//Write h5 files
+			gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(rho, mpiInfo, (double) n);
+			gWriteH5(phi, mpiInfo, (double) n);
+			// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+			pWriteEnergy(history,pop,(double)n);
+
+		}
+
+		if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+
+		/*
+		 * FINALIZE PINC VARIABLES
+		 */
+		gFreeMpi(mpiInfo);
+
+		// Close h5 files
+		pCloseH5(pop);
+		gCloseH5(phi);
+		gCloseH5(rho);
+		gCloseH5(E);
+		xyCloseH5(history);
+
+		// Free memory
+		gFree(phi);
+		gFree(rho);
+		gFree(E);
+		gFree(Et);
+		pFree(pop);
+
+		gsl_rng_free(rngSync);
+}
+
+funPtr puRunInterp_set(dictionary *ini){return puRunInterp;}
+void puRunInterp(dictionary *ini){
+
+
+}
+
+/******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
@@ -1058,7 +1246,8 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order){
 
 }
 
-static inline void puInterp3D1(double *result, const double *pos, const double *val, const long int *sizeProd){
+static inline void puInterp3D1(	double *result, const double *pos,
+								const double *val, const long int *sizeProd){
 
 	// Integer parts of position
 	int j = (int) pos[0];
@@ -1110,7 +1299,8 @@ static inline void puInterpND1(	double *result, const double *pos,
 		result[d] = 0;
 	}
 
-	puInterpND1Inner(result,val,p,&sizeProd[nDims],sizeProd[1],nDims,&decimal[nDims-1],&complement[nDims-1],1);
+	puInterpND1Inner(	result, val, p, &sizeProd[nDims], sizeProd[1], nDims,
+						&decimal[nDims-1], &complement[nDims-1], 1);
 
 }
 
@@ -1201,7 +1391,6 @@ int puRankToNeighbor(MpiInfo *mpiInfo, int rank){
 
 }
 
-// Adds cross product (Cross product is only defined for 3D, assuming vector 3 long)
 static inline void addCross(const double *a, const double *b, double *res){
 	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
 	res[1] += -(a[0]*b[2]-a[2]*b[0]);
