@@ -65,5 +65,6 @@ class PINC:
 		cmd += " grid:trueSize=" + self.arrToStr(self.trueSize)
 		cmd += " time:timeStep=" + str(self.timeStep)
 		cmd += " time:nTimeSteps=" + str(self.nTimeSteps)
+		cmd += " methods:acc=" + str(self.acc)
 
 		self.runCommand(cmd)

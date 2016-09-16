@@ -80,8 +80,8 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order);
  * RUN MODE FOR PROBING PUSHER
  *****************************************************************************/
 
-funPtr puRunParticle_set(dictionary *ini){return puRunParticle;}
-void puRunParticle(dictionary *ini){
+funPtr puModeParticle_set(dictionary *ini){return puModeParticle;}
+void puModeParticle(dictionary *ini){
 
 		/*
 		 * SELECT METHODS
@@ -117,9 +117,6 @@ void puRunParticle(dictionary *ini){
 		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
 		pOpenH5(ini, pop, "pop");
-		gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-		gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-		gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
 
 		hid_t history = xyOpenH5(ini,"history");
 		pCreateEnergyDatasets(history,pop);
@@ -142,7 +139,7 @@ void puRunParticle(dictionary *ini){
 		double stepSize = E->stepSize[1];
 		double timeStep = iniGetDouble(ini,"time:timeStep");
 
-		// cos
+		// cos (has no 3rd order term in its Taylor expansion)
 		// double pos[] = {0.5*midway+left};
 		// double vel[] = {0.0};
 
@@ -153,7 +150,6 @@ void puRunParticle(dictionary *ini){
 		pNew(pop,0,pos,vel);
 
 		double slope =  1.0/midway;
-		msg(STATUS,"midway: %f, L: %i",midway,L[0]);
 
 		free(L);
 
@@ -187,54 +183,28 @@ void puRunParticle(dictionary *ini){
 
 
 
-		Timer *t = tAlloc(rank);
-
 		// n should start at 1 since that's the timestep we have after the first
 		// iteration (i.e. when storing H5-files).
 		int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 		for(int n = 1; n <= nTimeSteps; n++){
 
-			// msg(STATUS,"Computing time-step %i",n);
-			MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+			MPI_Barrier(MPI_COMM_WORLD);
 
-			// Check that no particle moves beyond a cell (mostly for debugging)
 			pVelAssertMax(pop,1.0);
 
-			tStart(t);
-
-			// Move particles
-			// msg(STATUS,"n: %i, pos: %.2f",n,pop->pos[0]-1);
 			puMove(pop);
 			puPeriodic(pop,E);
 
 			pWriteH5(pop, mpiInfo, (double) n, (double)n-0.5);
 
-			// Check that no particle resides out-of-bounds (just for debugging)
 			pPosAssertInLocalFrame(pop, rho);
-
 			acc(pop, E);
 
-			tStop(t);
-
-			// Sum energy for all species
 			pSumKinEnergy(pop);
-
-			// Compute potential energy for step n
 			gPotEnergy(rho,phi,pop);
-
-			// Example of writing another dataset to history.xy.h5
-			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-
-			//Write h5 files
-			gWriteH5(E, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(phi, mpiInfo, (double) n);
-			// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			pWriteEnergy(history,pop,(double)n);
 
 		}
-
-		if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 
 		/*
 		 * FINALIZE PINC VARIABLES
@@ -243,9 +213,6 @@ void puRunParticle(dictionary *ini){
 
 		// Close h5 files
 		pCloseH5(pop);
-		gCloseH5(phi);
-		gCloseH5(rho);
-		gCloseH5(E);
 		xyCloseH5(history);
 
 		// Free memory
@@ -258,9 +225,47 @@ void puRunParticle(dictionary *ini){
 		gsl_rng_free(rngSync);
 }
 
-funPtr puRunInterp_set(dictionary *ini){return puRunInterp;}
-void puRunInterp(dictionary *ini){
+funPtr puModeInterp_set(dictionary *ini){
+	int nDims = iniGetInt(ini,"grid:nDims");
+	if(nDims!=1) msg(ERROR,"puModeInterp only works with grid:nDims=1");
+	return puModeInterp;
+}
+void puModeInterp(dictionary *ini){
 
+	Grid *E = gAlloc(ini, VECTOR);
+	Population *pop = pAlloc(ini);
+	MpiInfo *mpiInfo = gAllocMpi(ini);
+
+	double *val = E->val;
+	long int *sizeProd = E->sizeProd;
+	int rank = E->rank;
+
+	int *L = gGetGlobalSize(ini);
+
+	double pos[] = {0.112358*L[0]};
+	double vel[] = {0.};
+	pNew(pop,0,pos,vel);
+	pNew(pop,0,pos,vel);
+
+	for(int g=0;g<sizeProd[rank];g++){
+		val[g] = pow((double)g/L[0],2);	// E(x)=x^2
+	}
+
+	int integer[1];
+	double decimal[1];
+	double complement[1];
+
+	puInterpND0(&pop->vel[0],pos,val,sizeProd,1);
+	puInterpND1(&pop->vel[1],pos,val,sizeProd,1,integer,decimal,complement);
+
+	pOpenH5(ini, pop, "pop");
+	pWriteH5(pop, mpiInfo, 0.0, 0.0);
+	pCloseH5(pop);
+
+	free(L);
+	pFree(pop);
+	gFree(E);
+	gFreeMpi(mpiInfo);
 
 }
 

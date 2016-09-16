@@ -40,8 +40,8 @@ int main(int argc, char *argv[]){
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mgRun_set,
 												mgErrorScaling_set,
-												puRunParticle_set,
-												puRunInterp_set);
+												puModeParticle_set,
+												puModeInterp_set);
 	run(ini);
 
 	/*
@@ -70,7 +70,7 @@ void regular(dictionary *ini){
 	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
 													puDistrND1_set,
 													puDistrND0_set);
-													
+
 	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
