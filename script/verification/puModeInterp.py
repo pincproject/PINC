@@ -9,6 +9,7 @@ from pincClass import *
 
 ini = "../../local.ini"
 pinc = PINC(iniPath = ini)
+pinc.acc = "puAccND1KE"
 
 trueSizes = np.array([2**x    for x in range(1,26)])
 stepSizes = 2.0/trueSizes
@@ -30,7 +31,6 @@ for (i,trueSize,stepSize) in zip(count(),trueSizes,stepSizes):
 	pinc.puErrorScaling()
 
 	pop = h5py.File('test_pop.pop.h5','r')
-	pos = pop['/pos/specie 0/n=0.0']
 	numerical = pop['/vel/specie 0/n=0.0']
 
 	error0[i] = np.max(abs(numerical[0]-exact))
