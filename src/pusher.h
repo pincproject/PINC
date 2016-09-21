@@ -13,10 +13,6 @@
 #ifndef PUSHER_H
 #define PUSHER_H
 
-/******************************************************************************
- * DECLARING DATATYPES
- *****************************************************************************/
-
 /**
  * @brief Moves particles one timestep forward
  * @param[in,out]	pop		Population
@@ -28,6 +24,8 @@
  * PINC may fail ungracefully.
  */
 void puMove(Population *pop);
+
+void puPeriodic(Population *pop, Grid *grid);
 
 /** @name Accelerators (with interpolation)
  * This group of functions accelerates the particles in a population by
@@ -190,5 +188,10 @@ int puNeighborToRank(MpiInfo *mpiInfo, int neighbor);
 int puNeighborToReciprocal(int neighbor, int nDims);
 void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo);
 void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo);
+
+funPtr puModeParticle_set(dictionary *ini);
+void puModeParticle(dictionary *ini);
+funPtr puModeInterp_set(dictionary *ini);
+void puModeInterp(dictionary *ini);
 
 #endif // PUSHER_H

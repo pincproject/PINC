@@ -19,10 +19,6 @@ funPtr regular_set(dictionary *ini){ return regular; }
 void mgRun(dictionary *ini);
 funPtr mgRun_set(dictionary *ini){ return mgRun; }
 
-void mgErrorScaling(dictionary *ini);
-funPtr mgErrorScaling_set(dictionary *ini){ return mgErrorScaling; }
-
-
 int main(int argc, char *argv[]){
 
 	/*
@@ -37,11 +33,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * CHOOSE PINC RUN MODE
 	 */
-	void (*run)() = select(ini,"methods:mode",	regular_set,
-												mgRun_set,
-												mgErrorScaling_set,
-												puModeParticle_set,
-												puModeInterp_set);
+	void (*run)() = select(ini,"methods:mode",regular_set,mgRun_set);
 	run(ini);
 
 	/*
@@ -67,48 +59,19 @@ void regular(dictionary *ini){
 												puAccND0_set,
 												puAccND0KE_set);
 
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
-
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
-
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
-
-	// char *str;
-	//
-	// str = iniGetStr("methods:acc");
-	// void (*acc)() = NULL;
-	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
-	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
-
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
+	Grid *Et  = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-
-	// Creating a neighbourhood in the rho to handle migrants
-	gCreateNeighborhood(ini, mpiInfo, rho);
-
-	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
-
-	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
-
 
 	/*
 	 * PREPARE FILES FOR WRITING
@@ -138,32 +101,40 @@ void regular(dictionary *ini){
 	 * INITIAL CONDITIONS
 	 */
 
-	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
+	double left = E->nGhostLayers[1];
+	int *L = gGetGlobalSize(ini);
+	double midway = L[0]/2.0;
 
-	// Perturb particles
-	pPosPerturb(ini, pop, mpiInfo);
 
-	// Migrate those out-of-bounds due to perturbation
-	extractEmigrants(pop, mpiInfo);
-	puMigrate(pop, mpiInfo, rho);
+	double stepSize = E->stepSize[1];
 
-	/*
-	 * INITIALIZATION (E.g. half-step)
-	 */
+	double pos[] = {0.5*midway+left};
+	double vel[] = {0.0};
+	pNew(pop,0,pos,vel);
 
-	// Get initial charge density
-	distr(pop, rho);
-	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
+	double slope =  1.0/midway;
+	msg(STATUS,"midway: %f, L: %i",midway,L[0]);
 
-	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	free(L);
+
+	for(int g=1; g<Et->trueSize[1]+1; g++){
+		phi->val[g] = -0.5*stepSize*slope*pow((double)g-midway-left,2);
+		Et->val[g] = slope*(g-midway-left);
+	}
+	adPrint(Et->val, Et->size[1]);
+	gNormalizeE(ini, Et);
+	adPrint(Et->val, Et->size[1]);
+	gNormalizePhi(ini, phi);
+	// adPrint(phi->val, phi->size[1]);
+	gHaloOp(setSlice,phi,mpiInfo,TOHALO);
+	// adPrint(phi->val, phi->size[1]);
 	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, TOHALO);
-	gMul(E, -1.);
+	gMul(E,-1.0);
+	// adPrint(E->val, E->size[1]);
+	gHaloOp(setSlice,E,mpiInfo,TOHALO);
+	adPrint(E->val, E->size[1]);
 
+	pWriteH5(pop, mpiInfo, 0.0, 0.0);
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -174,6 +145,8 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
+
+
 	Timer *t = tAlloc(rank);
 
 	// n should start at 1 since that's the timestep we have after the first
@@ -181,7 +154,7 @@ void regular(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-		msg(STATUS,"Computing time-step %i",n);
+		// msg(STATUS,"Computing time-step %i",n);
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
@@ -190,36 +163,15 @@ void regular(dictionary *ini){
 		tStart(t);
 
 		// Move particles
+		// msg(STATUS,"n: %i, pos: %.2f",n,pop->pos[0]-1);
 		puMove(pop);
+		puPeriodic(pop,E);
 
-		// Migrate particles (periodic boundaries)
-		extractEmigrants(pop, mpiInfo);
-		puMigrate(pop, mpiInfo, rho);
+		pWriteH5(pop, mpiInfo, (double) n, (double)n-0.5);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		pPosAssertInLocalFrame(pop, rho);
 
-		// Compute charge density
-		distr(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-
-		gAssertNeutralGrid(rho, mpiInfo);
-
-		// Compute electric potential phi
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-		gAssertNeutralGrid(phi, mpiInfo);
-
-		// Compute E-field
-		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo, TOHALO);
-		gMul(E, -1.);
-
-		gAssertNeutralGrid(E, mpiInfo);
-		// Apply external E
-		// gAddTo(Ext);
-
-		// Accelerate particle and compute kinetic energy for step n
 		acc(pop, E);
 
 		tStop(t);
@@ -257,13 +209,11 @@ void regular(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
 	gFree(rho);
 	gFree(phi);
 	gFree(res);
 	gFree(E);
+	gFree(Et);
 	pFree(pop);
 
 	gsl_rng_free(rngSync);

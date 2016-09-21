@@ -239,7 +239,7 @@ static void gExpandInner(	const double **in, double **out,
 	double *scalarVal = scalar->val;
 	double *fieldVal = field->val;
 
- 	//Scalar indexes
+ 	// Scalar indices
 	long int sNext, sPrev;
 	long int f;
 	int fNext = fieldSizeProd[1];
@@ -253,7 +253,6 @@ static void gExpandInner(	const double **in, double **out,
 		sNext = start + sizeProd[d];
 		sPrev = start - sizeProd[d];
 		f = start*fieldSizeProd[1] + (d-1);
-
 
 
 		for(int g = start; g < end; g++){
@@ -589,11 +588,11 @@ int *gGetGlobalSize(const dictionary *ini){
 
 	int *L = malloc(nDims*sizeof(*L));
 
-//	if(!strcmp(bnd,"PERIODIC")){
+	if(!strcmp(bnd,"PERIODIC")){
 		for(int d=0;d<nDims;d++) L[d] = nSubdomains[d]*trueSize[d];
-//	} else {
-//		msg(ERROR,"Only all PERIODIC grid:boundaries supported by gGetGlobalSize() yet");
-//	}
+	} else {
+		msg(ERROR,"Only all PERIODIC grid:boundaries supported by gGetGlobalSize() yet");
+	}
 
 	free(trueSize);
 	free(nSubdomains);
@@ -737,6 +736,7 @@ void gCopy(const Grid *original, Grid *copy){
 
 }
 
+// Probably broken
 void gNormalizeE(const dictionary *ini, Grid *E){
 
 	int nSpecies = iniGetInt(ini,"population:nSpecies");
@@ -749,6 +749,18 @@ void gNormalizeE(const dictionary *ini, Grid *E){
 	for(int p=0;p<E->sizeProd[E->rank];p++){
 		E->val[p] /= stepSize[p%E->size[0]];
 	}
+
+}
+
+void gNormalizePhi(const dictionary *ini, Grid *phi){
+
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
+	int nDims = iniGetInt(ini,"grid:nDims");
+	double *q = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	double *m = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
+	gMul(phi,pow(timeStep/stepSize[0],2)*(q[0]/m[0]));
 
 }
 

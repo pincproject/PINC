@@ -55,7 +55,16 @@ class PINC:
 		cmd += " methods:mode=" + self.mode
 		cmd += " grid:nDims="	+ str(self.nDims)
 		cmd += " grid:trueSize=" + self.arrToStr(self.trueSize)
-		cmd += " grid:nSubdomains="	+self.arrToStr(self.nSubdomains)
+		cmd += " grid:nSubdomains="	+ self.arrToStr(self.nSubdomains)
 		cmd += " time:startTime=" + str(self.startTime)
+
+		self.runCommand(cmd)
+
+	def puErrorScaling(self):
+		cmd = self.pincPath + " " + self.iniPath
+		cmd += " grid:trueSize=" + self.arrToStr(self.trueSize)
+		cmd += " time:timeStep=" + str(self.timeStep)
+		cmd += " time:nTimeSteps=" + str(self.nTimeSteps)
+		cmd += " methods:acc=" + str(self.acc)
 
 		self.runCommand(cmd)

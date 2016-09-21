@@ -73,17 +73,24 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@$(CC) $^ -o $@ $(CFLAGS)
 	@echo "PINC is built"
 
-$(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
+$(ODIR)/%.o: $(SDIR)/%.c $(HEAD) headchecking
 	@echo "Compiling $<"
 	@mkdir -p $(ODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-$(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
+headchecking:
+	@echo $(HEAD) | xargs -n1 ./check.sh
+
+$(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD) testheadchecking
 	@echo "Compiling $<"
 	@mkdir -p $(TODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
+
+testheadchecking:
+	@echo $(TESTHEAD) | xargs -n1 ./check.sh
+
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
