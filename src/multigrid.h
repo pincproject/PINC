@@ -33,9 +33,12 @@
 	int nPostSmooth;
 	int nCoarseSolve;
 
-    void (*coarseSolv)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Coarse Grid Solver function
-    void (*postSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Post Smooth function
-    void (*preSmooth)(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
+    void (*coarseSolv)(	Grid *phi, const Grid *rho, const int nCycles,
+						const MpiInfo *mpiInfo);	///< Function pointer to a Coarse Grid Solver function
+    void (*postSmooth)(	Grid *phi, const Grid *rho, const int nCycles,
+						const MpiInfo *mpiInfo);	///< Function pointer to a Post Smooth function
+    void (*preSmooth)(	Grid *phi, const Grid *rho, const int nCycles,
+						const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
 	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
 	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
 

@@ -42,24 +42,26 @@ Population *pAlloc(const dictionary *ini){
 
 	// Get MPI info
 	int size, rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&size);	// Presumes sanity check on nSubdomains by allocGrid()
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	// Load data
 	int nSpecies = iniGetInt(ini,"population:nSpecies");
 	int nDims = iniGetInt(ini,"grid:nDims");
-	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",nSpecies);	// This is for all computing nodes
+
+	// Number of particles to allocate for (for all computing nodes)
+	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",nSpecies);
 
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
 	for(int s=0;s<nSpecies;s++){
 		nAlloc[s] = ceil((double)nAllocTotal[s]/size);
-		if(nAlloc[s]*size!=nAllocTotal[s])
-			msg(WARNING,"increased number of allocated particles from %i to %i to get integer per computing node",
-				nAllocTotal[s],nAlloc[s]*size);
+		if(nAlloc[s]*size != nAllocTotal[s])
+			msg(WARNING,"increased number of allocated particles from %i to %i"
+			 			"to get integer per computing node",
+						nAllocTotal[s], nAlloc[s]*size);
 	}
 
-	// Determine iStart and iStop
 	long int *iStart = malloc((nSpecies+1)*sizeof(long int));
 	long int *iStop  = malloc(nSpecies*sizeof(long int));
 
@@ -70,7 +72,6 @@ Population *pAlloc(const dictionary *ini){
 	free(nAlloc);
 	free(nAllocTotal);
 
-	// Store in struct
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
@@ -81,7 +82,6 @@ Population *pAlloc(const dictionary *ini){
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 
-	// Default normalization factors
 	pSetNormParams(ini,pop);
 
 	return pop;
@@ -126,14 +126,15 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 		long int iStop = iStart;
 		double *pos = &pop->pos[iStart*nDims];
 
-		// Iterate through all particles to be generated
-		// Same seed on all MPI nodes ensure same particles are generated everywhere.
-		for(long int i=0;i<nParticles[s];i++){	// Generate nParticles of this specie
+		// Iterate through all particles to be generated. Same seed on all MPI
+		// nodes ensure same particles are generated everywhere.
+		for(long int i=0;i<nParticles[s];i++){
 
 			// Generate position for particle i
 			for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
 
-			// Count the number of dimensions where the particle resides in the range of this node
+			// Count the number of dimensions where the particle resides in
+			// the range of this node
 			int correctRange = 0;
 			for(int d=0;d<nDims;d++)
 				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
@@ -149,7 +150,8 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 		if(iStop>pop->iStart[s+1]){
 			int allocated = pop->iStart[s+1]-iStart;
 			int generated = iStop-iStart;
-			msg(ERROR,"allocated only %i particles of specie %i per node but %i generated",allocated,s,generated);
+			msg(ERROR,	"allocated only %i particles of specie %i per node but"
+			 			"%i generated", allocated, s, generated);
 		}
 
 		pop->iStop[s]=iStop;
@@ -201,7 +203,8 @@ void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 				linearPos /= L[d];
 			}
 
-			// Count the number of dimensions where the particle resides in the range of this node
+			// Count the number of dimensions where the particle resides in
+			// the range of this node
 			int correctRange = 0;
 			for(int d=0;d<nDims;d++)
 				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
@@ -217,7 +220,8 @@ void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 		if(iStop>pop->iStart[s+1]){
 			int allocated = pop->iStart[s+1]-iStart;
 			int generated = iStop-iStart;
-			msg(ERROR,"allocated only %i particles of specie %i per node but %i generated",allocated,s,generated);
+			msg(ERROR,	"allocated only %i particles of specie %i per node but"
+			 			"%i generated", allocated, s, generated);
 		}
 
 		pop->iStop[s]=iStop;
@@ -253,7 +257,8 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 		for(long int i=iStart;i<iStop;i++){
 
 			for(int d=0;d<nDims;d++){
-				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(2.0*M_PI*mode[s*nDims+d]*pos[i*nDims+d]/L[d]);
+				double theta = 2.0*M_PI*mode[s*nDims+d]*pos[i*nDims+d]/L[d];
+				pos[i*nDims+d] += amplitude[s*nDims+d]*cos(theta);
 			}
 		}
 	}
@@ -281,9 +286,10 @@ void pPosDebug(const dictionary *ini, Population *pop){
 
 	int nDims = pop->nDims;
 	long int *nMigrantsResult = malloc(81*sizeof(*nMigrantsResult));
-	alSet(nMigrantsResult,81,	1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
-								1,1,0,1,1,0,1,1,0,3,3,0,0,0,0,4,4,0,1,1,0,1,1,0,1,1,0,
-								1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0);
+	alSet(nMigrantsResult,81,
+			1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
+			1,1,0,1,1,0,1,1,0,3,3,0,0,0,0,4,4,0,1,1,0,1,1,0,1,1,0,
+			1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0);
 
 	for(int s=0;s<nSpecies;s++){
 		long int iStart = pop->iStart[s];
@@ -320,7 +326,9 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 			for(int d=0; d<nDims; d++){
 
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
-					msg(ERROR,"Particle i=%li (of specie %i) is out of bounds in dimension %i: %f>%i",i,s,d,pos[i*nDims+d],size[d+1]-1);
+					msg(ERROR,	"Particle i=%li (of specie %i) is out of bounds"
+					 			"in dimension %i: %f>%i",
+								i, s, d, pos[i*nDims+d], size[d+1]-1);
 				}
 			}
 		}
@@ -343,7 +351,9 @@ void pVelAssertMax(const Population *pop, double max){
 			for(int d=0;d<nDims;d++){
 
 				if(vel[i*nDims+d]>max){
-					msg(ERROR,"Particle i=%li (of specie %i) travels too fast in dimension %i: %f>%f",i,s,d,vel[i*nDims+d],max);
+					msg(ERROR,	"Particle i=%li (of specie %i) travels too"
+					 			"fast in dimension %i: %f>%f",
+								i, s, d, vel[i*nDims+d], max);
 				}
 			}
 		}
@@ -420,7 +430,8 @@ void pNew(Population *pop, int s, const double *pos, const double *vel){
 	long int *iStop = pop->iStop;	// New particle added here
 
 	if(iStop[s]>=iStart[s+1])
-		msg(WARNING,"Not enough allocated memory to add new particle to specie %i. New particle ignored.",s);
+		msg(WARNING,"Not enough allocated memory to add new particle to specie"
+		 			"%i. New particle ignored.",s);
 	else {
 
 		long int p = iStop[s]*nDims;
@@ -540,7 +551,13 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 	for(int s=0;s<nSpecies;s++){
 
 		long int nParticles = pop->iStop[s] - pop->iStart[s];
-		MPI_Allgather(&nParticles,1,MPI_LONG,&offsetAllSubdomains[1],1,MPI_LONG,MPI_COMM_WORLD);
+		MPI_Allgather(	&nParticles,
+						1,
+						MPI_LONG,
+						&offsetAllSubdomains[1],
+						1,
+						MPI_LONG,
+						MPI_COMM_WORLD);
 
 		// Take cumulative sum to actually get offset
 		// Last element equals total number of particles on all nodes
@@ -559,7 +576,12 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 			hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
 			hid_t fileSpace = H5Screate_simple(arrSize,fileDims,NULL);
 
-			H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,memDims,NULL);
+			H5Sselect_hyperslab(fileSpace,
+								H5S_SELECT_SET,
+								offset,
+								NULL,
+								memDims,
+								NULL);
 
 			/*
 			 * STORE DATA COLLECTIVELY
@@ -571,13 +593,39 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 			hid_t dataset;
 
 			sprintf(name,"/pos/specie %i/n=%.1f",s,posN);
-			dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-			H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->pos[pop->iStart[s]*pop->nDims]);
+			dataset = H5Dcreate(pop->h5,
+								name,
+								H5T_IEEE_F64LE,
+								fileSpace,
+								H5P_DEFAULT,
+								H5P_DEFAULT,
+								H5P_DEFAULT);
+
+			H5Dwrite(	dataset,
+						H5T_NATIVE_DOUBLE,
+						memSpace,
+						fileSpace,
+						pList,
+						&pop->pos[pop->iStart[s]*pop->nDims]);
+
 			H5Dclose(dataset);
 
 			sprintf(name,"/vel/specie %i/n=%.1f",s,velN);
-			dataset = H5Dcreate(pop->h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-			H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, &pop->vel[pop->iStart[s]*pop->nDims]);
+			dataset = H5Dcreate(pop->h5,
+								name,
+								H5T_IEEE_F64LE,
+								fileSpace,
+								H5P_DEFAULT,
+								H5P_DEFAULT,
+								H5P_DEFAULT);
+
+			H5Dwrite(	dataset,
+				 		H5T_NATIVE_DOUBLE,
+						memSpace,
+						fileSpace,
+						pList,
+						&pop->vel[pop->iStart[s]*pop->nDims]);
+
 			H5Dclose(dataset);
 
 			H5Pclose(pList);
@@ -726,9 +774,9 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 	double *chargeBar = malloc(nSpecies*sizeof(*chargeBar));
 	double *massBar = malloc(nSpecies*sizeof(*massBar));
 	for(int s=0;s<nSpecies;s++){
-		chargeBar[s]	= (pow(timeStep,2)/cellVolume)*   (charge[0]/mass[0])  *charge[s];
-		// massBar[s] 		= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
-		massBar[s]		= pow(timeStep,2)*mass[s];
+		chargeBar[s] = (pow(timeStep,2)/cellVolume)*(charge[0]/mass[0])*charge[s];
+		// massBar[s] 	= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
+		massBar[s]	 = pow(timeStep,2)*mass[s];
 	}
 	pop->charge=chargeBar;
 	pop->mass=massBar;

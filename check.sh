@@ -14,7 +14,7 @@
 NUM=1			# Number of current line
 MAX=132			# Max line length
 PREFMAX=80		# Max preferable line length
-PREFFRACT=1		# Percentage of lines allowed to exceed max preferable
+PREFFRACT=5		# Percentage of lines allowed to exceed max preferable
 UNPREFLINES=0	# Number of lines exceeding preferrable
 
 while read -r line; do

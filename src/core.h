@@ -86,7 +86,7 @@ typedef struct{
 	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
 	double *charge;		///< Normalized charge (q-bar)
 	double *mass;		///< Normalized mass (m-bar)
-	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements, last is sum over all species)
+	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
 	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
@@ -329,18 +329,19 @@ typedef struct{
  * @see msg()
  */
 typedef enum{
-	STATUS = 0x00,		///< Normal status output about the progress of execution.
-	WARNING = 0x01,		///< Warning. Something might not be like the user intended.
-	ERROR = 0x02,		///< Error which makes the program unable to proceed. Program will stop.
-	TIMER = 0x03,		///< Printing out formatted timing result
-	ALL = 0x10			///< Output message from all MPI-nodes. To be bitwise ORed.
+	STATUS = 0x00,	///< Normal status output about the progress of execution.
+	WARNING = 0x01,	///< Warning. Something might not be like the user intended.
+	ERROR = 0x02,	///< Error which makes the program unable to proceed. Program will stop.
+	TIMER = 0x03,	///< Printing out formatted timing result
+	ALL = 0x10		///< Output message from all MPI-nodes. To be bitwise ORed.
 } msgKind;
 
 /**
  * @brief	Function pointers for the different slice operations
  * @see gHaloOp
  */
-typedef void (*SliceOpPointer)(const double *slice, Grid *grid, int d, int offset);
+typedef void (*SliceOpPointer)(	const double *slice, Grid *grid,
+	 							int d, int offset);
 
 typedef void (*funPtr)();
 

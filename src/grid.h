@@ -56,11 +56,11 @@ void gFree(Grid *grid);
  * @param   mpiInfo Mpi Info
  * @return  void
  *
- *  Set the boundary slices. With Dirichlet and Neumann bnd conditions the values
- *  which corresponds to phi and the gradient of phi is set here.
+ * Set the boundary slices. With Dirichlet and Neumann bnd conditions the
+ * values which corresponds to phi and the gradient of phi is set here.
  *
- *  For now it only has the capability of constant boundaries, but it could
- *  later be expanded without too much trouble.
+ * For now it only has the capability of constant boundaries, but it could
+ * later be expanded without too much trouble.
  *
  *
  */
@@ -88,12 +88,13 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * @param *mpiInfo		MpiInfo struct
  * @param d				Along which dimension it should exhange ghost cells
  *
- *
- * Since each true subdomain is surrounded by ghost layers, both to implement boundary conditions
- * and to facility communication between different processes each taking care of a spesified subdomain,
- * this function fills the ghost layers with the values from the surrounding subdomains. When called
- * it has the option to either set the ghost layer as neighboring subdomain, or add to the existing
- * ghost layers. This is specified by the first argument which can either be setSlice or addSlice.
+ * Since each true subdomain is surrounded by ghost layers, both to implement
+ * boundary conditions and to facility communication between different
+ * processes each taking care of a spesified subdomain, this function fills the
+ * ghost layers with the values from the surrounding subdomains. When called it
+ * has the option to either set the ghost layer as neighboring subdomain, or
+ * add to the existing ghost layers. This is specified by the first argument
+ * which can either be setSlice or addSlice.
  *
  *
  * Example with 2 subdomains and a 2D 2x2 true grid:
@@ -104,8 +105,9 @@ void gFreeMpi(MpiInfo *mpiInfo);
  	1	1	1	1			2	2	2	2
  * @endcode
  *
- *	If we then want to the ghost layers in the subdomains with the values from the surrounding subdomain
- *	we use the following syntax.
+ * If we then want to the ghost layers in the subdomains with the values from
+ * the surrounding subdomain we use the following syntax.
+ *
  * @code
 	gHaloOpDim(setSlice, grid, mpiInfo, 1)
  * @endcode
@@ -118,8 +120,8 @@ void gFreeMpi(MpiInfo *mpiInfo);
  	2	1	1	2			1	2	2	1
  * @endcode
  *
- *	If we go back to the original grids and we instead want to add to the ghostlayer
- *	we can use addSlice instead.
+ * If we go back to the original grids and we instead want to add to the
+ * ghostlayer we can use addSlice instead.
  * @code
 	gHaloOpDim(addSlice, grid, mpiInfo, 1)
  * @endcode
@@ -131,7 +133,8 @@ void gFreeMpi(MpiInfo *mpiInfo);
  	3	1	1	3			3	2	2	3
  * @endcode
  *
- *	If needed it should be quick to facilitate for more slice operations, in addition to set and add.
+ * If needed it should be quick to facilitate for more slice operations, in
+ * addition to set and add.
  *
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
@@ -145,8 +148,8 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
  * @param *grid				Grid struct
  * @param *mpiInfo			MpiInfo struct
  *
- * A wrapper to the gHaloOpDim function, that is used when the user wants the interaction in
- * all the dimensions.
+ * A wrapper to the gHaloOpDim function, that is used when the user wants the
+ * interaction in all the dimensions.
  *
  * NB! Only works with 1 ghost layer.
  * @see gExchangeSlice
@@ -164,12 +167,12 @@ void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirec
  * @return				Void
  *
  * This function gets extracts a slice from a N dimensional grid. The integer d
- * decides in which direction the slice is perpendicular to, and the offset decides
- * which which slice it picks out. It needs a preallocated slice array where
- * the extracted slice will be stored.
+ * decides in which direction the slice is perpendicular to, and the offset
+ * decides which which slice it picks out. It needs a preallocated slice array
+ * where the extracted slice will be stored.
  *
- * 2D example: Here we have a 5x4 grid and we want to extract a slice corresponding
- * to the second row, where x (d=0) is a constant 1.
+ * 2D example: Here we have a 5x4 grid and we want to extract a slice
+ * corresponding to the second row, where x (d=0) is a constant 1.
  *
  * @code
  * 15   16   17   18   19
@@ -349,8 +352,8 @@ void gNormalizePhi(const dictionary *ini, Grid *phi);
  * @brief Set total rho to 0
  * @param rho	rho-field
  *
- *	Sets total charge density to 0. This can be useful to avoid infinite potential
- *	when using periodic boundary conditions.
+ * Sets total charge density to 0. This can be useful to avoid infinite
+ * potential when using periodic boundary conditions.
  *
  */
 
@@ -361,7 +364,7 @@ void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 * @param	result		Grid added to
 * @param	addition	Grid that is added to the other
 *
-*	Adds one grid to another. result = result + addition
+* Adds one grid to another. result = result + addition
 *
 */
 void gAddTo(Grid *result, Grid *addition);
@@ -371,7 +374,7 @@ void gAddTo(Grid *result, Grid *addition);
 * @param	result		Grid subtracted from
 * @param	subtraction	Grid that is subtracted from the other
 *
-*	Subtracts one grid to another. result = result - addition
+* Subtracts one grid to another. result = result - addition
 *
 */
 
@@ -382,7 +385,7 @@ void gSubFrom(Grid *result, const Grid *subtraction);
 * @param	grid       Grid
 * @param	mpiInfo	   MpiInfo
 *
-*	Sums the true grid, uses a NDimensional algorithm
+* Sums the true grid, uses a NDimensional algorithm
 *
 */
 double gSumTruegrid(const Grid *grid);
@@ -463,7 +466,8 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * in the inputs denorm and dimen in this function. They are expected to be of
  * length nDims.
  */
-void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo, const double *denorm, const double *dimen, const char *fName);
+void gOpenH5(	const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
+	 			const double *denorm, const double *dimen, const char *fName);
 
 /**
  * @brief	Store values in Grid to .grid.h5-file
@@ -592,7 +596,8 @@ void gRemoveHalo(Grid *grid);
 void gInsertHalo(Grid *grid, const int *nGhostLayers);
 
 /**
- * @brief Initial grid configurations, temporary untill a read hdf5 method is available
+ * @brief Initial grid configurations, temporary untill a read hdf5 method is
+ * available
  */
 
  #define PI 3.14159265
