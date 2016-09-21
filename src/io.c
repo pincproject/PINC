@@ -201,7 +201,11 @@ void msg(msgKind kind, const char* restrict format,...){
 	char msg[bufferSize], buffer[bufferSize];
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	vsnprintf(msg,bufferSize,format,args);
-	snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
+	if((kind&ALL)){
+		snprintf(buffer,bufferSize,"%s (%i): %s",prefix,rank,msg);
+	} else {
+		snprintf(buffer,bufferSize,"%s: %s",prefix,msg);
+	}
 	va_end(args);
 
 	// Print message
@@ -724,7 +728,7 @@ char **strArrExpand(char **strArr, int nElements){
 	char **result = malloc((nElements+1)*sizeof(result));
 
 	for(int i=0;i<nElements;i++){
-		
+
 		int len = strlen(strArr[i%nElementsOld]);
 		result[i] = malloc((len+1)*sizeof(char));
 		strcpy(result[i],strArr[i%nElementsOld]);
@@ -732,7 +736,7 @@ char **strArrExpand(char **strArr, int nElements){
 	}
 
 	result[nElements]=NULL;
-	
+
 	return result;
 
 }
