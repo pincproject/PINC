@@ -143,9 +143,13 @@ void puModeParticle(dictionary *ini){
 		// double pos[] = {0.5*midway+left};
 		// double vel[] = {0.0};
 
-		// sin
-		double pos[] =  {midway + left};
-		double vel[] = {0.5*timeStep/stepSize};
+		// sin (has no even ordered terms)
+		// double pos[] =  {midway + left};
+		// double vel[] = {0.5*timeStep/stepSize};
+
+		// sin(omega*t+pi/4) has terms of all orders
+		double pos[] = {midway + left + (0.5/sqrt(2))*midway};
+		double vel[] = {(0.5/sqrt(2))*timeStep/stepSize};
 
 		pNew(pop,0,pos,vel);
 

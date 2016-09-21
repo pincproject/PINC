@@ -2,6 +2,7 @@ import h5py
 import pylab as plt
 import numpy as np
 from itertools import izip as zip, count
+from math import pi
 
 import sys
 sys.path.append('../framework')
@@ -10,19 +11,24 @@ from pincClass import *
 ini = "../../local.ini"
 pinc = PINC(iniPath = ini)
 
-test = 'dx'
+test = 'dt'
 assert test in ['dt','dx']
 
 # ANALYTICAL TRAJECTORY
-start = 2
-stop = 16
+if test=='dt':
+	start = 2
+	stop = 16
+if test=='dx':
+	start = 2
+	stop = 20
+
 
 timeSteps = np.array([2**(-x) for x in range(start,stop)])
 trueSizes = np.array([2**x    for x in range(start,stop)])
 
 if(test=='dt'): trueSizes[:] = 8
 stepSizes = 2.0/trueSizes
-if(test=='dx'): timeSteps[:] = 0.0001#0.5*stepSizes
+if(test=='dx'): timeSteps[:] = 0.00001#0.5*stepSizes
 
 pinc.nTimeSteps = 100
 omega = 1
@@ -37,12 +43,17 @@ for m,acc in enumerate(accs):
 
 	for (i,timeStep,trueSize,stepSize) in zip(count(),timeSteps,trueSizes,stepSizes):
 
+		print("Run %d of %d (dt,dx)=(%f,%f)"%(i+1,stop-start,timeStep,stepSize))
+
 		pinc.timeStep = timeStep
 		pinc.trueSize = np.array([trueSize])
 
 		n = np.linspace(0,pinc.timeStep*pinc.nTimeSteps,pinc.nTimeSteps+1)
 		# posAna = pinc.trueSize[0]*(0.5-0.25*np.cos(omega*n))
-		posAna = pinc.trueSize[0]*(0.5+0.25*np.sin(omega*n))
+		# posAna = pinc.trueSize[0]*(0.5+0.25*np.sin(omega*n))
+		# posAna = (0.5-0.25*np.cos(omega*n))
+		# posAna = (0.5+0.25*np.sin(omega*n))
+		posAna = (0.5+0.25*np.sin(omega*n+pi/4))
 
 		pinc.runCommand("rm *.h5")
 		pinc.puErrorScaling()
@@ -63,9 +74,11 @@ for m,acc in enumerate(accs):
 		for j in xrange(N):
 			pos[j]=pop['/pos/specie 0/n=%.1f'%j][:]
 
+		pos /= pinc.trueSize[0]
+
 		# PLOTTING TRAJECTORIES
 
-		if(i==-1):
+		if i==-1:
 			plt.plot(pos,label='Numerical')
 			plt.plot(posAna,label='Analytical')
 			plt.legend()
@@ -85,8 +98,11 @@ print order
 plt.figure()
 plt.loglog(xaxis,error[0],'o-b',label="puAccND0")
 plt.loglog(xaxis,error[1],'o-g',label="puAccND1")
-# plt.loglog(xaxis,(error[0][-1]/xaxis[-1]**3)*xaxis**3,'--b',label="O(dx^3)")
-# plt.loglog(xaxis,(error[1][-1]/xaxis[-1]**3)*xaxis**3,'--g',label="O(dx^3)")
+if test=='dt':
+	plt.loglog(xaxis,(error[0][-1]/xaxis[-1]**2)*xaxis**2,'--b',label="O(dt^2)")
+	plt.loglog(xaxis,(error[1][-1]/xaxis[-1]**3)*xaxis**3,'--g',label="O(dt^3)")
+if test=='dx':
+	plt.loglog(xaxis,(error[0][7]/xaxis[7])*xaxis,'--',label="O(dx)")
 plt.grid(b=True, which='major', color='k', linestyle='-')
 plt.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.5)
 plt.xlabel(test)
@@ -108,12 +124,12 @@ plt.show()
 
 # PLOTTING ENERGY
 
-avgEn = np.average(tot)
-maxEn = np.max(tot)
-minEn = np.min(tot)
-absError = max(maxEn-avgEn,avgEn-minEn)
-relError = absError/avgEn;
-print "Relative error: %.2f%%\n"%(relError*100)
+# avgEn = np.average(tot)
+# maxEn = np.max(tot)
+# minEn = np.min(tot)
+# absError = max(maxEn-avgEn,avgEn-minEn)
+# relError = absError/avgEn;
+# print "Relative error: %.2f%%\n"%(relError*100)
 
 # plt.figure()
 # plt.plot(pot,label='potential')
