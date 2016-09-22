@@ -38,17 +38,21 @@
 ///@{
 static inline void puInterp3D1(	double *result, const double *pos,
 								const double *val, const long int *sizeProd);
+
 static inline void puInterpND0(	double *result, const double *pos,
 								const double *val, const long int *sizeProd,
 								int nDims);
+
 static inline void puInterpND1(	double *result, const double *pos,
 								const double *val, const long int *sizeProd,
 								int nDims, int *integer, double *decimal,
 								double *complement);
+
 static void puInterpND1Inner(	double *result, const double *val, long int p,
 								const long int *mul, long int lastMul,
 								int nDims, double *decimal, double *complement,
 								double factor);
+
 static void puDistrND1Inner(	double *val, long int p, const long int *mul,
 								long int lastMul, double *decimal,
 								double *complement, double factor);
@@ -93,6 +97,9 @@ void puModeParticle(dictionary *ini){
 													puAccND0_set,
 													puAccND0KE_set);
 
+		void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
+																	puExtractEmigrantsND_set);
+
 		/*
 		 * INITIALIZE PINC VARIABLES
 		 */
@@ -102,6 +109,12 @@ void puModeParticle(dictionary *ini){
 		Grid *Et  = gAlloc(ini, VECTOR);
 		Grid *rho = gAlloc(ini, SCALAR);
 		Grid *phi = gAlloc(ini, SCALAR);
+
+		gCreateNeighborhood(ini, mpiInfo, rho);
+
+		aiPrint(rho->size,2);
+		aiPrint(rho->trueSize,2);
+		adPrint(mpiInfo->thresholds,2);
 
 		// Random number seeds
 		gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -139,16 +152,9 @@ void puModeParticle(dictionary *ini){
 		double stepSize = E->stepSize[1];
 		double timeStep = iniGetDouble(ini,"time:timeStep");
 
-		// cos (has no 3rd order term in its Taylor expansion)
-		// double pos[] = {0.5*midway+left};
-		// double vel[] = {0.0};
-
-		// sin (has no even ordered terms)
-		// double pos[] =  {midway + left};
-		// double vel[] = {0.5*timeStep/stepSize};
-
 		// sin(omega*t+pi/4) has terms of all orders
-		double pos[] = {midway + left + (0.5/sqrt(2))*midway};
+		double equilibrium = 0;
+		double pos[] = {equilibrium + left + (0.5/sqrt(2))*midway};
 		double vel[] = {(0.5/sqrt(2))*timeStep/stepSize};
 
 		pNew(pop,0,pos,vel);
@@ -158,21 +164,10 @@ void puModeParticle(dictionary *ini){
 		free(L);
 
 		for(int g=1; g<Et->trueSize[1]+1; g++){
-			phi->val[g] = -0.5*stepSize*slope*pow((double)g-midway-left,2);
-			Et->val[g] = slope*(g-midway-left);
+			E->val[g] = fmod(slope*(g-equilibrium-left)+1,2)-1;
 		}
-		// adPrint(Et->val, Et->size[1]);
-		gNormalizeE(ini, Et);
-		// adPrint(Et->val, Et->size[1]);
-		gNormalizePhi(ini, phi);
-		// adPrint(phi->val, phi->size[1]);
-		gHaloOp(setSlice,phi,mpiInfo,TOHALO);
-		// adPrint(phi->val, phi->size[1]);
-		gFinDiff1st(phi, E);
-		gMul(E,-1.0);
-		// adPrint(E->val, E->size[1]);
+		gNormalizeE(ini, E);
 		gHaloOp(setSlice,E,mpiInfo,TOHALO);
-		// adPrint(E->val, E->size[1]);
 
 		pWriteH5(pop, mpiInfo, 0.0, 0.0);
 
@@ -194,10 +189,14 @@ void puModeParticle(dictionary *ini){
 
 			MPI_Barrier(MPI_COMM_WORLD);
 
-			pVelAssertMax(pop,1.0);
+			// pVelAssertMax(pop,1.0);
 
 			puMove(pop);
-			puPeriodic(pop,E);
+
+			extractEmigrants(pop, mpiInfo);
+			puMigrate(pop, mpiInfo, rho);
+
+			// puPeriodic(pop,E);
 
 			pWriteH5(pop, mpiInfo, (double) n, (double)n-0.5);
 
@@ -311,7 +310,7 @@ void puPeriodic(Population *pop, Grid *grid){
 		for(long int p=pStart;p<pStop;p++){
 			int d = (p%nDims)+1;
 			double lower = (double)nGhostLayers[d];
-			double length = (double)trueSize[d]-1.0;
+			double length = (double)trueSize[d];//-1.0;
 			pos[p] = fmod(pos[p]-lower+length,length)+lower;
 		}
 	}

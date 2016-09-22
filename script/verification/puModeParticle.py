@@ -53,7 +53,8 @@ for m,acc in enumerate(accs):
 		# posAna = pinc.trueSize[0]*(0.5+0.25*np.sin(omega*n))
 		# posAna = (0.5-0.25*np.cos(omega*n))
 		# posAna = (0.5+0.25*np.sin(omega*n))
-		posAna = (0.5+0.25*np.sin(omega*n+pi/4))
+		equilibrium = 0
+		posAna = (equilibrium+0.25*np.sin(omega*n+pi/4))%1
 
 		pinc.runCommand("rm *.h5")
 		pinc.puErrorScaling()
@@ -75,10 +76,11 @@ for m,acc in enumerate(accs):
 			pos[j]=pop['/pos/specie 0/n=%.1f'%j][:]
 
 		pos /= pinc.trueSize[0]
+		pos%=1
 
 		# PLOTTING TRAJECTORIES
 
-		if i==-1:
+		if i==0:
 			plt.plot(pos,label='Numerical')
 			plt.plot(posAna,label='Analytical')
 			plt.legend()
