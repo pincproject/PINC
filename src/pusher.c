@@ -112,10 +112,6 @@ void puModeParticle(dictionary *ini){
 
 		gCreateNeighborhood(ini, mpiInfo, rho);
 
-		aiPrint(rho->size,2);
-		aiPrint(rho->trueSize,2);
-		adPrint(mpiInfo->thresholds,2);
-
 		// Random number seeds
 		gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 
@@ -1237,9 +1233,6 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order){
 
 	if(minThreshold<reqMinThreshold)
 		msg(ERROR,"%s requires grid:thresholds >=%.1f",name,reqMinThreshold);
-
-	if(minThreshold==reqMinThreshold)
-		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly %.1f",name,reqMinThreshold);
 
 	double reqMaxThreshold = minLayers-0.5;
 

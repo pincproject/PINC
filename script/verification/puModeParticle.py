@@ -8,8 +8,7 @@ import sys
 sys.path.append('../framework')
 from pincClass import *
 
-ini = "../../local.ini"
-pinc = PINC(iniPath = ini)
+pinc = Pinc(ini = "local.ini")
 
 test = 'dt'
 assert test in ['dt','dx']
@@ -30,7 +29,7 @@ if(test=='dt'): trueSizes[:] = 8
 stepSizes = 2.0/trueSizes
 if(test=='dx'): timeSteps[:] = 0.00001#0.5*stepSizes
 
-pinc.nTimeSteps = 100
+pinc["time:nTimeSteps"] = 100
 omega = 1
 
 errorMax = np.zeros((2,len(timeSteps)))
@@ -39,16 +38,16 @@ error2 = np.zeros((2,len(timeSteps)))
 accs = ['puAccND0KE','puAccND1KE']
 
 for m,acc in enumerate(accs):
-	pinc.acc = acc
+	pinc["methods:acc"] = acc
 
 	for (i,timeStep,trueSize,stepSize) in zip(count(),timeSteps,trueSizes,stepSizes):
 
 		print("Run %d of %d (dt,dx)=(%f,%f)"%(i+1,stop-start,timeStep,stepSize))
 
-		pinc.timeStep = timeStep
-		pinc.trueSize = np.array([trueSize])
+		pinc["time:timeStep"] = timeStep
+		pinc["grid:trueSize"] = np.array([trueSize])
 
-		n = np.linspace(0,pinc.timeStep*pinc.nTimeSteps,pinc.nTimeSteps+1)
+		n = np.linspace(0,pinc["time:timeStep"]*pinc["time:nTimeSteps"],pinc["time:nTimeSteps"]+1)
 		# posAna = pinc.trueSize[0]*(0.5-0.25*np.cos(omega*n))
 		# posAna = pinc.trueSize[0]*(0.5+0.25*np.sin(omega*n))
 		# posAna = (0.5-0.25*np.cos(omega*n))
@@ -56,11 +55,11 @@ for m,acc in enumerate(accs):
 		equilibrium = 0
 		posAna = (equilibrium+0.25*np.sin(omega*n+pi/4))%1
 
-		pinc.runCommand("rm *.h5")
-		pinc.puErrorScaling()
+		pinc.clean()
+		pinc.run()
 
 		# EXTRACTING ENERGY
-		hist = h5py.File('test_history.xy.h5','r')
+		hist = h5py.File('../../data/history.xy.h5','r')
 		pot = hist['/energy/potential/total']
 		kin = hist['/energy/kinetic/total']
 
@@ -69,13 +68,13 @@ for m,acc in enumerate(accs):
 		tot = pot+kin;
 
 		# EXTRACTING TRAJECTORY OF SINGLE PARTICLE
-		pop = h5py.File('test_pop.pop.h5','r')
+		pop = h5py.File('../../data/pop.pop.h5','r')
 		N = len(pop['/pos/specie 0/'])
 		pos = np.zeros(N)
 		for j in xrange(N):
 			pos[j]=pop['/pos/specie 0/n=%.1f'%j][:]
 
-		pos /= pinc.trueSize[0]
+		pos /= pinc["grid:trueSize"][0]
 		pos%=1
 
 		# PLOTTING TRAJECTORIES
@@ -89,7 +88,7 @@ for m,acc in enumerate(accs):
 
 		diff = pos-posAna
 		errorMax[m][i] = np.max(abs(diff))
-		error2[m][i] = np.sqrt(np.sum(diff**2)/(pinc.nTimeSteps+1))
+		error2[m][i] = np.sqrt(np.sum(diff**2)/(pinc["time:nTimeSteps"]+1))
 
 xaxis = timeSteps if test=='dt' else stepSizes
 error = errorMax
