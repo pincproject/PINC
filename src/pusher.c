@@ -1244,7 +1244,6 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order){
 
 	free(nGhostLayers);
 	free(thresholds);
-
 }
 
 static inline void puInterp3D1(	double *result, const double *pos,
