@@ -9,20 +9,14 @@
 CC		= mpicc
 COPT	= -O3
 
+CLOCAL = 	-Ilib/iniparser/src\
+			-lm -lblas -lgsl -lhdf5
+
 -include local.mk
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT)\
-			-Ilib/iniparser/src\
-		 	-lm  -lblas -lgsl -lhdf5 $(CADD)
-ACFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT)\
-			-Ilib/iniparser/src $(CADD)\
-			-lhdf5
-		
-CPATHS 	=	-I /cluster/software/gsl-1.16/include\
-		-I /cluster/software/VERSIONS/hdf5-1.8.15-patch1_gnu
-			 
+CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT) $(CADD)\
 
 SDIR	= src
 ODIR	= src/obj
@@ -60,8 +54,6 @@ all: version $(EXEC) cleantestdata doc
 
 local: version $(EXEC).local cleantestdata doc
 
-abel: version $(EXEC).abel cleantestdata doc
-
 test: version $(EXEC).test cleantestdata doc
 	@echo "Running Unit Tests"
 	@echo $(TEST)
@@ -76,12 +68,6 @@ $(EXEC).local: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC (using main.local.c)"
 	@$(CC) $^ -o $(EXEC) $(CFLAGS)
 	@echo "PINC is built"
-
-
-$(EXEC).abel: $(ODIR)/main.o $(OBJ) $(LIBOBJ)
-	@echo "Linking PinC (for ABEL)"
-	@$(CC) $^ -o $(EXEC) $(CPATHS) $(ACFLAGS)
-	@echo "PinC is built"        
 
 $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"

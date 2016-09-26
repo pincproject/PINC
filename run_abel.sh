@@ -20,9 +20,8 @@ source /cluster/bin/jobsetup
 module purge   # clear any inherited modules
 set -o errexit # exit on errors
 
-module load openmpi.gnu/1.8.8
+module load openmpi.gnu
 module load gsl/1.16
-module load hdf5/1.8.15-patch1_gnu
 
 #Compile
 #cd mn-fysrp-pic
