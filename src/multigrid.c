@@ -1627,7 +1627,7 @@ void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 	}
 
 	//Solve problem
-	mgVRegular(bottom, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+	mgVRecursive(bottom, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 
 	return;
 }
@@ -1652,10 +1652,21 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	int nLevels = mgRho->nLevels;
 
 	// gZero(mgPhi->grids[0]);
+	double tol = 1.E-12;
+	double barRes = 2.;
+
 	if(nLevels >1){
-		for(int c = 0; c < nMGCycles; c++){
+		while(barRes > tol){
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
+			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
+			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
+			// msg(STATUS, "barRes = %f", barRes);
 		}
+		// for(int c = 0; c < nMGCycles; c++){
+		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+		//
+		// }
 	}	else {
 		for(int c = 0; c < nMGCycles; c++){
 

@@ -37,4 +37,14 @@
 #			-lgslcblas				\
 #			-lgsl					\
 #			-lhdf5
+
+CLOCAL =	-Ilib/iniparser/src								\
+			-I/usit/abel/u1/sigvaldm/hdf5-1.8.17/include	\
+			-L/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib		\
+			-I/cluster/software/gsl/include/gsl				\
+			-L/cluster/software/gsl/lib						\
+			-lm												\
+			-lgslcblas										\
+			-lgsl											\
+			-lhdf5
 						

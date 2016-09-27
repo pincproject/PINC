@@ -9,13 +9,14 @@
 CC		= mpicc
 COPT	= -O3
 
+CLOCAL = 	-Ilib/iniparser/src\
+			-lm -lblas -lgsl -lhdf5
+
 -include local.mk
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT)\
-			-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 $(CADD)
+CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT) $(CADD)\
 
 SDIR	= src
 ODIR	= src/obj
