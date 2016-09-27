@@ -9,7 +9,7 @@ timeStepList = []
 errorList = []
 
 prefix = "../../"
-pincCmd = prefix + "mpinc.sh " + prefix + "input.ini "
+pincCmd = prefix + "mpinc.sh " + prefix + "langmuir.ini "
 
 for nTimeSteps in nTimeStepsList:
 
@@ -26,7 +26,7 @@ for nTimeSteps in nTimeStepsList:
 	kin = hist['/energy/kinetic/total']
 
 	kin = kin[:,1];		# Extract y-axis
-	pot = -pot[:,1];	# Extract y-axis and invert
+	pot = pot[:,1];		# Extract y-axis
 	tot = pot+kin;		# Collect total energy
 
 	avgEn = np.average(tot)
