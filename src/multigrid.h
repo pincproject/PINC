@@ -9,21 +9,24 @@
  * @date		26.10.15
  *
  *
- * Functions dealing with the initialisation and destruction of multigrid structures and
- * a multigrid solver containing restriction, prolongation operatorors and smoothers
+ * Functions dealing with the initialisation and destruction of multigrid
+ * structures and a multigrid solver containing restriction, prolongation
+ * operators and smoothers
  *
  */
 
 
 /**
-  * @brief Contains the grids needed in a multigrid solver, as well as other specifications
-  * @param ini 			Input file, contains specification for the run
-  * @param gridQuantity  Grid with quantities and grid specifications as a memmber
+  * @brief Contains the grids needed in a multigrid solver, as well as other
+  *         specifications
+  * @param ini 			  Input file, contains specification for the run
+  * @param gridQuantity     Grid with quantities and grid specifications as a
+                            member
   *
-  * The finest grid, grid 0, links to the grid used in the rest of the program, the other grids
-  * in the grid array is coarser grids used in the
-  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for now the only
-  * options are Gauss-Seidel Red-Black (mgGS). More TBD.
+  * The finest grid, grid 0, links to the grid used in the rest of the program,
+  * the other grids in the grid array is coarser grids used in the
+  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for
+  * now the only options are Gauss-Seidel Red-Black (mgGS). More TBD.
   */
  typedef struct {
     Grid **grids;   ///< Array of Grid structs of decreasing coarseness
@@ -33,14 +36,19 @@
 	int nPostSmooth;
 	int nCoarseSolve;
 
+    ///< Function pointer to a Coarse Grid Solver function
     void (*coarseSolv)(	Grid *phi, const Grid *rho, const int nCycles,
-						const MpiInfo *mpiInfo);	///< Function pointer to a Coarse Grid Solver function
+						const MpiInfo *mpiInfo);
+    ///< Function pointer to a Post Smooth function
     void (*postSmooth)(	Grid *phi, const Grid *rho, const int nCycles,
-						const MpiInfo *mpiInfo);	///< Function pointer to a Post Smooth function
+						const MpiInfo *mpiInfo);
+    ///< Function pointer to a Pre Smooth function
     void (*preSmooth)(	Grid *phi, const Grid *rho, const int nCycles,
-						const MpiInfo *mpiInfo);	///< Function pointer to a Pre Smooth function
-	void (*restrictor)(const Grid *fine, Grid *coarse);	///< Function pointer to restrictor
-	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);	///< Function pointer to prolongator
+						const MpiInfo *mpiInfo);
+    ///< Function pointer to restrictor
+	void (*restrictor)(const Grid *fine, Grid *coarse);
+    ///< Function pointer to prolongator
+	void (*prolongator)(Grid *fine, const Grid *coarse, const MpiInfo *mpiInfo);
 
 } Multigrid;
 
@@ -48,8 +56,8 @@
  * @brief	Function pointers for the different slice operations
  * @see gHaloOp
  */
-typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
-									Multigrid *mgRes, const MpiInfo *mpiInfo);
+typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho,
+                    Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 
 
@@ -58,8 +66,9 @@ typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigri
  * @param grid 		Finest grid
  * @param ini		Dictionary
  *
- *	Allocates memory for a multgrid struct. A multigrid struct consist of an array of
- *	grids, where each subsequent grid has half the true grid points of the previous.
+ *	Allocates memory for a multgrid struct. A multigrid struct consist of an
+ *  array of grids, where each subsequent grid has half the true grid points of
+ *  the previous.
  *
  *	In addition it stores a few additional parameters that are useful during the
  *	handling of the multigrid algorithm.
@@ -69,17 +78,19 @@ typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho, Multigri
  *	nPostSmooth:Number of cycles the postsmoother to run
  *	nCoarseSolve:Number of cycles for the coarse solver to run
  *
- *	The algorithms for the solver, restrictors and prolongators are set in the allocation according
- *	to a input file, then it is handled by a function pointer stored in the MG struct.
- *'	So if we want to use the prolongator, the function pointer can just be used as a regular function
- * 	and the chosen prolongator algorithm will be used.
+ *	The algorithms for the solver, restrictors and prolongators are set in the
+ *  allocation according to a input file, then it is handled by a function
+ *  pointer stored in the MG struct. So if we want to use the prolongator,
+ *  the function pointer can just be used as a regular function	and the chosen
+ *  prolongator algorithm will be used.
  * 	\code
 		multigrid->prolongator(fine, coarse, mpiInfo);
  *	\endcode
  *
  *
- *	NB!The number of true grid points used in the finest grid needs to be a multiple
- *	nLevels*2, to make it possible to half the grid points down to the coarsest grid.
+ *	NB!The number of true grid points used in the finest grid needs to be a
+ *  multiple nLevels*2, to make it possible to half the grid points down to
+ *  the coarsest grid.
  */
 
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
@@ -133,8 +144,8 @@ void mgErrorScaling(dictionary *ini);
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
- 									Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgVRegular(int level,int bottom, int top, Multigrid *mgRho,
+                Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
 /**
  * @brief Performs a recursive multigrid V cycle
  * @param   level       Grid level the V cycle starts on
@@ -145,8 +156,8 @@ void mgVRegular(int level,int bottom, int top, Multigrid *mgRho, Multigrid *mgPh
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
- 					Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho,
+                    Multigrid *mgPhi,Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 /**
  * @brief Performs a Full multigrid cycle
@@ -176,17 +187,20 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 
 /**
- * @brief Solves Poissons equation for electric potential, with multigrid V cycles
+ * @brief Solves Poissons equation for electric potential, with multigrid V
+ *        cycles
  * @param	mrRho	Source term
  * @param	mgPhi	Solution term
  * @param	mgRes	Residual
  * @param	mpiInfo	Subdomain information
  * @return	mgPhi
  *
- *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more information.
+ *	This is an implementation of a Multigrid V Cycle solver. See "DOC" for more
+ *  information.
  */
 
-void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
+void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,Multigrid *mgRes,
+                const MpiInfo *mpiInfo);
 
 funPtr mgSolve_set(dictionary *ini);
 
@@ -197,11 +211,12 @@ funPtr mgSolve_set(dictionary *ini);
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- *	3D dimensional implementation of Gauss-Seidel RB, which does several sweeps through the
- *	grid trying to simplify the iteration through the grid.
+ *	3D dimensional implementation of Gauss-Seidel RB, which does several sweeps
+ *  through the grid trying to simplify the iteration through the grid.
  *
  */
-void mgGS3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS3DNew(Grid *phi, const Grid *rho, const int nCycles,
+                const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -210,13 +225,14 @@ void mgGS3DNew(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpi
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- *	3D dimensional implementation of Gauss-Seidel RB, which does one sweep through the grid for
- *	each color, but has slightly more complicated behaviour on the edges, due to needing to skip
- *	the ghostlayers.
+ *	3D dimensional implementation of Gauss-Seidel RB, which does one sweep
+ *  through the grid for each color, but has slightly more complicated behaviour
+ *  on the edges, due to needing to skip the ghostlayers.
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void mgGS3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS3D(Grid *phi, const Grid *rho, const int nCycles,
+            const MpiInfo *mpiInfo);
 
 /**
  * @brief Gauss-Seidel Red and Black 2D
@@ -225,12 +241,13 @@ void mgGS3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInf
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- *	2D dimensional implementation of Gauss-Seidel RB, which does several sweeps through the
- *	grid trying to simplify the iteration through the grid.
+ *	2D dimensional implementation of Gauss-Seidel RB, which does several sweeps
+ *  through the grid trying to simplify the iteration through the grid.
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void mgGS2D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgGS2D(Grid *phi, const Grid *rho, const int nCycles,
+            const MpiInfo *mpiInfo);
 
 
 void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
@@ -242,13 +259,17 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
  * @param	mpiInfo	Subdomain information
  * @return	phi
  *
- * Non-optimized implementation of a mgJacob2D algorithm to solve poissons equation.
+ * Non-optimized implementation of a mgJacob2D algorithm to solve poissons
+ * equation.
  *
  *	NB! Assumes 1 ghost layer, and even number of grid points.
  */
-void mgJacobND(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
-void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
-void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles, const MpiInfo *mpiInfo);
+void mgJacobND(Grid *phi, const Grid *rho, const int nCycles,
+                const MpiInfo *mpiInfo);
+void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles,
+                const MpiInfo *mpiInfo);
+void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles,
+                const MpiInfo *mpiInfo);
 
 
 /**
@@ -405,7 +426,8 @@ double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo);
 double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo);
 
  /**
-  * @brief Writes out information about the MG cycles, used when optimizing the number of cycles
+  * @brief Writes out information about the MG cycles, used when optimizing the
+  *        number of cycles
   * @param ini 					dictionary of the input file
   * @param multigrid 		multigrid struct
   *
