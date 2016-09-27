@@ -1652,7 +1652,7 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	int nLevels = mgRho->nLevels;
 
 	// gZero(mgPhi->grids[0]);
-	double tol = 1.E-12;
+	double tol = 1.E-10;
 	double barRes = 2.;
 
 	if(nLevels >1){
@@ -1661,6 +1661,8 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
 			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
 			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
+			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
+			barRes = sqrt(barRes);
 			// msg(STATUS, "barRes = %f", barRes);
 		}
 		// for(int c = 0; c < nMGCycles; c++){

@@ -27,11 +27,11 @@ if mode=='dt':
 	if stop ==0: stop  = 11
 
 	nTimeStepss = np.array([2**x for x in range(start,stop)])
-	trueSizes   = 128*np.ones(nTimeStepss.shape)
+	trueSizes   = 256*np.ones(nTimeStepss.shape)
 
 if mode=='dx':
-	if start==0: start = 2
-	if stop ==0: stop  = 20
+	if start==0: start = 3
+	if stop ==0: stop  = 9
 
 	trueSizes   = np.array([2**x for x in range(start,stop)])
 	nTimeStepss = 100*np.ones(trueSizes.shape)
@@ -43,6 +43,11 @@ pinc["grid:nDims"]=1
 pinc["methods:acc"]='puAccND1KE'
 pinc["methods:distr"]='puDistrND1'
 pinc["methods:migrate"]='puExtractEmigrantsND'
+pinc["multigrid:preSmooth"]='gaussSeidelRBND'
+pinc["multigrid:postSmooth"]='gaussSeidelRBND'
+pinc["multigrid:coarseSolver"]='gaussSeidelRBND'
+pinc["multigrid:prolongator"]='bilinearND'
+pinc["multigrid:restrictor"]='halfWeightND'
 
 error = np.zeros(timeSteps.shape)
 

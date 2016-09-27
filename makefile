@@ -118,7 +118,7 @@ cleandoc:
 
 cleantestdata:
 	@echo "Cleaning test data"
-	@rm -f test_*.h5 parsedump.txt
+	@rm -f data/*.h5 data/parsedump.txt
 
 clean: cleandoc cleantestdata
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"

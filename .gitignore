@@ -24,3 +24,4 @@ local.mk
 **.png
 doc.html
 src/version.h
+**.swp
