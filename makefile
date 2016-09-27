@@ -74,24 +74,19 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@$(CC) $^ -o $@ $(CFLAGS)
 	@echo "PINC is built"
 
-$(ODIR)/%.o: $(SDIR)/%.c $(HEAD) headchecking
+$(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
+	@echo $(HEAD) | xargs -n1 ./check.sh
 	@mkdir -p $(ODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
-headchecking:
-	@echo $(HEAD) | xargs -n1 ./check.sh
-
-$(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD) testheadchecking
+$(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo "Compiling $<"
+	@echo $(TESTHEAD) | xargs -n1 ./check.sh
 	@mkdir -p $(TODIR)
 	@./check.sh $<
 	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
-
-testheadchecking:
-	@echo $(TESTHEAD) | xargs -n1 ./check.sh
-
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
@@ -123,7 +118,7 @@ cleandoc:
 
 cleantestdata:
 	@echo "Cleaning test data"
-	@rm -f test_*.h5 parsedump.txt
+	@rm -f data/*.h5 data/parsedump.txt
 
 clean: cleandoc cleantestdata
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"

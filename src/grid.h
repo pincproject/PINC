@@ -308,7 +308,7 @@ void gSquare(Grid *grid);
  * @return	double	Number of total true nodes in simulation
  */
 
-long int gTotTruesize(Grid *grid, MpiInfo *mpiInfo);
+long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo);
 
 /**
  * @brief Performs a central space finite difference on a grid

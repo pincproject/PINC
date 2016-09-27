@@ -234,9 +234,9 @@ void regular(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		gWriteH5(E, mpiInfo, (double) n);
-		gWriteH5(rho, mpiInfo, (double) n);
-		gWriteH5(phi, mpiInfo, (double) n);
+		// gWriteH5(E, mpiInfo, (double) n);
+		// gWriteH5(rho, mpiInfo, (double) n);
+		// gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
