@@ -6,7 +6,7 @@ from math import pi
 
 import sys
 sys.path.append('../framework')
-from pincClass import *
+from pinc import *
 
 pinc = Pinc(ini = "local.ini")
 
