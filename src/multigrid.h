@@ -119,7 +119,8 @@ MgAlgo getMgAlgo(const dictionary *ini);
  *  found in the script folder.
  *
  */
-void mgRun(dictionary *ini);
+void mgMode(dictionary *ini);
+funPtr mgMode_set(dictionary *ini);
 
 /**
  * @brief Performs a Multigrid run on a test case, used to optimize
@@ -131,7 +132,8 @@ void mgRun(dictionary *ini);
  *
  */
 
-void mgErrorScaling(dictionary *ini);
+void mgModeErrorScaling(dictionary *ini);
+funPtr mgModeErrorScaling_set(dictionary *ini);
 
 
 /**

@@ -1689,8 +1689,10 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
  *		RUNS
  ************************************************/
 
-
-void mgErrorScaling(dictionary *ini){
+funPtr mgModeErrorScaling_set(dictionary *ini){
+	return mgModeErrorScaling;
+}
+void mgModeErrorScaling(dictionary *ini){
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -1812,7 +1814,10 @@ void mgErrorScaling(dictionary *ini){
 
 }
 
-void mgRun(dictionary *ini){
+funPtr mgMode_set(dictionary *ini){
+	return mgMode;
+}
+void mgMode(dictionary *ini){
 
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
