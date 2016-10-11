@@ -371,6 +371,10 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nSpecies = pop->nSpecies;
 	double *temp = iniGetDoubleArr(ini,"population:temperature",nSpecies);
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",nSpecies);
+
+	adMul(mass,multiplicity,mass,nSpecies);
 
 	int nDims = pop->nDims;
 
@@ -379,7 +383,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = sqrt(temp[s]/temp[0]);
+		double velTh = sqrt( (temp[s]/temp[0]) * (mass[0]/mass[s]) );
 
 		for(long int i=iStart;i<iStop;i++){
 
@@ -391,6 +395,8 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	}
 	free(temp);
 	free(velDrift);
+	free(mass);
+	free(multiplicity);
 }
 
 void pVelSet(Population *pop, const double *vel){
