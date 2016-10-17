@@ -101,6 +101,8 @@ void regular(dictionary *ini){
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
 
 
 	/*
@@ -132,9 +134,12 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	pVelMaxwell(ini, pop, rng);
+	double maxVel = iniGetDouble(ini,"population:maxVel");
+
+	// pPosLattice(ini, pop, mpiInfo);
+	// pVelZero(pop);
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
@@ -178,7 +183,7 @@ void regular(dictionary *ini){
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,1.0);
+		pVelAssertMax(pop,maxVel);
 
 		tStart(t);
 
@@ -260,5 +265,6 @@ void regular(dictionary *ini){
 	pFree(pop);
 
 	gsl_rng_free(rngSync);
+	gsl_rng_free(rng);
 
 }
