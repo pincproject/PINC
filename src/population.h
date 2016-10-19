@@ -1,9 +1,7 @@
 /**
  * @file		population.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- * @copyright	University of Oslo, Norway
  * @brief		Input/output functions.
- * @date		26.06.16
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
 #ifndef POPULATION_H

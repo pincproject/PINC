@@ -1,10 +1,7 @@
 /**
  * @file		multigrid.c
- * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Poisson Solver, multigrid.
- * @date		26.10.15
- *
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid structures and
  * a multigrid solver containing restriction, prolongation operatorors and smoothers

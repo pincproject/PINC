@@ -1,9 +1,7 @@
 /**
  * @file		aux.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Small auxiliary functions
- * @date		29.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Small auxiliary functions.
  */
