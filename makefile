@@ -27,8 +27,8 @@ TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h
-SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox
 
