@@ -74,16 +74,16 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
-	@echo $(HEAD) | xargs -n1 ./check.sh
+	@echo $(HEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(ODIR)
-	@./check.sh $<
+	@./aux/check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 $(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo "Compiling $<"
-	@echo $(TESTHEAD) | xargs -n1 ./check.sh
+	@echo $(TESTHEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(TODIR)
-	@./check.sh $<
+	@./aux/check.sh $<
 	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
