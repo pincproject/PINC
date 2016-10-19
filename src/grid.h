@@ -1,10 +1,8 @@
 /**
  * @file		grid.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Input/output functions.
- * @date		26.06.16
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+ * 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  */
 
 #ifndef GRID_H

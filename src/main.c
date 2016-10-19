@@ -1,10 +1,8 @@
 /**
  * @file	    main.c
+ * @brief	    PINC main routine.
  * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
  *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright   University of Oslo, Norway
- * @brief	    PINC main routine.
- * @date        08.10.15
  *
  * Main routine for PINC (Particle-IN-Cell).
  */

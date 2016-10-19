@@ -1,10 +1,8 @@
 /**
  * @file		aux.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Auxiliary functions.
- * @date		26.06.16
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+ *				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  */
 
 #ifndef AUX_H

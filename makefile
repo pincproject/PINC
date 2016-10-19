@@ -1,9 +1,7 @@
 ##
 ## @file		makefile
-## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
-## @copyright	University of Oslo, Norway
 ## @brief		PINC makefile.
-## @date		10.10.15
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
 ##
 
 CC		= mpicc

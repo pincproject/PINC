@@ -1,9 +1,7 @@
 /**
  * @file		multigrid.test.c
- * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Unit tests for multigrid.c
- * @date		17.12.15
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  */
 
 #include "pinc.h"
