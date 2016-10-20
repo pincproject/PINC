@@ -1434,7 +1434,7 @@ double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo){
 	double sum = gSumTruegrid(error);
 
 	//Reduce
-	MPI_Allreduce(&sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	return sum;
 }

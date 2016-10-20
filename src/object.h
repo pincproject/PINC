@@ -20,9 +20,12 @@ typedef struct{
 
 Object *oAlloc(const dictionary *ini);
 void oFree(Object *obj);
-void oOpenH5(	const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
-				const char *fName);
-void oCloseH5(Grid *grid);
+void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
+             const double *denorm, const double *dimen, const char *fName);
+
+void oCloseH5(Object *obj);
+
+void oReadH5(Object *obj, const MpiInfo *mpiInfo);
 
 void oRayTrace(Population *pop, const Object *obj);
 
