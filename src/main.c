@@ -88,7 +88,7 @@ void regular(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
-	// Object *obj = oAlloc(ini);
+	Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -119,7 +119,10 @@ void regular(dictionary *ini){
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-	// oOpenH5(ini, obj, mpiInfo, "obj");
+	
+    oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
+    
+    oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -254,7 +257,7 @@ void regular(dictionary *ini){
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
-	// oCloseH5(obj);
+	oCloseH5(obj);
 	xyCloseH5(history);
 
 	// Free memory
@@ -266,7 +269,7 @@ void regular(dictionary *ini){
 	gFree(res);
 	gFree(E);
 	pFree(pop);
-	// oFree(obj);
+	oFree(obj);
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
