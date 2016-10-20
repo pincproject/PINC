@@ -325,6 +325,26 @@ void alCumProd(const long int *a, long int *res, long int n){
 	for(long int i=0;i<n;i++) res[i+1]=res[i]*a[i];
 }
 
+void adCumSum(const double *a, double *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void aiCumSum(const int *a, int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void ailCumSum(const int *a, long int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void alCumSum(const long int *a, long int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
 void adSetAll(double *a, long int n, double value){
 	for(long int i=0;i<n;i++) a[i] = value;
 }
