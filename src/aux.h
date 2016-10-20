@@ -106,22 +106,26 @@ char *strCatAlloc(int n,...);
  *	aiAdd(a,b,res,n);		// The sum of a and b (the vector {3,5,7,9,11})
  * @endcode
  *
- * All functions starts with the prefix 'a' (for array) and a second letter
- * signifying the datatype of the arrays:
+ * All functions starts with the prefix 'a' (for array) followed by one or
+ * two letters signifying the datatype of the arrays:
  *
  *  prefix  | datatype
- *	--------|----------
+ *	--------|------------------------------------
  *	ad      | double
  *	ai      | int
  *	al      | long int
+ *	ail		| int but output is a long int array
  *
- * The (scalar-valued) return values of certain 'ai'-functions may still be long
- * int since, for instance, the product of many int's may end up in the long int
- * range. If the result is stored in a plain int the result will be
- * automatically cast to int without emitting a warning. Likewise, the number
- * of elements of the arrays (n) is always of type long int to support large
- * arrays, but using a plain int should cast nicely (strictly speaking, int and
- * long int is the same on most modern architectures).
+ * The return values of certain 'ai'-functions may still be long int since, for
+ * instance, the product of many int's may end up in the long int range. If the
+ * return value is stored in a plain int variable the return value will cast
+ * nicely to int without emitting a warning. Likewise, the number of elements
+ * of the arrays (n) is always of type long int to support large arrays, but
+ * using a plain int input should cast nicely. The only place where long int
+ * doesn't cast nicely to int is in arrays since the array would mis-align upon
+ * casting. Therefore, some 'ai' functions returning int arrays as results has
+ * an 'ail' variant which returns an array of long ints (for when the result
+ * may be in the long int range).
  *
  * In-place operations are supported, i.e. the 'res' array may very well be the
  * same as one or both of the input array. Example:
@@ -240,15 +244,28 @@ void adCumProd(const double *a, double *res, long int n);
 void aiCumProd(const int *a, int *res, long int n);
 ///@brief Determine cumulative product of elements in 'a' starting at 1.
 /// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
-/// result is of lenght n+1 in this case. Notice that this function is of mixed
-/// datatype: input is int while output is long int to facilitate the possibly
-/// larger values of the output. Pointers to arrays of different types do not
-/// cast nicely since data may be mis-aligned upon casting.
+/// result is of lenght n+1 in this case.
 void ailCumProd(const int *a, long int *res, long int n);
 ///@brief Determine cumulative product of elements in 'a' starting at 1.
 /// Hence the cumulative product of {5,4,3} is {1,5,20,60}. Notice that the
 /// result is of lenght n+1 in this case.
 void alCumProd(const long int *a, long int *res, long int n);
+///@brief Determine cumulative sum of elements in 'a' starting at 0.
+/// Hence the cumulative sum of {5,4,3} is {0,5,9,12}. Notice that the
+/// result is of lenght n+1 in this case.
+void adCumSum(const double *a, double *res, long int n);
+///@brief Determine cumulative sum of elements in 'a' starting at 0.
+/// Hence the cumulative sum of {5,4,3} is {0,5,9,12}. Notice that the
+/// result is of lenght n+1 in this case.
+void aiCumSum(const int *a, int *res, long int n);
+///@brief Determine cumulative sum of elements in 'a' starting at 0.
+/// Hence the cumulative sum of {5,4,3} is {0,5,9,12}. Notice that the
+/// result is of lenght n+1 in this case.
+void ailCumSum(const int *a, long int *res, long int n);
+///@brief Determine cumulative sum of elements in 'a' starting at 0.
+/// Hence the cumulative sum of {5,4,3} is {0,5,9,12}. Notice that the
+/// result is of lenght n+1 in this case.
+void alCumSum(const long int *a, long int *res, long int n);
 ///@brief Sets all elements in array to 'value'
 void adSetAll(double *a, long int n, double value);
 ///@brief Sets all elements in array to 'value'
