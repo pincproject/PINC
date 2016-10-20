@@ -1,9 +1,7 @@
 /**
  * @file		population.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Particle handling.
- * @date		26.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions for handling particles: initialization and finalization of
  * particle structs, reading and writing of data and so on.

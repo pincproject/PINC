@@ -1,9 +1,7 @@
 ##
 ## @file		local makefile input
-## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
-## @copyright	University of Oslo, Norway
 ## @brief		local makefile input
-## @date		23.02.16
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
 ##
 ## Local adjustments to the makefile can be stored in a file local.mk for which
 ## this file (local.mk.tmp) is a template. Supported local adjustments are
@@ -37,4 +35,3 @@
 #			-lgslcblas				\
 #			-lgsl					\
 #			-lhdf5
-						

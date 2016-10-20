@@ -1,9 +1,7 @@
 /**
  * @file		pusher.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Particle Pusher
- * @date		16.12.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * All parts of a standard explicit particle pusher is implemented herein,
  * including particle mover, particle accelerators (leapfrog, boris) and

@@ -1,9 +1,7 @@
 /**
  * @file		aux.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Small auxiliary functions
- * @date		29.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Small auxiliary functions.
  */
@@ -325,6 +323,26 @@ void ailCumProd(const int *a, long int *res, long int n){
 void alCumProd(const long int *a, long int *res, long int n){
 	res[0]=1;
 	for(long int i=0;i<n;i++) res[i+1]=res[i]*a[i];
+}
+
+void adCumSum(const double *a, double *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void aiCumSum(const int *a, int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void ailCumSum(const int *a, long int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
+}
+
+void alCumSum(const long int *a, long int *res, long int n){
+	res[0]=0;
+	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
 }
 
 void adSetAll(double *a, long int n, double value){

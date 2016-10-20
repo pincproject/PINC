@@ -1,10 +1,8 @@
 /**
  * @file		grid.c
+ * @brief		Grid-struct handling.
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
- * @brief		Grid-struct handling.
- * @date		30.10.15
  *
  * Functions for handling particles: initialization and finalization of
  * particle structs, reading and writing of data and so on.

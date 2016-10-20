@@ -1,9 +1,7 @@
 /**
  * @file		pusher.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Particle pusher
- * @date		02.12.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Particle pusher schemes
  */

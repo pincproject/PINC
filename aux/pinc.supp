@@ -1,8 +1,6 @@
 # File:			Valgrind suppression file for PINC
-# Author:		Sigvald Marholm
-# Copyright:	University of Oslo, Norway
 # Brief:		Suppresses irrelevant MPI errors
-# Date:			09.11.15
+# Author:		Sigvald Marholm
 
 # BASIC MPI INIT FINALIZE SUPPRESSIONS
 {
