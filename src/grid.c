@@ -18,7 +18,7 @@
 
 
 /******************************************************************************
- * DECLARAING LOCAL FUNCTIONS
+ * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
 /**
  * @brief Returns the ND-index of this MPI node in the global reference frame
@@ -68,7 +68,7 @@ static void gExpandInner(	const double **in, double **out,
 	 						const int *trueSize, const long int *sizeProd);
 
 /******************************************************************************
- * DEFINING LOCAL FUNCTIONS
+ * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
 static double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
@@ -218,7 +218,7 @@ static void gExpandInner(	const double **in, double **out,
 }
 
 /******************************************************************************
- * DEFINING GLOBAL FUNCTIONS
+ * GLOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
 /******************************************************************************
