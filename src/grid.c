@@ -896,7 +896,7 @@ long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo){
 	return totTruesize;
 }
 
-void gAssertNeutralGrid(Grid *rho,MpiInfo *mpiInfo){
+void gAssertNeutralGrid(const Grid *rho, const MpiInfo *mpiInfo){
 
 	double sum = gSumTruegrid(rho);
 	double totSum = 1.;
