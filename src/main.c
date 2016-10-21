@@ -83,6 +83,7 @@ void regular(dictionary *ini){
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *deltaRho = gAlloc(ini, SCALAR);
 	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
 	Multigrid *mgRho = mgAlloc(ini, rho);
@@ -119,9 +120,9 @@ void regular(dictionary *ini){
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-	
+
     oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
-    
+
     oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
@@ -136,6 +137,8 @@ void regular(dictionary *ini){
 	/*
 	 * INITIAL CONDITIONS
 	 */
+
+	//  oComputeCapacitanceMatrix(obj,phi,deltaRho);
 
 	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rngSync);
@@ -192,8 +195,8 @@ void regular(dictionary *ini){
 		tStart(t);
 
 		// Move particles
+		// oRayTrace(pop, obj, deltaRho);
 		puMove(pop);
-		// oRayTrace(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
@@ -212,6 +215,12 @@ void regular(dictionary *ini){
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 		gAssertNeutralGrid(phi, mpiInfo);
+
+		// Second run with solver to account for charges
+		// oApplyCapacitanceMatrix(obj,phi,deltaRho);
+		// gAdd(rho, deltaRho);
+		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
@@ -265,6 +274,7 @@ void regular(dictionary *ini){
 	mgFree(mgPhi);
 	mgFree(mgRes);
 	gFree(rho);
+	gFree(deltaRho);
 	gFree(phi);
 	gFree(res);
 	gFree(E);
