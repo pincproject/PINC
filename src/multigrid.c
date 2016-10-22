@@ -1,10 +1,7 @@
 /**
  * @file		multigrid.c
- * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Poisson Solver, multigrid.
- * @date		26.10.15
- *
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid structures and
  * a multigrid solver containing restriction, prolongation operatorors and smoothers
@@ -1434,7 +1431,7 @@ double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo){
 	double sum = gSumTruegrid(error);
 
 	//Reduce
-	MPI_Allreduce(&sum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	return sum;
 }
@@ -1689,8 +1686,10 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
  *		RUNS
  ************************************************/
 
-
-void mgErrorScaling(dictionary *ini){
+funPtr mgModeErrorScaling_set(dictionary *ini){
+	return mgModeErrorScaling;
+}
+void mgModeErrorScaling(dictionary *ini){
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -1812,7 +1811,10 @@ void mgErrorScaling(dictionary *ini){
 
 }
 
-void mgRun(dictionary *ini){
+funPtr mgMode_set(dictionary *ini){
+	return mgMode;
+}
+void mgMode(dictionary *ini){
 
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);

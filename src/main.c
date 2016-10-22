@@ -1,10 +1,8 @@
 /**
  * @file	    main.c
+ * @brief	    PINC main routine.
  * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
  *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright   University of Oslo, Norway
- * @brief	    PINC main routine.
- * @date        08.10.15
  *
  * Main routine for PINC (Particle-IN-Cell).
  */
@@ -12,16 +10,10 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
+#include "object.h"
 
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
-
-void mgRun(dictionary *ini);
-funPtr mgRun_set(dictionary *ini){ return mgRun; }
-
-void mgErrorScaling(dictionary *ini);
-funPtr mgErrorScaling_set(dictionary *ini){ return mgErrorScaling; }
-
 
 int main(int argc, char *argv[]){
 
@@ -38,8 +30,8 @@ int main(int argc, char *argv[]){
 	 * CHOOSE PINC RUN MODE
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
-												mgRun_set,
-												mgErrorScaling_set,
+												mgMode_set,
+												mgModeErrorScaling_set,
 												puModeParticle_set,
 												puModeInterp_set);
 	run(ini);
@@ -96,6 +88,7 @@ void regular(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
+	Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -108,6 +101,8 @@ void regular(dictionary *ini){
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
 
 
 	/*
@@ -124,6 +119,10 @@ void regular(dictionary *ini){
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
+	
+    oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
+    
+    oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -139,9 +138,12 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	pVelMaxwell(ini, pop, rng);
+	double maxVel = iniGetDouble(ini,"population:maxVel");
+
+	// pPosLattice(ini, pop, mpiInfo);
+	// pVelZero(pop);
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
@@ -185,12 +187,13 @@ void regular(dictionary *ini){
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,1.0);
+		pVelAssertMax(pop,maxVel);
 
 		tStart(t);
 
 		// Move particles
 		puMove(pop);
+		// oRayTrace(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
@@ -254,6 +257,7 @@ void regular(dictionary *ini){
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
+	oCloseH5(obj);
 	xyCloseH5(history);
 
 	// Free memory
@@ -265,7 +269,9 @@ void regular(dictionary *ini){
 	gFree(res);
 	gFree(E);
 	pFree(pop);
+	oFree(obj);
 
 	gsl_rng_free(rngSync);
+	gsl_rng_free(rng);
 
 }

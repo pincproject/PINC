@@ -1,33 +1,29 @@
-#ifndef MULTIGRID_H
-#define MULTIGRID_H
-
 /**
  * @file		multigrid.h
- * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Poisson Solver, multigrid.
- * @date		26.10.15
- *
+ * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid
  * structures and a multigrid solver containing restriction, prolongation
  * operators and smoothers
- *
  */
+
+#ifndef MULTIGRID_H
+#define MULTIGRID_H
 
 
 /**
-  * @brief Contains the grids needed in a multigrid solver, as well as other
-  *         specifications
-  * @param ini 			  Input file, contains specification for the run
-  * @param gridQuantity     Grid with quantities and grid specifications as a
-                            member
-  *
-  * The finest grid, grid 0, links to the grid used in the rest of the program,
-  * the other grids in the grid array is coarser grids used in the
-  * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for
-  * now the only options are Gauss-Seidel Red-Black (mgGS). More TBD.
-  */
+ * @brief Contains the grids needed in a multigrid solver, as well as other
+ *         specifications
+ * @param ini 			  Input file, contains specification for the run
+ * @param gridQuantity     Grid with quantities and grid specifications as a
+                        member
+ *
+ * The finest grid, grid 0, links to the grid used in the rest of the program,
+ * the other grids in the grid array is coarser grids used in the
+ * The preSmooth, postSmooth and coarseSolv is set in the input.ini file, for
+ * now the only options are Gauss-Seidel Red-Black (mgGS). More TBD.
+ */
  typedef struct {
     Grid **grids;   ///< Array of Grid structs of decreasing coarseness
     int nLevels;         			///< #Grid levels
@@ -119,7 +115,8 @@ MgAlgo getMgAlgo(const dictionary *ini);
  *  found in the script folder.
  *
  */
-void mgRun(dictionary *ini);
+void mgMode(dictionary *ini);
+funPtr mgMode_set(dictionary *ini);
 
 /**
  * @brief Performs a Multigrid run on a test case, used to optimize
@@ -131,7 +128,8 @@ void mgRun(dictionary *ini);
  *
  */
 
-void mgErrorScaling(dictionary *ini);
+void mgModeErrorScaling(dictionary *ini);
+funPtr mgModeErrorScaling_set(dictionary *ini);
 
 
 /**

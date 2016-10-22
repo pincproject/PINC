@@ -1,9 +1,7 @@
 /**
  * @file	    main.test.c
- * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
- * @copyright   University of Oslo, Norway
  * @brief	    Unit testing main routine
- * @date        16.12.15
+ * @author	    Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
 #include "test.h"

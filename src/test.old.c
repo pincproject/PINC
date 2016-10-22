@@ -1,9 +1,7 @@
 /**
  * @file	    test.c
- * @author	    Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright   University of Oslo, Norway
  * @brief	    PINC temp tests
- * @date        09.10.15
+ * @author	    Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  *
  * Test Area for PINC model, a place where some small test are made to see that small
  * parts of the code works as suspected. Here in case one of the develpment test is needed

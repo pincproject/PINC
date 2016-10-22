@@ -1,9 +1,7 @@
 ##
 ## @file		makefile
-## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
-## @copyright	University of Oslo, Norway
 ## @brief		PINC makefile.
-## @date		10.10.15
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
 ##
 
 CC		= mpicc
@@ -27,8 +25,8 @@ TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h
-SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox
 
@@ -76,16 +74,16 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
-	@echo $(HEAD) | xargs -n1 ./check.sh
+	@echo $(HEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(ODIR)
-	@./check.sh $<
+	@./aux/check.sh $<
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 $(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo "Compiling $<"
-	@echo $(TESTHEAD) | xargs -n1 ./check.sh
+	@echo $(TESTHEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(TODIR)
-	@./check.sh $<
+	@./aux/check.sh $<
 	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
@@ -118,7 +116,9 @@ cleandoc:
 
 cleantestdata:
 	@echo "Cleaning test data"
+	@mv data/obj.grid.h5 data/temp 2> /dev/null || true
 	@rm -f data/*.h5 data/parsedump.txt
+	@mv data/temp data/obj.grid.h5 2> /dev/null || true
 
 clean: cleandoc cleantestdata
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"

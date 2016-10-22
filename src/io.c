@@ -1,9 +1,7 @@
 /**
  * @file		io.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		PINC input/output handling.
- * @date		13.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions for dealing with input and output. Dealing with input/output is in
  * PINC largely done by the iniparser library and the HDF5 API. io.c may expand

@@ -25,3 +25,4 @@ local.mk
 doc.html
 src/version.h
 **.swp
+.DS_Store

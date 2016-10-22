@@ -1,10 +1,8 @@
 /**
  * @file		grid.c
+ * @brief		Grid-struct handling.
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
- * @copyright	University of Oslo, Norway
- * @brief		Grid-struct handling.
- * @date		30.10.15
  *
  * Functions for handling particles: initialization and finalization of
  * particle structs, reading and writing of data and so on.
@@ -20,7 +18,7 @@
 
 
 /******************************************************************************
- * DECLARAING LOCAL FUNCTIONS
+ * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
 /**
  * @brief Returns the ND-index of this MPI node in the global reference frame
@@ -70,7 +68,7 @@ static void gExpandInner(	const double **in, double **out,
 	 						const int *trueSize, const long int *sizeProd);
 
 /******************************************************************************
- * DEFINING LOCAL FUNCTIONS
+ * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
 static double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
@@ -220,7 +218,7 @@ static void gExpandInner(	const double **in, double **out,
 }
 
 /******************************************************************************
- * DEFINING GLOBAL FUNCTIONS
+ * GLOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
 /******************************************************************************

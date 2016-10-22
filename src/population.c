@@ -1,9 +1,7 @@
 /**
  * @file		population.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		Particle handling.
- * @date		26.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions for handling particles: initialization and finalization of
  * particle structs, reading and writing of data and so on.
@@ -369,8 +367,10 @@ void pVelAssertMax(const Population *pop, double max){
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
-	double *temp = iniGetDoubleArr(ini,"population:temperature",nSpecies);
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
+	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double stepSize = iniGetDouble(ini,"grid:stepSize");
 
 	int nDims = pop->nDims;
 
@@ -379,7 +379,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = sqrt(temp[s]/temp[0]);
+		double velTh = (timeStep/stepSize)*velThermal[s];
 
 		for(long int i=iStart;i<iStop;i++){
 
@@ -389,8 +389,8 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 			}
 		}
 	}
-	free(temp);
 	free(velDrift);
+	free(velThermal);
 }
 
 void pVelSet(Population *pop, const double *vel){
@@ -506,11 +506,9 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	int nDims = pop->nDims;
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double debye = iniGetDouble(ini,"grid:debye");
-	double *T = iniGetDoubleArr(ini,"population:temperature",nDims);
-	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	double debye = 0; // TBD: Does not work
 
-	double vThermal = sqrt(BOLTZMANN*T[0]/(mass[0]*ELECTRON_MASS));
+	double vThermal = 0; // TBD: Does not work
 
 	double *attrData = malloc(nDims*sizeof(*attrData));
 
@@ -525,8 +523,6 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	adSetAll(attrData,nDims,vThermal);
 	setH5Attr(file, "Velocity dimensionalizing factor", attrData, nDims);
 
-	free(T);
-	free(mass);
 	free(stepSize);
 	free(attrData);
 

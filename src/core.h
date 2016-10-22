@@ -1,10 +1,8 @@
 /**
  * @file		core.h
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
- * @copyright	University of Oslo, Norway
  * @brief		PINC main header.
- * @date		11.10.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
+ * 				Gullik Vetvik Killie <gullikvk@fys.uio.no>
  *
  * The PINC main header file constitutes a framework of function and struct
  * declarations central to all PINC modules.

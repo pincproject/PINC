@@ -1,9 +1,7 @@
 /**
  * @file		population.test.c
- * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
- * @copyright	University of Oslo, Norway
  * @brief		Unit tests for population.c
- * @date		17.12.15
+ * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
 #include "pinc.h"
