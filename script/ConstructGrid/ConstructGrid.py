@@ -40,7 +40,7 @@ gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 #infile = ["sphere.vtk", "box.vtk", "box.vtk", "arrow.vtk"]
 infile = ["box"]
 # Outputfiles and comment.
-outfile = ["testbox.vtk", "testbox.h5","gridfile for PINC"]
+outfile = ["boxmiddle.vtk", "boxmiddle.h5","Object in the middle of the mpi domain"]
 
 # Object file contents. Provide one entry for each file in "infile".
 # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
@@ -53,9 +53,9 @@ content[0] = [1, (0,0,0),1]
 
 # Define the transformation. Provide one entry for each file in "infile".
 # Translate x,y,z; Rotate x,y,z (in degrees); Scale x,y,z
-transfo[0] = [0.5,0.5,0.5,0,0,0,1,1,1]
+#transfo[0] = [0.5,0.5,0.5,0,0,0,1,1,1]
 #transfo[1] = [-1.5,-1.5,-1.5,45,45,45,0.5,0.5,0.5]
-#transfo[0] = [3.5,3,3,0,0,0,3.14,3.14,3.14]
+transfo[0] = [2.6,2.6,2.6,0,0,0,1,1,1]
 #transfo[3] = [0.75,0.75,-0.75,45,-45,-45,2,5,5]
 
 ####################

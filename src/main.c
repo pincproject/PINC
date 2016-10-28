@@ -124,6 +124,9 @@ void regular(dictionary *ini){
     oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
 
     oReadH5(obj, mpiInfo);
+    
+    //Compute capacitance matrix
+    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);

@@ -15,6 +15,8 @@ typedef struct{
 	Grid *domain;					///< Represents precense of objects
 	long int *lookupInterior;		///< Indices of the interior of the objects
 	long int *lookupInteriorOffset;	///< Offset in the above per object (nObjects+1 elements)
+    long int *lookupSurface;
+    long int *lookupSurfaceOffset;
 	int nObjects;					///< Number of objects
 } Object;
 
@@ -76,5 +78,7 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo);
  *
  */
 void oRayTrace(Population *pop, const Object *obj);
+
+void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
 
 #endif // OBJECT_H

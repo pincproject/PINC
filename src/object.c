@@ -7,6 +7,10 @@
 
 #include "core.h"
 #include "object.h"
+#include "multigrid.h"
+#include <gsl/gsl_blas.h>
+#include <stdbool.h>
+
 
 /******************************************************************************
  *  LOCAL FUNCTION DECLARATIONS
@@ -20,9 +24,73 @@
  */
 void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
 
+/**
+ * @brief   Find all the object nodes which are part of the object surface.
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ */
+void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
+
+/**
+ * @brief   Compute the capacitance matrix.
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ */
+void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
+
+
+/**
+ * @brief   Check whether a certain node is a ghost node.
+ * @param	grid	Grid
+ * @param	node	long int
+ * @return	bool
+ */
+bool isGhostNode(Grid *grid, long int node);
+void oWoop(long int node, const int *nGhostLayersBefore,
+           const int *nGhostLayersAfter, const int *trueSize,
+           const long int *sizeProd, bool *woo);
+
 /******************************************************************************
  *  LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
+
+
+bool isGhostNode(Grid *grid, long int node) {
+    
+    //const double *val = grid->val;
+    long int *sizeProd = grid->sizeProd;
+    int *trueSize = grid->trueSize;
+    int *nGhostLayers = grid->nGhostLayers;
+    int rank = grid->rank;
+    
+    bool woo = false;
+    
+    oWoop(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&woo);
+
+    return woo;
+}
+
+void oWoop(long int node, const int *nGhostLayersBefore,
+           const int *nGhostLayersAfter, const int *trueSize,
+           const long int *sizeProd, bool *woo) {
+    
+    if (*sizeProd==1) {
+        if (node>*trueSize || node<1) {
+            *woo = true;
+        }
+    } else {
+        long int help = *(sizeProd) * (*(trueSize)+1);
+        if (node < *(sizeProd) || node > help  ) {
+            *woo = true;
+        }
+        node = node % *(sizeProd);
+        oWoop(node,nGhostLayersBefore-1,
+                    nGhostLayersAfter-1,trueSize-1,sizeProd-1,woo);
+    }
+}
+
 
 void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     
@@ -71,6 +139,136 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     obj->nObjects = nObjects;
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
+}
+
+// Put comments and documentation still
+void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
+    
+    long int *sizeProd = obj->domain->sizeProd;
+    
+    //if(isGhostNode(obj->domain, 10439)) printf("test\n");
+    
+    long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*sizeof(*lookupSurfaceOffset));
+    for (long int i=0; i<obj->nObjects+1; i++) {
+        lookupSurfaceOffset[i] = 0;
+    }
+    
+    long int *meNeighbours = malloc(7*sizeof(*meNeighbours));
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
+            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
+                // My neighbours
+                meNeighbours[0] = b; // me
+                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
+                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
+                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
+                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
+                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
+                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
+            
+                int d=0;
+                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+                
+                // Check if surface
+                if (d<5.5) {
+                    lookupSurfaceOffset[a+1]++;
+                }
+            }
+        }
+    }
+    alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
+  
+    //Second go through to fill the table.
+    long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*sizeof(*lookupSurface));
+    for (long int i=0; i<lookupSurfaceOffset[obj->nObjects]+1; i++) {
+        lookupSurface[i]=0;
+    }
+    
+    long int *index = malloc((obj->nObjects)*sizeof(*index));
+    for (long int i=0; i<obj->nObjects; i++) {
+        index[i]=lookupSurfaceOffset[i];
+    }
+    
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
+            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
+                // My neighbours
+                meNeighbours[0] = b; // me
+                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
+                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
+                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
+                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
+                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
+                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
+            
+                int d=0;
+                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+                
+                // Check if boundary
+                if (d<5.5) {
+                    lookupSurface[index[a]] = meNeighbours[0];
+                    index[a]++;
+                }
+            }
+        }
+    }
+    
+    // Add to object
+    obj->lookupSurface = lookupSurface;
+    obj->lookupSurfaceOffset = lookupSurfaceOffset;
+}
+
+void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
+    
+    long int *lookupSurface = obj->lookupSurface;
+    long int *lookupSurfaceOffset = obj->lookupSurfaceOffset;
+    
+    // Allocate structures to run the potential solver
+    MgAlgo mgAlgo = getMgAlgo(ini);
+    Grid *rho = gAlloc(ini, SCALAR);
+    Grid *res = gAlloc(ini, SCALAR);
+    Grid *phi = gAlloc(ini, SCALAR);
+    double *val = rho->val;
+    Multigrid *mgPhi = mgAlloc(ini, phi);
+    Multigrid *mgRho = mgAlloc(ini, rho);
+    Multigrid *mgRes = mgAlloc(ini, res);
+
+    
+    for (long int i=0; i<rho->sizeProd[obj->domain->rank]; i++) {
+        val[i] = 0;
+        res->val = 0;
+        phi->val = 0;
+    }
+    
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int i=lookupSurfaceOffset[a]; i<lookupSurfaceOffset[a+1]; i++) {
+            msg(STATUS,"Solving capacitance matrix for point %ld of %ld for object %ld of %ld.",
+                i-lookupSurfaceOffset[a]+1,lookupSurfaceOffset[a+1]-lookupSurfaceOffset[a],a+1,obj->nObjects);
+
+            // Set the correct rho to 1.
+            val[lookupSurface[i]] = 1;
+
+            mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+            
+            
+            
+            
+            
+           
+
+            val[lookupSurface[i]] = 0;
+        }
+    }
 }
 
 
@@ -138,8 +336,14 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo){
     H5Dclose(dataset);
     H5Pclose(pList);
     
-    //Count the number of objects and fills the lookup tables.
+    //Communicate the boundary nodes
+    gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+    
+    // Count the number of objects and fills the lookup tables.
     oFillLookupTables(obj,mpiInfo);
+    
+    // Find all the object nodes which are part of the object surface.
+    oFindObjectSurfaceNodes(obj, mpiInfo);
 }
 
 /******************************************************************************
