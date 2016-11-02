@@ -8,6 +8,7 @@
 #include "core.h"
 #include "object.h"
 #include "multigrid.h"
+#include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
 #include <stdbool.h>
 
@@ -180,8 +181,11 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 }
             }
         }
+        //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     }
+    
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
+    
   
     //Second go through to fill the table.
     long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*sizeof(*lookupSurface));
@@ -238,37 +242,105 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     Grid *rho = gAlloc(ini, SCALAR);
     Grid *res = gAlloc(ini, SCALAR);
     Grid *phi = gAlloc(ini, SCALAR);
-    double *val = rho->val;
+    double *valrho = rho->val;
+    double *valphi = phi->val;
     Multigrid *mgPhi = mgAlloc(ini, phi);
     Multigrid *mgRho = mgAlloc(ini, rho);
     Multigrid *mgRes = mgAlloc(ini, res);
 
+    gZero(rho);
     
-    for (long int i=0; i<rho->sizeProd[obj->domain->rank]; i++) {
-        val[i] = 0;
-        res->val = 0;
-        phi->val = 0;
-    }
-    
+    int rank = mpiInfo->mpiRank;
+    int size = mpiInfo->mpiSize;
+
     for (long int a=0; a<obj->nObjects; a++) {
-        for (long int i=lookupSurfaceOffset[a]; i<lookupSurfaceOffset[a+1]; i++) {
-            msg(STATUS,"Solving capacitance matrix for point %ld of %ld for object %ld of %ld.",
-                i-lookupSurfaceOffset[a]+1,lookupSurfaceOffset[a+1]-lookupSurfaceOffset[a],a+1,obj->nObjects);
-
-            // Set the correct rho to 1.
-            val[lookupSurface[i]] = 1;
-
-            mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-            
-            
-            
-            
-            
-           
-
-            val[lookupSurface[i]] = 0;
+        int total_global = 0;
+        int total_local = lookupSurfaceOffset[a+1] - lookupSurfaceOffset[a];
+        
+        // MPI_LONG_INT sum not defined apparently....
+        MPI_Allreduce(&total_local, &total_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        //printf("%ld, %ld\n",total_local, total_global);
+        // total_global is the size of the capacitance matrix! -> so we should have done things globally after all...
+        //total_global=5;
+        double *capMatrix = malloc((total_global*total_global) * sizeof(*capMatrix));
+        for (long int i=0; i<(total_global*total_global); i++) {
+            capMatrix[i] = 0;
         }
+        double *invCapMatrix = malloc((total_global*total_global) * sizeof(*invCapMatrix));
+        for (long int i=0; i<(total_global*total_global); i++) {
+            invCapMatrix[i] = 0;
+        }
+        int *totalPerNode = malloc((size+1)*sizeof(*totalPerNode));
+        MPI_Allgather(&total_local, 1, MPI_INT, totalPerNode, 1, MPI_INT, MPI_COMM_WORLD);
+        //aiPrint(totalPerNode,size+1);
+        for(long int i=size;i>-1;i--) totalPerNode[i+1]=totalPerNode[i];
+        totalPerNode[0] = 0;
+        aiCumSum(totalPerNode+1,totalPerNode,size);
+        aiPrint(totalPerNode,size+1);
+        
+        int j = 0;
+        int inode = 0;
+        
+        for (int i=0; i<total_global; i++) {
+            msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.",i+1,total_global,a+1,obj->nObjects);
+            //printf("%d %d %ld, a",j,inode,lookupSurface[inode]);
+            if (rank==j) {
+                valrho[lookupSurface[inode]] = 1;
+            }
+            //printf("b");
+            mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+            //printf("c");
+            if (rank==j) {
+                valrho[lookupSurface[inode]] = 0;
+            }
+            //printf("d");
+            
+            //printf("e\n");
+            //Now add the result to the matrix in the ith column -> this needs to be done globally!!!
+         
+            //if (rank==j) {
+            //    printf("%f\n",phi->val[lookupSurface[inode]]);
+               // for (long int k=0; k<total_global; k++) {
+                  //  printf("%d %d, %f\n",inode,k, phi->val[lookupSurface[k]]);
+                //    capMatrix[i+total_global*k] = phi->val[lookupSurface[k]];
+            //}
+            //}
+            //printf("%d %d %d\n",rank, totalPerNode[rank],totalPerNode[rank+1]);
+            for (int k=totalPerNode[rank]; k<totalPerNode[rank+1]; k++) {
+                //printf("%d\n",k);
+                // lookUpSurface is not the same on all nodes, that's why it hangs... NOT WORKING FOR MORE THAN ONE OBJECT!!!
+                capMatrix[i+total_global*k] = phi->val[lookupSurface[k-totalPerNode[rank]]];
+                //printf("%f %d\n",phi->val[lookupSurface[k]],k);
+            }
+ /*
+            for (int k=totalPerNode[rank]; k<totalPerNode[rank+1]; k++) {
+              //  //capMatrix[i+total_global*k] = phi->val[lookupSurface[k]];
+                printf("%d %d %f\n",k,rank,phi->val[lookupSurface[k]]);
+            }
+*/
+            inode++;
+            if (inode>(totalPerNode[j+1]-totalPerNode[j]-1)) {
+                j++;
+                inode=0;
+            }
+
+        }
+    
+        MPI_Allreduce(MPI_IN_PLACE, capMatrix, (total_global*total_global), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        //adPrint(capMatrix,(total_global*total_global));
+        
+        gsl_matrix_view A = gsl_matrix_view_array(capMatrix, total_global, total_global);
+        gsl_matrix_view invA = gsl_matrix_view_array(invCapMatrix, total_global, total_global);
+        
+        int s;
+        gsl_permutation *p = gsl_permutation_alloc (total_global);
+        
+        gsl_linalg_LU_decomp(&A.matrix, p, &s);
+        
+        gsl_linalg_LU_invert(&A.matrix, p, &invA.matrix);
+    
     }
+
 }
 
 

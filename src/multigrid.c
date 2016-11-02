@@ -1472,10 +1472,8 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	Grid *phi = mgPhi->grids[level];
  	Grid *rho = mgRho->grids[level];
  	Grid *res = mgRes->grids[level];
-    printf("testb");
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
-    printf("testa");
  	gNeutralizeGrid(rho,mpiInfo);
 
  	//Prepare to go down
@@ -1654,17 +1652,13 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	double barRes = 2.;
 	if(nLevels >1){
 		while(barRes > tol){
-            printf("1\n");
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-            printf("2\n");
 			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
-            printf("3\n");
 			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
-            printf("4\n");
 			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
 			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
 			barRes = sqrt(barRes);
-			msg(STATUS, "barRes = %f", barRes);
+			//msg(STATUS, "barRes = %f", barRes);
 		}
 		// for(int c = 0; c < nMGCycles; c++){
 		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);

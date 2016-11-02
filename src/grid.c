@@ -388,6 +388,7 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
 	// TBD: Ommitting this seems to yield race condition between consecutive
 	// calls to gHaloOpDim(). I'm not quite sure why so this should be
 	// investigated further.
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Send and recieve upper (tag 1)
