@@ -15,8 +15,9 @@ typedef struct{
 	Grid *domain;					///< Represents precense of objects
 	long int *lookupInterior;		///< Indices of the interior of the objects
 	long int *lookupInteriorOffset;	///< Offset in the above per object (nObjects+1 elements)
-    long int *lookupSurface;
-    long int *lookupSurfaceOffset;
+    long int *lookupSurface;        ///< Indices of the surface nodes of the objects
+    long int *lookupSurfaceOffset;  ///< Offset in the above per object (nObjects+1 elements)
+    double *capMatrixAll;         ///< Array holding the capacitance matrices for each object
 	int nObjects;					///< Number of objects
 } Object;
 

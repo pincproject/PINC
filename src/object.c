@@ -34,7 +34,7 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
 void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
 
 /**
- * @brief   Compute the capacitance matrix.
+ * @brief   Compute the capacitance matrix for each object.
  * @param	obj		Object
  * @param	ini		input settings
  * @return	void
@@ -49,57 +49,56 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
  * @return	bool
  */
 bool isGhostNode(Grid *grid, long int node);
-void oWoop(long int node, const int *nGhostLayersBefore,
+void oGhost(long int node, const int *nGhostLayersBefore,
            const int *nGhostLayersAfter, const int *trueSize,
-           const long int *sizeProd, bool *woo);
+           const long int *sizeProd, bool *ghost);
 
 /******************************************************************************
  *  LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
-
+//Check whether a certain node is a ghost node.
 bool isGhostNode(Grid *grid, long int node) {
     
-    //const double *val = grid->val;
     long int *sizeProd = grid->sizeProd;
     int *trueSize = grid->trueSize;
     int *nGhostLayers = grid->nGhostLayers;
     int rank = grid->rank;
     
-    bool woo = false;
+    bool ghost = false;
     
-    oWoop(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&woo);
+    oGhost(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&ghost);
 
-    return woo;
+    return ghost;
 }
-
-void oWoop(long int node, const int *nGhostLayersBefore,
+void oGhost(long int node, const int *nGhostLayersBefore,
            const int *nGhostLayersAfter, const int *trueSize,
-           const long int *sizeProd, bool *woo) {
+           const long int *sizeProd, bool *ghost) {
     
     if (*sizeProd==1) {
         if (node>*trueSize || node<1) {
-            *woo = true;
+            *ghost = true;
         }
     } else {
         long int help = *(sizeProd) * (*(trueSize)+1);
         if (node < *(sizeProd) || node > help  ) {
-            *woo = true;
+            *ghost = true;
         }
         node = node % *(sizeProd);
-        oWoop(node,nGhostLayersBefore-1,
-                    nGhostLayersAfter-1,trueSize-1,sizeProd-1,woo);
+        oGhost(node,nGhostLayersBefore-1,
+                    nGhostLayersAfter-1,trueSize-1,sizeProd-1,ghost);
     }
 }
 
-
+//Count the number of objects and fills the lookup tables.
 void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     
+    // Find the number of objects in the input file.
     int nObjects = 0;
     for (int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
-        if (obj->domain->val[i]>nObjects) {
-            nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessary
-                //the number of objects, but rather the identifier of the object with the highest number.
+        if (obj->domain->val[i] > nObjects) {
+            nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
+                // the number of objects, but rather the identifier of the object with the highest number.
         }
     }
     // Make sure each process knows about the total number of objects.
@@ -107,12 +106,10 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     
     // Initialise and compute the array storing the offsets of the objects in the lookup table.
     long int *lookupInteriorOffset = malloc((nObjects+1)*sizeof(*lookupInteriorOffset));
-    for (long int i=0; i<nObjects+1; i++) {
-        lookupInteriorOffset[i] = 0;
-    }
+    alSetAll(lookupInteriorOffset, nObjects+1, 0);
    
     for (long int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
-        if (obj->domain->val[i]>0.5){
+        if (obj->domain->val[i]>0.5 && !isGhostNode(obj->domain, i)){
             lookupInteriorOffset[(int)(obj->domain->val[i]+0.5)]++;
         }
     }
@@ -120,9 +117,7 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     
     // Initialise and compute the lookup table.
     long int *lookupInterior = malloc((lookupInteriorOffset[nObjects])*sizeof(*lookupInterior));
-    for (long int i=0; i<lookupInteriorOffset[nObjects]; i++) {
-        lookupInterior[i]=0;
-    }
+    alSetAll(lookupInterior,lookupInteriorOffset[nObjects],0);
    
     long int *index = malloc((nObjects)*sizeof(*index));
     for (long int i=0; i<nObjects; i++) {
@@ -130,68 +125,66 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     }
    
     for (long int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
-        if (obj->domain->val[i]>0.5){
+        if (obj->domain->val[i]>0.5 && !isGhostNode(obj->domain, i)){
             lookupInterior[(index[(int)(obj->domain->val[i]+0.5)-1])] = i;
             (index[(int)(obj->domain->val[i]+0.5)-1])++;
         }
     }
     
-    // Add to the obj Object.
+    // Add to the object.
     obj->nObjects = nObjects;
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
+
 }
 
-// Put comments and documentation still
+//Find all the object nodes which are part of the object surface.
 void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     
     long int *sizeProd = obj->domain->sizeProd;
     
-    //if(isGhostNode(obj->domain, 10439)) printf("test\n");
-    
+    // Initialise the array storing the offsets for the surface nodes in the lookup table.
     long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*sizeof(*lookupSurfaceOffset));
-    for (long int i=0; i<obj->nObjects+1; i++) {
-        lookupSurfaceOffset[i] = 0;
-    }
+    alSetAll(lookupSurfaceOffset,obj->nObjects+1,0);
     
-    long int *meNeighbours = malloc(7*sizeof(*meNeighbours));
+    // Find the 8 neighbour cells of each non-ghost node.
+    long int *myNeighbours = malloc(9*sizeof(*myNeighbours));
+    // Find the ofsetts first.
     for (long int a=0; a<obj->nObjects; a++) {
-        for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
-            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
-                // My neighbours
-                meNeighbours[0] = b; // me
-                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
-                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
-                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
-                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
-                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
-                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
-            
-                int d=0;
-                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+        for (long int b=0; b<sizeProd[obj->domain->rank]; b++) {
+            if (!isGhostNode(obj->domain, b)) {
+                myNeighbours[0] = b;    // me on node i,j,k
+                myNeighbours[1] = myNeighbours[0];                  // cell i,j,k
+                myNeighbours[2] = myNeighbours[0] - sizeProd[3];    // cell i,j,k-1
+                myNeighbours[3] = myNeighbours[0] - sizeProd[1];                    // cell i-1,j,k
+                myNeighbours[4] = myNeighbours[0] - sizeProd[1] - sizeProd[3];      // cell i-1,j,k-1
+                myNeighbours[5] = myNeighbours[0] - sizeProd[2];                    // cell i,j-1,k
+                myNeighbours[6] = myNeighbours[0] - sizeProd[2] - sizeProd[3];      // cell i,j-1,k-1
+                myNeighbours[7] = myNeighbours[0] - sizeProd[2] - sizeProd[1];                  // cell i-1,j-1,k;
+                myNeighbours[8] = myNeighbours[0] - sizeProd[2] - sizeProd[1] - sizeProd[3];    // cell i-1,j-1,k-1
                 
-                // Check if surface
-                if (d<5.5) {
+                int d=0;
+                if (obj->domain->val[myNeighbours[1]]>(a+0.5) && obj->domain->val[myNeighbours[1]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[2]]>(a+0.5) && obj->domain->val[myNeighbours[2]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[3]]>(a+0.5) && obj->domain->val[myNeighbours[3]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[4]]>(a+0.5) && obj->domain->val[myNeighbours[4]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[5]]>(a+0.5) && obj->domain->val[myNeighbours[5]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[6]]>(a+0.5) && obj->domain->val[myNeighbours[6]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[7]]>(a+0.5) && obj->domain->val[myNeighbours[7]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[8]]>(a+0.5) && obj->domain->val[myNeighbours[8]]<(a+1.5)) d++;
+
+                // Check if on surface.
+                if (d<7.5 && d>0) {
                     lookupSurfaceOffset[a+1]++;
                 }
             }
         }
-        //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     }
-    
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
     
-  
-    //Second go through to fill the table.
+    // Initialise and compute the lookup table.
     long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*sizeof(*lookupSurface));
-    for (long int i=0; i<lookupSurfaceOffset[obj->nObjects]+1; i++) {
-        lookupSurface[i]=0;
-    }
+    alSetAll(lookupSurface,lookupSurfaceOffset[obj->nObjects]+1,0);
     
     long int *index = malloc((obj->nObjects)*sizeof(*index));
     for (long int i=0; i<obj->nObjects; i++) {
@@ -200,150 +193,148 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     
     for (long int a=0; a<obj->nObjects; a++) {
         for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
-            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
-                // My neighbours
-                meNeighbours[0] = b; // me
-                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
-                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
-                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
-                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
-                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
-                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
-            
-                int d=0;
-                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
-                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+            if (!isGhostNode(obj->domain, b)) {
+                myNeighbours[0] = b;    // me on node i,j,k
+                myNeighbours[1] = myNeighbours[0];                  // cell i,j,k
+                myNeighbours[2] = myNeighbours[0] - sizeProd[3];    // cell i,j,k-1
+                myNeighbours[3] = myNeighbours[0] - sizeProd[1];                    // cell i-1,j,k
+                myNeighbours[4] = myNeighbours[0] - sizeProd[1] - sizeProd[3];      // cell i-1,j,k-1
+                myNeighbours[5] = myNeighbours[0] - sizeProd[2];                    // cell i,j-1,k
+                myNeighbours[6] = myNeighbours[0] - sizeProd[2] - sizeProd[3];      // cell i,j-1,k-1
+                myNeighbours[7] = myNeighbours[0] - sizeProd[2] - sizeProd[1];                  // cell i-1,j-1,k;
+                myNeighbours[8] = myNeighbours[0] - sizeProd[2] - sizeProd[1] - sizeProd[3];    // cell i-1,j-1,k-1
                 
-                // Check if boundary
-                if (d<5.5) {
-                    lookupSurface[index[a]] = meNeighbours[0];
+                int d=0;
+                if (obj->domain->val[myNeighbours[1]]>(a+0.5) && obj->domain->val[myNeighbours[1]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[2]]>(a+0.5) && obj->domain->val[myNeighbours[2]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[3]]>(a+0.5) && obj->domain->val[myNeighbours[3]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[4]]>(a+0.5) && obj->domain->val[myNeighbours[4]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[5]]>(a+0.5) && obj->domain->val[myNeighbours[5]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[6]]>(a+0.5) && obj->domain->val[myNeighbours[6]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[7]]>(a+0.5) && obj->domain->val[myNeighbours[7]]<(a+1.5)) d++;
+                if (obj->domain->val[myNeighbours[8]]>(a+0.5) && obj->domain->val[myNeighbours[8]]<(a+1.5)) d++;
+                
+                // Check if on surface.
+                if (d<7.5 && d>0) {
+                    lookupSurface[index[a]] = myNeighbours[0];
                     index[a]++;
                 }
             }
         }
     }
     
-    // Add to object
+    // Add to object.
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
 }
 
+// Compute the capacitance matrix for each object.
 void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
     
+    int rank = mpiInfo->mpiRank;
+    int size = mpiInfo->mpiSize;
     long int *lookupSurface = obj->lookupSurface;
     long int *lookupSurfaceOffset = obj->lookupSurfaceOffset;
     
-    // Allocate structures to run the potential solver
+    // Allocate and initialise the structures to run the potential solver.
     MgAlgo mgAlgo = getMgAlgo(ini);
     Grid *rho = gAlloc(ini, SCALAR);
     Grid *res = gAlloc(ini, SCALAR);
     Grid *phi = gAlloc(ini, SCALAR);
-    double *valrho = rho->val;
-    double *valphi = phi->val;
     Multigrid *mgPhi = mgAlloc(ini, phi);
     Multigrid *mgRho = mgAlloc(ini, rho);
     Multigrid *mgRes = mgAlloc(ini, res);
 
     gZero(rho);
     
-    int rank = mpiInfo->mpiRank;
-    int size = mpiInfo->mpiSize;
+    // Find the number of surface nodes for each object.
+    long int *nodesCoreLocal = malloc((size+1)*sizeof(*nodesCoreLocal));
+    long int *nodesCoreGlobal = malloc(obj->nObjects*(size+1)*sizeof(*nodesCoreGlobal));
 
     for (long int a=0; a<obj->nObjects; a++) {
-        int total_global = 0;
-        int total_local = lookupSurfaceOffset[a+1] - lookupSurfaceOffset[a];
         
-        // MPI_LONG_INT sum not defined apparently....
-        MPI_Allreduce(&total_local, &total_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-        //printf("%ld, %ld\n",total_local, total_global);
-        // total_global is the size of the capacitance matrix! -> so we should have done things globally after all...
-        //total_global=5;
-        double *capMatrix = malloc((total_global*total_global) * sizeof(*capMatrix));
-        for (long int i=0; i<(total_global*total_global); i++) {
-            capMatrix[i] = 0;
-        }
-        double *invCapMatrix = malloc((total_global*total_global) * sizeof(*invCapMatrix));
-        for (long int i=0; i<(total_global*total_global); i++) {
-            invCapMatrix[i] = 0;
-        }
-        int *totalPerNode = malloc((size+1)*sizeof(*totalPerNode));
-        MPI_Allgather(&total_local, 1, MPI_INT, totalPerNode, 1, MPI_INT, MPI_COMM_WORLD);
-        //aiPrint(totalPerNode,size+1);
-        for(long int i=size;i>-1;i--) totalPerNode[i+1]=totalPerNode[i];
-        totalPerNode[0] = 0;
-        aiCumSum(totalPerNode+1,totalPerNode,size);
-        aiPrint(totalPerNode,size+1);
+        long int nodesThisCore = lookupSurfaceOffset[a+1] - lookupSurfaceOffset[a];
+
+        // Let every core know how many surface nodes everybody has.
+        MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodesCoreLocal, 1, MPI_LONG, MPI_COMM_WORLD);
         
-        int j = 0;
-        int inode = 0;
-        
-        for (int i=0; i<total_global; i++) {
-            msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.",i+1,total_global,a+1,obj->nObjects);
-            //printf("%d %d %ld, a",j,inode,lookupSurface[inode]);
+        for(long int i=size-1;i>-1;i--) nodesCoreLocal[i+1]=nodesCoreLocal[i];
+        nodesCoreLocal[0] = 0;
+        alCumSum(nodesCoreLocal+1,nodesCoreLocal,size);
+
+        for (long int b=0; b<size+1; b++) nodesCoreGlobal[a*(size+1)+b] = nodesCoreLocal[b];
+    }
+    
+    // Find the size and initialise the array holding the capacitance matrices for all objects.
+    long int capMatrixAllSize = 0;
+    for (long int a=0; a<obj->nObjects; a++) {
+        capMatrixAllSize +=nodesCoreGlobal[a*(size+1)+size];
+    }
+    double *capMatrixAll = malloc(capMatrixAllSize*capMatrixAllSize*sizeof(*capMatrixAll));
+
+    // Compute the actual capacitance matrix for each object.
+    for (long int a=0; a<obj->nObjects; a++) {
+        long int j = 0; // Keep track of the rank
+        long int inode = 0; // Keep track of the node number
+
+        // Initialise the matrix and its inverse.
+        double *capMatrix = malloc((nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size]) * sizeof(*capMatrix));
+        double *invCapMatrix = malloc((nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size]) * sizeof(*invCapMatrix));
+        adSetAll(capMatrix,nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size],0);
+        adSetAll(invCapMatrix,nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size],0);
+
+        // Loop over the nodes and fill the matrix
+        for (long int i=0; i<nodesCoreGlobal[a*(size+1)+size]; i++) {
+            msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
+                i+1,nodesCoreGlobal[a*(size+1)+size],a+1,obj->nObjects);
+            // Set the surface node to 1 charge.
             if (rank==j) {
-                valrho[lookupSurface[inode]] = 1;
+                rho->val[lookupSurface[inode]] = 1;
             }
-            //printf("b");
+            // Solve for the potential.
             mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-            //printf("c");
+            // Set the surface node back to zero.
             if (rank==j) {
-                valrho[lookupSurface[inode]] = 0;
+                rho->val[lookupSurface[inode]] = 0;
             }
-            //printf("d");
+            // Fill column i of the capacitance matrix.
+            for (int k=nodesCoreGlobal[a*(size+1)+rank]; k<nodesCoreGlobal[a*(size+1)+rank+1]; k++) {
+                capMatrix[i+nodesCoreGlobal[a*(size+1)+size]*k] = \
+                    phi->val[lookupSurface[k-nodesCoreGlobal[a*(size+1)+rank]]];
+            }
             
-            //printf("e\n");
-            //Now add the result to the matrix in the ith column -> this needs to be done globally!!!
-         
-            //if (rank==j) {
-            //    printf("%f\n",phi->val[lookupSurface[inode]]);
-               // for (long int k=0; k<total_global; k++) {
-                  //  printf("%d %d, %f\n",inode,k, phi->val[lookupSurface[k]]);
-                //    capMatrix[i+total_global*k] = phi->val[lookupSurface[k]];
-            //}
-            //}
-            //printf("%d %d %d\n",rank, totalPerNode[rank],totalPerNode[rank+1]);
-            for (int k=totalPerNode[rank]; k<totalPerNode[rank+1]; k++) {
-                //printf("%d\n",k);
-                // lookUpSurface is not the same on all nodes, that's why it hangs... NOT WORKING FOR MORE THAN ONE OBJECT!!!
-                capMatrix[i+total_global*k] = phi->val[lookupSurface[k-totalPerNode[rank]]];
-                //printf("%f %d\n",phi->val[lookupSurface[k]],k);
-            }
- /*
-            for (int k=totalPerNode[rank]; k<totalPerNode[rank+1]; k++) {
-              //  //capMatrix[i+total_global*k] = phi->val[lookupSurface[k]];
-                printf("%d %d %f\n",k,rank,phi->val[lookupSurface[k]]);
-            }
-*/
+            // Increase the counters. If you looped over all nodes on this core, increase the rank and reset inode.
             inode++;
-            if (inode>(totalPerNode[j+1]-totalPerNode[j]-1)) {
+            if (inode>(nodesCoreGlobal[a*(size+1)+j+1]-nodesCoreGlobal[a*(size+1)+j]-1)) {
                 j++;
                 inode=0;
             }
 
         }
     
-        MPI_Allreduce(MPI_IN_PLACE, capMatrix, (total_global*total_global), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        //adPrint(capMatrix,(total_global*total_global));
-        
-        gsl_matrix_view A = gsl_matrix_view_array(capMatrix, total_global, total_global);
-        gsl_matrix_view invA = gsl_matrix_view_array(invCapMatrix, total_global, total_global);
+        // Make sure every codes has the complete matrix (needed for BLAS).
+        MPI_Allreduce(MPI_IN_PLACE, capMatrix, (nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size]), \
+                      MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+ 
+        // Compute the inverse of the capacitance matrix.
+        // Actually, the inverse is the capacitance matrix. Probably have to rethink the variable names.
+        gsl_matrix_view A = gsl_matrix_view_array(capMatrix, nodesCoreGlobal[a*(size+1)+size], nodesCoreGlobal[a*(size+1)+size]);
+        gsl_matrix_view invA = gsl_matrix_view_array(invCapMatrix, nodesCoreGlobal[a*(size+1)+size], nodesCoreGlobal[a*(size+1)+size]);
         
         int s;
-        gsl_permutation *p = gsl_permutation_alloc (total_global);
-        
+        gsl_permutation *p = gsl_permutation_alloc (nodesCoreGlobal[a*(size+1)+size]);
         gsl_linalg_LU_decomp(&A.matrix, p, &s);
-        
         gsl_linalg_LU_invert(&A.matrix, p, &invA.matrix);
-    
+        
+        // Add the invCapMatrix for object a to the big array.
+        for (long int l=0; l<nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size]; l++) {
+            capMatrixAll[a*nodesCoreGlobal[a*(size+1)+size]*nodesCoreGlobal[a*(size+1)+size]+l] = \
+                invCapMatrix[l];
+        }
     }
-
+    // Add to object
+    obj->capMatrixAll = capMatrixAll;
 }
-
-
 
 /*****************************************************************************
  *  ALLOC/DESTRUCTORS
@@ -355,14 +346,22 @@ Object *oAlloc(const dictionary *ini){
     
     long int *lookupInterior = NULL;
     long int *lookupInteriorOffset = NULL;
+    long int *lookupSurface = NULL;
+    long int *lookupSurfaceOffset = NULL;
     int nObjects = 0;
+    
+    double *capMatrixAll = NULL;
     
     Object *obj = malloc(sizeof(*obj));
     
     obj->domain = domain;
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
+    obj->lookupSurface = lookupSurface;
+    obj->lookupSurfaceOffset = lookupSurfaceOffset;
     obj->nObjects = nObjects;
+    
+    obj->capMatrixAll = capMatrixAll;
     
     return obj;
 }
@@ -373,6 +372,9 @@ void oFree(Object *obj){
     
     free(obj->lookupInterior);
     free(obj->lookupInteriorOffset);
+    free(obj->lookupSurface);
+    free(obj->lookupSurfaceOffset);
+    free(obj->capMatrixAll);
     free(obj);
     
 }
@@ -408,7 +410,7 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo){
     H5Dclose(dataset);
     H5Pclose(pList);
     
-    //Communicate the boundary nodes
+    //Communicate the boundary nodes -> DON'T DO THIS HERE!
     gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
     
     // Count the number of objects and fills the lookup tables.
@@ -419,7 +421,96 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo){
 }
 
 /******************************************************************************
- *  GLOBAL FUNCTION DEFINITIONS
+ *  DEPRECIATED FUNCTION DEFINITIONS
  *****************************************************************************/
 
+//depreciated...
+void oFindObjectSurfaceNodes_v1(Object *obj, const MpiInfo *mpiInfo) {
+    
+    long int *sizeProd = obj->domain->sizeProd;
+    
+    //if(isGhostNode(obj->domain, 10439)) printf("test\n");
+    
+    long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*sizeof(*lookupSurfaceOffset));
+    for (long int i=0; i<obj->nObjects+1; i++) {
+        lookupSurfaceOffset[i] = 0;
+    }
+    
+    long int *meNeighbours = malloc(7*sizeof(*meNeighbours));
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
+            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
+                // My neighbours
+                meNeighbours[0] = b; // me
+                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
+                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
+                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
+                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
+                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
+                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
+                
+                int d=0;
+                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+                
+                // Check if surface
+                if (d<5.5) {
+                    lookupSurfaceOffset[a+1]++;
+                }
+            }
+        }
+        //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    }
+    
+    alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
+    
+    
+    //Second go through to fill the table.
+    long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*sizeof(*lookupSurface));
+    for (long int i=0; i<lookupSurfaceOffset[obj->nObjects]+1; i++) {
+        lookupSurface[i]=0;
+    }
+    
+    long int *index = malloc((obj->nObjects)*sizeof(*index));
+    for (long int i=0; i<obj->nObjects; i++) {
+        index[i]=lookupSurfaceOffset[i];
+    }
+    
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int b=0; b<obj->domain->sizeProd[obj->domain->rank]; b++) {
+            if (obj->domain->val[b]>0.5 && !isGhostNode(obj->domain, b)) {
+                // My neighbours
+                meNeighbours[0] = b; // me
+                meNeighbours[1] = meNeighbours[0] + sizeProd[1]; // right
+                meNeighbours[2] = meNeighbours[0] - sizeProd[1]; // left
+                meNeighbours[3] = meNeighbours[0] + sizeProd[2]; // up
+                meNeighbours[4] = meNeighbours[0] - sizeProd[2]; // down
+                meNeighbours[5] = meNeighbours[0] + sizeProd[3]; // back
+                meNeighbours[6] = meNeighbours[0] - sizeProd[3]; // front
+                
+                int d=0;
+                if (obj->domain->val[meNeighbours[1]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[2]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[3]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[4]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[5]]>(a+0.5)) d++;
+                if (obj->domain->val[meNeighbours[6]]>(a+0.5)) d++;
+                
+                // Check if boundary
+                if (d<5.5) {
+                    lookupSurface[index[a]] = meNeighbours[0];
+                    index[a]++;
+                }
+            }
+        }
+    }
+    
+    // Add to object
+    obj->lookupSurface = lookupSurface;
+    obj->lookupSurfaceOffset = lookupSurfaceOffset;
+}
 
