@@ -17,7 +17,9 @@ typedef struct{
 	long int *lookupInteriorOffset;	///< Offset in the above per object (nObjects+1 elements)
     long int *lookupSurface;        ///< Indices of the surface nodes of the objects
     long int *lookupSurfaceOffset;  ///< Offset in the above per object (nObjects+1 elements)
-    double *capMatrixAll;         ///< Array holding the capacitance matrices for each object
+    double *capMatrixAll;           ///< Array holding the capacitance matrices for each object
+    long int *capMatrixAllOffsets;  ///< Offset in the above per object (nObjects*(size+1) elements)
+    double *capMatrixSum;           ///< Array holding the total sum of capMatrix elements (nObjects elements)
 	int nObjects;					///< Number of objects
 } Object;
 
@@ -82,4 +84,13 @@ void oRayTrace(Population *pop, const Object *obj);
 
 void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
 
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo);
+
 #endif // OBJECT_H
+
+
+
+
+
+
+

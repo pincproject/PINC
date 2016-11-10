@@ -122,11 +122,7 @@ void regular(dictionary *ini){
 	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
 
     oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
-
     oReadH5(obj, mpiInfo);
-    
-    //Compute capacitance matrix
-    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -141,8 +137,9 @@ void regular(dictionary *ini){
 	 * INITIAL CONDITIONS
 	 */
 
-	//  oComputeCapacitanceMatrix(obj,phi,deltaRho);
-
+    //Compute capacitance matrix
+    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
+    
 	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rngSync);
 	pVelMaxwell(ini, pop, rng);
@@ -213,17 +210,19 @@ void regular(dictionary *ini){
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 		gAssertNeutralGrid(rho, mpiInfo);
-
+        //printf("aaa\n");
 		// Compute electric potential phi
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
+        //printf("bbb\n");
 		gAssertNeutralGrid(phi, mpiInfo);
-
+        //printf("ccc\n");
 		// Second run with solver to account for charges
-		// oApplyCapacitanceMatrix(obj,phi,deltaRho);
+        gZero(rho);
+		oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
 		// gAdd(rho, deltaRho);
-		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
+        //printf("ddd\n");
+		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+        //printf("eee\n");
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
@@ -250,10 +249,13 @@ void regular(dictionary *ini){
 
 		//Write h5 files
 		// gWriteH5(E, mpiInfo, (double) n);
-		// gWriteH5(rho, mpiInfo, (double) n);
-		// gWriteH5(phi, mpiInfo, (double) n);
+		gWriteH5(rho, mpiInfo, (double) n);
+        //printf("fff\n");
+		gWriteH5(phi, mpiInfo, (double) n);
+        //printf("ggg\n");
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
+        //printf("hhh\n");
 
 	}
 
