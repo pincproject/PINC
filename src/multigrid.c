@@ -310,6 +310,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 	int nPreSmooth = iniGetInt(ini, "multigrid:nPreSmooth");
 	int nPostSmooth = iniGetInt(ini, "multigrid:nPostSmooth");
 	int nCoarseSolve = iniGetInt(ini, "multigrid:nCoarseSolve");
+	double tol = iniGetDouble(ini, "multigrid:tol");
 	//Load data
 	int nDims = grid->rank-1;
 	int *trueSize = grid->trueSize;
@@ -334,11 +335,12 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 	//Store in multigrid struct
     Multigrid *multigrid = malloc(sizeof(Multigrid));
 
-    multigrid->nLevels = nLevels;
-    multigrid->nMGCycles = nMGCycles;
-	multigrid->nPreSmooth = nPreSmooth;
-	multigrid->nPostSmooth = nPostSmooth;
+    multigrid->nLevels 		= nLevels;
+    multigrid->nMGCycles 	= nMGCycles;
+	multigrid->nPreSmooth 	= nPreSmooth;
+	multigrid->nPostSmooth 	= nPostSmooth;
 	multigrid->nCoarseSolve = nCoarseSolve;
+	multigrid->tol			= tol;
     multigrid->grids = grids;
 
     //Setting the algorithms to be used, pointer functions
@@ -1639,9 +1641,6 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 }
 
-
-
-
 void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
@@ -1649,8 +1648,9 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 	int nLevels = mgRho->nLevels;
 
 	// gZero(mgPhi->grids[0]);
-	double tol = 1.E-10;
+	double tol = mgRho->tol;
 	double barRes = 2.;
+	int count = 0;
 
 	if(nLevels >1){
 		while(barRes > tol){
@@ -1660,12 +1660,9 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
 			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
 			barRes = sqrt(barRes);
-			// msg(STATUS, "barRes = %f", barRes);
+			count += 1;
+ 			if(!(count%10))	msg(STATUS, "Cycles = %d,  res = %f ", barRes);
 		}
-		// for(int c = 0; c < nMGCycles; c++){
-		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		//
-		// }
 	}	else {
 		for(int c = 0; c < nMGCycles; c++){
 
@@ -1685,6 +1682,33 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 /*************************************************
  *		RUNS
  ************************************************/
+//  funPtr mgModeConvRate_set(dictionary *ini){
+//  	return mgModeConvRate;
+//  }
+//  void mgModeConvRate(dictionary *ini){
+// 	//Mpi
+// 	MpiInfo *mpiInfo = gAllocMpi(ini);
+//
+// 	//Grids
+// 	Grid *phi 	= gAlloc(ini, SCALAR);
+// 	Grid *rho 	= gAlloc(ini, SCALAR);
+// 	Grid *res 	= gAlloc(ini, SCALAR);
+//
+// 	//Multigrids
+// 	Multigrid *mgPhi = mgAlloc(ini, phi);
+// 	Multigrid *mgRho = mgAlloc(ini, rho);
+// 	Multigrid *mgRes = mgAlloc(ini, res);
+//
+// 	//Set up the case
+// 	gFillSin(rho, 1, mpiInfo, 0);
+// 	MgAlgo mgAlgo = getMgAlgo(ini);
+//
+//
+//
+//
+//
+//
+// }
 
 funPtr mgModeErrorScaling_set(dictionary *ini){
 	return mgModeErrorScaling;
@@ -1821,6 +1845,7 @@ void mgMode(dictionary *ini){
 
 	//Rand Seed
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
+	gsl_rng_set(rng, mpiInfo->mpiRank);
 
 	//Grids
 	Grid *phi = gAlloc(ini, SCALAR);
@@ -1854,41 +1879,42 @@ void mgMode(dictionary *ini){
 	// gFillPolynomial(rho, mpiInfo);
 	// gFillPointSol(sol, mpiInfo);
 	// gFillExp(sol, mpiInfo);
-	gFillSin(rho, 3, mpiInfo, 0);
-	gFillSinSol(sol, 3,  mpiInfo);
+	// gFillSin(rho, 3, mpiInfo, 0);
+	// gFillSinSol(sol, 3,  mpiInfo);
 	// gFillCst(rho, mpiInfo);
-	// gFillRng(rho, mpiInfo, rng);
+	gFillRng(rho, mpiInfo, rng);
 
 	// gHaloOp(setSlice, sol, mpiInfo);
 	// gFinDiff2nd3D(rho, sol);
 
 	gNeutralizeGrid(rho, mpiInfo);
 	//
-	double tol = 0.01;
 	double avgError = 1;
-	double errSquared;
-	double resSquared;
+	double barErr;
+	double barRes;
 	int run = 1;
-	//
-	while(avgError>tol){
-		// Run solver
-		tStart(t);
-		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-		tStop(t);
 
-		//Compute error
-		mgCompError(phi, sol, error);
-		// avgError = mgAvgError(error, mpiInfo);
-		errSquared = mgSumTrueSquared(error, mpiInfo);
-		avgError = errSquared/gTotTruesize(error, mpiInfo);
+	// Run solver
+	tStart(t);
+	mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	tStop(t);
 
-		if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
-		run++;
-	}
+	//Compute error
+	mgCompError(phi, sol, error);
+	// avgError = mgAvgError(error, mpiInfo);
 
-	resSquared = mgSumTrueSquared(res, mpiInfo);
+	barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
+	barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
+	barRes = sqrt(barRes);
+	barErr = mgSumTrueSquared(error, mpiInfo);
+	barErr = barErr/gTotTruesize(error, mpiInfo);
+
+
+	// if(!(run%10))	msg(STATUS, "Avg e^2 = %.2e", errSquared);
+	run++;
+
 	msg(STATUS, "Avg e^2 = %f", avgError);
-	msg(STATUS, "Residual squared (res^2) = %f", resSquared);
+	msg(STATUS, "Residual squared (res^2) = %f", barRes);
 	msg(STATUS, "Number of Cycles: %d", run);
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 

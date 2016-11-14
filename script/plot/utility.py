@@ -53,8 +53,8 @@ def plotScatterLogLog(name, stepSize, values):
     ax.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.5)
     ax.minorticks_on()
     # ax.majorticks_on()
-    ax.set_xlabel('$\log{\delta x}$')
-    ax.set_ylabel('$\log{E}$')
+    ax.set_xlabel('$\log{\Delta x}$')
+    ax.set_ylabel('$\log{\phi}$')
 
     ax.set_title(name)
     ax.grid(True, which="both")

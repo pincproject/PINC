@@ -18,7 +18,7 @@ import subprocess
 import numpy as np
 
 class Pinc(dict):
-	def __init__(self, pinc="./mpinc.sh", ini="langmuir.ini", path="../.."):
+	def __init__(self, pinc="./mpinc.sh", ini="langmuirWarm.ini", path="../.."):
 		# All commands will be executed from "path"
 
 		self.pinc = pinc

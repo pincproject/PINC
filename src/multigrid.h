@@ -31,6 +31,7 @@
 	int nPreSmooth;					///<
 	int nPostSmooth;
 	int nCoarseSolve;
+	double tol;
 
     ///< Function pointer to a Coarse Grid Solver function
     void (*coarseSolv)(	Grid *phi, const Grid *rho, const int nCycles,
@@ -130,6 +131,10 @@ funPtr mgMode_set(dictionary *ini);
 
 void mgModeErrorScaling(dictionary *ini);
 funPtr mgModeErrorScaling_set(dictionary *ini);
+
+void mgModeConvRate(dictionary *ini);
+funPtr mgModeConvRate_set(dictionary *ini);
+
 
 
 /**

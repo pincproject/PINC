@@ -18,21 +18,24 @@ if cmd_subfolder not in sys.path:
 import h5py
 import numpy as np
 import pylab as plt
-from pincClass import *
+from pinc import *
 from utility import *
 
-if(len(sys.argv) > 1):
-    ini = "../../" + sys.argv[1]
-else:
-    ini = "../../local.ini"
+# if(len(sys.argv) > 1):
+#     ini = "../../" + sys.argv[1]
+# else:
+#     ini = "../../local.ini"
 
-pinc = PINC(iniPath = ini)
+pinc = Pinc(ini = "input/mgErrorScaling.ini")
+path = '../../data/'
 
-pinc.mode           = 'mgErrorScaling'
-pinc.nSubdomains    = np.array([2,1,1])
-pinc.trueSize       = np.array([8,8,8])
-pinc.nDims          = 3
-pinc.startTime      = 0
+pinc['methods:mode'] 		= 'mgModeErrorScaling'
+pinc['grid:nSubdomains']   	= np.array([2,1,1])
+trueSize 					= np.array([8,8,8])
+pinc['grid:trueSize']       = trueSize
+pinc['grid:nDims']          = 3
+pinc['time:startTime']      = 0
+
 
 dim = 0
 
@@ -45,23 +48,24 @@ meanE2E        = np.zeros(nTest)
 stepSize       = np.zeros(nTest)
 
 for n in range(nTest):
-    pinc.mgErrorScaling()
-    dataPath            = 'test_error_' + str(n) + '.grid.h5'
-    errorPhi            = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
-    dataPath            = 'test_errorE_' + str(n) + '.grid.h5'
-    errorE              = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
-
-    meanE2E[n]           = np.sqrt(np.sum(errorE*errorE)/pinc.trueSize[dim])
-    meanE2Phi[n]         = np.sqrt(np.sum(errorPhi*errorPhi)/pinc.trueSize[dim])
-    stepSize[n]          = 1./np.product(pinc.trueSize)
-    pinc.trueSize[dim]  *= 2
-    pinc.startTime      += 1
-    del errorPhi
-    del errorE
+	pinc.run()
+	dataPath            = path + 'error_' + str(n) + '.grid.h5'
+	errorPhi            = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
+	dataPath            = path + 'errorE_' + str(n) + '.grid.h5'
+	errorE              = transformData(dim, h5py.File(dataPath,'r'), 0., average=False)
+	#
+	meanE2E[n]           = np.sqrt(np.sum(errorE*errorE)/trueSize[dim])
+	meanE2Phi[n]         = np.sqrt(np.sum(errorPhi*errorPhi)/trueSize[dim])
+	stepSize[n]          = 1./np.product(trueSize)
+	trueSize[dim] 		*= 2
+	pinc['grid:trueSize']  = trueSize
+	pinc['time:startTime']      += 1
+	del errorPhi
+	del errorE
 
 print np.log(meanE2E[nTest-1]/meanE2E[nTest-2])/np.log(stepSize[nTest-1]/stepSize[nTest-2])
 print np.log(meanE2Phi[nTest-1]/meanE2Phi[nTest-2])/np.log(stepSize[nTest-1]/stepSize[nTest-2])
-# plotScatterLogLog('$E$', stepSize, meanE2E)
-plotScatterLogLog('$Phi$', stepSize, meanE2Phi)
+# plotScatterLogLog('Numerical Error in Electric Field', stepSize, meanE2E)
+plotScatterLogLog('Numerical Error in Potential', stepSize, meanE2Phi)
 
 plt.show()
