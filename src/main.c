@@ -177,6 +177,7 @@ void regular(dictionary *ini){
 	 */
 
 	Timer *t = tAlloc(rank);
+	Timer *tMg = tAlloc(rank);
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -206,12 +207,14 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		gAssertNeutralGrid(rho, mpiInfo);
+		// gAssertNeutralGrid(rho, mpiInfo);
+
 
 		// Compute electric potential phi
+		tStart(tMg);
 		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-		gAssertNeutralGrid(phi, mpiInfo);
+		tStop(tMg);
+		// gAssertNeutralGrid(phi, mpiInfo);
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
@@ -246,6 +249,7 @@ void regular(dictionary *ini){
 	}
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+	if(mpiInfo->mpiRank==0) tMsg(tMg->total, "Time spent MG: ");
 
 	/*
 	 * FINALIZE PINC VARIABLES

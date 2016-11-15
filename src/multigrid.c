@@ -1661,7 +1661,7 @@ void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes
 			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
 			barRes = sqrt(barRes);
 			count += 1;
- 			if(!(count%10))	msg(STATUS, "Cycles = %d,  res = %f ", barRes);
+ 		// 	if((count%10))	msg(STATUS, "Cycles = %d,  res = %f ", barRes);
 		}
 	}	else {
 		for(int c = 0; c < nMGCycles; c++){

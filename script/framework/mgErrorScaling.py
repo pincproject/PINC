@@ -4,8 +4,7 @@
 #  @brief		Investigate error scaling
 #  @date		26.10.15
 #
-#   Compares the scaling of the error of the solver, as a function of stepsize,
-#   compared to an analytical solution. The test case is a sinusoidal function
+#
 #
 
 import sys, os, inspect
