@@ -823,7 +823,6 @@ void gAddTo(Grid *result, Grid *addition){
 	long int *sizeProd = result->sizeProd;
 	double *resultVal = result->val;
 	double *addVal = addition->val;
-
 	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] += addVal[g];
 
 }

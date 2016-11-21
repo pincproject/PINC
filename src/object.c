@@ -341,9 +341,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         capMatrixSum[a] = 1/capMatrixSum[a];
 
     }
-    
-    //alPrint(nodesCoreLocal,size+1);
-    //alPrint(nodesCoreGlobal, obj->nObjects*(size+1));
+
     long int *capMatrixAllOffsets = nodesCoreGlobal;
     
     // Add to object
@@ -354,11 +352,10 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
 void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo){
-    //printf("a\n");
+
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
     long int *lookupSurface = obj->lookupSurface;
-    //long int *lookupSurfaceOffset = obj->lookupSurfaceOffset;
     
     double *capMatrixAll = obj->capMatrixAll;
     long int *capMatrixAllOffsets = obj->capMatrixAllOffsets;
@@ -366,80 +363,110 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
     
     double capMatrixPhiSum = 0;
     
-    alPrint(capMatrixAllOffsets,obj->nObjects*(size+1));
-    
     // Loop over the objects
     for (long int a=0; a<obj->nObjects; a++) {
         
-        double *deltaPhi = malloc(capMatrixAllOffsets[a*(size+1)+size]*sizeof(*deltaPhi));
-        adSetAll(deltaPhi,capMatrixAllOffsets[a*(size+1)+size],0);
-        double *rhoCorrection = malloc(capMatrixAllOffsets[a*(size+1)+size]*sizeof(*rhoCorrection));
-        adSetAll(rhoCorrection,capMatrixAllOffsets[a*(size+1)+size],0);
+        // total number of surface nodes
+        long int totSurfNodGlobal = capMatrixAllOffsets[a*(size+1)+size];
+        long int beginIndex = capMatrixAllOffsets[a*(size+1)+rank];
+        long int endIndex = capMatrixAllOffsets[a*(size+1)+rank+1];
+
         
-        //printf("b\n");
+        double *deltaPhi = malloc(totSurfNodGlobal*sizeof(*deltaPhi));
+        adSetAll(deltaPhi,totSurfNodGlobal,0);
+        double *rhoCorrection = malloc(totSurfNodGlobal*sizeof(*rhoCorrection));
+        adSetAll(rhoCorrection,totSurfNodGlobal,0);
+        
         // Compute eq. 7.
-        //printf("%ld \n", capMatrixAllOffsets[a*(size+1)+size]);
-        for (long int i=0; i<capMatrixAllOffsets[a*(size+1)+size]; i++) {
-            for (int j=capMatrixAllOffsets[a*(size+1)+rank]; j<capMatrixAllOffsets[a*(size+1)+rank+1]; j++) {
-            
-                capMatrixPhiSum += capMatrixAll[i+capMatrixAllOffsets[a*(size+1)+size]*j]*(phi->val[lookupSurface[j-capMatrixAllOffsets[a*(size+1)+rank]]]);
+        for (long int i=0; i<totSurfNodGlobal; i++) {
+            // Make sure that each core loops only over the matrix elements/parts of the grid it has
+            for (long int j=beginIndex; j<endIndex; j++) {
+                capMatrixPhiSum += capMatrixAll[i+totSurfNodGlobal*j] * (phi->val[lookupSurface[j-beginIndex]]);
             }
         }
         // This is phi_c for each object.
         capMatrixPhiSum = capMatrixPhiSum*capMatrixSum[a];
         MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        //printf("%d, %f\n",rank, capMatrixPhiSum);
-        capMatrixPhiSum=-0.5;
-        //printf("c\n");
-        for (int j=capMatrixAllOffsets[a*(size+1)+rank]; j<capMatrixAllOffsets[a*(size+1)+rank+1]; j++) {
-            deltaPhi[j] = capMatrixPhiSum - phi->val[lookupSurface[j-capMatrixAllOffsets[a*(size+1)+rank]]];
-            
+        
+        msg(STATUS,"Potential-check for object %ld : %f",a,capMatrixPhiSum);
+        //capMatrixPhiSum=0.03;
+
+        for (long int j=beginIndex; j<endIndex; j++) {
+            deltaPhi[j] = capMatrixPhiSum - phi->val[lookupSurface[j-beginIndex]];
         }
-        MPI_Allreduce(MPI_IN_PLACE, deltaPhi, capMatrixAllOffsets[a*(size+1)+size], MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        //printf("d\n");
+        MPI_Allreduce(MPI_IN_PLACE, deltaPhi, totSurfNodGlobal, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         // Eq. 5
-        for (long int i=0; i<capMatrixAllOffsets[a*(size+1)+size]; i++) {
-            for (int j=capMatrixAllOffsets[a*(size+1)+rank]; j<capMatrixAllOffsets[a*(size+1)+rank+1]; j++) {
-                rhoCorrection[i] += capMatrixAll[i+capMatrixAllOffsets[a*(size+1)+size]*j]*deltaPhi[j];
+        for (long int i=0; i<totSurfNodGlobal; i++) {
+            for (long int j=beginIndex; j<endIndex; j++) {
+                rhoCorrection[i] += capMatrixAll[i+totSurfNodGlobal*j]*deltaPhi[j];
             }
         }
-        //adPrint(rhoCorrection,capMatrixAllOffsets[a*(size+1)+size]);
-        //printf("qqqqqqq");
-        MPI_Allreduce(MPI_IN_PLACE, rhoCorrection, capMatrixAllOffsets[a*(size+1)+size], MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        MPI_Allreduce(MPI_IN_PLACE, rhoCorrection, totSurfNodGlobal, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         
-        //adPrint(rhoCorrection,capMatrixAllOffsets[a*(size+1)+size]);
-        // Add the correction to the rho grid.
-        //printf("e %ld\n",a);
-        
-        //MPI_Barrier(MPI_COMM_WORLD);
-        for (long int j=capMatrixAllOffsets[a*(size+1)+rank]; j<capMatrixAllOffsets[a*(size+1)+rank+1]; j++) {
+        for (long int j=beginIndex; j<endIndex; j++) {
             
-            if (rhoCorrection[j-capMatrixAllOffsets[a*(size+1)+rank]]==0) {
+            if (rhoCorrection[j]==0) {
                 printf("trouble");
             }
-            rho->val[lookupSurface[j-capMatrixAllOffsets[a*(size+1)+rank]]] += rhoCorrection[j-capMatrixAllOffsets[a*(size+1)+rank]];
-            
-            
-            //printf("%ld %ld %d %f %f\n",j,a,rank, rho->val[lookupSurface[j-capMatrixAllOffsets[a*(size+1)+rank]]],rhoCorrection[j-capMatrixAllOffsets[a*(size+1)+rank]]);
+            rho->val[lookupSurface[j-beginIndex]] += rhoCorrection[j];
         }
-        //MPI_Barrier(MPI_COMM_WORLD);
     }
-    //printf("f\n");
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
 
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
+
+    double *val = rhoObj->val;
+    long int *sizeProd = rhoObj->sizeProd;
+    
+    int nSpecies = pop->nSpecies;
+    double *charge = pop->charge;
+    
+    // We might add this to the Object, although probably better  to store the rhoObj for restarts and insulators later on.
+    double *chargeCounter = malloc(obj->nObjects*sizeof(*chargeCounter));
+    adSetAll(chargeCounter,obj->nObjects,0);
+
+    //double invNrSurfaceNodes = 1.0/(obj->lookupSurfaceOffset[obj->nObjects]);
+    double *invNrSurfaceNodes = malloc(obj->nObjects*sizeof(*invNrSurfaceNodes));
+    for (long int a=0; a<obj->nObjects; a++) {
+        invNrSurfaceNodes[a] = 1.0/(obj->lookupSurfaceOffset[a+1]);
+    }
+    
+    for(int s=0;s<nSpecies;s++) {
+            
+        long int iStart = pop->iStart[s];
+        long int iStop = pop->iStop[s];
+        
+        for(int i=iStart;i<iStop;i++){
+            
+            double *pos = &pop->pos[3*i];
+            double *vel = &pop->vel[3*i];
+            
+            // Integer parts of position
+            int j = (int) pos[0];
+            int k = (int) pos[1];
+            int l = (int) pos[2];
+            
+            long int p = j + k*sizeProd[2] + l*sizeProd[3];
+
+            // Check wether p is one of the object nodes and collect the charge if so.
+            for (long int a=0; a<obj->nObjects; a++) {
+                for (long int b=obj->lookupInteriorOffset[a]; b<obj->lookupInteriorOffset[a+1]; b++) {
+                    if ((obj->lookupInterior[b])==p) {
+                        chargeCounter[a] += charge[s];
+                        pCut(pop, s, p, pos, vel);
+                    }
+                }
+            }
+        }
+    }
+    // Add the collected charge to the surface nodes on rhoObject.
+    for (long int a=0; a<obj->nObjects; a++) {
+        for (long int b=obj->lookupSurfaceOffset[a]; b<obj->lookupSurfaceOffset[a+1]; b++) {
+            val[obj->lookupSurface[b]] += chargeCounter[a]*invNrSurfaceNodes[a];
+        }
+    }
+}
 
 
 
