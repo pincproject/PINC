@@ -240,10 +240,10 @@ void regular(dictionary *ini){
 
 		// Second run with solver to account for charges
 		oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
-
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-
+        solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+        //oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
+        //solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+        
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);

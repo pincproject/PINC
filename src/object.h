@@ -77,16 +77,44 @@ void oCloseH5(Object *obj);
 void oReadH5(Object *obj, const MpiInfo *mpiInfo);
 
 /**
+ * @brief   Compute the capacitance matrix for each object.
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ *
+ * Compute the capacitance matrix for each object.
+ */
+void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
+
+/**
+ * @brief	Apply the capacitance matrices
+ * @param   rho         Grid
+ * @param   phi         Grid
+ * @param	obj         Object
+ * @param	mpiInfo		MpiInfo
+ * @return	void
+ *
+ * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
+ */
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo);
+
+/**
+ * @brief	Collect the charge inside each object
+ * @param   pop         Population
+ * @param   rhoObj      Grid
+ * @param	obj         Object
+ * @param	mpiInfo		MpiInfo
+ * @return	void
+ *
+ * Collect the charge inside each object.
+ */
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+
+/**
  * TO IMPLEMENT!
  *
  */
 void oRayTrace(Population *pop, const Object *obj);
-
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
-
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo);
-
-void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 
 #endif // OBJECT_H
 
