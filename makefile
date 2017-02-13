@@ -9,12 +9,15 @@ COPT	= -O3
 
 CLOCAL = 	-Ilib/iniparser/src\
 			-lm -lgsl -lblas -lhdf5
+LLOCAL =	-Ilib/iniparser/src\
+			-lm -lgsl -lblas -lhdf5
 
 -include local.mk
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT) $(CADD)\
+CFLAGS	= -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
+LFLAGS	= -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
 
 SDIR	= src
 ODIR	= src/obj
@@ -59,17 +62,17 @@ test: version $(EXEC).test cleantestdata doc
 
 $(EXEC).test: $(TODIR)/main.test.o $(OBJ) $(TESTOBJ) $(LIBOBJ)
 	@echo "Linking Unit Tests"
-	@$(CC) $^ -o $(EXEC) $(CFLAGS)
+	@$(CC) $^ -o $(EXEC) $(LFLAGS)
 	@echo "PINC is built"
 
 $(EXEC).local: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC (using main.local.c)"
-	@$(CC) $^ -o $(EXEC) $(CFLAGS)
+	@$(CC) $^ -o $(EXEC) $(LFLAGS)
 	@echo "PINC is built"
 
 $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"
-	@$(CC) $^ -o $@ $(CFLAGS)
+	@$(CC) $^ -o $@ $(LFLAGS)
 	@echo "PINC is built"
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
@@ -84,7 +87,7 @@ $(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo $(TESTHEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(TODIR)
 	@./aux/check.sh $<
-	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
+	@$(CC) -c $< -o $@ -Isrc $(CFLAGS) 
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
