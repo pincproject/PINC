@@ -472,7 +472,6 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	/*
 	 * CREATE FILE
 	 */
-
 	hid_t file = openH5File(ini,fName,"pop");
 
 	/*

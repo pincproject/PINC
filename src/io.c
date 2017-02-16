@@ -480,7 +480,7 @@ hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
 	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
 
 	// Make sure parent folder exist
-	if(makePath(fName))
+	if(makePath(fTotName))
 		msg(ERROR,"Could not open or create folder for '%s'.",fTotName);
 
 	hid_t file;	// h5 file handle
@@ -761,6 +761,7 @@ static int makeDir(const char *dir){
 }
 
 int makePath(const char *path){
+
     char *pp;
     char *sp;
     int status;
