@@ -10,6 +10,7 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
+#include "spectral.h"
 #include "object.h"
 
 void regular(dictionary *ini);
@@ -33,7 +34,8 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												puModeParticle_set,
-												puModeInterp_set);
+												puModeInterp_set,
+												sMode_set);
 	run(ini);
 
 	/*
@@ -63,7 +65,8 @@ void regular(dictionary *ini){
 													puDistrND1_set,
 													puDistrND0_set);
 
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
+	// void (*solve)() = select(ini,"methods:poisson", mgSolve_set,
+	// 												sSolve_set);
 
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
 																puExtractEmigrantsND_set);
@@ -85,9 +88,10 @@ void regular(dictionary *ini){
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
+	// Multigrid *mgRho = mgAlloc(ini, rho);
+	// Multigrid *mgRes = mgAlloc(ini, res);
+	// Multigrid *mgPhi = mgAlloc(ini, phi);
+	SpectralSolver *solver = sAlloc(ini, rho, phi);
 	// Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -97,13 +101,12 @@ void regular(dictionary *ini){
 	gSetBndSlices(phi, mpiInfo);
 
 	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	// MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
 
 	/*
 	 * PREPARE FILES FOR WRITING
@@ -147,6 +150,8 @@ void regular(dictionary *ini){
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
+
+	// msg(ERROR,"bp after extractEmigrants");
 	puMigrate(pop, mpiInfo, rho);
 
 	/*
@@ -158,7 +163,8 @@ void regular(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	sSolve(solver, rho, phi);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -203,10 +209,13 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		gAssertNeutralGrid(rho, mpiInfo);
+		// gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		sSolve(solver, rho, phi);
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		gAssertNeutralGrid(phi, mpiInfo);
 
@@ -258,9 +267,10 @@ void regular(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
+	sFree(solver);
+	// mgFree(mgRho);
+	// mgFree(mgPhi);
+	// mgFree(mgRes);
 	gFree(rho);
 	gFree(phi);
 	gFree(res);

@@ -389,7 +389,7 @@ void gSubFrom(Grid *result, const Grid *subtraction);
 double gSumTruegrid(const Grid *grid);
 
 
-void gAssertNeutralGrid(Grid *rho, MpiInfo *mpiInfo);
+void gAssertNeutralGrid(const Grid *rho, const MpiInfo *mpiInfo);
 
 /**
  * @brief Applies boundary conditions to edge

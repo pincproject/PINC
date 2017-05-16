@@ -935,6 +935,8 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
 funPtr puExtractEmigrants3D_set(const dictionary *ini){
+	int nDims = iniGetInt(ini, "grid:nDims");
+	if(nDims!=3) msg(ERROR, "puExtractEmigrants3D requires grid:nDims=3");
 	return puExtractEmigrants3D;
 }
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){

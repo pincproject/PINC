@@ -896,15 +896,13 @@ long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo){
 	return totTruesize;
 }
 
-void gAssertNeutralGrid(Grid *rho,MpiInfo *mpiInfo){
+void gAssertNeutralGrid(const Grid *rho, const MpiInfo *mpiInfo){
 
 	double sum = gSumTruegrid(rho);
 	double totSum = 1.;
 	MPI_Allreduce(&sum, &totSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	if( totSum < -0.001 || totSum > 0.001) msg(ERROR, "Total charge is %f", totSum);
-
-	return;
 }
 
 
