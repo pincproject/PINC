@@ -71,7 +71,8 @@ funPtr sSolve_set(dictionary *ini){
 
 	return sSolve;
 }
-void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi){
+void sSolve(const SpectralSolver *solver,
+	Grid *rho, Grid *phi, const MpiInfo *mpiInfo){
 
 	int rank = rho->rank;
 	int *nGhostLayers = (int *)malloc(2*rank*sizeof(*nGhostLayers));
@@ -84,7 +85,7 @@ void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi){
 
 	// Set DC-component to zero for charge neutrality
 	solver->spectrum[0] = 0;
-	
+
 	for(int n=1; n<solver->spectralSize; n++){
 		solver->spectrum[n] *= solver->spectralFactor[n];
 	}
@@ -109,6 +110,7 @@ void sMode(dictionary *ini){
 
 	Grid *phi = gAlloc(ini, SCALAR);
 	Grid *rho = gAlloc(ini, SCALAR);
+	MpiInfo *mpiInfo = gAllocMpi(ini);
 
 	SpectralSolver *solver = sAlloc(ini, rho, phi);
 
@@ -121,11 +123,12 @@ void sMode(dictionary *ini){
 	}
 
 	adPrint(rhoValStart, trueSize[1]);
-	sSolve(solver, rho, phi);
+	sSolve(solver, rho, phi, mpiInfo);
 	adPrint(phiValStart, trueSize[1]);
 
 	sFree(solver);
 	gFree(rho);
 	gFree(phi);
+	gFreeMpi(mpiInfo);
 
 }

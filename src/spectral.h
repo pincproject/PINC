@@ -22,6 +22,6 @@ void sMode(dictionary *ini);
 SpectralSolver* sAlloc(const dictionary *ini, const Grid *rho, Grid *phi);
 void sFree(SpectralSolver *solver);
 funPtr sSolve_set(dictionary *ini);
-void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi);
+void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi, const MpiInfo *mpiInfo);
 
 #endif // SPECTRAL_H

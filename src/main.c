@@ -54,30 +54,34 @@ void regular(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
+	void (*acc)()   			= select(ini,	"methods:acc",
+												puAcc3D1_set,
 												puAcc3D1KE_set,
 												puAccND1_set,
 												puAccND1KE_set,
 												puAccND0_set,
 												puAccND0KE_set);
 
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
+	void (*distr)() 			= select(ini,	"methods:distr",
+												puDistr3D1_set,
+												puDistrND1_set,
+												puDistrND0_set);
 
-	// void (*solve)() = select(ini,"methods:poisson", mgSolve_set,
-	// 												sSolve_set);
+	void (*solve)() 			= select(ini,	"methods:poisson",
+												mgSolve_set,
+												sSolve_set);
 
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
-
-	// char *str;
+	// void (*solverAlloc)() 		= select(ini,	"methods:poisson",
+	// 											mgSolve_setAlloc,
+	// 											sSolve_setFree);
 	//
-	// str = iniGetStr("methods:acc");
-	// void (*acc)() = NULL;
-	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
-	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
+	// void (*solverFree)() 		= select(ini,	"methods:poisson",
+	// 											mgSolve_setAlloc,
+	// 											sSolve_setFree);
+
+	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
+												puExtractEmigrants3D_set,
+												puExtractEmigrantsND_set);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -86,12 +90,9 @@ void regular(dictionary *ini){
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	// Multigrid *mgRho = mgAlloc(ini, rho);
-	// Multigrid *mgRes = mgAlloc(ini, res);
-	// Multigrid *mgPhi = mgAlloc(ini, phi);
-	SpectralSolver *solver = sAlloc(ini, rho, phi);
+	// SpectralSolver *solver = sAlloc(ini, rho, phi);
+	MultigridSolver *solver = mgAllocSolver(ini, rho, phi);
 	// Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -99,9 +100,6 @@ void regular(dictionary *ini){
 
 	// Setting Boundary slices
 	gSetBndSlices(phi, mpiInfo);
-
-	//Set mgSolve
-	// MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -151,7 +149,6 @@ void regular(dictionary *ini){
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
 
-	// msg(ERROR,"bp after extractEmigrants");
 	puMigrate(pop, mpiInfo, rho);
 
 	/*
@@ -163,8 +160,8 @@ void regular(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-	sSolve(solver, rho, phi);
+	mgSolve(solver, rho, phi, mpiInfo);
+	// sSolve(solver, rho, phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -214,7 +211,8 @@ void regular(dictionary *ini){
 		// Compute electric potential phi
 		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
-		sSolve(solver, rho, phi);
+		mgSolve(solver, rho, phi, mpiInfo);
+		// sSolve(solver, rho, phi, mpiInfo);
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		gAssertNeutralGrid(phi, mpiInfo);
@@ -267,13 +265,10 @@ void regular(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	sFree(solver);
-	// mgFree(mgRho);
-	// mgFree(mgPhi);
-	// mgFree(mgRes);
+	// sFree(solver);
+	mgFreeSolver(solver);
 	gFree(rho);
 	gFree(phi);
-	gFree(res);
 	gFree(E);
 	pFree(pop);
 	// oFree(obj);
