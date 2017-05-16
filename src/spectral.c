@@ -61,6 +61,13 @@ void sFree(SpectralSolver *solver){
 	free(solver->spectrum);
 	free(solver);
 }
+
+/**
+ * @brief Returns routines necessary for using solver
+ * @param[out] solve			&sSolve()
+ * @param[out] solverAlloc	&sAlloc()
+ * @param[out] solverFree	&sFree()
+ */
 void sSolver(	void (**solve)(),
 				SpectralSolver *(**solverAlloc)(),
 				void (**solverFree)()){
@@ -69,6 +76,7 @@ void sSolver(	void (**solve)(),
 	*solverAlloc=sAlloc;
 	*solverFree=sFree;
 }
+
 funPtr sSolver_set(dictionary *ini){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
@@ -80,6 +88,7 @@ funPtr sSolver_set(dictionary *ini){
 
 	return sSolver;
 }
+
 void sSolve(const SpectralSolver *solver,
 	Grid *rho, Grid *phi, const MpiInfo *mpiInfo){
 
