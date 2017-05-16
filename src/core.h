@@ -343,6 +343,7 @@ typedef void (*SliceOpPointer)(	const double *slice, Grid *grid,
 
 typedef void (*funPtr)();
 
+
 /******************************************************************************
  * INCLUDING CORE MODULES
  *****************************************************************************/

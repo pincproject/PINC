@@ -36,6 +36,7 @@ SpectralSolver* sAlloc(const dictionary *ini, const Grid *rho, Grid *phi){
 		spectralFactor[n] /= size;
 	}
 
+
 	spectrum = (fftw_complex *)fftw_malloc(spectralSize*sizeof(fftw_complex));
 
 	// Replacing FFTW_ESTIMATE with FFTW_MEASURE may be beneficial for very
@@ -60,8 +61,16 @@ void sFree(SpectralSolver *solver){
 	free(solver->spectrum);
 	free(solver);
 }
+void sSolver(	void (**solve)(),
+				SpectralSolver *(**solverAlloc)(),
+				void (**solverFree)()){
 
-funPtr sSolve_set(dictionary *ini){
+	*solve=sSolve;
+	*solverAlloc=sAlloc;
+	*solverFree=sFree;
+}
+funPtr sSolver_set(dictionary *ini){
+
 	int nDims = iniGetInt(ini,"grid:nDims");
 	if(nDims!=1) msg(ERROR,"sMode only works with grid:nDims=1");
 
@@ -69,7 +78,7 @@ funPtr sSolve_set(dictionary *ini){
 	if(nSubdomains[0]!=1) msg(ERROR,"sMode only works with grid:nSubdomains=1");
 	free(nSubdomains);
 
-	return sSolve;
+	return sSolver;
 }
 void sSolve(const SpectralSolver *solver,
 	Grid *rho, Grid *phi, const MpiInfo *mpiInfo){

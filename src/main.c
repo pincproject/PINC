@@ -67,21 +67,18 @@ void regular(dictionary *ini){
 												puDistrND1_set,
 												puDistrND0_set);
 
-	void (*solve)() 			= select(ini,	"methods:poisson",
-												mgSolve_set,
-												sSolve_set);
-
-	// void (*solverAlloc)() 		= select(ini,	"methods:poisson",
-	// 											mgSolve_setAlloc,
-	// 											sSolve_setFree);
-	//
-	// void (*solverFree)() 		= select(ini,	"methods:poisson",
-	// 											mgSolve_setAlloc,
-	// 											sSolve_setFree);
-
 	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
 												puExtractEmigrants3D_set,
 												puExtractEmigrantsND_set);
+
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolver_set,
+												sSolver_set);
+
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -91,8 +88,7 @@ void regular(dictionary *ini){
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	// SpectralSolver *solver = sAlloc(ini, rho, phi);
-	MultigridSolver *solver = mgAllocSolver(ini, rho, phi);
+	void *solver = solverAlloc(ini, rho, phi);
 	// Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -113,8 +109,8 @@ void regular(dictionary *ini){
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
+	for(int d=1; d < rank; d++) dimen[d-1] = 1.;
 
 	pOpenH5(ini, pop, "pop");
 	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
@@ -160,8 +156,7 @@ void regular(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	mgSolve(solver, rho, phi, mpiInfo);
-	// sSolve(solver, rho, phi, mpiInfo);
+	solve(solver, rho, phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -211,8 +206,11 @@ void regular(dictionary *ini){
 		// Compute electric potential phi
 		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
-		mgSolve(solver, rho, phi, mpiInfo);
+		// mgSolve(solver, rho, phi, mpiInfo);
 		// sSolve(solver, rho, phi, mpiInfo);
+
+		solve(solver, rho, phi, mpiInfo);
+
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		gAssertNeutralGrid(phi, mpiInfo);
@@ -266,7 +264,8 @@ void regular(dictionary *ini){
 
 	// Free memory
 	// sFree(solver);
-	mgFreeSolver(solver);
+	// mgFreeSolver(solver);
+	solverFree(solver);
 	gFree(rho);
 	gFree(phi);
 	gFree(E);

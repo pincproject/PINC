@@ -390,7 +390,17 @@ void mgFreeSolver(MultigridSolver *solver){
 	gFree(solver->res);
 	free(solver);
 }
+void mgSolver(	void (**solve)(),
+				MultigridSolver *(**solverAlloc)(),
+				void (**solverFree)()){
 
+	*solve=mgSolve;
+	*solverAlloc=mgAllocSolver;
+	*solverFree=mgFreeSolver;
+}
+funPtr mgSolver_set(const dictionary *ini){
+	return mgSolver;
+}
 void mgSolve(const MultigridSolver *solver,
 	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo){
 
