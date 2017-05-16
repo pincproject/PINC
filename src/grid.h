@@ -81,7 +81,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param sliceOp			SliceOpPointer
+ * @param sliceOp			Slicing operation
  * @param *Grid	Grid struct
  * @param *mpiInfo		MpiInfo struct
  * @param d				Along which dimension it should exhange ghost cells
@@ -137,12 +137,12 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
  */
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
+void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
 
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param sliceOp			SliceOpPointer
+ * @param sliceOp			Slicing operation
  * @param *grid				Grid struct
  * @param *mpiInfo			MpiInfo struct
  *
@@ -152,9 +152,8 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
  * NB! Only works with 1 ghost layer.
  * @see gExchangeSlice
  * @see gHaloOpDim
- * @see SliceOpPointer
  */
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
+void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.

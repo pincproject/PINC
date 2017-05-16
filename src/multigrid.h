@@ -48,20 +48,12 @@
 
 } Multigrid;
 
-/**
- * @brief	Function pointers for the different slice operations
- * @see gHaloOp
- */
-typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho,
-                    Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
-
-
 typedef struct {
     Grid *res;
     Multigrid *mgRho;
     Multigrid *mgPhi;
     Multigrid *mgRes;
-    MgAlgo mgAlgo;
+    funPtr mgAlgo;
 } MultigridSolver;
 
 /**
@@ -114,7 +106,7 @@ funPtr mgSolver_set(const dictionary *ini);
   */
 void mgFree(Multigrid *multigrid);
 
-MgAlgo getMgAlgo(const dictionary *ini);
+funPtr getMgAlgo(const dictionary *ini);
 
 
 /**
@@ -209,7 +201,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  *  information.
  */
 
-void mgSolveRaw(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,
+void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,
     Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 funPtr mgSolveRaw_set(dictionary *ini);

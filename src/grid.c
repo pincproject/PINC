@@ -339,7 +339,7 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  *	HALO FUNCTIONS
  *****************************************************************************/
 
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
+void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
 
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++){
@@ -348,7 +348,7 @@ void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirec
 
 }
 
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
+void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
 
  	//Load MpiInfo
  	int mpiRank = mpiInfo->mpiRank;
