@@ -10,6 +10,7 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
+#include "collisions.h"
 #include "object.h"
 
 void regular(dictionary *ini);
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]){
 	 * CHOOSE PINC RUN MODE
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
+												mccTestMode_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
 												puModeParticle_set,
