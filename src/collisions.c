@@ -1,7 +1,7 @@
 /**
-* @file		multigrid.c
+* @file		 	collisions.c
 * @brief		Collisional module, Montecarlo Collision Method.
-* @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
+* @author		Steffen Mattias Brask <steffen.brask@fys.uio.no>
 *
 * Main module collecting functions conserning collisions
 *
@@ -57,12 +57,10 @@ void mccCollideElectron(Population *pop,  double Pnull, const gsl_rng *rng){
 
 
 	msg(STATUS,"colliding Electrons");
-	//int nSpecies = pop->nSpecies;
+
 	int nDims = pop->nDims;
-	double *pos = pop->pos;
 	double *vel = pop->vel;
 	double *mass = pop->mass;
-	//double *vel = &pop.vel[i*pop.nDims];
 	double R = gsl_rng_uniform(rng);
 
 	double angleChi = 0; //scattering angle in x, y
@@ -72,40 +70,37 @@ void mccCollideElectron(Population *pop,  double Pnull, const gsl_rng *rng){
 	long int q = 0;
 	double vx, vy, vz;
 
-	//for(int s=0; s<nSpecies; s++){
 	int errorcounter = 0;
-
 	double Ekin = 0;
-	long int pStart = pop->iStart[0];		// *nDims??
-	long int pStop = pop->iStop[0];      // make shure theese are actually electrons!
-	long int NparticleColl = (1-Pnull)*(pop->iStop[0]-pop->iStart[0])/nDims; // 1 dim ?, Number of particles too collide
-	long int mccStepSize = floor((double)((pStop-pStart)*nDims)/ (double)(NparticleColl));
-	if ((mccStepSize-1)*(NparticleColl)/nDims > (pStop-pStart)){ //errorcheck, remove
+	long int iStart = pop->iStart[0];		// *nDims??
+	long int iStop = pop->iStop[0];      // make shure theese are actually electrons!
+	long int NparticleColl = (1-Pnull)*(pop->iStop[0]-pop->iStart[0]); // 1 dim ?, Number of particles too collide
+	long int mccStepSize = floor((double)((iStop-iStart))\
+	/ (double)(NparticleColl));
+	if ((mccStepSize-1)*(NparticleColl) > (iStop-iStart)){ //errorcheck, remove
 		msg(WARNING,"particle collisions out of bounds in mccCollideElectron");
 	}
-	msg(STATUS,"number of particles in array = %i", (pStop-pStart)/nDims);
+	msg(STATUS,"number of particles in array = %i", (iStop-iStart));
 	msg(STATUS,"number of particles colliding = %i", (NparticleColl));
-	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize/nDims));
+	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
 
-	long int mccStop = pStart + mccStepSize*NparticleColl; //enshure non out of bounds
-	for(long int p=pStart;p<mccStop;p+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pnull*(pStop-pStart);p++)
+	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pnull*(pStop-pStart);p++)
 		errorcounter += 1;
 		//msg(STATUS,"errorcounter = %i", (errorcounter));
 		if (errorcounter > NparticleColl){ //errorcheck, remove
 			msg(WARNING,"errorcounter = %i should be the same as number of coll\
-			particles = %i", (errorcounter),NparticleColl/nDims);
-			msg(WARNING,"particle collisions out of bounds in mccCollideElectron");
+			particles = %i", (errorcounter),NparticleColl);
+			msg(WARNING,"particle collisions out of bounds\
+			in mccCollideElectron");
 			//errorcounter = 0;
 		}
 		R = gsl_rng_uniform(rng); // New random number per particle. maybe print?
-		q = p + (R*(((double)mccStepSize/(double)nDims)));
+		q = (i + (R*mccStepSize))*nDims;
 		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
 		vx = vel[q];
 		vy = vel[q+1];
 		vz = vel[q+2];
-		double testy;
-
-
 		// need n,n+1,n+2 for x,y,j ?
 		Ekin = 0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; // values stored in population for speed??
 		R = gsl_rng_uniform(rng); // New random number per particle. maybe print?
@@ -118,27 +113,27 @@ void mccCollideElectron(Population *pop,  double Pnull, const gsl_rng *rng){
 		vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
 
 	}
-	msg(STATUS,"errorcounter = %i should be the same as number of coll particles\
-	= %i", (errorcounter),NparticleColl);
+	msg(STATUS,"errorcounter = %i should be the same as number of\
+	coll particles = %i", (errorcounter),NparticleColl);
 
 	//free?
 }
  //1590430
 
-void mccCollideIon(const dictionary *ini, Population *pop, double Pnull, const gsl_rng *rng){
+void mccCollideIon(const dictionary *ini, Population *pop, double Pnull,
+	const gsl_rng *rng){
 
 	msg(STATUS,"colliding Ions");
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
-	double *pos = pop->pos;
 	double *vel = pop->vel;
 	double *mass = pop->mass;
-	//double *vel = &pop.vel[i*pop.nDims];
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	double stepSize = iniGetDouble(ini,"grid:stepSize");
 	double velTh = (timeStep/stepSize)*velThermal[1]; //Ions !?
+	free(velThermal);
 
 	double R = gsl_rng_uniform(rng);
 	double fractR = gsl_rng_uniform(rng);
@@ -149,29 +144,26 @@ void mccCollideIon(const dictionary *ini, Population *pop, double Pnull, const g
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	long int q = 0;
 	double fraction = 0.7; //defines fraction of particles colliding w el/ch-ex
-
 	double vxMW, vyMW, vzMW;
-
-	//for(int s=0; s<nSpecies; s++){
 	int errorcounter = 0;
-
 	double Ekin = 0;
 
-	long int pStart = pop->iStart[1];			// *nDims??
-	long int pStop = pop->iStop[1];      // make shure theese are actually ions!
-
-	long int NparticleColl = (1-Pnull)*(pop->iStop[1]-pop->iStart[1])/nDims; // 1 dim ?, Number of particles too collide
-	long int mccStepSize = floor((double)((pStop-pStart)*nDims)/ (double)(NparticleColl));
-	if ((mccStepSize-1)*(NparticleColl)/nDims > (pStop-pStart)){ //errorcheck, remove
+	long int iStart = pop->iStart[1];			// *nDims??
+	long int iStop = pop->iStop[1];      // make shure theese are actually ions!
+	long int NparticleColl = (1-Pnull)*(pop->iStop[0]-pop->iStart[0]); // 1 dim ?, Number of particles too collide
+	long int mccStepSize = floor((double)((iStop-iStart))\
+	/ (double)(NparticleColl));
+	if ((mccStepSize-1)*(NparticleColl)/nDims > (iStop-iStart)){ //errorcheck, remove
 		msg(WARNING,"particle collisions out of bounds in mccCollideIon");
-		msg(WARNING,"%i is bigger than array = %i",(mccStepSize-1)*(NparticleColl),(pStop-pStart) );
+		msg(WARNING,"%i is bigger than array = %i",(mccStepSize-1)\
+		*(NparticleColl),(iStop-iStart) );
 	}
-	msg(STATUS,"number of particles in array = %i", (pStop-pStart)/nDims);
+	msg(STATUS,"number of particles in array = %i", (iStop-iStart));
 	msg(STATUS,"number of particles colliding = %i", (NparticleColl));
-	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize/nDims));
+	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
 
-	long int mccStop = pStart + mccStepSize*NparticleColl; //enshure non out of bounds
-	for(long int p=pStart;p<mccStop;p+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pnull*(pStop-pStart);p++)
+	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pnull*(pStop-pStart);p++)
 		errorcounter += 1;
 		if (errorcounter > NparticleColl){ //errorcheck, remove
 			msg(WARNING,"errorcounter = %i should be the same as number of coll\
@@ -181,7 +173,7 @@ void mccCollideIon(const dictionary *ini, Population *pop, double Pnull, const g
 		}
 		fractR = gsl_rng_uniform(rng); //decides type of coll.
 		R = gsl_rng_uniform(rng); // New random number per particle. maybe print?
-		q = (R*(((double)mccStepSize/(double)nDims))) + p;
+		q = (i + (R*mccStepSize))*nDims;
 		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
 
 		vxMW = gsl_ran_gaussian_ziggurat(rng,velTh); //maxwellian dist?
@@ -201,7 +193,8 @@ void mccCollideIon(const dictionary *ini, Population *pop, double Pnull, const g
 			anglePhi = 2*PI*R; // set different R?
 			angleTheta = acos(vxTran);
 			A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
-			vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) + vxMW; //Vx
+			vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) \
+			+ vxMW; //Vx
 			vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
 			vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
 		}else{
@@ -217,8 +210,8 @@ void mccCollideIon(const dictionary *ini, Population *pop, double Pnull, const g
 		}
 	}
 
-	msg(STATUS,"errorcounter = %i should be the same as number of coll particles\
-	= %i", (errorcounter),NparticleColl);
+	msg(STATUS,"errorcounter = %i should be the same as number of\
+	coll particles = %i", (errorcounter),NparticleColl);
 
 	//free?
 }
