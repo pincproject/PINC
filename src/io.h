@@ -116,7 +116,7 @@
  * arguments to make the selectInner() function able to match function names by
  * values in the ini-file.
  */
-funPtr selectInner(dictionary *ini, const char *key, const char *string,...);
+funPtr selectInner(const dictionary *ini, const char *key, const char *string,...);
 
 /**
  * @brief	The PINC equivalent of printf().

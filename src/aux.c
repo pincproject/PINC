@@ -404,9 +404,9 @@ void adPrintInner(double *a, long int inc, long int end, char *varName){
 	printf("PRINT(%i): %s(1:%li:%li) = \n  [",rank,varName,inc,end);
 	int i;
 	for(i=0;i<end-inc;i+=inc){
-		printf("%f ",a[i]);
+		printf("%g ",a[i]);
 	}
-	printf("%f]\n",a[i]);
+	printf("%g]\n",a[i]);
 
 }
 

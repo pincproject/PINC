@@ -53,6 +53,8 @@ LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
 all: version $(EXEC) cleantestdata doc
 
+jan: version $(EXEC)
+
 local: version $(EXEC).local cleantestdata doc
 
 test: version $(EXEC).test cleantestdata doc
@@ -124,6 +126,10 @@ cleantestdata:
 	@mv data/temp data/obj.grid.h5 2> /dev/null || true
 
 clean: cleandoc cleantestdata
+	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
+	@rm -f *~ $(TODIR)/*.o $(ODIR)/*.o $(SDIR)/*.o $(SDIR)/*~ gmon.out ut
+
+janclean:
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
 	@rm -f *~ $(TODIR)/*.o $(ODIR)/*.o $(SDIR)/*.o $(SDIR)/*~ gmon.out ut
 
