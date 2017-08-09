@@ -124,6 +124,7 @@ void puAccND0(Population *pop, Grid *E);
 void puAccND0KE(Population *pop, Grid *E);
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S);
 void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S);
+void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S);
 
 funPtr puAcc3D1_set(dictionary *ini);
 funPtr puAcc3D1KE_set(dictionary *ini);
@@ -131,6 +132,9 @@ funPtr puAccND1_set(dictionary *ini);
 funPtr puAccND1KE_set(dictionary *ini);
 funPtr puAccND0_set(dictionary *ini);
 funPtr puAccND0KE_set(dictionary *ini);
+funPtr puBoris3D1_set(dictionary *ini);
+funPtr puBoris3D1KE_set(dictionary *ini);
+funPtr puBoris3D1KETEST_set(dictionary *ini);
 ///@}
 
 /**
@@ -143,6 +147,7 @@ funPtr puAccND0KE_set(dictionary *ini);
  * This functions needs some cleanup.
  */
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
+void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S);
 
 
 /** @name Distributors
@@ -168,6 +173,16 @@ funPtr puDistr3D1_set(dictionary *ini);
 funPtr puDistrND1_set(dictionary *ini);
 funPtr puDistrND0_set(dictionary *ini);
 ///@}
+
+/**
+ * @brief Adds External E-field to Exiting E-field.
+ * @param			ini		Input file
+ * @param     pop   Population struct
+ * @param[in,out]		  E		  E-field Grid.
+ *
+ *
+ */
+void puAddEext(dictionary *ini, Population *pop, Grid *E);
 
 // EVERYTHING BELOW THIS SHOULD MOVE TO SEPARATE MIGRATION.H MODULE.
 

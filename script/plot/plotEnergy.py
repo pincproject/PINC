@@ -6,6 +6,7 @@ import numpy as np
 hist = h5py.File('../../data/history.xy.h5','r')
 pot = hist['/energy/potential/total']
 kin = hist['/energy/kinetic/total']
+print pot
 
 kin = kin[:,1];		# Extract y-axis
 pot = pot[:,1];	# Extract y-axis and invert
@@ -18,7 +19,7 @@ absError = max(maxEn-avgEn,avgEn-minEn)
 relError = absError/avgEn;
 print "Relative error: %.2f%%\n"%(relError*100)
 
-plt.plot(pot,label='potential')
+#plt.plot(pot,label='potential')
 plt.plot(kin,label='kinetic')
 plt.plot(tot,label='total')
 plt.legend(loc='lower left')

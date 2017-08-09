@@ -77,6 +77,8 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 void pVelSet(Population *pop, const double *vel);
 
 void pVelZero(Population *pop);
+void pVelConstant(const dictionary *ini, Population *pop, double constant1, \
+   double constant2);
 
 void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
 void pVelAssertMax(const Population *pop, double max);

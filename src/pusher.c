@@ -93,7 +93,9 @@ void puModeParticle(dictionary *ini){
 													puAccND1_set,
 													puAccND1KE_set,
 													puAccND0_set,
-													puAccND0KE_set);
+													puAccND0KE_set,
+													puBoris3D1_set,
+													puBoris3D1KE_set);
 
 		void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
 																	puExtractEmigrantsND_set);
@@ -360,12 +362,13 @@ void puAcc3D1KE(Population *pop, Grid *E){
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
-
+		msg(STATUS,"number of particles in array = %i", (pStop-pStart));
 		kinEnergy[s]=0;
 
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3];
 			puInterp3D1(dv,&pos[p],val,sizeProd);
+
 			double velSquared=0;
 			for(int d=0;d<nDims;d++){
 				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
@@ -557,7 +560,10 @@ void puAccND0(Population *pop, Grid *E){
 	free(dv);
 }
 
-
+funPtr puBoris3D1_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1",3,1);
+	return puBoris3D1;
+}
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 
 	int nSpecies = pop->nSpecies;
@@ -594,6 +600,11 @@ void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 		// Specie-specific re-normalization
 		gMul(E,pop->renormE[s]);
 	}
+}
+
+funPtr puBoris3D1KE_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1KE",3,1);
+	return puBoris3D1KE;
 }
 
 void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
@@ -647,10 +658,108 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 
 }
 
+funPtr puBoris3D1KETEST_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1KE",3,1);
+	return puBoris3D1KETEST;
+}
+
+void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S){
+
+	int nSpecies = pop->nSpecies;
+	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+	double *kinEnergy = pop->kinEnergy;
+	double *mass = pop->mass;
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+		kinEnergy[s]=0;
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3], w[3], vPlus[3], vMinus[3];
+			for(int d=0;d<nDims;d++){
+				// initializes memory
+				// this is for safety and can be removed/optimized in final ver.
+				vMinus[d] = 0.0;
+				vPlus[d] = 0.0;
+				w[d] = 0.0;
+				dv[d] = 0.0;
+			}
+			puInterp3D1(dv,&pos[p],val,sizeProd);
+
+			// Add half the acceleration (becomes vMinus in B&L notation)
+			for(int d=0;d<nDims;d++){ vMinus[d] = vel[p+d] + 0.5*dv[d]; }
+			//Compute omega, w (Trulsen)
+			addCross(vMinus,&T[3*s],w);
+			for(int d=0;d<nDims;d++){ w[d] += vMinus[d]; }
+			//Compute vPlus
+			addCross(w,&S[3*s],vPlus);
+			for(int d=0;d<nDims;d++){ vPlus[d] += vMinus[d]; }
+			// Add half the acceleration
+			for(int d=0;d<nDims;d++){ vel[p+d] = vPlus[d] + 0.5*dv[d]; }
+
+			// Compute energy
+			double velSquared = 0;
+			for(int d=0;d<nDims;d++){
+				velSquared += pow(vel[p+d],2);
+			}
+			kinEnergy[s]+=velSquared;
+
+
+		}
+
+		kinEnergy[s]*=mass[s];
+
+		// Specie-specific re-normalization
+		gMul(E,pop->renormE[s]);
+		// Renorm B!?!? That is S, and T ?
+	}
+
+}
+
+void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S){
+
+	//p, q needs to malloc 3*nDims*sizeof(double)
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
+	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
+	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	double halfTimeStep = 0.5*iniGetDouble(ini,"time:timeStep");
+	double factor;
+	double OmegaNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
+
+	for(int s=0;s<nSpecies;s++){
+		//safety for B = 0
+		if(OmegaNorm == 0.0){
+			factor = 0.0;
+		}else{
+			factor = (charge[s]/mass[s])*tan(halfTimeStep*OmegaNorm)/(OmegaNorm);
+		}
+
+		double denom = 1;
+		for(int p=0;p<3;p++){
+			T[3*s+p] = factor*(BExt[p]);
+			denom += pow(T[3*s+p],2);
+		}
+		double mul = 2.0/(denom);
+		for(int p=0;p<3;p++){
+			S[3*s+p] = mul*T[3*s+p];
+		}
+	}
+	free(BExt);
+	free(mass);
+	free(charge);
+}
+
+
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
-	int nSpecies = iniGetInt(ini,"grid:nSpecies");
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
@@ -1393,4 +1502,28 @@ static inline void addCross(const double *a, const double *b, double *res){
 	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
 	res[1] += -(a[0]*b[2]-a[2]*b[0]);
 	res[2] +=  (a[0]*b[1]-a[1]*b[0]);
+}
+
+void puAddEext(dictionary *ini, Population *pop, Grid *E){
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double stepSize = iniGetDouble(ini,"grid:stepSize");
+
+	int rank = E->rank;
+	int nDims = pop->nDims;
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+	double *Eext = iniGetDoubleArr(ini,"fields:EExt",nDims);
+	for(int d=0;d<nDims;d++){
+		Eext[d]*=((timeStep*timeStep)/stepSize);
+	}
+	for(long int p=0;p<sizeProd[rank];p+=nDims){
+		for(int d=0;d<nDims;d++){
+			//msg(STATUS, "E1 = %f" , val[p+d] );
+			val[p+d] += Eext[d];
+
+			E->val[p+d] = val[p+d];
+			//msg(STATUS, "E2 = %f" , E->val[p+d] );
+		}
+	}
+	free(Eext);
 }

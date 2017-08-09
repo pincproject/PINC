@@ -429,6 +429,33 @@ void pVelZero(Population *pop){
 	}
 }
 
+void pVelConstant(const dictionary *ini, Population *pop, double constant1, double constant2){
+
+	//test function. takes only two species
+	int nDims = pop->nDims;
+	//int nSpecies = pop->nSpecies;
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double stepSize = iniGetDouble(ini,"grid:stepSize");
+
+	long int iStart1 = pop->iStart[0];
+	long int iStop1 = pop->iStop[0];
+	long int iStart2 = pop->iStart[1];
+	long int iStop2 = pop->iStop[1];
+
+	for(long int i=iStart1;i<iStop1;i++){
+		//for(int d=0;d<nDims;d++){
+			pop->vel[i*nDims] = constant1;
+		//}
+	}
+	for(long int i=iStart2;i<iStop2;i++){
+		//for(int d=0;d<nDims;d++){
+			pop->vel[i*nDims] = (timeStep/stepSize)*constant2;
+			//for(int d=0;d<nDims;d++){
+			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
+		//}
+	}
+}
+
 void pNew(Population *pop, int s, const double *pos, const double *vel){
 
 	int nDims = pop->nDims;
