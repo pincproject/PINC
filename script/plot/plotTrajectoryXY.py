@@ -16,7 +16,7 @@ pos = file['/pos/specie 0']
 
 
 particleNum = 1643 
-Nt = 1000 #pos.shape[1]
+Nt = 200 #pos.shape[1]
 
 Np = pos['n=1.0'].shape[0]	# Number of particles
 Nd = pos['n=1.0'].shape[1]	# Number of dimensions

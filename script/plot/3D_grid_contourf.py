@@ -33,6 +33,7 @@ import sys, os, inspect
 
 def transformData(dataset, timestep):
 	grid = dataset['/n=%.1f'%timestep]
+	print dataset
 	# grid = np.transpose(grid, (3,2,1,0))
 	grid = np.squeeze(grid)
 	grid = np.average(grid, axis = 1)
@@ -49,7 +50,7 @@ def plot2DSlice(name, grid, saveStr):
 	X,Y = np.meshgrid(x,y)
 
 	plt.figure()
-	plt.contourf(X,Y,grid, 50)
+	plt.contourf(X,Y,grid,50)
 
 	plt.colorbar()
 	plt.title(name)
@@ -59,24 +60,27 @@ def plot2DSlice(name, grid, saveStr):
 
 path = "../../data/"
 #Loading data/Shaving of last dimension
-rho = transformData(h5py.File(path +'rho_0.grid.h5','r'),0)
+rho = transformData(h5py.File(path +'rho.grid.h5','r'),1)
 plot2DSlice("$\\rho$", rho, "rho.pdf")
+print"rho"
 del rho
-res = transformData(h5py.File(path +'res_0.grid.h5','r'),0)
-plot2DSlice("Residual", res, "residual.pdf")
-del res
-E = transformData(h5py.File(path +'E_0.grid.h5','r'),0)
+#res = transformData(h5py.File(path +'res_0.grid.h5','r'),0)
+#plot2DSlice("Residual", res, "residual.pdf")
+#del res
+E = transformData(h5py.File(path +'E.grid.h5','r'),1)
 plot2DSlice("$E$", E[:,:,0], "E.pdf")
+print "E"
 del E
-phi = transformData(h5py.File(path +'phi_0.grid.h5','r'),0)
-sol = transformData(h5py.File(path +'sol_0.grid.h5','r'),0)
-error = sol - phi
+phi = transformData(h5py.File(path +'phi.grid.h5','r'),1)
+#sol = transformData(h5py.File(path +'sol_0.grid.h5','r'),0)
+#error = sol - phi
 plot2DSlice("Numerical $\phi$", phi, "numerical.pdf")
+print "phi"
 del phi
-plot2DSlice("Solution", sol, "analytical.pdf")
-del sol
-plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error, "error.pdf")
-del error
+#plot2DSlice("Solution", sol, "analytical.pdf")
+#del sol
+#plot2DSlice("Error $|\phi_{num} - \phi_{ana}|$", error, "error.pdf")
+#del error
 
 
 
