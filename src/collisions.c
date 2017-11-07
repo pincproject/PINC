@@ -437,7 +437,7 @@ void mccTestMode(dictionary *ini){
 	// using Boris algo
 	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
 	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	puGet3DRotationParameters(ini, T, S);
+	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
