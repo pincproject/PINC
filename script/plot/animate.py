@@ -7,12 +7,12 @@ import pylab as plt
 
 h5 = h5py.File('../../data/phi.grid.h5','r')
 
-for i in range(1,60):
+for i in range(1701,2000):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
 	#data = np.average(data,axis=1)		#animate average on axis
 	data = data[:][16][:]			#animate slice
-	if i==1:
+	if i==1701:
 		p = plt.imshow(data)
 		fig = plt.gcf()
 		plt.clim()

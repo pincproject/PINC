@@ -362,7 +362,6 @@ void puAcc3D1KE(Population *pop, Grid *E){
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
-		msg(STATUS,"number of particles in array = %i", (pStop-pStart));
 		kinEnergy[s]=0;
 
 		for(long int p=pStart;p<pStop;p+=nDims){

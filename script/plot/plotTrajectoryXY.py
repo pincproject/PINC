@@ -9,14 +9,15 @@ import matplotlib.pyplot as plt
 file = h5py.File('../../data/pop.pop.h5','r')
 
 pos = file['/pos/specie 0']
+#vel = file['/vel/specie 0']
 
 #for item in f.attrs.keys():
 #    print item + ":", f.attrs[item]
 
 
 
-particleNum = 1643 
-Nt = 200 #pos.shape[1]
+particleNum = 27
+Nt = 1 #pos.shape[1]
 
 Np = pos['n=1.0'].shape[0]	# Number of particles
 Nd = pos['n=1.0'].shape[1]	# Number of dimensions
@@ -29,13 +30,21 @@ print 'picked particle number %i' % particleNum
 x = []
 y = []
 z = []
+#vx = []
+#vy = []
+#vz = []
 for i in range(1,Nt):
 	
 	positionOfParticle = pos['n=%.1f' % i][particleNum]
 	x.append(positionOfParticle[:][0])
 	y.append(positionOfParticle[:][1])
 	z.append(positionOfParticle[:][2])
+	#velocOfParticle = vel['n=%i.5' % i][particleNum]
+	#vx.append(velocOfParticle[:][0])
+	#vy.append(velocOfParticle[:][1])
+	#vz.append(velocOfParticle[:][2])
 
+#print(vx, vy, vz)
 
 #for i in range(0,Nt-1):
 #	print "x = %f, y = %f z = %f" %(x[i],y[i],z[i])

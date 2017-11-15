@@ -29,6 +29,13 @@ funPtr mccTestMode_set(dictionary *ini);
  * Looong description of mccTest
  */
 
+
+ //delete BorisTest in final Version
+ void BorisTestMode(dictionary *ini);
+ funPtr BorisTestMode_set(dictionary *ini);
+
+
+
 int mccTest(int one, int two);
 
 #endif // COLLISIONS_H

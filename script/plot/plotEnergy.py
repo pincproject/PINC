@@ -6,12 +6,12 @@ import numpy as np
 hist = h5py.File('../../data/history.xy.h5','r')
 pot = hist['/energy/potential/total']
 kin = hist['/energy/kinetic/total']
-print pot
 
 kin = kin[:,1];		# Extract y-axis
 pot = pot[:,1];	# Extract y-axis and invert
 tot = pot+kin;		# Collect total energy
 
+print(len(tot))
 avgEn = np.average(tot)
 maxEn = np.max(tot)
 minEn = np.min(tot)
