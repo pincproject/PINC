@@ -629,16 +629,17 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3], vPrime[3];
 			puInterp3D1(dv,&pos[p],val,sizeProd);
+			//msg(STATUS,"p = %i",p);
 
 			// Add half the acceleration (becomes v minus in B&L notation)
 			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
 
 			// Rotate
 			memcpy(vPrime,vel,3*sizeof(*vPrime));
-			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime
-			addCross(vPrime,&S[3*s],vel); // vel is now v plus (B&L)
+			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime (Eq. 4-4 (10) in B&L)
+			addCross(vPrime,&S[3*s],vel); // vel is now v plus (Eq. 4-4 (12) in B&L)
 
-			// Compute energy
+			// Compute energy (at integer timestep)
 			double velSquared = 0;
 			for(int d=0;d<nDims;d++){
 				velSquared += pow(vel[p+d],2);
@@ -755,27 +756,36 @@ void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S){
 }
 
 
-void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
+void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int nSpecies = iniGetInt(ini,"population:nSpecies");
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double halfTimeStep = 0.5*iniGetDouble(ini,"time:timeStep");
+	double timeStep = iniGetDouble(ini,"time:timeStep");
+	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
 
 	for(int s=0;s<nSpecies;s++){
-		double factor = halfTimeStep*charge[s]/mass[s];
+		double factor = 0.5*charge[s]/mass[s]*dtFactor;
+		double tanThetaHalf = 0;
+		if(BNorm != 0.0) tanThetaHalf = tan(factor*BNorm);
+		msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
 		double denom = 1;
 		for(int p=0;p<3;p++){
-			T[3*s+p] = factor*BExt[p];
+			// T[3*s+p] = factor*BExt[p]; // Eq. 4-4 (11) in B&L without tan-correction
+			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
 			denom += pow(T[3*s+p],2);
 		}
 		double mul = 2.0/denom;
 		for(int p=0;p<3;p++){
-			S[3*s+p] = mul*T[3*s+p];
+			S[3*s+p] = mul*T[3*s+p]; // Eq. 4-4 (13) in B&L
 		}
 	}
+
+    free(BExt);
+    free(mass);
+    free(charge);
 }
 
 

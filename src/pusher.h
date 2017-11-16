@@ -146,7 +146,7 @@ funPtr puBoris3D1KETEST_set(dictionary *ini);
  * S and T must be pre-allocated to hold 3*nSpecies doubles each.
  * This functions needs some cleanup.
  */
-void puGet3DRotationParameters(dictionary *ini, double *T, double *S);
+void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor);
 void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S);
 
 

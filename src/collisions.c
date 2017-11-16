@@ -107,7 +107,7 @@ double mccSigmaIonElastic(double eps, double DebyeLength){
 	double b = 0.5*pow(10,-2); //slew? rate
 	double temp = a+(b/(sqrt(eps)));
 	//temp = temp/(DebyeLength*DebyeLength); // convert to PINC dimensions
-	return 0.0;//temp;
+	return temp;
 }
 double mccSigmaElectronElastic(double eps, double DebyeLength){
 	// need a function for calculating real cross sects from data...
@@ -162,8 +162,26 @@ void mccGetPmaxElectron(double m, double thermalVel, double dt, double nt, doubl
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
 	double min_v = mccGetMinVel(pop,0);
 	msg(STATUS,"maxVelocity Electron =  %f minVelocity Electron =  %f", max_v, min_v);
-	double eps = 0.5*max_v*max_v*pop->mass[0];
-	*maxfreq = mccSigmaElectronElastic(eps, DebyeLength)*max_v*nt; //maxfreq = max_eps(sigma_T *v)*nt (or max frequency of colls?)
+	double eps = 0.0;//0.5*max_v*max_v*pop->mass[0];
+
+	double *vel = pop->vel;
+	double NewFreq = 0;
+	double NewVelocity = 0;
+	int nDims = pop->nDims;
+
+	long int iStart = pop->iStart[0]; //ions as specie 1
+	long int iStop  = pop->iStop[0];
+	for(int i=iStart; i<iStop; i++){
+		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
+			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+		eps = 0.5*NewVelocity*NewVelocity*pop->mass[0];
+		NewFreq = mccSigmaElectronElastic(eps, DebyeLength)*NewVelocity*nt;
+		if(NewFreq>*maxfreq){
+			*maxfreq=NewFreq;
+		}
+	}
+
+	//*maxfreq = mccSigmaElectronElastic(eps, DebyeLength)*max_v*nt; //maxfreq = max_eps(sigma_T *v)*nt (or max frequency of colls?)
 	msg(STATUS,"maxfreq electron =  %f", *maxfreq );
 	*Pmax = 1-exp(-(*maxfreq*dt));
 	//*Pmax = 0.01;
@@ -186,7 +204,8 @@ double mccEnergyDiffIonElastic(double Ekin, double theta, double mass1, double m
 	//msg(STATUS, "theta = %f", theta);
 	//msg(STATUS, "mass1 = %f", mass1);
 	//msg(STATUS, "mass2 = %f", mass2);
-	temp = Ekin*((2*mass1*mass2)/(mass1+mass2))*(1.0-cos(theta));
+	temp = Ekin*( 1-((2*mass1*mass2)/((mass1+mass2)*(mass1+mass2)) )*(1.0-cos(theta)) );
+	//temp = Ekin*(cos(2*theta)*cos(2*theta));
 	//msg(STATUS, "temp = %.32f", temp);
 	return temp;
 }
@@ -359,10 +378,12 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 	long int errorcounter1 = 0;
 	long int errorcounter2 = 0;
 	long int errorcounter3 = 0;
+	long int errorcounter4 = 0;
 	long int debugindex = 0;
 	double Ekin = 0;
 	double EkinAfter = 0;
 	double EnergyDiff = 1;
+	double AccumulatedEnergyDiff = 0;
 
 	long int iStart = pop->iStart[1];			// *nDims??
 	long int iStop = pop->iStop[1];      // make shure theese are actually ions!
@@ -405,9 +426,9 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 		if(q>iStop*nDims){
 			msg(ERROR,"index out of range, q>iStop in collideIon");
 		}
-		vxMW = 0.0;//gsl_ran_gaussian_ziggurat(rng,velTh); //maxwellian dist?
-		vyMW = 0.0;//gsl_ran_gaussian_ziggurat(rng,velTh);
-		vzMW = 0.0;//gsl_ran_gaussian_ziggurat(rng,velTh);
+		vxMW = gsl_ran_gaussian_ziggurat(rng,velTh); //maxwellian dist?
+		vyMW = gsl_ran_gaussian_ziggurat(rng,velTh);
+		vzMW = gsl_ran_gaussian_ziggurat(rng,velTh);
 		//msg(STATUS,"neutral velx = %f vely = %f velz = %f",vxMW,vyMW,vzMW );
 		double vxTran = vel[q]-vxMW;   //simple transfer, should be picked from maxwellian
 		double vyTran = vel[q+1]-vyMW;  //vel-velMaxwellian
@@ -435,7 +456,8 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 				Ekin = 0.5*(vel[q]*vel[q] + vel[q+1]*vel[q+1] + vel[q+2]*vel[q+2])*mass[1];
 				R1 = gsl_rng_uniform_pos(rng);
 
-				double argument = sqrt(1-R); // This one has the posibility to be greater than 1?
+				//The scattering happens in center of mass so we use THETA not chi
+				double argument = 1-2*R; //chi is THETA
 
 				if(sqrt(argument*argument)>1.0){
 					double newargument = sqrt(argument*argument)/argument;
@@ -452,14 +474,17 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 					msg(STATUS, "abs(argument) = %32f", sqrt(argument*argument));
 					msg(ERROR,"angleChi == nan!!!! new velocity is cos(nan)  argument of acos() is %.32f!!", argument);
 				}
+
 				//angleChi = acos(sqrt(1-R)); // for M_ion = M_neutral
 				anglePhi = 2*PI*R1; // set different R?
-				angleTheta = 2*angleChi;
-				//EnergyDiff = mccEnergyDiffIonElastic(Ekin, angleTheta, mass[0], mass[1]);
+				//angleTheta = 2*angleChi; //NOPE! not the same!
+				angleTheta = acos(vxTran); //C_M frame
+				EnergyDiff = mccEnergyDiffIonElastic(Ekin, angleChi, mass[1], mass[1]);//Acctually Ion and neutral mass
 				//if(sin(angleTheta) == 0.0){
 				//	msg(ERROR,"float division by zero in collideion", argument);
 				//}
 				A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
+
 				if(isinf(A)){
 					msg(ERROR,"A is inf in Collide ion !!");
 				}
@@ -470,9 +495,25 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 				+ vxMW; //Vx
 				vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
 				vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
+				if(sqrt(vel[q]*vel[q] + vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])>sqrt(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*10){
+					msg(STATUS,"argument of acos() = %f", argument);
+					msg(STATUS,"acos() = %f",angleChi );
+					msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
+					msg(STATUS,"vx = %f, vy = %f, vz = %f",vel[q],vel[q+1],vel[q+2]);
+					errorcounter4 += 1;
+				}
+				//if(sqrt(A*A)<0.00000001){
+				//	msg(STATUS,"argument of acos() = %f", argument);
+				//	msg(STATUS,"acos() = %f",angleChi );
+				//	msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
+				//}
 				EkinAfter = 0.5*(vel[q]*vel[q] + vel[q+1]*vel[q+1] + vel[q+2]*vel[q+2])*mass[1];
-				//msg(STATUS, "---------- energydiff = %.32f", (Ekin-EkinAfter) );
-				//msg(STATUS, "analytical energydiff = %.32f",EnergyDiff );
+				AccumulatedEnergyDiff += (Ekin-EkinAfter);
+				///msg(STATUS," ");
+				///msg(STATUS, "---------- energydiff = %.32f", (Ekin-EkinAfter) );
+				///msg(STATUS, "analytical energydiff = %.32f",EnergyDiff );
+				///msg(STATUS, "deviation = %.32f",EnergyDiff-(Ekin-EkinAfter) );
+				//msg(STATUS," ");
 				errorcounter1 += 1;
 			}else{
 				// Charge exchange:
@@ -485,6 +526,8 @@ void mccCollideIon(const dictionary *ini, Population *pop, double *Pmax,
 			}
 		}
 	}
+	msg(STATUS, "AccumulatedEnergyDiff = %.32f",AccumulatedEnergyDiff );
+	msg(STATUS, "counted %i energy increases",errorcounter4);
 	msg(STATUS,"%i ion collisions actually performed and last index was %i", errorcounter2, debugindex-iStart);
 	msg(STATUS,"%i ion collisions as ch-ex and %i as elastic, the sum should be %i", errorcounter, errorcounter1,errorcounter2);
 
@@ -593,7 +636,6 @@ void mccTestMode(dictionary *ini){
 	// using Boris algo
 	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
 	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	puGet3DRotationParameters(ini, T, S);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -619,7 +661,7 @@ void mccTestMode(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	//pOpenH5(ini, pop, "pop");
+	pOpenH5(ini, pop, "pop");
 	//gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	//gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
@@ -677,16 +719,12 @@ void mccTestMode(dictionary *ini){
 	// add External E
 	puAddEext(ini, pop, E);
 
-
 	// Advance velocities half a step
 	gMul(E, 0.5);
-	for(int d = 0; d < nSpecies*3;d++) T[d] *= 0.5;
-	for(int d = 0; d < nSpecies*3;d++) S[d] *= 0.5;
+	puGet3DRotationParameters(ini, T, S, 0.5);
 	acc(pop, E, T, S);
 	gMul(E, 2.0);
-	//msg(STATUS, "S = %f", T);
-	for(int d = 0; d < nSpecies*3;d++) T[d] *= 2.0;
-	for(int d = 0; d < nSpecies*3;d++) S[d] *= 2.0;
+	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	//Write initial h5 files
 	//gWriteH5(E, mpiInfo, 0.0);
@@ -786,10 +824,12 @@ void mccTestMode(dictionary *ini){
 		gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
 		// gAddTo(Ext);
+		gZero(E);
 		puAddEext(ini, pop, E);
 
 		// Accelerate particle and compute kinetic energy for step n
 		//msg(STATUS, "Accelerate particles");
+
 		acc(pop, E, T, S);
 		tStop(t);
 
@@ -799,7 +839,7 @@ void mccTestMode(dictionary *ini){
 		//msg(STATUS, "compute pot energy");
 		// Compute potential energy for step n
 		gPotEnergy(rho,phi,pop);
-		if(n>89000){
+		if(n>nTimeSteps-1000){
 			msg(STATUS, "writing over a given timestep to file");
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
@@ -808,6 +848,9 @@ void mccTestMode(dictionary *ini){
 			//gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		}
+		if(n>nTimeSteps-50){
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
 //		if(n%1000==0 && n<48000){
 //			msg(STATUS, "writing every 1000 timestep to file");
@@ -840,7 +883,7 @@ void mccTestMode(dictionary *ini){
 	gFreeMpi(mpiInfo);
 
 	// Close h5 files
-	//pCloseH5(pop);
+	pCloseH5(pop);
 	//gCloseH5(rho);
 	gCloseH5(phi);
 	//gCloseH5(E);
@@ -858,266 +901,6 @@ void mccTestMode(dictionary *ini){
 	pFree(pop);
 	free(S);
 	free(T);
-	// oFree(obj);
-
-	gsl_rng_free(rngSync);
-	gsl_rng_free(rng);
-
-}
-
-
-// delete below here in final version
-
-//delete BorisTest in final Version
-void BorisTestMode(dictionary *ini);
-funPtr BorisTestMode_set(dictionary *ini){ return BorisTestMode; }
-
-void BorisTestMode(dictionary *ini){
-
-
-	/*
-	 * SELECT METHODS
-	 */
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set,
-												puBoris3D1_set,
-												puBoris3D1KE_set,
-												puBoris3D1KETEST_set);
-
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
-
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
-
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
-
-	// char *str;
-	//
-	// str = iniGetStr("methods:acc");
-	// void (*acc)() = NULL;
-	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
-	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
-
-	/*
-	 * INITIALIZE PINC VARIABLES
-	 */
-
-
-
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-	// Object *obj = oAlloc(ini);
-
-	// using Boris algo
-	int nSpecies = pop->nSpecies;
-	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	puGet3DRotationParameters(ini, T, S);
-
-	// Creating a neighbourhood in the rho to handle migrants
-	gCreateNeighborhood(ini, mpiInfo, rho);
-
-	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
-
-	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
-
-	// Random number seeds
-	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
-
-	/*
-	 * PREPARE FILES FOR WRITING
-	 */
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-
-	pOpenH5(ini, pop, "pop");
-	//gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	//gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	//gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-  // oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
-  // oReadH5(obj, mpiInfo);
-
-	hid_t history = xyOpenH5(ini,"history");
-	pCreateEnergyDatasets(history,pop);
-
-	// Add more time series to history if you want
-	// xyCreateDataset(history,"/group/group/dataset");
-
-	free(denorm);
-	free(dimen);
-
-	/*
-	 * INITIAL CONDITIONS
-	 */
-
-	// Initalize particles
-
-	pPosUniform(ini, pop, mpiInfo, rngSync);
-	//pPosLattice(ini, pop, mpiInfo);
-	//pVelZero(pop);
-	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	pVelConstant(ini, pop,velThermal[0] , velThermal[1]);
-	//pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
-
-	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
-
-	// Migrate those out-of-bounds due to perturbation
-	extractEmigrants(pop, mpiInfo);
-	puMigrate(pop, mpiInfo, rho);
-
-	/*
-	 * INITIALIZATION (E.g. half-step)
-	 */
-
-	// Get initial charge density
-	distr(pop, rho);
-	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-
-	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, TOHALO);
-	gMul(E, -1.);
-
-
-	// Advance velocities half a step
-	puAddEext(ini, pop, E);
-	gMul(E, 0.5);
-	for(int d = 0; d < nSpecies*3;d++) T[d] *= 0.5;
-	for(int d = 0; d < nSpecies*3;d++) S[d] *= 0.5;
-	//acc(pop, E, T, S);
-	gMul(E, 2.0);
-	//msg(STATUS, "S = %f", T);
-	for(int d = 0; d < nSpecies*3;d++) T[d] *= 2.0;
-	for(int d = 0; d < nSpecies*3;d++) S[d] *= 2.0;
-
-	/*
-	 * TIME LOOP
-	 */
-
-	Timer *t = tAlloc(rank);
-
-	// n should start at 1 since that's the timestep we have after the first
-	// iteration (i.e. when storing H5-files).
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	for(int n = 1; n <= nTimeSteps; n++){
-
-		msg(STATUS,"Computing time-step %i",n);
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,maxVel);
-
-		tStart(t);
-
-		// Move particles
-		puMove(pop);
-		// oRayTrace(pop, obj);
-
-		// Migrate particles (periodic boundaries)
-		extractEmigrants(pop, mpiInfo);
-		puMigrate(pop, mpiInfo, rho);
-
-		// Check that no particle resides out-of-bounds (just for debugging)
-		pPosAssertInLocalFrame(pop, rho);
-		//msg(STATUS, "HEEEEEEEEEEERRRRRRRRRRREEEEEEEEEEEE");
-		// Compute charge density
-		distr(pop, rho);
-		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-
-		gAssertNeutralGrid(rho, mpiInfo);
-
-		// Compute electric potential phi
-		//solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-		gAssertNeutralGrid(phi, mpiInfo);
-
-		// Compute E-field
-		//gFinDiff1st(phi, E);
-		gMul(E, 0.0); //nullify field
-		gHaloOp(setSlice, E, mpiInfo, TOHALO);
-		//gMul(E, -1.);
-
-		gAssertNeutralGrid(E, mpiInfo);
-		// Apply external E
-		// gAddTo(Ext);
-		puAddEext(ini, pop, E);
-
-		// Accelerate particle and compute kinetic energy for step n
-		acc(pop, E, T, S);
-
-		tStop(t);
-
-		// Sum energy for all species
-		pSumKinEnergy(pop);
-
-		// Compute potential energy for step n
-		gPotEnergy(rho,phi,pop);
-
-		// Example of writing another dataset to history.xy.h5
-		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-
-		//Write h5 files
-		//gWriteH5(E, mpiInfo, (double) n);
-		//gWriteH5(rho, mpiInfo, (double) n);
-		//gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		pWriteEnergy(history,pop,(double)n);
-
-	}
-
-	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
-
-	/*
-	 * FINALIZE PINC VARIABLES
-	 */
-	free(S);
-	free(T);
-
-	gFreeMpi(mpiInfo);
-
-	// Close h5 files
-	pCloseH5(pop);
-	//gCloseH5(rho);
-	//gCloseH5(phi);
-	//gCloseH5(E);
-	// oCloseH5(obj);
-	xyCloseH5(history);
-
-	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
-	gFree(rho);
-	gFree(phi);
-	gFree(res);
-	gFree(E);
-	pFree(pop);
 	// oFree(obj);
 
 	gsl_rng_free(rngSync);
