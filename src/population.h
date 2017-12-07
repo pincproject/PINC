@@ -53,6 +53,35 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
 
 /**
+ * @brief    Assign particles to Gaussian distributed positions
+ * @param            ini        Dictionary to input file
+ * @param[in,out]    pop        Population of particles
+ * @param            grid       Grid in which the particles are to be distributed
+ * @param            rngSync    Synchronized random number generator
+ * @return           void
+ *
+ * The amount of particles specified by blob:BlobParticles in ini will be
+ * generated with a Gaussian distributed random positions within the simulation
+ * domain (global reference frame). The standard deviation of the distribution,
+ * sigma, is given by blob:blobSize in ini, and can be different in different
+ * dimensions. The blob is centered on the grid.
+ 
+ * Is this part true?: In case of multiple subdomains only
+ * particles residing in this MPI node's subdomain will be stored, and will be
+ * transformed to its local reference frame. The rng should have the same seed
+ * (be synchronized) on all MPI nodes when calling this function as that will
+ * ensure that all nodes generates the same particles and discards particles
+ * not belonging to their subdomain. Failure to do so may lead to the number of
+ * particles generated being different than specified in ini.
+ *
+ */
+
+void pPosBlob(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
+
+void pPosUniformBlob(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
+
+
+/**
  * @brief	Assign particles artificial positions suitable for debugging
  * @param			ini		Dictionary to input file
  * @param[in,out]	pop		Population

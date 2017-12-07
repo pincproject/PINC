@@ -133,11 +133,13 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
+    pPosUniformBlob(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
+    //pPosBlob(ini, pop, mpiInfo, rngSync);
+    pVelZero(pop);
 	// pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
+    
 
 	// Perturb particles
 	pPosPerturb(ini, pop, mpiInfo);
@@ -172,6 +174,8 @@ void regular(dictionary *ini){
 	 */
 
 	Timer *t = tAlloc(rank);
+    
+    
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -239,10 +243,10 @@ void regular(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		// gWriteH5(E, mpiInfo, (double) n);
-		// gWriteH5(rho, mpiInfo, (double) n);
-		// gWriteH5(phi, mpiInfo, (double) n);
-		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		gWriteH5(E, mpiInfo, (double) n);
+        gWriteH5(rho, mpiInfo, (double) n);
+		gWriteH5(phi, mpiInfo, (double) n);
+		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
 	}

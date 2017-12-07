@@ -130,6 +130,8 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 
 			// Generate position for particle i
 			for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
+            //for(int d=0;d<nDims;d++) pos[d] = L[d]/2 + gsl_ran_gaussian(rng, 0.1);
+            
 
 			// Count the number of dimensions where the particle resides in
 			// the range of this node
@@ -163,6 +165,162 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 	free(trueSize);
 
 }
+
+void pPosUniformBlob(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
+    // Read from ini
+    int nSpecies = pop->nSpecies;
+    int nDims = pop->nDims;
+    long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+    double *sigma = iniGetDoubleArr(ini, "blob:blobSize", nDims);
+    int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+    
+    double blobAmp = iniGetDouble(ini, "blob:blobAmp");
+    
+    // Part of nParticles that belongs to the background plasma
+    double background = 1.0/(1.0+blobAmp);
+    
+    // Read from mpiInfo
+    int *subdomain = mpiInfo->subdomain;
+    double *posToSubdomain = mpiInfo->posToSubdomain;
+    
+    // Compute normalized length of global reference frame
+    int *L = gGetGlobalSize(ini);
+    
+    for(int s=0;s<nSpecies;s++){
+        // Start on first particle of this specie
+        long int iStart = pop->iStart[s];
+        long int iStop = iStart;
+        double *pos = &pop->pos[iStart*nDims];
+        
+        // Iterate through all particles to be generated. Same seed on all MPI
+        // nodes ensure same particles are generated everywhere.
+        for(long int i=0;i<nParticles[s]*background;i++){
+            
+            // Generate position for particle i
+            for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
+            //for(int d=0;d<nDims;d++) pos[d] = L[d]/2 + gsl_ran_gaussian(rng, sigma[d]);
+            
+            
+            // Count the number of dimensions where the particle resides in
+            // the range of this node
+            int correctRange = 0;
+            for(int d=0;d<nDims;d++)
+                correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+            
+            // Iterate only if particle resides in this sub-domain.
+            if(correctRange==nDims){
+                pos += nDims;
+                iStop++;
+            }
+            
+        }
+        for(long int i=nParticles[s]*background;i<nParticles[s];i++){
+            
+            // Generate position for particle i
+            for(int d=0;d<nDims;d++) pos[d] = L[d]/2 + gsl_ran_gaussian(rng, sigma[d]);
+            
+            
+            // Count the number of dimensions where the particle resides in
+            // the range of this node
+            int correctRange = 0;
+            for(int d=0;d<nDims;d++)
+                correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+            
+            // Iterate only if particle resides in this sub-domain.
+            if(correctRange==nDims){
+                pos += nDims;
+                iStop++;
+            }
+            
+        }
+        
+        if(iStop>pop->iStart[s+1]){
+            int allocated = pop->iStart[s+1]-iStart;
+            int generated = iStop-iStart;
+            msg(ERROR,    "allocated only %i particles of specie %i per node but"
+                "%i generated", allocated, s, generated);
+        }
+        
+        pop->iStop[s]=iStop;
+        
+    }
+    
+    pToLocalFrame(pop,mpiInfo);
+    
+    free(L);
+    free(nParticles);
+    free(trueSize);
+    
+}
+
+void pPosBlob(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
+    
+    // Read from ini
+    int nSpecies = pop->nSpecies;
+    int nDims = pop->nDims;
+    long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+    long int *blobAmp = iniGetLongIntArr(ini,"blob:blobAmp",nSpecies);
+    double *sigma = iniGetDoubleArr(ini, "blob:blobSize", nDims);
+    int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+    
+    
+    // Read from mpiInfo
+    int *subdomain = mpiInfo->subdomain;
+    double *posToSubdomain = mpiInfo->posToSubdomain;
+    
+    // Compute normalized length of global reference frame
+    int *L = gGetGlobalSize(ini);
+    
+    for(int s=0;s<nSpecies;s++){
+        // How many particles in this dimension
+        int nBlobParticles = blobAmp[s] * nParticles[s];
+        
+        // Start on first particle of this specie
+        long int iStart = pop->iStart[s];
+        long int iStop = iStart;
+        double *pos = &pop->pos[iStart*nDims];
+        
+        // Iterate through all particles to be generated. Same seed on all MPI
+        // nodes ensure same particles are generated everywhere.
+        for(long int i=0;i<nBlobParticles;i++){
+            
+            // Generate position for particle i
+            for(int d=0;d<nDims;d++) pos[d] = L[d]/2 + gsl_ran_gaussian(rng, sigma[d]);
+            
+            // Count the number of dimensions where the particle resides in
+            // the range of this node
+            int correctRange = 0;
+            for(int d=0;d<nDims;d++)
+                correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+            
+            // Iterate only if particle resides in this sub-domain.
+            if(correctRange==nDims){
+                pos += nDims;
+                iStop++;
+            }
+            
+        }
+        
+        if(iStop>pop->iStart[s+1]){
+            int allocated = pop->iStart[s+1]-iStart;
+            int generated = iStop-iStart;
+            msg(ERROR,    "allocated only %i particles of specie %i per node but"
+                "%i generated", allocated, s, generated);
+        }
+        
+        pop->iStop[s]=iStop;
+        
+    }
+    
+    pToLocalFrame(pop,mpiInfo);
+    
+    free(L);
+    //free(nBlobParticles);
+    free(trueSize);
+    free(sigma);
+    
+}
+
 
 void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo){
 
@@ -763,6 +921,9 @@ static void pSetNormParams(const dictionary *ini, Population *pop){
 
 	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
+
+    
+    
 	double cellVolume = adProd(stepSize,nDims);
 
 	// Multiply charge and mass by multiplicity
