@@ -147,7 +147,7 @@ funPtr puBoris3D1KETEST_set(dictionary *ini);
  * This functions needs some cleanup.
  */
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor);
-void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S);
+void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S, double dtFactor);
 
 
 /** @name Distributors
@@ -166,10 +166,16 @@ void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S);
  */
 ///@{
 void puDistr3D1(const Population *pop, Grid *rho);
+void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i);
+/**
+ * @brief	does the same as puDistr3D1 but splits rho and writes to rho_e
+ * and rho_i for species 0 and 1
+ */
 void puDistrND1(const Population *pop, Grid *rho);
 void puDistrND0(const Population *pop, Grid *rho);
 
 funPtr puDistr3D1_set(dictionary *ini);
+funPtr puDistr3D1split_set(dictionary *ini);
 funPtr puDistrND1_set(dictionary *ini);
 funPtr puDistrND0_set(dictionary *ini);
 ///@}

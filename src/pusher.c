@@ -720,7 +720,10 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 
 }
 
-void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S){
+void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S, double dtFactor){
+
+	// do not use! Delete this one later.....
+
 
 	//p, q needs to malloc 3*nDims*sizeof(double)
 	int nDims = iniGetInt(ini,"grid:nDims");
@@ -737,7 +740,7 @@ void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S){
 		if(OmegaNorm == 0.0){
 			factor = 0.0;
 		}else{
-			factor = (charge[s]/mass[s])*tan(halfTimeStep*OmegaNorm)/(OmegaNorm);
+			factor = dtFactor*(charge[s]/mass[s])*tan(halfTimeStep*OmegaNorm)/(OmegaNorm);
 		}
 
 		double denom = 1;
@@ -764,22 +767,34 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 	double timeStep = iniGetDouble(ini,"time:timeStep");
+	//*BExt = *BExt*timeStep;
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
 
 	for(int s=0;s<nSpecies;s++){
-		double factor = 0.5*charge[s]/mass[s]*dtFactor;
+		double factor = charge[s]/mass[s]*dtFactor;
 		double tanThetaHalf = 0;
-		if(BNorm != 0.0) tanThetaHalf = tan(factor*BNorm);
+		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm*timeStep); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
+		}else{tanThetaHalf = 0.0;}
 		msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
+		if(factor*BNorm*factor*BNorm*timeStep*timeStep > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
+			msg(STATUS,"mass of specie %i: %f",s, mass[s]);
+			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm*timeStep, tanThetaHalf);
+			msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm*timeStep);
+			msg(ERROR, "unphysical rotatons encountered in puGet3DRotationParameters");
+		}
+		//if(factor*BNorm*factor*BNorm/ > (3.14*3.14){
+
 		double denom = 1;
 		for(int p=0;p<3;p++){
 			// T[3*s+p] = factor*BExt[p]; // Eq. 4-4 (11) in B&L without tan-correction
 			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
+			msg(STATUS,"T: %f", tanThetaHalf*BExt[p]/BNorm);
 			denom += pow(T[3*s+p],2);
 		}
 		double mul = 2.0/denom;
 		for(int p=0;p<3;p++){
 			S[3*s+p] = mul*T[3*s+p]; // Eq. 4-4 (13) in B&L
+			msg(STATUS,"S: %f", mul*T[3*s+p]);
 		}
 	}
 
@@ -848,6 +863,83 @@ void puDistr3D1(const Population *pop, Grid *rho){
 		}
 
 		gMul(rho,pop->renormRho[s]);
+
+	}
+
+}
+funPtr puDistr3D1split_set(dictionary *ini){
+	puSanity(ini,"puDistr3D1split",3,1);
+	return puDistr3D1split;
+}
+
+void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+	double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[3*i];
+
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
+
+			// Decimal (cell-referenced) parts of position and their complement
+			double x = pos[0]-j;
+			double y = pos[1]-k;
+			double z = pos[2]-l;
+			double xcomp = 1-x;
+			double ycomp = 1-y;
+			double zcomp = 1-z;
+
+			// Index of neighbouring nodes
+			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + 1; //sizeProd[1];
+			long int pk 	= p + sizeProd[2];
+			long int pjk 	= pk + 1; //sizeProd[1];
+			long int pl 	= p + sizeProd[3];
+			long int pjl 	= pl + 1; //sizeProd[1];
+			long int pkl 	= pl + sizeProd[2];
+			long int pjkl 	= pkl + 1; //sizeProd[1];
+
+			// if(pjkl>=sizeProd[4])
+			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
+
+			val[p] 		+= xcomp*ycomp*zcomp;
+			val[pj]		+= x    *ycomp*zcomp;
+			val[pk]		+= xcomp*y    *zcomp;
+			val[pjk]	+= x    *y    *zcomp;
+			val[pl]     += xcomp*ycomp*z    ;
+			val[pjl]	+= x    *ycomp*z    ;
+			val[pkl]	+= xcomp*y    *z    ;
+			val[pjkl]	+= x    *y    *z    ;
+
+		}
+
+		gMul(rho,pop->renormRho[s]);
+		//Assuming two species with 0'th as electrons
+		//an 1'st as Ions
+		//msg(STATUS,"in dist, s = %i",s);
+		if(s==0){
+			gMul(rho_e,pop->renormRho[s]);
+			//msg(STATUS,"if s= 0");
+		}
+		if(s==1){
+			//msg(STATUS,"if s= 1");
+			gMul(rho_i,pop->renormRho[s]);
+		}
 
 	}
 
@@ -1508,6 +1600,7 @@ int puRankToNeighbor(MpiInfo *mpiInfo, int rank){
 }
 
 static inline void addCross(const double *a, const double *b, double *res){
+	//msg(STATUS, "addCross b (S or T) is %f, %f, %f",b[0],b[1],b[2]);
 	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
 	res[1] += -(a[0]*b[2]-a[2]*b[0]);
 	res[2] +=  (a[0]*b[1]-a[1]*b[0]);

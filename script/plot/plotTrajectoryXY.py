@@ -16,10 +16,12 @@ pos = file['/pos/specie 0']
 
 
 particleNum = 0
-Nt = 100 #pos.shape[1]
 
-Np = pos['n=51.0'].shape[0]	# Number of particles
-Nd = pos['n=51.0'].shape[1]	# Number of dimensions
+Nt_start = 201 #1
+Nt_stop = 400 #pos.shape[1]
+
+Np = pos['n=201.0'].shape[0]	# Number of particles
+Nd = pos['n=201.0'].shape[1]	# Number of dimensions
 
 print 'number of particles = %i' % Np
 print 'number of dimensions = %i' % Nd
@@ -32,7 +34,7 @@ z = []
 #vx = []
 #vy = []
 #vz = []
-for i in range(1,Nt):
+for i in range(Nt_start,Nt_stop):
 
 	positionOfParticle = pos['n=%.1f' % i][particleNum]
 	x.append(positionOfParticle[:][0])

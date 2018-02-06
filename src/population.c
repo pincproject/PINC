@@ -379,13 +379,14 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = (timeStep/stepSize)*velThermal[s];
+		double velTh = (stepSize/timeStep)*velThermal[s];
 
 		for(long int i=iStart;i<iStop;i++){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
 				vel[d] = velDrift[s] + gsl_ran_gaussian_ziggurat(rng,velTh);
+
 			}
 		}
 	}
@@ -446,13 +447,13 @@ void pVelConstant(const dictionary *ini, Population *pop, double constant1, doub
 		//for(int d=0;d<nDims;d++){
 			pop->vel[i*nDims] = constant1;
 			//for(int d=0;d<nDims;d++){
-			//msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
+			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
 		//}
 		//}
 	}
 	for(long int i=iStart2;i<iStop2;i++){
 		//for(int d=0;d<nDims;d++){
-			pop->vel[i*nDims] = (timeStep/stepSize)*constant2;
+			pop->vel[i*nDims] = constant2;
 
 	}
 }
@@ -473,6 +474,8 @@ void pNew(Population *pop, int s, const double *pos, const double *vel){
 			pop->pos[p+d] = pos[d];
 			pop->vel[p+d] = vel[d];
 		}
+
+
 		iStop[s]++;
 
 	}

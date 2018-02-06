@@ -37,8 +37,8 @@ def timer(text):
 
 # Loading file
 file = h5py.File('../../data/pop.pop.h5','r')
-pos = file['/pos/specie 0/n=0.0']
-vel = file['/vel/specie 0/n=0.5']
+pos = file['/pos/specie 0/n=5998.0']
+vel = file['/vel/specie 0/n=5998.5']
 
 
 timer("loading H5 files")

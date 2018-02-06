@@ -39,6 +39,7 @@ int main(int argc, char *argv[]){
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mccTestMode_set,
+												mccTestMode2_set,
 												BorisTestMode_set,
 												BorisTestMode2_set,
 												mgMode_set,
@@ -134,10 +135,10 @@ void regular(dictionary *ini){
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	//pOpenH5(ini, pop, "pop");
+	//gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
+	//gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
   // oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
   // oReadH5(obj, mpiInfo);
 
@@ -253,10 +254,10 @@ void regular(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		gWriteH5(E, mpiInfo, (double) n);
-		gWriteH5(rho, mpiInfo, (double) n);
+		//gWriteH5(E, mpiInfo, (double) n);
+		//gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
 	}
@@ -269,10 +270,10 @@ void regular(dictionary *ini){
 	gFreeMpi(mpiInfo);
 
 	// Close h5 files
-	pCloseH5(pop);
-	gCloseH5(rho);
+	//pCloseH5(pop);
+	//gCloseH5(rho);
 	gCloseH5(phi);
-	gCloseH5(E);
+	//gCloseH5(E);
 	// oCloseH5(obj);
 	xyCloseH5(history);
 
@@ -399,8 +400,9 @@ void BorisTestMode(dictionary *ini){
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
-	//pVelMaxwell(ini, pop, rng);
+	msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
+	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
@@ -651,10 +653,14 @@ void BorisTestMode2(dictionary *ini){
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Manually initialize a single particles
-	double pos[3] = {10., 11., 10.};
-	double vel[3] = {1., 0., 0.};
-	pNew(pop, 0, pos, vel);
-	pNew(pop, 0, pos, vel); //second particle
+	if(mpiInfo->mpiRank==0){
+		double pos[3] = {8., 8., 8.};
+		double vel[3] = {0.05, 0., 0.01};
+		pNew(pop, 0, pos, vel);
+		double pos1[3] = {5., 5., 5.};
+		double vel1[3] = {0.05, 0., 0.};
+		pNew(pop, 1, pos1, vel1); //second particle
+	}
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -720,11 +726,11 @@ void BorisTestMode2(dictionary *ini){
 		tStart(t);
 
 		// Move particles
-		adPrint(pop->pos, 3);
-		x_min = pop->pos[0]<x_min ? pop->pos[0] : x_min;
-		x_max = pop->pos[0]>x_max ? pop->pos[0] : x_max;
-		y_min = pop->pos[1]<y_min ? pop->pos[1] : y_min;
-		y_max = pop->pos[1]>y_max ? pop->pos[1] : y_max;
+		//adPrint(pop->pos, 3);
+		//x_min = pop->pos[0]<x_min ? pop->pos[0] : x_min;
+		//x_max = pop->pos[0]>x_max ? pop->pos[0] : x_max;
+		//y_min = pop->pos[1]<y_min ? pop->pos[1] : y_min;
+		//y_max = pop->pos[1]>y_max ? pop->pos[1] : y_max;
 		puMove(pop);
 		// oRayTrace(pop, obj);
 
@@ -774,11 +780,11 @@ void BorisTestMode2(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		gWriteH5(E, mpiInfo, (double) n);
-		gWriteH5(rho, mpiInfo, (double) n);
+		//gWriteH5(E, mpiInfo, (double) n);
+		//gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
 		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		pWriteEnergy(history,pop,(double)n);
+		//pWriteEnergy(history,pop,(double)n);
 
 	}
 
