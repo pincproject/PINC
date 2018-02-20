@@ -129,8 +129,11 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
 		for(long int i=0;i<nParticles[s];i++){
 
 			// Generate position for particle i
-			for(int d=0;d<nDims;d++) pos[d] = L[d]*gsl_rng_uniform_pos(rng);
-
+			for(int d=0;d<nDims;d++){
+				pos[d] = (L[d])*gsl_rng_uniform_pos(rng);
+				//msg(STATUS, "pos[%i] = %f", d, pos[d]);
+				//msg(STATUS, "L[%i] = %i",d, L[d]);
+			}
 			// Count the number of dimensions where the particle resides in
 			// the range of this node
 			int correctRange = 0;

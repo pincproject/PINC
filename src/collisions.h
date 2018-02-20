@@ -17,6 +17,9 @@
  *  Run designed for testing MCC
  *
  */
+void mccTestMode3(dictionary *ini);
+funPtr mccTestMode3_set(dictionary *ini);
+
 void mccTestMode2(dictionary *ini);
 funPtr mccTestMode2_set(dictionary *ini);
 

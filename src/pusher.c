@@ -878,6 +878,8 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 	gZero(rho_e);
 	gZero(rho_i);
 	double *val = rho->val;
+	double *val_i = rho_i->val;
+	double *val_e = rho_e->val;
 	long int *sizeProd = rho->sizeProd;
 
 	int nSpecies = pop->nSpecies;
@@ -892,18 +894,22 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 			double *pos = &pop->pos[3*i];
 
 			// Integer parts of position
-			int j = (int) pos[0];
-			int k = (int) pos[1];
-			int l = (int) pos[2];
-
+			int j = (int) (pos[0]);
+			int k = (int) (pos[1]);
+			int l = (int) (pos[2]);
+			//if(j==0 || k==0 || l==0){
+				//msg(STATUS, "j = %i, k = %i, l = %i", j,k,l);
+			//msg(STATUS, "pos0 = %f, pos1 = %f, pos2 = %f", pos[0],pos[1],pos[2]);
+			//}
 			// Decimal (cell-referenced) parts of position and their complement
 			double x = pos[0]-j;
 			double y = pos[1]-k;
 			double z = pos[2]-l;
+			//msg(STATUS, "x = %f, y = %f, z = %f", x,y,z);
 			double xcomp = 1-x;
 			double ycomp = 1-y;
 			double zcomp = 1-z;
-
+			//msg(STATUS, "xcomp = %f, ycomp = %f, zcomp = %f", xcomp,ycomp,zcomp);
 			// Index of neighbouring nodes
 			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
 			long int pj 	= p + 1; //sizeProd[1];
@@ -913,7 +919,7 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 			long int pjl 	= pl + 1; //sizeProd[1];
 			long int pkl 	= pl + sizeProd[2];
 			long int pjkl 	= pkl + 1; //sizeProd[1];
-
+			//msg(STATUS, "p= %li, pk = %li",p,pk);
 			// if(pjkl>=sizeProd[4])
 			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
 
@@ -925,6 +931,28 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 			val[pjl]	+= x    *ycomp*z    ;
 			val[pkl]	+= xcomp*y    *z    ;
 			val[pjkl]	+= x    *y    *z    ;
+			//msg(STATUS,"val[p] = %f val[p+1] = %f ",val[p], val[p+1] );
+			if(s==1){ // stupid way to split but but, it isnt only only
+				val_i[p] 		+= xcomp*ycomp*zcomp;
+				val_i[pj]		+= x    *ycomp*zcomp;
+				val_i[pk]		+= xcomp*y    *zcomp;
+				val_i[pjk]	+= x    *y    *zcomp;
+				val_i[pl]     += xcomp*ycomp*z    ;
+				val_i[pjl]	+= x    *ycomp*z    ;
+				val_i[pkl]	+= xcomp*y    *z    ;
+				val_i[pjkl]	+= x    *y    *z    ;
+			}
+			if(s==0){
+				val_e[p] 		+= xcomp*ycomp*zcomp;
+				val_e[pj]		+= x    *ycomp*zcomp;
+				val_e[pk]		+= xcomp*y    *zcomp;
+				val_e[pjk]	+= x    *y    *zcomp;
+				val_e[pl]     += xcomp*ycomp*z    ;
+				val_e[pjl]	+= x    *ycomp*z    ;
+				val_e[pkl]	+= xcomp*y    *z    ;
+				val_e[pjkl]	+= x    *y    *z    ;
+
+			}
 
 		}
 
@@ -933,17 +961,109 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 		//an 1'st as Ions
 		//msg(STATUS,"in dist, s = %i",s);
 		if(s==0){
-			gMul(rho_e,pop->renormRho[s]);
+
+			//val_i = *val;
+			//rho_i->val = rho->val;
+			//gMul(rho_e,pop->renormRho[s]);
 			//msg(STATUS,"if s= 0");
 		}
 		if(s==1){
 			//msg(STATUS,"if s= 1");
-			gMul(rho_i,pop->renormRho[s]);
+			//gMul(rho_i,pop->renormRho[s]);
 		}
+		//int rank = rho_i->rank;
+		//long int nElements = rho_i->sizeProd[rank];
+		//for(long int p=0;p<nElements;p++){
+		//	msg(STATUS,"val[p]_e = %f n = %i",val_e[p],nElements);
+		//}
 
 	}
 
 }
+
+
+funPtr puDistrND1Split_set(dictionary *ini){
+	puSanity(ini,"puDistrND1",0,1);
+	return puDistrND1Split;
+}
+static void puDistrND1InnerSplit(int s,double *val,double *val_e,double *val_i,
+								long int p, const long int *mul,
+								long int lastMul, double *decimal,
+								double *complement, double factor){
+
+	if(*mul==lastMul){
+		val[p     ] += *complement*factor;
+		val[p+*mul] += *decimal*factor;
+		if(s==0){
+			//e is specie 0
+			val_e[p     ] += *complement*factor;
+			val_e[p+*mul] += *decimal*factor;
+		}
+		if(s==1){
+			//e is specie 0
+			val_i[p     ] += *complement*factor;
+			val_i[p+*mul] += *decimal*factor;
+		}
+	} else {
+		puDistrND1InnerSplit(s,val,val_e,val_i,p     ,mul-1,lastMul,decimal-1,complement-1,*complement*factor);
+		puDistrND1InnerSplit(s,val,val_e,val_i,p+*mul,mul-1,lastMul,decimal-1,complement-1,*decimal   *factor);
+	}
+
+}
+
+
+void puDistrND1Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+	// assumes two species s = e, i
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	double *val_e = rho_e->val;
+	double *val_i = rho_i->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	int *integer = malloc(nDims*sizeof(*integer));
+	double *decimal = malloc(nDims*sizeof(*decimal));
+	double *complement = malloc(nDims*sizeof(*complement));
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				integer[d] = (int) pos[d];
+				decimal[d] = pos[d] - integer[d];
+				complement[d] = 1 - decimal[d];
+
+				p += integer[d]*sizeProd[d+1];
+			}
+
+			puDistrND1InnerSplit(s,val,val_e,val_i,p,&sizeProd[nDims],sizeProd[1],&decimal[nDims-1],&complement[nDims-1],1);
+
+		}
+
+		gMul(rho,pop->renormRho[s]);
+
+	}
+
+	free(integer);
+	free(decimal);
+	free(complement);
+}
+
+
+
 
 funPtr puDistrND1_set(dictionary *ini){
 	puSanity(ini,"puDistrND1",0,1);
@@ -1039,6 +1159,49 @@ void puDistrND0(const Population *pop, Grid *rho){
 				p += integer*sizeProd[d+1];
 			}
 			val[p]++;
+
+		}
+
+		gMul(rho,pop->renormRho[s]);
+
+	}
+}
+funPtr puDistrND0Split_set(dictionary *ini){
+	puSanity(ini,"puDistrND0",0,0);
+	return puDistrND0Split;
+}
+void puDistrND0Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	double *val_e = rho_e->val;
+	double *val_i = rho_i->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				int integer = (int)(pos[d]+0.5);
+				p += integer*sizeProd[d+1];
+			}
+			val[p]++;
+			if(s==0)val_e[p]++;
+			if(s==1)val_i[p]++;
 
 		}
 

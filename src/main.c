@@ -40,6 +40,7 @@ int main(int argc, char *argv[]){
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mccTestMode_set,
 												mccTestMode2_set,
+												mccTestMode3_set,
 												BorisTestMode_set,
 												BorisTestMode2_set,
 												mgMode_set,
