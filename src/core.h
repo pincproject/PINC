@@ -80,8 +80,6 @@ typedef struct{
 	double *vel;		///< Velocity
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
-	double *renormRho;	///< Re-normalization factors for rho (nSpecies elements)
-	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
 	double *charge;		///< Normalized charge (q-bar)
 	double *mass;		///< Normalized mass (m-bar)
 	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)

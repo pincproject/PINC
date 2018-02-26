@@ -26,6 +26,7 @@ int main(int argc, char *argv[]){
 	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 	parseIndirectInput(ini);
+	normalizeSemiSI(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE

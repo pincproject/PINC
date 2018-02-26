@@ -326,6 +326,8 @@ void puAcc3D1(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
@@ -335,8 +337,7 @@ void puAcc3D1(Population *pop, Grid *E){
 			for(int d=0;d<nDims;d++) vel[p+d] += dv[d];
 		}
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 }
 
@@ -358,6 +359,8 @@ void puAcc3D1KE(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
@@ -374,10 +377,9 @@ void puAcc3D1KE(Population *pop, Grid *E){
 			kinEnergy[s]+=velSquared;
 		}
 
-		kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*mass[s];
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 }
 funPtr puAccND1KE_set(dictionary *ini){
@@ -403,6 +405,8 @@ void puAccND1KE(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
@@ -419,10 +423,9 @@ void puAccND1KE(Population *pop, Grid *E){
 			kinEnergy[s]+=velSquared;
 		}
 
-		kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*mass[s];
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 
 	free(dv);
@@ -452,9 +455,10 @@ void puAccND1(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
-
 
 		for(long int p=pStart;p<pStop;p+=nDims){
 
@@ -464,9 +468,7 @@ void puAccND1(Population *pop, Grid *E){
 			}
 		}
 
-
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 
 	free(dv);
@@ -495,6 +497,8 @@ void puAccND0KE(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
@@ -511,10 +515,9 @@ void puAccND0KE(Population *pop, Grid *E){
 			kinEnergy[s]+=velSquared;
 		}
 
-		kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*mass[s];
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 
 	free(dv);
@@ -538,6 +541,8 @@ void puAccND0(Population *pop, Grid *E){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(E, pop->charge[s]/pop->mass[s]);
+
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
@@ -549,9 +554,7 @@ void puAccND0(Population *pop, Grid *E){
 			}
 		}
 
-
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 
 	free(dv);
@@ -569,6 +572,8 @@ void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 	double *val = E->val;
 
 	for(int s=0;s<nSpecies;s++){
+
+		gMul(E, pop->charge[s]/pop->mass[s]);
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
@@ -591,8 +596,7 @@ void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
 		}
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 }
 
@@ -610,6 +614,8 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 	double *val = E->val;
 
 	for(int s=0;s<nSpecies;s++){
+
+		gMul(E, pop->charge[s]/pop->mass[s]);
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
@@ -639,10 +645,9 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
 		}
 
-		kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*mass[s];
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
 
 }
@@ -684,6 +689,8 @@ void puDistr3D1(const Population *pop, Grid *rho){
 	int nSpecies = pop->nSpecies;
 
 	for(int s=0;s<nSpecies;s++){
+
+		gMul(rho, 1.0/pop->charge[s]);
 
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
@@ -729,7 +736,7 @@ void puDistr3D1(const Population *pop, Grid *rho){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
 
 	}
 
@@ -755,6 +762,8 @@ void puDistrND1(const Population *pop, Grid *rho){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(rho, 1.0/pop->charge[s]);
+
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
@@ -776,7 +785,7 @@ void puDistrND1(const Population *pop, Grid *rho){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
 
 	}
 
@@ -815,6 +824,8 @@ void puDistrND0(const Population *pop, Grid *rho){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(rho, 1.0/pop->charge[s]);
+
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
@@ -832,7 +843,7 @@ void puDistrND0(const Population *pop, Grid *rho){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
 
 	}
 }

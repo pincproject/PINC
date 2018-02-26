@@ -1325,7 +1325,11 @@ void gPotEnergy(const Grid *rho, const Grid *phi, Population *pop){
 	int *nGhostLayers = rho->nGhostLayers;
 	int rank = rho->rank;
 
-	double energy = gPotEnergyInner(&rhoVal,&phiVal,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+	double energy = gPotEnergyInner(&rhoVal, &phiVal,
+									&nGhostLayers[rank-1],
+									&nGhostLayers[2*rank-1],
+									&trueSize[rank-1], &sizeProd[rank-1]);
+	energy *= 0.5;
 
 	int nSpecies = pop->nSpecies;
 	pop->potEnergy[nSpecies] = energy;

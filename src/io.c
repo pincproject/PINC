@@ -247,6 +247,167 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
 	free(fName);
 }
 
+void parseIndirectInput(dictionary *ini){
+
+	/*
+	 * APPLIES MULTIPLIERS TO ELEMENTS WITH SUFFICES
+	 */
+
+	int nDims = iniGetInt(ini, "grid:nDims");
+
+	double V = (double)gGetGlobalVolume(ini);
+
+	int *L = gGetGlobalSize(ini);
+	double *mul = malloc(nDims*sizeof(nDims));
+	for(int i=0;i<nDims;i++) mul[i] = 1.0/L[i];
+
+	iniApplySuffix(ini, "population:nParticles", "pc", &V, 1);
+	iniApplySuffix(ini, "population:nAlloc", "pc", &V, 1);
+	iniApplySuffix(ini, "grid:nEmigrantsAlloc", "pc", &V, 1);
+	iniApplySuffix(ini, "grid:stepSize", "tot", mul, nDims);
+
+	free(mul);
+}
+
+void normalizeSemiSI(dictionary *ini){
+
+	const double elementaryCharge = 1.60217733e-19; // [C]
+	const double electronMass = 9.10938188e-31; // [kg]
+	const double vacuumPermittivity = 8.854187817e-12; // [F/m]
+
+	int nSpecies = iniGetInt(ini, "population:nSpecies");
+	double *charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
+	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
+	double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
+	double timeStep = iniGetDouble(ini, "time:timeStep");
+
+	double tol = 1e-10;
+	if(abs(abs(charge[0])-1)>tol){
+		msg(STATUS, "charge[0]=%f", charge[0]);
+		msg(ERROR, "Species 0 must have charge -1 or 1 with this normalization");
+	}
+	if(abs(mass[0]-1)>tol)
+		msg(ERROR, "Species 0 must have mass 1 with this normalization");
+
+	adScale(charge, nSpecies, elementaryCharge);
+	adScale(mass, nSpecies, electronMass);
+
+
+	double wpe = sqrt(pow(elementaryCharge,2)*density[0]/(vacuumPermittivity*electronMass));
+	timeStep /= wpe;
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+	num[0] = '\0';
+	list[0] = '\0';
+
+	for(int i=0; i<nSpecies; i++){
+		snprintf(num,numSize,",%a",charge[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini,"population:charge",&list[1]);
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nSpecies; i++){
+		snprintf(num,numSize,",%a",mass[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini,"population:mass",&list[1]);
+
+	num[0] = '\0';
+	snprintf(num,numSize,"%a",timeStep);
+	iniparser_set(ini, "time:timeStep", num);
+
+	free(charge);
+	free(mass);
+	free(density);
+
+	normalizeSI(ini);
+}
+void normalizeSI(dictionary *ini){
+	
+	int nDims = iniGetInt(ini, "grid:nDims");
+	int nSpecies = iniGetInt(ini, "population:nSpecies");
+	double timeStep = iniGetDouble(ini, "time:timeStep");
+	double *stepSize = iniGetDoubleArr(ini, "grid:stepSize", nDims);
+	long int *nParticles = iniGetLongIntArr(ini, "population:nParticles", nSpecies);
+	double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
+	double *charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
+	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
+	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+
+	double V  = gGetGlobalVolume(ini)*pow(stepSize[0],nDims);
+
+	double *K = (double*)malloc(nSpecies*sizeof(*K));
+	for(int s=0; s<nSpecies; s++){
+		K[s] = density[s]*V/nParticles[s];
+	}
+
+	const double vacuumPermittivity = 8.854187817e-12; // [F/m]
+	double X  = stepSize[0];
+	double T  = timeStep;
+	double Q  = K[0]*fabs(charge[0]);
+	double M  = pow(T*Q,2)/(vacuumPermittivity*pow(X,nDims));
+
+	/* msg(STATUS, "%g", K); */
+	adPrint(K, nSpecies);
+	adMul(charge, K, charge, nSpecies);
+	adPrint(K, nSpecies);
+	adMul(mass,   K, mass,   nSpecies);
+	adScale(charge, nSpecies, 1.0/Q);
+	adScale(mass, nSpecies, 1.0/M);
+
+	adScale(thermalVelocity, nSpecies, T/X);
+	/* adScale(perturbAmplitude, nSpecies, 1/X); */
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nSpecies; i++){
+		snprintf(num,numSize,",%a",charge[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini,"population:charge",&list[1]);
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nSpecies; i++){
+		snprintf(num,numSize,",%a",mass[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini,"population:mass",&list[1]);
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nSpecies; i++){
+		snprintf(num,numSize,",%a",thermalVelocity[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini,"population:thermalVelocity",&list[1]);
+
+	free(K);
+	free(charge);
+	free(mass);
+	free(density);
+	free(thermalVelocity);
+	free(stepSize);
+	free(nParticles);
+
+	charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
+	mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
+	thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+	adPrint(charge, nSpecies);
+	adPrint(mass, nSpecies);
+	adPrint(thermalVelocity, nSpecies);
+}
+
 /******************************************************************************
  * DEFINING INI PARSING FUNCTIONS (expanding iniparser library)
  *****************************************************************************/
@@ -432,8 +593,8 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 
 }
 
-void iniApplySuffix(	dictionary *ini, const char *key,
-						const char *suffix, const double *mul, int mulLen){
+void iniApplySuffix(dictionary *ini, const char *key,
+					const char *suffix, const double *mul, int mulLen){
 
 	int nElements = iniGetNElements(ini,key);
 	char **strArr = iniGetStrArr(ini,key,nElements);

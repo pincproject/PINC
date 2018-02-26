@@ -18,21 +18,6 @@
 #include "iniparser.h"
 
 /******************************************************************************
- * DECLARING LOCAL FUNCTIONS
- *****************************************************************************/
-
-/**
- * @brief	Sets normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- *
- * Normalizes charge and mass and sets specie-specific renormalization
- * parameters in Population.
- *
- */
-static void pSetNormParams(const dictionary *ini, Population *pop);
-
-/******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
@@ -79,8 +64,8 @@ Population *pAlloc(const dictionary *ini){
 	pop->iStop = iStop;
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
-
-	pSetNormParams(ini,pop);
+	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 
 	return pop;
 
@@ -90,8 +75,6 @@ void pFree(Population *pop){
 
 	free(pop->pos);
 	free(pop->vel);
-	free(pop->renormE);
-	free(pop->renormRho);
 	free(pop->kinEnergy);
 	free(pop->potEnergy);
 	free(pop->iStart);
@@ -751,57 +734,4 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
 		}
 	}
-}
-
-static void pSetNormParams(const dictionary *ini, Population *pop){
-
-	int nSpecies = pop->nSpecies;
-	int nDims = pop->nDims;
-	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
-	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",nSpecies);
-
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double cellVolume = adProd(stepSize,nDims);
-
-	// Multiply charge and mass by multiplicity
-	adMul(charge,multiplicity,charge,nSpecies);
-	adMul(mass,multiplicity,mass,nSpecies);
-
-	/*
-	 * Normalizing charge and mass (used in energy computations)
-	 */
-	double *chargeBar = malloc(nSpecies*sizeof(*chargeBar));
-	double *massBar = malloc(nSpecies*sizeof(*massBar));
-	for(int s=0;s<nSpecies;s++){
-		chargeBar[s] = (pow(timeStep,2)/cellVolume)*(charge[0]/mass[0])*charge[s];
-		// massBar[s] 	= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
-		massBar[s]	 = pow(timeStep,2)*mass[s];
-	}
-	pop->charge=chargeBar;
-	pop->mass=massBar;
-
-	/*
-	 * Computing renormalization factors (used in update equations)
-	 */
-	double *renormE = malloc(nSpecies*sizeof(*renormE));
-	double *renormRho = malloc(nSpecies*sizeof(*renormRho));
-	for(int s=0;s<nSpecies-1;s++){
-		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
-		renormRho[s] = chargeBar[s]/chargeBar[s+1];
-		// renormRho[s] = charge[s]/charge[s+1];
-	}
-	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
-	// renormRho[nSpecies-1] = chargeBar[nSpecies-1];
-	renormRho[nSpecies-1] = pow(timeStep,2)*(charge[0]/mass[0])*charge[nSpecies-1];
-
-	pop->renormE = renormE;
-	pop->renormRho = renormRho;
-
-	free(charge);
-	free(mass);
-	free(multiplicity);
-	free(stepSize);
-
 }
