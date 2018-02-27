@@ -269,6 +269,10 @@ void parseIndirectInput(dictionary *ini){
 	free(mul);
 }
 
+/******************************************************************************
+ * DEFINING NORMALIZATION FUNCTIONS
+ *****************************************************************************/
+
 void normalizeSemiSI(dictionary *ini){
 
 	const double elementaryCharge = 1.60217733e-19; // [C]
@@ -281,19 +285,17 @@ void normalizeSemiSI(dictionary *ini){
 	double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
 	double timeStep = iniGetDouble(ini, "time:timeStep");
 
-	double tol = 1e-10;
-	if(abs(abs(charge[0])-1)>tol){
-		msg(STATUS, "charge[0]=%f", charge[0]);
-		msg(ERROR, "Species 0 must have charge -1 or 1 with this normalization");
-	}
+	const double tol = 1e-10;
+	if(abs(charge[0]+1)>tol)
+		msg(ERROR, "Species 0 must have charge -1 with this normalization");
 	if(abs(mass[0]-1)>tol)
 		msg(ERROR, "Species 0 must have mass 1 with this normalization");
 
 	adScale(charge, nSpecies, elementaryCharge);
 	adScale(mass, nSpecies, electronMass);
 
-
-	double wpe = sqrt(pow(elementaryCharge,2)*density[0]/(vacuumPermittivity*electronMass));
+	double wpe = sqrt(pow(elementaryCharge,2)*density[0]/
+			(vacuumPermittivity*electronMass));
 	timeStep /= wpe;
 
 	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
@@ -306,8 +308,11 @@ void normalizeSemiSI(dictionary *ini){
 
 	normalizeSI(ini);
 }
+
 void normalizeSI(dictionary *ini){
 	
+	const double vacuumPermittivity = 8.854187817e-12; // [F/m]
+
 	int nDims = iniGetInt(ini, "grid:nDims");
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
 	double timeStep = iniGetDouble(ini, "time:timeStep");
@@ -325,25 +330,25 @@ void normalizeSI(dictionary *ini){
 		K[s] = density[s]*V/nParticles[s];
 	}
 
-	const double vacuumPermittivity = 8.854187817e-12; // [F/m]
 	double X  = stepSize[0];
 	double T  = timeStep;
 	double Q  = K[0]*fabs(charge[0]);
 	double M  = pow(T*Q,2)/(vacuumPermittivity*pow(X,nDims));
+	msg(STATUS, "Characteristic length: %15g m  (%a)",X,X);
+	msg(STATUS, "Characteristic time  : %15g s  (%a)",T,T);
+	msg(STATUS, "Characteristic charge: %15g C  (%a)",Q,Q);
+	msg(STATUS, "Characteristic mass  : %15g kg (%a)",M,M);
 
-	/* msg(STATUS, "%g", K); */
-	adPrint(K, nSpecies);
 	adMul(charge, K, charge, nSpecies);
-	adPrint(K, nSpecies);
 	adMul(mass,   K, mass,   nSpecies);
 	adScale(charge, nSpecies, 1.0/Q);
-	adScale(mass, nSpecies, 1.0/M);
+	adScale(mass,   nSpecies, 1.0/M);
+	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
+	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
 
 	adScale(thermalVelocity, nSpecies, T/X);
 	/* adScale(perturbAmplitude, nSpecies, 1/X); */
 
-	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
-	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
 	iniSetDoubleArr(ini, "population:thermalVelocity", thermalVelocity, nSpecies);
 
 	free(K);
@@ -353,13 +358,6 @@ void normalizeSI(dictionary *ini){
 	free(thermalVelocity);
 	free(stepSize);
 	free(nParticles);
-
-	charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
-	mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
-	adPrint(charge, nSpecies);
-	adPrint(mass, nSpecies);
-	adPrint(thermalVelocity, nSpecies);
 }
 
 /******************************************************************************
