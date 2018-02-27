@@ -467,7 +467,7 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Scales *scales,
 	group = H5Gcreate(file,"/vel",H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 	H5Gclose(group);
 
-	char name[18];	// int is max 5 digits + "/pos/specie " + '\0'
+	char name[32];	// int is max 5 digits + "/pos/specie " + '\0'
 
 	int nSpecies = pop->nSpecies;
 	for(int s=0;s<nSpecies;s++){
@@ -613,7 +613,7 @@ void pCloseH5(Population *pop){
 
 void pCreateEnergyDatasets(hid_t xy, Population *pop){
 
-	char name[32];
+	char name[64];
 	int nSpecies = pop->nSpecies;
 
 	sprintf(name,"/energy/potential/total");
@@ -633,7 +633,7 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop){
 
 void pWriteEnergy(hid_t xy, Population *pop, double x){
 
-	char name[32];
+	char name[64];
 	int nSpecies = pop->nSpecies;
 
 	sprintf(name,"/energy/potential/total");

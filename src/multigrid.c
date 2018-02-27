@@ -1785,7 +1785,6 @@ void mgModeErrorScaling(dictionary *ini){
 	*			STORE GRIDS
 	********************************************************************/
 	int runNumber 	= iniGetInt(ini, "time:startTime");
-	int rank 		= rho->rank;
 
 	char *fName 	= malloc(8*sizeof(fName));
 
@@ -1958,7 +1957,7 @@ void mgMode(dictionary *ini){
 
 
 		//Saving lvl of grids
-		char fName[12];
+		char fName[64];
 		for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
 
 			rho = mgRho->grids[lvl];

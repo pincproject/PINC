@@ -291,6 +291,7 @@ void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const 
 void parseIndirectInput(dictionary *ini);
 Scales *normalizeSemiSI(dictionary *ini);
 Scales *normalizeSI(dictionary *ini);
+void nFree(Scales *scales);
 
 ///@}
 
