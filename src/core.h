@@ -25,8 +25,8 @@
  * DEFINING PHYSICAL CONSTANTS (following SI standard)
  *****************************************************************************/
 
-#define BOLTZMANN 1.3806488e-23
-#define ELECTRON_MASS 9.10938215e-31
+/* #define BOLTZMANN 1.3806488e-23 */
+/* #define ELECTRON_MASS 9.10938215e-31 */
 
 /******************************************************************************
  * DEFINING CORE DATATYPES (used by several modules)
@@ -304,7 +304,7 @@ typedef struct{
 	double bField;
 	double energy;
 
-} Scales;
+} Units;
 /**
  * @brief	Timer struct for simple profiling
  * @see allocTimer(), freeTimer(), tMsg()
@@ -365,5 +365,6 @@ typedef void (*funPtr)();
 #include "grid.h"
 #include "io.h"
 #include "aux.h"
+#include "units.h"
 
 #endif // CORE_H

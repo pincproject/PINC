@@ -173,11 +173,11 @@ void adShift(double *a, long int n, double value);
 void aiShift(int *a, long int n, int value);
 ///@brief Shifts an array by a constant value
 void alShift(long int *a, long int n, long int value);
-///@brief Scales an array by a constant value
+///@brief Units an array by a constant value
 void adScale(double *a, long int n, double value);
-///@brief Scales an array by a constant value
+///@brief Units an array by a constant value
 void aiScale(int *a, long int n, int value);
-///@brief Scales an array by a constant value
+///@brief Units an array by a constant value
 void alScale(long int *a, long int n, int value);
 ///@brief Returns maximum value in an array
 double adMax(const double *a, long int n);

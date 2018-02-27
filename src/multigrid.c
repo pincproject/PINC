@@ -1728,7 +1728,7 @@ funPtr mgModeErrorScaling_set(dictionary *ini){
 }
 void mgModeErrorScaling(dictionary *ini){
 
-	Scales *scales=normalizeSemiSI(ini);
+	Units *units=uSemiSI(ini);
 
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
@@ -1789,42 +1789,42 @@ void mgModeErrorScaling(dictionary *ini){
 	char *fName 	= malloc(8*sizeof(fName));
 
 	sprintf(fName, "rho_%d", runNumber);
-	gOpenH5(ini, rho, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, rho, mpiInfo, units, 1.0, fName);
 	gWriteH5(rho, mpiInfo, 0.);
 	gCloseH5(rho);
 
 	sprintf(fName, "phi_%d", runNumber);
-	gOpenH5(ini, phi, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, phi, mpiInfo, units, 1.0, fName);
 	gWriteH5(phi, mpiInfo, 0.);
 	gCloseH5(phi);
 
 	sprintf(fName, "res_%d", runNumber);
-	gOpenH5(ini, res, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, res, mpiInfo, units, 1.0, fName);
 	gWriteH5(res, mpiInfo, 0.);
 	gCloseH5(res);
 
 	sprintf(fName, "E_%d", runNumber);
-	gOpenH5(ini, E, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, E, mpiInfo, units, 1.0, fName);
 	gWriteH5(E, mpiInfo, 0.);
 	gCloseH5(E);
 
 	sprintf(fName, "sol_%d", runNumber);
-	gOpenH5(ini, sol, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, sol, mpiInfo, units, 1.0, fName);
 	gWriteH5(sol, mpiInfo, 0.);
 	gCloseH5(sol);
 
 	sprintf(fName, "error_%d", runNumber);
-	gOpenH5(ini, error, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, error, mpiInfo, units, 1.0, fName);
 	gWriteH5(error, mpiInfo, 0.);
 	gCloseH5(error);
 
 	sprintf(fName, "solE_%d", runNumber);
-	gOpenH5(ini, solE, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, solE, mpiInfo, units, 1.0, fName);
 	gWriteH5(solE, mpiInfo, 0.);
 	gCloseH5(solE);
 
 	sprintf(fName, "errorE_%d", runNumber);
-	gOpenH5(ini, errorE, mpiInfo, scales, 1.0, fName);
+	gOpenH5(ini, errorE, mpiInfo, units, 1.0, fName);
 	gWriteH5(errorE, mpiInfo, 0.);
 	gCloseH5(errorE);
 
@@ -1840,7 +1840,7 @@ void mgModeErrorScaling(dictionary *ini){
 	gFree(error);
 	gFree(sol);
 
-	nFree(scales);
+	uFree(units);
 
 }
 
@@ -1849,7 +1849,7 @@ funPtr mgMode_set(dictionary *ini){
 }
 void mgMode(dictionary *ini){
 
-	Scales *scales=normalizeSemiSI(ini);
+	Units *units=uSemiSI(ini);
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -1943,15 +1943,15 @@ void mgMode(dictionary *ini){
 		mgResidual(res,rho, phi, mpiInfo);
 
 
-		gOpenH5(ini, E, mpiInfo, scales, 1.0, "E_0");
+		gOpenH5(ini, E, mpiInfo, units, 1.0, "E_0");
 		gWriteH5(E, mpiInfo, 0.);
 		gCloseH5(E);
 
-		gOpenH5(ini, sol, mpiInfo, scales, 1.0, "sol_0");
+		gOpenH5(ini, sol, mpiInfo, units, 1.0, "sol_0");
 		gWriteH5(sol, mpiInfo, 0.);
 		gCloseH5(sol);
 
-		gOpenH5(ini, error, mpiInfo, scales, 1.0, "error_0");
+		gOpenH5(ini, error, mpiInfo, units, 1.0, "error_0");
 		gWriteH5(error, mpiInfo, 0.);
 		gCloseH5(error);
 
@@ -1965,11 +1965,11 @@ void mgMode(dictionary *ini){
 			res = mgRes->grids[lvl];
 
 			sprintf(fName, "rho_%d", lvl);
-			gOpenH5(ini, rho, mpiInfo, scales, 1.0, fName);
+			gOpenH5(ini, rho, mpiInfo, units, 1.0, fName);
 			sprintf(fName, "phi_%d", lvl);
-			gOpenH5(ini,  phi, mpiInfo, scales, 1.0, fName);
+			gOpenH5(ini,  phi, mpiInfo, units, 1.0, fName);
 			sprintf(fName, "res_%d", lvl);
-			gOpenH5(ini, res, mpiInfo, scales, 1.0, fName);
+			gOpenH5(ini, res, mpiInfo, units, 1.0, fName);
 
 
 			gWriteH5(rho,mpiInfo,0.);
@@ -2003,5 +2003,5 @@ void mgMode(dictionary *ini){
 
 	gsl_rng_free(rng);
 
-	nFree(scales);
+	uFree(units);
 }

@@ -1208,7 +1208,7 @@ void gCloseH5(Grid *grid){
 }
 
 void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
-			 const Scales *scales, double denorm, const char *fName){
+			 const Units *units, double denorm, const char *fName){
 
 	int rank = grid->rank;
 	int nDims = rank-1;
@@ -1228,7 +1228,7 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 * CREATE ATTRIBUTES
 	 */
 
-	setH5Attr(file,"Axis denormalization factor",&scales->length,1);
+	setH5Attr(file,"Axis denormalization factor",&units->length,1);
 	setH5Attr(file,"Quantity denormalization factor",&denorm,1);
 
 	/*

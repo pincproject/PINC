@@ -448,7 +448,7 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * units.
  */
 void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
-			 const Scales *scales, double denorm, const char *fName);
+			 const Units *units, double denorm, const char *fName);
 
 /**
  * @brief	Store values in Grid to .grid.h5-file

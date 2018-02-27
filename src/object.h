@@ -51,7 +51,7 @@ void oFree(Object *obj);
  *
  */
 void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
-             const Scales *scales, double denorm, const char *fName);
+             const Units *units, double denorm, const char *fName);
 /**
  * @brief	Closes .grid.h5-file
  * @param	obj     Object

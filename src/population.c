@@ -443,7 +443,7 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pOpenH5(	const dictionary *ini, Population *pop, const Scales *scales,
+void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	   			const char *fName){
 
 	/*
@@ -479,8 +479,8 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Scales *scales,
 	 * CREATE ATTRIBUTES
 	 */
 
-	setH5Attr(file, "Position denormalization factor", &scales->length, 1);
-	setH5Attr(file, "Velocity denormalization factor", &scales->velocity, 1);
+	setH5Attr(file, "Position denormalization factor", &units->length, 1);
+	setH5Attr(file, "Velocity denormalization factor", &units->velocity, 1);
 
 }
 

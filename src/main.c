@@ -81,7 +81,7 @@ void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-	Scales *scales=normalizeSemiSI(ini);
+	Units *units=uSemiSI(ini);
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
@@ -104,11 +104,11 @@ void regular(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
-	pOpenH5(ini, pop, scales, "pop");
-	gOpenH5(ini, rho, mpiInfo, scales, scales->chargeDensity, "rho");
-	gOpenH5(ini, phi, mpiInfo, scales, scales->potential, "phi");
-	gOpenH5(ini, E,   mpiInfo, scales, scales->eField, "E");
-  // oOpenH5(ini, obj, mpiInfo, scales, 1, "test");
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+  // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
   // oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
@@ -259,7 +259,7 @@ void regular(dictionary *ini){
 	gFree(phi);
 	gFree(E);
 	pFree(pop);
-	nFree(scales);
+	uFree(units);
 	// oFree(obj);
 
 	gsl_rng_free(rngSync);

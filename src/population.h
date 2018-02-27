@@ -150,7 +150,7 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel);
  * factor" and "Velocity denormalization factor". Upon multiplication by these,
  * the position/velocity will become physical values.
  */
-void pOpenH5(	const dictionary *ini, Population *pop, const Scales *scales,
+void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	   			const char *fName);
 
 /**
