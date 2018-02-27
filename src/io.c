@@ -296,30 +296,9 @@ void normalizeSemiSI(dictionary *ini){
 	double wpe = sqrt(pow(elementaryCharge,2)*density[0]/(vacuumPermittivity*electronMass));
 	timeStep /= wpe;
 
-	const int listSize=1024;
-	const int numSize=32;
-	char num[numSize];
-	char list[listSize];
-	num[0] = '\0';
-	list[0] = '\0';
-
-	for(int i=0; i<nSpecies; i++){
-		snprintf(num,numSize,",%a",charge[i]);
-		strcat(list,num);
-	}
-	iniparser_set(ini,"population:charge",&list[1]);
-
-	num[0] = '\0';
-	list[0] = '\0';
-	for(int i=0; i<nSpecies; i++){
-		snprintf(num,numSize,",%a",mass[i]);
-		strcat(list,num);
-	}
-	iniparser_set(ini,"population:mass",&list[1]);
-
-	num[0] = '\0';
-	snprintf(num,numSize,"%a",timeStep);
-	iniparser_set(ini, "time:timeStep", num);
+	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
+	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
+	iniSetDouble(ini, "time:timeStep", timeStep);
 
 	free(charge);
 	free(mass);
@@ -363,34 +342,9 @@ void normalizeSI(dictionary *ini){
 	adScale(thermalVelocity, nSpecies, T/X);
 	/* adScale(perturbAmplitude, nSpecies, 1/X); */
 
-	const int listSize=1024;
-	const int numSize=32;
-	char num[numSize];
-	char list[listSize];
-
-	num[0] = '\0';
-	list[0] = '\0';
-	for(int i=0; i<nSpecies; i++){
-		snprintf(num,numSize,",%a",charge[i]);
-		strcat(list,num);
-	}
-	iniparser_set(ini,"population:charge",&list[1]);
-
-	num[0] = '\0';
-	list[0] = '\0';
-	for(int i=0; i<nSpecies; i++){
-		snprintf(num,numSize,",%a",mass[i]);
-		strcat(list,num);
-	}
-	iniparser_set(ini,"population:mass",&list[1]);
-
-	num[0] = '\0';
-	list[0] = '\0';
-	for(int i=0; i<nSpecies; i++){
-		snprintf(num,numSize,",%a",thermalVelocity[i]);
-		strcat(list,num);
-	}
-	iniparser_set(ini,"population:thermalVelocity",&list[1]);
+	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
+	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
+	iniSetDoubleArr(ini, "population:thermalVelocity", thermalVelocity, nSpecies);
 
 	free(K);
 	free(charge);
@@ -590,6 +544,85 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 	freeStrArr(strArr);
 
 	return strArrExpanded;
+
+}
+
+void iniSetInt(dictionary *ini, const char *key, int value){
+	iniSetLongInt(ini, key, value);
+}
+
+void iniSetLongInt(dictionary *ini, const char *key, long int value){
+
+	const int numSize=32;
+	char num[numSize];
+	snprintf(num,numSize,"%ld",value);
+	iniparser_set(ini, key, num);
+
+}
+
+void iniSetDouble(dictionary *ini, const char *key, double value){
+
+	const int numSize=32;
+	char num[numSize];
+	snprintf(num,numSize,"%a",value);
+	iniparser_set(ini, key, num);
+
+}
+
+
+void iniSetStr(dictionary *ini, const char *key, const char *value){
+	iniparser_set(ini, key, value);
+}
+
+void iniSetIntArr(		dictionary *ini, const char *key,
+						const int *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%d",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
+}
+
+void iniSetLongIntArr(	dictionary *ini, const char *key,
+						const long int *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%ld",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
+}
+
+void iniSetDoubleArr(	dictionary *ini, const char *key,
+						const double *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%a",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
 
 }
 
