@@ -223,14 +223,9 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 	int nSpecies = pop->nSpecies;
 
 	int nElements = nDims *nSpecies;
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",nElements);
 	double *mode = iniGetDoubleArr(ini,"population:perturbMode",nElements);
 
-	for(int e = 0; e < nElements; e++) {
-		if (nDims > 1)	amplitude[e] /= stepSize[e%(nDims-1)];
-		else amplitude[e] /= stepSize[0];
-	}
 	int *L = gGetGlobalSize(ini);
 	double *pos = pop->pos;
 
@@ -352,8 +347,6 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nSpecies = pop->nSpecies;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double stepSize = iniGetDouble(ini,"grid:stepSize");
 
 	int nDims = pop->nDims;
 
@@ -362,7 +355,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = (timeStep/stepSize)*velThermal[s];
+		double velTh = velThermal[s];
 
 		for(long int i=iStart;i<iStop;i++){
 

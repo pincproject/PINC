@@ -342,7 +342,6 @@ Scales *normalizeSI(dictionary *ini){
 	double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
 	double *charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
 
 	double V  = gGetGlobalVolume(ini)*pow(stepSize[0],nDims);
 
@@ -367,17 +366,11 @@ Scales *normalizeSI(dictionary *ini){
 	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
 	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
 
-	adScale(thermalVelocity, nSpecies, T/X);
-	/* adScale(perturbAmplitude, nSpecies, 1/X); */
-
-	iniSetDoubleArr(ini, "population:thermalVelocity", thermalVelocity, nSpecies);
-
 
 	free(K);
 	free(charge);
 	free(mass);
 	free(density);
-	free(thermalVelocity);
 	free(stepSize);
 	free(nParticles);
 
@@ -387,7 +380,28 @@ Scales *normalizeSI(dictionary *ini){
 	scales->charge = Q;
 	scales->mass = M;
 	nAddDerivedUnits(scales);
+	nNormalize(ini, scales);
 	return scales;
+}
+
+void nNormalize(dictionary *ini, const Scales *scales){
+
+	iniScaleDoubleArr(ini, "population:thermalVelocity", 1.0/scales->velocity);
+	iniScaleDoubleArr(ini, "population:drift", 1.0/scales->velocity);
+	iniScaleDoubleArr(ini, "population:perturbAmplitude", 1.0/scales->length);
+	iniScaleDoubleArr(ini, "fields:BExt", 1.0/scales->bField);
+	iniScaleDoubleArr(ini, "fields:EExt", 1.0/scales->eField);
+}
+
+void iniScaleDoubleArr(dictionary *ini, const char *key, double factor){
+
+	int nElements = iniGetNElements(ini, key);
+	double *arr = iniGetDoubleArr(ini, key, nElements);
+
+	adScale(arr, nElements, factor);
+	iniSetDoubleArr(ini, key, arr, nElements);
+
+	free(arr);
 }
 
 /******************************************************************************

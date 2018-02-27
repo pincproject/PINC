@@ -292,6 +292,8 @@ void parseIndirectInput(dictionary *ini);
 Scales *normalizeSemiSI(dictionary *ini);
 Scales *normalizeSI(dictionary *ini);
 void nFree(Scales *scales);
+void nNormalize(dictionary *ini, const Scales *scales);
+void iniScaleDoubleArr(dictionary *ini, const char *key, double factor);
 
 ///@}
 

@@ -1784,7 +1784,7 @@ void mgModeErrorScaling(dictionary *ini){
 	/*********************************************************************
 	*			STORE GRIDS
 	********************************************************************/
-	int runNumber 	= iniGetInt(ini, "time:startTime");
+	int runNumber 	= iniGetInt(ini, "multigrid:runNumber");
 
 	char *fName 	= malloc(8*sizeof(fName));
 
@@ -1930,7 +1930,7 @@ void mgMode(dictionary *ini){
 	/*********************************************************************
 	*			STORE GRIDS
 	********************************************************************/
-	int runNumber = iniGetInt(ini, "time:startTime");
+	int runNumber = iniGetInt(ini, "multigrid:runNumber");
 
 	if(runNumber == 0){
 
