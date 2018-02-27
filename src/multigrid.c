@@ -133,7 +133,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 	int *trueSize = grid->trueSize;
 	int *nGhostLayers = grid->nGhostLayers;
-	double *stepSize = grid->stepSize;
 	bndType *bnd = grid->bnd;
 	int rank = grid->rank;
 
@@ -181,15 +180,9 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
 		for(int d = 0; d < 2*rank; d++)	subNGhostLayers[d] = nGhostLayers[d];
 
-		//Copying boundaries and stepSize
+		//Copying boundaries
 		bndType *subBnd = malloc(rank*2*sizeof(*subBnd));
 		for(int d = 0; d < 2*rank; d++)	subBnd[d] = bnd[d];
-
-
-
-		double *subStepSize = malloc(rank*sizeof(*subStepSize));
-		for(int d = 0; d < rank; d++)	subStepSize[d] = stepSize[d];
-
 
 		//Assign to grid
 		Grid *grid = malloc(sizeof(Grid));
@@ -199,7 +192,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		grid->trueSize = subTrueSize;
 		grid->sizeProd = subSizeProd;
 		grid->nGhostLayers = subNGhostLayers;
-		grid->stepSize = subStepSize;
 
 		grid->sendSlice = sendSlice;
 		grid->recvSlice = recvSlice;

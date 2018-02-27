@@ -57,7 +57,7 @@
  * this is true also for the last specie. The last element is then simply the
  * number of particles allocated in total.
  *
- * The position of the particles is normalized with respect to 'stepSize' in
+ * The position of the particles is normalized with respect to the step size in
  * Grid, such that a particle with local position (1,2,3) is located _on_ node
  * (1,2,3) in the grid. Particles are usually specified in local frame but may
  * temporarily be expressed in global frame. See MpiInfo.
@@ -254,11 +254,6 @@ typedef enum{
  * Naturally, domain decomposition doesn't affect the first (non-physical)
  * dimension in the array.
  *
- * 'stepSize' is the step-size of each dimension in terms of Debye lengths (or
- * possibly some other quantity in the future). This doesn't make sense for the
- * first non-physical dimension and is therefore arbitrarily set to 1. Thence
- * the product of all elements in 'stepSize' is the volume of a cell.
- *
  * 'h5' is a HDF5 file identifier used to store the grid quantity to an .h5-file
  * and are used by gWriteH5(). The other two h5-variables are also used by
  * gWriteH5() since they only needs to be computed once.
@@ -274,7 +269,6 @@ typedef struct{
 	int *trueSize;				///< Size of array (excluding ghosts) (rank elements)
 	long int *sizeProd;			///< Cumulative product of size (rank+1 elements)
 	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
-	double *stepSize;			///< Step-sizes in Debye lengths (rank elements)
 
 	double *sendSlice;			///< Slice buffer of the grid sent to other
 	double *recvSlice;			///< Slice buffer of the grid sent to other

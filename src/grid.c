@@ -422,34 +422,29 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	int nDims = iniGetInt(ini, "grid:nDims");
 	int *trueSizeTemp = iniGetIntArr(ini, "grid:trueSize", nDims);
 	int *nGhostLayersTemp = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
-	double *stepSizeTemp = iniGetDoubleArr(ini, "grid:stepSize", nDims);
 	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , 2*nDims);
 
 	// Calculate the number of grid points (True points + ghost points)
 	int rank = nDims+1;
 	int *size 			= malloc(rank*sizeof(*size));
 	int *trueSize 		= malloc(rank*sizeof(*trueSize));
-	double *stepSize	= malloc(rank*sizeof(*stepSize));
 	int *nGhostLayers 	= malloc(2*rank*sizeof(*nGhostLayers));
 
 	if(nValues==VECTOR) nValues = nDims; // VECTOR equals -1
 
 	size[0] = nValues;
 	trueSize[0] = nValues;
-	stepSize[0] = 1;
 	nGhostLayers[0] = 0;
 	nGhostLayers[rank] = 0;
 
 	for(int d = 1 ; d < rank; d++){
 		trueSize[d] = trueSizeTemp[d-1];
-		stepSize[d] = stepSizeTemp[d-1];
 		nGhostLayers[d] = nGhostLayersTemp[d-1];
 		nGhostLayers[d+rank] = nGhostLayersTemp[d+nDims-1];
 
 		size[d] = trueSize[d] + nGhostLayers[d] + nGhostLayers[d+rank];
 	}
 	free(trueSizeTemp);
-	free(stepSizeTemp);
 	free(nGhostLayersTemp);
 
 	//Cumulative products
@@ -495,7 +490,6 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->trueSize = trueSize;
 	grid->sizeProd = sizeProd;
 	grid->nGhostLayers = nGhostLayers;
-	grid->stepSize = stepSize;
 	grid->val = val;
 	grid->h5 = 0;	// Must be activated separately
 	grid->sendSlice = sendSlice;
@@ -568,7 +562,6 @@ void gFree(Grid *grid){
 	free(grid->trueSize);
 	free(grid->sizeProd);
 	free(grid->nGhostLayers);
-	free(grid->stepSize);
 	free(grid->val);
 	free(grid->sendSlice);
 	free(grid->recvSlice);
@@ -731,34 +724,6 @@ void gCopy(const Grid *original, Grid *copy){
 	double *copyVal=	copy->val;
 
 	for(int g = 0; g < sizeProd[rank]; g++) copyVal[g] = origVal[g];
-
-}
-
-// Probably broken
-void gNormalizeE(const dictionary *ini, Grid *E){
-
-	int nSpecies = iniGetInt(ini,"population:nSpecies");
-	int nDims = iniGetInt(ini,"grid:nDims");
-	double *q = iniGetDoubleArr(ini,"population:charge",nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	gMul(E,pow(timeStep,2)*(q[0]/m[0]));
-	for(int p=0;p<E->sizeProd[E->rank];p++){
-		E->val[p] /= stepSize[p%E->size[0]];
-	}
-
-}
-
-void gNormalizePhi(const dictionary *ini, Grid *phi){
-
-	int nSpecies = iniGetInt(ini,"population:nSpecies");
-	int nDims = iniGetInt(ini,"grid:nDims");
-	double *q = iniGetDoubleArr(ini,"population:charge",nSpecies);
-	double *m = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	gMul(phi,pow(timeStep/stepSize[0],2)*(q[0]/m[0]));
 
 }
 
@@ -1269,10 +1234,10 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	debye[0] = iniGetDouble(ini,"grid:debye");
 	for(int d=1;d<nDims;d++) debye[d]=debye[0];
 
-	setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims);
-	setH5Attr(file,"Axis dimensionalizing factor",debye,nDims);
-	setH5Attr(file,"Quantity denormalization factor",denorm,size[0]);
-	setH5Attr(file,"Quantity dimensionalizing factor",denorm,size[0]);
+	/* setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims); */
+	/* setH5Attr(file,"Axis dimensionalizing factor",debye,nDims); */
+	/* setH5Attr(file,"Quantity denormalization factor",denorm,size[0]); */
+	/* setH5Attr(file,"Quantity dimensionalizing factor",denorm,size[0]); */
 
 	/*
 	 * HDF5 HYPERSLAB DEFINITION
