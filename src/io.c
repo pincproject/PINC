@@ -273,7 +273,7 @@ void parseIndirectInput(dictionary *ini){
  * DEFINING NORMALIZATION FUNCTIONS
  *****************************************************************************/
 
-void normalizeSemiSI(dictionary *ini){
+Scales *normalizeSemiSI(dictionary *ini){
 
 	const double elementaryCharge = 1.60217733e-19; // [C]
 	const double electronMass = 9.10938188e-31; // [kg]
@@ -306,10 +306,31 @@ void normalizeSemiSI(dictionary *ini){
 	free(mass);
 	free(density);
 
-	normalizeSI(ini);
+	return normalizeSI(ini);
 }
 
-void normalizeSI(dictionary *ini){
+void nFree(Scales *scales){
+	free(scales);
+}
+
+static void nAddDerivedUnits(Scales *scales){
+
+	double nDims = scales->nDims;
+	double charge = scales->charge;
+	double mass = scales->mass;
+	double length = scales->length;
+	double time = scales->time;
+
+	scales->velocity = length/time;
+	scales->acceleration = length/pow(time,2);
+	scales->chargeDensity = charge/pow(length,nDims);
+	scales->potential = pow(length/time,2)*mass/charge;
+	scales->eField = length*mass/(pow(time,2)*charge);
+	scales->bField = mass/(time*charge);
+	scales->energy = mass*pow(length/time,2);
+}
+
+Scales *normalizeSI(dictionary *ini){
 	
 	const double vacuumPermittivity = 8.854187817e-12; // [F/m]
 
@@ -351,6 +372,7 @@ void normalizeSI(dictionary *ini){
 
 	iniSetDoubleArr(ini, "population:thermalVelocity", thermalVelocity, nSpecies);
 
+
 	free(K);
 	free(charge);
 	free(mass);
@@ -358,6 +380,14 @@ void normalizeSI(dictionary *ini){
 	free(thermalVelocity);
 	free(stepSize);
 	free(nParticles);
+
+	Scales *scales = malloc(sizeof(*scales));
+	scales->length = X;
+	scales->time = T;
+	scales->charge = Q;
+	scales->mass = M;
+	nAddDerivedUnits(scales);
+	return scales;
 }
 
 /******************************************************************************

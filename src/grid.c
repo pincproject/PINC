@@ -27,8 +27,6 @@
  */
 static int *getSubdomain(const dictionary *ini);
 
-
-
 /**
  * @brief Gets, sends, recieves and sets a slice, using MPI
  * @param nSlicePoints		Length of the slice array
@@ -1210,7 +1208,7 @@ void gCloseH5(Grid *grid){
 }
 
 void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
-						  const double *denorm, const double *dimen, const char *fName){
+			 const Scales *scales, double denorm, const char *fName){
 
 	int rank = grid->rank;
 	int nDims = rank-1;
@@ -1230,14 +1228,8 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 * CREATE ATTRIBUTES
 	 */
 
-	double *debye = malloc(nDims*sizeof(*debye));
-	debye[0] = iniGetDouble(ini,"grid:debye");
-	for(int d=1;d<nDims;d++) debye[d]=debye[0];
-
-	/* setH5Attr(file,"Axis denormalization factor",&grid->stepSize[1],nDims); */
-	/* setH5Attr(file,"Axis dimensionalizing factor",debye,nDims); */
-	/* setH5Attr(file,"Quantity denormalization factor",denorm,size[0]); */
-	/* setH5Attr(file,"Quantity dimensionalizing factor",denorm,size[0]); */
+	setH5Attr(file,"Axis denormalization factor",&scales->length,1);
+	setH5Attr(file,"Quantity denormalization factor",&denorm,1);
 
 	/*
 	 * HDF5 HYPERSLAB DEFINITION

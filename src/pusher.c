@@ -79,54 +79,6 @@ static inline void addCross(const double *a, const double *b, double *res);
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
 /******************************************************************************
- * RUN MODE FOR PROBING PUSHER
- *****************************************************************************/
-
-funPtr puModeInterp_set(dictionary *ini){
-	int nDims = iniGetInt(ini,"grid:nDims");
-	if(nDims!=1) msg(ERROR,"puModeInterp only works with grid:nDims=1");
-	return puModeInterp;
-}
-void puModeInterp(dictionary *ini){
-
-	Grid *E = gAlloc(ini, VECTOR);
-	Population *pop = pAlloc(ini);
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-
-	double *val = E->val;
-	long int *sizeProd = E->sizeProd;
-	int rank = E->rank;
-
-	int *L = gGetGlobalSize(ini);
-
-	double pos[] = {0.112358*L[0]};
-	double vel[] = {0.};
-	pNew(pop,0,pos,vel);
-	pNew(pop,0,pos,vel);
-
-	for(int g=0;g<sizeProd[rank];g++){
-		val[g] = pow((double)g/L[0],2);	// E(x)=x^2
-	}
-
-	int integer[1];
-	double decimal[1];
-	double complement[1];
-
-	puInterpND0(&pop->vel[0],pos,val,sizeProd,1);
-	puInterpND1(&pop->vel[1],pos,val,sizeProd,1,integer,decimal,complement);
-
-	pOpenH5(ini, pop, "pop");
-	pWriteH5(pop, mpiInfo, 0.0, 0.0);
-	pCloseH5(pop);
-
-	free(L);
-	pFree(pop);
-	gFree(E);
-	gFreeMpi(mpiInfo);
-
-}
-
-/******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 

@@ -450,7 +450,8 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
+void pOpenH5(	const dictionary *ini, Population *pop, const Scales *scales,
+	   			const char *fName){
 
 	/*
 	 * CREATE FILE
@@ -485,28 +486,8 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	 * CREATE ATTRIBUTES
 	 */
 
-	int nDims = pop->nDims;
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double debye = 0; // TBD: Does not work
-
-	double vThermal = 0; // TBD: Does not work
-
-	double *attrData = malloc(nDims*sizeof(*attrData));
-
-	setH5Attr(file, "Position denormalization factor", stepSize, nDims);
-
-	adSetAll(attrData,nDims,debye);
-	setH5Attr(file, "Position dimensionalizing factor", attrData, nDims);
-
-	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
-	setH5Attr(file, "Velocity denormalization factor", attrData, nDims);
-
-	adSetAll(attrData,nDims,vThermal);
-	setH5Attr(file, "Velocity dimensionalizing factor", attrData, nDims);
-
-	free(stepSize);
-	free(attrData);
+	setH5Attr(file, "Position denormalization factor", &scales->length, 1);
+	setH5Attr(file, "Velocity denormalization factor", &scales->velocity, 1);
 
 }
 

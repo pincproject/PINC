@@ -281,6 +281,31 @@ typedef struct{
 } Grid;
 
 /**
+ * @brief Contains characteristic scales to be used for normalization and
+ * de-normalization.
+ *
+ */
+typedef struct{
+
+	double nDims;
+
+	// Base units (in PINC)
+	double charge;
+	double mass;
+	double length;
+	double time;
+	
+	// Derived units
+	double velocity;
+	double acceleration;
+	double chargeDensity;
+	double potential;
+	double eField;
+	double bField;
+	double energy;
+
+} Scales;
+/**
  * @brief	Timer struct for simple profiling
  * @see allocTimer(), freeTimer(), tMsg()
  *
