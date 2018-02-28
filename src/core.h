@@ -282,27 +282,50 @@ typedef struct{
 
 /**
  * @brief Contains characteristic scales to be used for normalization and
- * de-normalization.
+ * denormalization in PINC.
  *
+ * This datatype contains characteristic scales that can be used to normalize or
+ * denormalize quantities in PINC. These characteristic scales have physical
+ * units (normally SI units) so if for instance a variable has the dimension of
+ * "velocity", it is normalize by dividing by units->velocity. Likewise, a
+ * simulation variable E for the E-field, can be obtained in physical units by
+ * multiplying by units->eField. 
+ *
+ * The (new) convention in PINC is that all normalization takes place during
+ * initialization
+ *
+ * @code
+ * 	Units *units = uAlloc(ini);
+ * 	uNormalize(ini, units);
+ *
+ * 	Grid *rho = gAlloc(ini, SCALAR);
+ * 	Population *pop = pAlloc(ini);
+ *
+ * 	pOpenH5(ini, pop, units, "pop");
+ * 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+ *
+ * 	uFree(units);
+ * @endcode
  */
 typedef struct{
 
-	double nDims;
+	double nDims;		///< Number of spatial dimensions
+	double weight;		///< Number of physical particle per simulation particle
 
-	// Base units (in PINC)
-	double charge;
-	double mass;
-	double length;
-	double time;
+	// Characteristic SI base units (with charge instead of current)
+	double charge;			///< Charge
+	double mass;			///< Mass
+	double length;			///< Length
+	double time;			///< Time
 	
 	// Derived units
-	double velocity;
-	double acceleration;
-	double chargeDensity;
-	double potential;
-	double eField;
-	double bField;
-	double energy;
+	double velocity;		///< Velocity
+	double acceleration;	///< Acceleration
+	double chargeDensity;	///< Electric charge density
+	double potential;		///< Electric potential
+	double eField;			///< Electric field
+	double bField;			///< Magnetic flux density
+	double energy;			///< Energy
 
 } Units;
 /**

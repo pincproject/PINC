@@ -149,21 +149,11 @@ Units *uSI(dictionary *ini){
 
 void uNormalize(dictionary *ini, const Units *units){
 
-	iniScaleDoubleArr(ini, "population:thermalVelocity", 1.0/units->velocity);
-	iniScaleDoubleArr(ini, "population:drift", 1.0/units->velocity);
-	iniScaleDoubleArr(ini, "population:perturbAmplitude", 1.0/units->length);
-	iniScaleDoubleArr(ini, "fields:BExt", 1.0/units->bField);
-	iniScaleDoubleArr(ini, "fields:EExt", 1.0/units->eField);
+	iniScaleDouble(ini, "population:thermalVelocity", 1.0/units->velocity);
+	iniScaleDouble(ini, "population:drift", 1.0/units->velocity);
+	iniScaleDouble(ini, "population:perturbAmplitude", 1.0/units->length);
+	iniScaleDouble(ini, "fields:BExt", 1.0/units->bField);
+	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
 }
 
-void iniScaleDoubleArr(dictionary *ini, const char *key, double factor){
-
-	int nElements = iniGetNElements(ini, key);
-	double *arr = iniGetDoubleArr(ini, key, nElements);
-
-	adScale(arr, nElements, factor);
-	iniSetDoubleArr(ini, key, arr, nElements);
-
-	free(arr);
-}
 

@@ -511,6 +511,28 @@ void iniSetDoubleArr(	dictionary *ini, const char *key,
 
 }
 
+void iniScaleDouble(dictionary *ini, const char *key, double factor){
+
+	int nElements = iniGetNElements(ini, key);
+	double *arr = iniGetDoubleArr(ini, key, nElements);
+
+	adScale(arr, nElements, factor);
+	iniSetDoubleArr(ini, key, arr, nElements);
+
+	free(arr);
+}
+
+void iniScaleLongInt(dictionary *ini, const char *key, double factor){
+
+	int nElements = iniGetNElements(ini, key);
+	long int *arr = iniGetLongIntArr(ini, key, nElements);
+
+	alScale(arr, nElements, factor);
+	iniSetLongIntArr(ini, key, arr, nElements);
+
+	free(arr);
+}
+
 void iniApplySuffix(dictionary *ini, const char *key,
 					const char *suffix, const double *mul, int mulLen){
 

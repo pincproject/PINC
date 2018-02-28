@@ -255,6 +255,10 @@ void iniSetLongIntArr(	dictionary *ini, const char *key,
 ///@brief Set key to array of double
 void iniSetDoubleArr(	dictionary *ini, const char *key,
 						const double *values, int nElements);
+///@brief Scale long int (or int) array or scalar stored in key by factor.
+void iniScaleLongInt(dictionary *ini, const char *key, double factor);
+///@brief Scale double array or scalar stored in key by factor.
+void iniScaleDouble(dictionary *ini, const char *key, double factor);
 
 /**
  * @brief Get the array of strings associated to a key.
@@ -288,7 +292,6 @@ int iniGetNElements(const dictionary* ini, const char* key);
  */
 void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const double *mul, int mulLen);
 
-void iniScaleDoubleArr(dictionary *ini, const char *key, double factor);
 
 ///@}
 
