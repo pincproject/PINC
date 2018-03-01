@@ -1735,7 +1735,8 @@ funPtr mgModeErrorScaling_set(dictionary *ini){
 }
 void mgModeErrorScaling(dictionary *ini){
 
-	Units *units=uSemiSI(ini);
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
 
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
@@ -1856,7 +1857,8 @@ funPtr mgMode_set(dictionary *ini){
 }
 void mgMode(dictionary *ini){
 
-	Units *units=uSemiSI(ini);
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 

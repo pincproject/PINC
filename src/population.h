@@ -10,20 +10,19 @@
 /**
  * @brief	Allocates memory for Population according to ini-file
  * @param	ini		Dictionary to input file
- * @see freePopulation(), posUniform(), velMaxwell()
+ * @return			Population
  *
  * Allocates memory for as many particles and species as specified in
  * populations:nSpecies and population:nAlloc in ini-file. This function only
  * allocates the memory for the particles, it does not generate them.
  *
- * Remember to call freePopulation() to free memory.
+ * Remember to call pFree() to free memory.
  */
 Population *pAlloc(const dictionary *ini);
 
 /**
  * @brief					Frees memory for Population
  * @param[in,out]	pop		Pointer to population to be freed
- * @see allocPopulation()
  */
 void pFree(Population *pop);
 

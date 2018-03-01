@@ -341,6 +341,14 @@ typedef struct{
  * are run directly after uNormalize(). uNormalize() can act as a prototype for
  * these functions.
  *
+ * Notice also the distinction between e.g. a hypervolume and a "normal" volume.
+ * A volume is normally defined to be of three dimensions (length^3) whereas a
+ * hypervolume is of nDims dimensions. For generality this is usually what you
+ * want. When you talk about domain volume, or cell volume, you usually mean
+ * area if it's 2D, length if it's 1D and (length^4) if its 4D. Likewise, a
+ * hyperarea is length^(nDims-1). This is what you get when you take a cross
+ * section in nDims dimensions.
+ *
  * Although not relevant for most users, several normalization schemes can
  * actually be implemented in PINC, but they must all fulfill these criteria:
  * - \f$\Delta x=\Delta t=1\f$ after normalization. Hence the characteristic
@@ -380,8 +388,9 @@ typedef struct{
  */
 typedef struct{
 
-	double nDims;		///< Number of spatial dimensions
-	double weight;		///< Number of physical particle per simulation particle
+	int nDims;			///< Number of spatial dimensions
+	int nSpecies;		///< Number of species
+	double *weights;	///< Number of physical particle per simulation particle
 
 	// Characteristic SI base units (with charge instead of current)
 	double charge;			///< Charge
@@ -390,8 +399,12 @@ typedef struct{
 	double time;			///< Time
 	
 	// Derived units
+	double hyperArea;		///< Length^(nDims-1)
+	double hyperVolume;		///< Length^(nDims)
+	double frequency;		///< Frequency
 	double velocity;		///< Velocity
 	double acceleration;	///< Acceleration
+	double density;			///< Density
 	double chargeDensity;	///< Electric charge density
 	double potential;		///< Electric potential
 	double eField;			///< Electric field
