@@ -216,7 +216,7 @@ void msg(msgKind kind, const char* restrict format,...){
 
 }
 
-void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
+void fMsg(const dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
 
 	// Get filename
 	char key[BUFFSIZE] = "msgfiles:";

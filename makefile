@@ -120,7 +120,7 @@ cleandoc:
 cleantestdata:
 	@echo "Cleaning test data"
 	@mv data/obj.grid.h5 data/temp 2> /dev/null || true
-	@rm -f data/*.h5 data/parsedump.txt
+	@rm -f data/*.h5 data/parsedump.txt/CollisionDump.txt
 	@mv data/temp data/obj.grid.h5 2> /dev/null || true
 
 clean: cleandoc cleantestdata

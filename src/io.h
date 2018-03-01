@@ -152,7 +152,7 @@ void msg(msgKind kind, const char* restrict format,...);
  * Beware that this is not a high performance writing function, and very
  * frequent invocations (for instance per particle) should be avoided.
  */
-void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...);
+void fMsg(const dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...);
 
 /**
  * @name ini functions
