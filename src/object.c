@@ -113,9 +113,9 @@ void oCloseH5(Object *obj){
 }
 
 void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
-             const double *denorm, const double *dimen, const char *fName){
+             const Units *units, double denorm, const char *fName){
    
-    gOpenH5(ini, obj->domain,   mpiInfo, denorm, dimen, "object");
+    gOpenH5(ini, obj->domain,   mpiInfo, units, denorm, "object");
 }
 
 void oReadH5(Object *obj, const MpiInfo *mpiInfo){

@@ -25,7 +25,6 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
 	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
-	parseIndirectInput(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE
@@ -33,8 +32,6 @@ int main(int argc, char *argv[]){
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
-												puModeParticle_set,
-												puModeInterp_set,
 												sMode_set);
 	run(ini);
 
@@ -83,6 +80,9 @@ void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
+
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
@@ -105,18 +105,11 @@ void regular(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
-	for(int d=1; d < rank; d++) dimen[d-1] = 1.;
-
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-  // oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+  // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
   // oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
@@ -124,9 +117,6 @@ void regular(dictionary *ini){
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
-
-	free(denorm);
-	free(dimen);
 
 	/*
 	 * INITIAL CONDITIONS
@@ -171,7 +161,7 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
-	Timer *t = tAlloc(rank);
+	Timer *t = tAlloc(mpiInfo->mpiRank);
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -270,6 +260,7 @@ void regular(dictionary *ini){
 	gFree(phi);
 	gFree(E);
 	pFree(pop);
+	uFree(units);
 	// oFree(obj);
 
 	gsl_rng_free(rngSync);
