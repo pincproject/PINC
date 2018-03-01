@@ -316,8 +316,15 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
 	for(int d = 0; d < nDims; d++){
-		if(trueSize[d+1] % (int) 2*(nLevels-1)){ //Sloppy and wrong
-			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
+
+		// Computes 2^nLevels. pow() is for doubles.
+		int power = 1;
+		for(int i = 0; i<nLevels; i++) power *= 2;
+
+		if(trueSize[d+1] % (int) pow(2,nLevels)){
+			/* msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels"); */
+			msg(STATUS, "2^nLevels=%d", power);
+			msg(ERROR, "All elements in grid:trueSize must be a multiple of 2^mgLevels=%d", power);
 		}
 	}
 
