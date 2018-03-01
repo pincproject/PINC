@@ -6,7 +6,7 @@
 #ifndef SPECTRAL_H
 #define SPECTRAL_H
 
-#include <fftw3.h>
+//#include <fftw3.h>
 
 /**
  * @brief Spectral solver

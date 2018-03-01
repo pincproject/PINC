@@ -10,7 +10,7 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
-#include "spectral.h"
+//#include "spectral.h"
 #include "object.h"
 #include "collisions.h"
 
@@ -47,8 +47,9 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												puModeParticle_set,
-												puModeInterp_set,
-												sMode_set);
+												puModeInterp_set
+												//sMode_set
+												);
 	run(ini);
 
 	/*
@@ -87,8 +88,9 @@ void regular(dictionary *ini){
 												puExtractEmigrantsND_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set,
-												sSolver_set);
+												mgSolver_set
+												//sSolver_set
+												);
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
