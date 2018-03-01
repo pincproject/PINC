@@ -471,10 +471,9 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double halfTimeStep = 0.5*iniGetDouble(ini,"time:timeStep");
 
 	for(int s=0;s<nSpecies;s++){
-		double factor = halfTimeStep*charge[s]/mass[s];
+		double factor = 0.5*charge[s]/mass[s];
 		double denom = 1;
 		for(int p=0;p<3;p++){
 			T[3*s+p] = factor*BExt[p];
