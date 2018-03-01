@@ -17,8 +17,6 @@
  *  Run designed for testing MCC
  *
  */
-void mccTestMode3(dictionary *ini);
-funPtr mccTestMode3_set(dictionary *ini);
 
 void mccTestMode2(dictionary *ini);
 funPtr mccTestMode2_set(dictionary *ini);
@@ -33,12 +31,6 @@ funPtr mccTestMode_set(dictionary *ini);
  *
  * Looong description of mccTest
  */
-
-
- //delete BorisTest in final Version
- void BorisTestMode(dictionary *ini);
- funPtr BorisTestMode_set(dictionary *ini);
-
 
 
 int mccTest(int one, int two);

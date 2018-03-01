@@ -1377,11 +1377,20 @@ void mccTestMode(dictionary *ini){
 													puDistrND1_set,
 													puDistrND0_set);
 
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
-
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
 	puExtractEmigrantsND_set);
 
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolveRaw_set
+												//sSolver_set
+												);
+
+
+	//
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
 
 
 	/*
@@ -1391,15 +1400,13 @@ void mccTestMode(dictionary *ini){
 	*/
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
+	Grid *phi = gAlloc(ini, SCALAR);
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *rho_e = gAlloc(ini, SCALAR);
 	Grid *rho_i = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
+	void *solver = solverAlloc(ini, rho, phi);
+
 
 	/*
 	* mcc specific variables
@@ -1434,7 +1441,7 @@ void mccTestMode(dictionary *ini){
 	gSetBndSlices(phi, mpiInfo);
 
 	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	//MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1500,7 +1507,8 @@ void mccTestMode(dictionary *ini){
 	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	//solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	solve(solver, rho, phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -1622,7 +1630,8 @@ void mccTestMode(dictionary *ini){
 
 		// Compute electric potential phi
 		//msg(STATUS, "Compute electric potential phi");
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		//solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		solve(solver, rho, phi, mpiInfo);
 		//msg(STATUS, "gAssertNeutralGrid");
 		gAssertNeutralGrid(phi, mpiInfo);
 
@@ -1749,14 +1758,11 @@ void mccTestMode(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
+	solverFree(solver);
 	gFree(rho);
 	gFree(rho_e);
 	gFree(rho_i);
 	gFree(phi);
-	gFree(res);
 	gFree(E);
 	pFree(pop);
 	free(S);
@@ -1796,10 +1802,22 @@ void mccTestMode2(dictionary *ini){
 													puDistrND1_set,
 													puDistrND0_set);
 
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
 
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
 																puExtractEmigrantsND_set);
+
+	//
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolveRaw_set
+												//sSolver_set
+												);
+
+
+	//
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -1812,10 +1830,7 @@ void mccTestMode2(dictionary *ini){
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-
+	void *solver = solverAlloc(ini, rho, phi);
 	/*
 	* mcc specific variables
 	*/
@@ -1844,7 +1859,7 @@ void mccTestMode2(dictionary *ini){
 	gSetBndSlices(phi, mpiInfo);
 
 	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	//MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1915,7 +1930,8 @@ void mccTestMode2(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	solve(solver, rho, phi, mpiInfo);
+	//solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -2009,7 +2025,8 @@ void mccTestMode2(dictionary *ini){
 		// gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		solve(solver, rho, phi, mpiInfo);
+		//solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 		gAssertNeutralGrid(phi, mpiInfo);
 
@@ -2071,404 +2088,11 @@ void mccTestMode2(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
+	solverFree(solver);
 	gFree(rho);
 	gFree(phi);
-	gFree(res);
 	gFree(E);
 	pFree(pop);
-	// oFree(obj);
-
-	gsl_rng_free(rngSync);
-	gsl_rng_free(rng);
-
-}
-
-
-funPtr mccTestMode3_set(dictionary *ini){
-	//test sanity here!
-	mccSanity(ini,"mccTestMode",2);
-	return mccTestMode3;
-}
-
-void mccTestMode3(dictionary *ini){
-	//int errorvar = 0;
-	msg(STATUS, "start mcc Test Mode3");
-
-	/*
-	* SELECT METHODS
-	*/
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
-	puAcc3D1KE_set,
-	puAccND1_set,
-	puAccND1KE_set,
-	puAccND0_set,
-	puAccND0KE_set,
-	puBoris3D1_set,
-	puBoris3D1KE_set,
-	puBoris3D1KETEST_set);
-
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1split_set,
-													puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND1Split_set,
-													puDistrND0_set,
-													puDistrND0Split_set);
-
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
-
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-	puExtractEmigrantsND_set);
-
-
-
-	/*
-	* INITIALIZE PINC VARIABLES
-	*
-	*done in "main" for "regular mode"
-	*/
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *rho_e = gAlloc(ini, SCALAR);
-	Grid *rho_i = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-
-	/*
-	* mcc specific variables
-	*/
-	// make struct???
-	double PmaxElectron = 0;
-	double maxfreqElectron = 0;
-	double PmaxIon = 0;
-	double maxfreqIon = 0;
-	//double *mass = pop->mass;
-	int nSpecies = pop->nSpecies;
-	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
-	double mccTimestep = iniGetDouble(ini,"time:timeStep");
-	//double mccStepSize = iniGetDouble(ini,"grid:stepSize");
-	//double frequency = iniGetDouble(ini,"collisions:collisionFrequency"); // for static Pmax...
-	//double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	//double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
-	double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
-	double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-
-	// using Boris algo
-	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
-
-	// Creating a neighbourhood in the rho to handle migrants
-	gCreateNeighborhood(ini, mpiInfo, rho);
-
-	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
-
-	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
-
-	// Random number seeds
-	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
-	/*
-	* PREPARE FILES FOR WRITING
-	*/
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gOpenH5(ini, rho_e, mpiInfo, denorm, dimen, "rho_e");
-	gOpenH5(ini, rho_i, mpiInfo, denorm, dimen, "rho_i");
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-	// oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
-	// oReadH5(obj, mpiInfo);
-
-	hid_t history = xyOpenH5(ini,"history");
-	pCreateEnergyDatasets(history,pop);
-
-	// Add more time series to history if you want
-	// xyCreateDataset(history,"/group/group/dataset");
-
-	free(denorm);
-	free(dimen);
-
-	/*
-	* INITIAL CONDITIONS
-	*/
-
-	//msg(STATUS, "constants = %f, %f", velThermal[0], velThermal[1]);
-	// Initalize particles
-	//pPosLattice(ini, pop, mpiInfo);
-	pPosUniform(ini, pop, mpiInfo, rngSync);
-	//pVelZero(pop);
-	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
-	pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
-
-	// Perturb particles
-	// pPosPerturb(ini, pop, mpiInfo);
-
-	// compute Pmax once outside loop. More correct is every dt
-	mccGetPmaxElectronStatic(ini,StaticSigmaElectronElastic, mccTimestep, nt,
-		&PmaxElectron, &maxfreqElectron,pop,mpiInfo);
-	mccGetPmaxIonStatic(ini,StaticSigmaCEX, StaticSigmaIonElastic, mccTimestep, nt,
-		&PmaxIon, &maxfreqIon, pop,mpiInfo);
-	//msg(STATUS, "freq is %f",frequency);
-
-	// Migrate those out-of-bounds due to perturbation
-	extractEmigrants(pop, mpiInfo);
-	puMigrate(pop, mpiInfo, rho);
-
-	/*
-	* compute initial half-step
-	*/
-
-	// Get initial charge density
-	distr(pop, rho,rho_e,rho_i); //two species
-	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-	gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
-	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
-
-
-	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, TOHALO);
-	gMul(E, -1.);
-
-	// add External E
-	puAddEext(ini, pop, E);
-
-	// Advance velocities half a step
-	gMul(E, 0.5);
-	puGet3DRotationParameters(ini, T, S, 0.5);
-	acc(pop, E, T, S);
-	gMul(E, 2.0);
-	puGet3DRotationParameters(ini, T, S, 1.0);
-
-	//Write initial h5 files
-	//gWriteH5(E, mpiInfo, 0.0);
-	gWriteH5(rho, mpiInfo, 0.0);
-	gWriteH5(rho_e, mpiInfo, 0.0);
-	gWriteH5(rho_i, mpiInfo, 0.0);
-	gWriteH5(phi, mpiInfo, 0.0);
-	//pWriteH5(pop, mpiInfo, 0.0, 0.5);
-	pWriteEnergy(history,pop,0.0);
-
-
-	//msg(STATUS, "Pmax for Electrons is %f",PmaxElectron);
-	//msg(STATUS, "Pmax for Ions is %f",PmaxIon);
-
-	/*
-	* TIME LOOP
-	*/
-
-	Timer *t = tAlloc(rank);
-
-	// n should start at 1 since that's the timestep we have after the first
-	// iteration (i.e. when storing H5-files).
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	for(int n = 1; n <= nTimeSteps; n++){
-
-		msg(STATUS,"Computing time-step %i",n);
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,maxVel);
-
-		tStart(t);
-
-
-		// Move particles
-		//msg(STATUS, "moving particles");
-		puMove(pop);
-		// oRayTrace(pop, obj);
-
-
-		// Migrate particles (periodic boundaries)
-		//msg(STATUS, "extracting emigrants");
-		extractEmigrants(pop, mpiInfo);
-		//msg(STATUS, "Migrating particles");
-		puMigrate(pop, mpiInfo, rho);
-
-
-		mccGetPmaxElectronStatic(ini,StaticSigmaElectronElastic, mccTimestep, nt,
-			&PmaxElectron, &maxfreqElectron,pop,mpiInfo);
-		mccGetPmaxIonStatic(ini,StaticSigmaCEX, StaticSigmaIonElastic, mccTimestep,
-			nt, &PmaxIon, &maxfreqIon, pop,mpiInfo);
-
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-		mccCollideElectron_debug(ini,pop, &PmaxElectron, &maxfreqElectron, rng, mccTimestep, nt); //race conditions?????
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-		mccCollideIon_debug(ini, pop, &PmaxIon, &maxfreqIon, rng, mccTimestep, nt);
-		//mccCollideIonStatic(ini, pop, &PmaxIon, &maxfreqIon, rng, mccTimestep, nt,NvelThermal,mccStepSize,StaticSigmaCEX,StaticSigmaIonElastic);
-
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-		// Check that no particle resides out-of-bounds (just for debugging)
-		//msg(STATUS, "checking particles out of bounds");
-		pPosAssertInLocalFrame(pop, rho);
-
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-		//-----------------------------
-		// Compute charge density
-		//msg(STATUS, "computing charge density");
-		distr(pop, rho,rho_e,rho_i); //two species
-
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-		//msg(STATUS, "MPI exchanging density");
-		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-		gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
-		gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
-
-		//---------------------------
-		//msg(STATUS, "gAssertNeutralGrid");
-		gAssertNeutralGrid(rho, mpiInfo);
-
-		// Compute electric potential phi
-		//msg(STATUS, "Compute electric potential phi");
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-		//msg(STATUS, "gAssertNeutralGrid");
-		gAssertNeutralGrid(phi, mpiInfo);
-
-		// Compute E-field
-		//msg(STATUS, "compute E field");
-		gFinDiff1st(phi, E);
-		//msg(STATUS, "MPI exchanging E");
-		gHaloOp(setSlice, E, mpiInfo, TOHALO);
-		//msg(STATUS, "gMul( E, -1)");
-		gMul(E, -1.);
-
-		//msg(STATUS, "gAssertNeutralGrid");
-		gAssertNeutralGrid(E, mpiInfo);
-		// Apply external E
-		// gAddTo(Ext);
-		//gZero(E); //temporary test
-		puAddEext(ini, pop, E);
-
-		// Accelerate particle and compute kinetic energy for step n
-		//msg(STATUS, "Accelerate particles");
-
-		acc(pop, E, T, S);
-		tStop(t);
-
-		// Sum energy for all species
-		//msg(STATUS, "sum kinetic energy");
-		pSumKinEnergy(pop); // kin_energy per species to pop
-		//msg(STATUS, "compute pot energy");
-		// Compute potential energy for step n
-		gPotEnergy(rho,phi,pop);
-		//if( n> 40000 && n< 59500 && n%100 == 0){
-		//	msg(STATUS, "writing over a given timestep to file");
-			// Example of writing another dataset to history.xy.h5
-			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-			//Write h5 files
-			//gWriteH5(E, mpiInfo, (double) n);
-			//gWriteH5(rho, mpiInfo, (double) n);
-		//	gWriteH5(rho, mpiInfo, (double) n);
-		//	gWriteH5(rho_e, mpiInfo, (double) n);
-		//	gWriteH5(rho_i, mpiInfo, (double) n);
-		//	gWriteH5(phi, mpiInfo, (double) n);
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		//}
-		if( n> 15000){
-			msg(STATUS, "writing over a given timestep to file");
-			// Example of writing another dataset to history.xy.h5
-			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-			//Write h5 files
-			gWriteH5(E, mpiInfo, (double) n);
-			//gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(rho_e, mpiInfo, (double) n);
-			gWriteH5(rho_i, mpiInfo, (double) n);
-			gWriteH5(phi, mpiInfo, (double) n);
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		}
-		if(n>nTimeSteps-1){
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			//gWriteH5(rho, mpiInfo, (double) n);
-			//gWriteH5(rho_e, mpiInfo, (double) n);
-			//gWriteH5(rho_i, mpiInfo, (double) n);
-			//gWriteH5(phi, mpiInfo, (double) n);
-			//gWriteH5(E, mpiInfo, (double) n);
-		}
-		//gWriteH5(rho_e, mpiInfo, (double) n);
-		//if(n%20000 == 0){
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			//gWriteH5(phi, mpiInfo, (double) n);
-			//gWriteH5(rho, mpiInfo, (double) n);
-			//gWriteH5(E, mpiInfo, (double) n);
-		//}
-//		if(n%1000==0 && n<48000){
-//			msg(STATUS, "writing every 1000 timestep to file");
-//			// Example of writing another dataset to history.xy.h5
-//			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-//			//Write h5 files
-//			//gWriteH5(E, mpiInfo, (double) n);
-//			//gWriteH5(rho, mpiInfo, (double) n);
-//			gWriteH5(phi, mpiInfo, (double) n);
-//			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-//		}
-		//gWriteH5(phi, mpiInfo, (double) n);
-		pWriteEnergy(history,pop,(double)n);
-
-		//free(nt);
-		//free(mccTimestep);
-		//free(frequency);
-		//free(velThermal);
-		//msg(STATUS, "   -    ");
-
-
-	}
-	//msg(STATUS, "Test returned %d", errorvar);
-
-	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
-
-	/*
-	* FINALIZE PINC VARIABLES
-	*/
-	gFreeMpi(mpiInfo);
-
-	// Close h5 files
-	pCloseH5(pop);
-	gCloseH5(rho);
-	gCloseH5(rho_e);
-	gCloseH5(rho_i);
-	gCloseH5(phi);
-	gCloseH5(E);
-	// oCloseH5(obj);
-	xyCloseH5(history);
-
-	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
-	gFree(rho);
-	gFree(rho_e);
-	gFree(rho_i);
-	gFree(phi);
-	gFree(res);
-	gFree(E);
-	pFree(pop);
-	free(S);
-	free(T);
 	// oFree(obj);
 
 	gsl_rng_free(rngSync);

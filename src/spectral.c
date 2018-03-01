@@ -6,7 +6,7 @@
 #define _XOPEN_SOURCE 700
 
 #include <complex.h>
-//#include <fftw3.h>
+#include <fftw3.h>
 #include <math.h>
 #include "core.h"
 #include "spectral.h"
