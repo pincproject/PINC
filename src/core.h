@@ -335,13 +335,10 @@ typedef enum{
 } msgKind;
 
 /**
- * @brief	Function pointers for the different slice operations
- * @see gHaloOp
+ * @brief Pointer to function returning void. (All parameter lists works).
  */
-typedef void (*SliceOpPointer)(	const double *slice, Grid *grid,
-	 							int d, int offset);
-
 typedef void (*funPtr)();
+
 
 /******************************************************************************
  * INCLUDING CORE MODULES

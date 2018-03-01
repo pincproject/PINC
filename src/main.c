@@ -10,8 +10,9 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
-#include "collisions.h"
+#include "spectral.h"
 #include "object.h"
+#include "collisions.h"
 
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
@@ -46,7 +47,8 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												puModeParticle_set,
-												puModeInterp_set);
+												puModeInterp_set,
+												sMode_set);
 	run(ini);
 
 	/*
@@ -65,7 +67,8 @@ void regular(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
+	void (*acc)()   			= select(ini,	"methods:acc",
+												puAcc3D1_set,
 												puAcc3D1KE_set,
 												puAccND1_set,
 												puAccND1KE_set,
@@ -74,22 +77,23 @@ void regular(dictionary *ini){
 												puBoris3D1_set,
 												puBoris3D1KE_set);
 
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
+	void (*distr)() 			= select(ini,	"methods:distr",
+												puDistr3D1_set,
+												puDistrND1_set,
+												puDistrND0_set);
 
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
+	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
+												puExtractEmigrants3D_set,
+												puExtractEmigrantsND_set);
 
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolver_set,
+												sSolver_set);
 
-	// char *str;
-	//
-	// str = iniGetStr("methods:acc");
-	// void (*acc)() = NULL;
-	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
-	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -98,11 +102,8 @@ void regular(dictionary *ini){
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
+	void *solver = solverAlloc(ini, rho, phi);
 	// Object *obj = oAlloc(ini);
 
 	// using Boris algo
@@ -117,14 +118,10 @@ void regular(dictionary *ini){
 	// Setting Boundary slices
 	gSetBndSlices(phi, mpiInfo);
 
-	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
-
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
 
 	/*
 	 * PREPARE FILES FOR WRITING
@@ -133,8 +130,8 @@ void regular(dictionary *ini){
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
+	for(int d=1; d < rank; d++) dimen[d-1] = 1.;
 
 	//pOpenH5(ini, pop, "pop");
 	//gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
@@ -168,6 +165,7 @@ void regular(dictionary *ini){
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
+
 	puMigrate(pop, mpiInfo, rho);
 
 	/*
@@ -179,7 +177,7 @@ void regular(dictionary *ini){
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
 	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	solve(solver, rho, phi, mpiInfo);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -224,10 +222,17 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		gAssertNeutralGrid(rho, mpiInfo);
+		// gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		// mgSolve(solver, rho, phi, mpiInfo);
+		// sSolve(solver, rho, phi, mpiInfo);
+
+		solve(solver, rho, phi, mpiInfo);
+
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		gAssertNeutralGrid(phi, mpiInfo);
 
@@ -811,12 +816,11 @@ void BorisTestMode2(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-	mgFree(mgPhi);
-	mgFree(mgRes);
+	// sFree(solver);
+	// mgFreeSolver(solver);
+	solverFree(solver);
 	gFree(rho);
 	gFree(phi);
-	gFree(res);
 	gFree(E);
 	pFree(pop);
 	// oFree(obj);

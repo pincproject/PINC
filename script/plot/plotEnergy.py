@@ -17,7 +17,7 @@ maxEn = np.max(tot)
 minEn = np.min(tot)
 absError = max(maxEn-avgEn,avgEn-minEn)
 relError = absError/avgEn;
-print "Relative error: %.2f%%\n"%(relError*100)
+print("Relative error: %.2f%%\n"%(relError*100))
 
 #plt.plot(pot,label='potential')
 plt.plot(kin,label='kinetic')

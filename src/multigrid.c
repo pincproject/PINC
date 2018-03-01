@@ -2,12 +2,12 @@
  * @file		multigrid.c
  * @brief		Poisson Solver, multigrid.
  * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
+ *          	Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid structures and
  * a multigrid solver containing restriction, prolongation operatorors and smoothers
  *
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,8 +20,8 @@
  * 				Local functions
  *****************************************************************************/
 
-funPtr mgSolve_set(dictionary *ini){
-	return mgSolve;
+funPtr mgSolveRaw_set(dictionary *ini){
+	return mgSolveRaw;
 }
 
 
@@ -82,7 +82,7 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
     free(coarseSolverName);
 }
 
-void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
+void mgSetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	char *restrictor = iniGetStr(ini, "multigrid:restrictor");
 	char *prolongator = iniGetStr(ini, "multigrid:prolongator");
 
@@ -110,11 +110,11 @@ void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	free(prolongator);
 }
 
-MgAlgo getMgAlgo(const dictionary *ini){
+funPtr getMgAlgo(const dictionary *ini){
 
 	char *mgAlgo = iniGetStr(ini, "multigrid:cycle");
 
-	MgAlgo algorithm;
+	funPtr algorithm;
 
 	if(!strcmp(mgAlgo, "mgVRegular"))	algorithm = &mgVRegular;
 	if(!strcmp(mgAlgo, "mgVRecursive"))	algorithm = &mgVRecursive;
@@ -343,7 +343,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
     //Setting the algorithms to be used, pointer functions
 	mgSetSolver(ini, multigrid);
-	mgsetRestrictProlong(ini, multigrid);
+	mgSetRestrictProlong(ini, multigrid);
 
   	return multigrid;
 
@@ -360,6 +360,51 @@ void mgFree(Multigrid *multigrid){
 	free(multigrid);
 
 	return;
+}
+
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi){
+
+	MultigridSolver *solver = (MultigridSolver *)malloc(sizeof(*solver));
+
+	Grid *res = gAlloc(ini, SCALAR);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+	funPtr mgAlgo = getMgAlgo(ini);
+
+	solver->res = res;
+	solver->mgRho = mgRho;
+	solver->mgRes = mgRes;
+	solver->mgPhi = mgPhi;
+	solver->mgAlgo = mgAlgo;
+
+	return solver;
+}
+
+void mgFreeSolver(MultigridSolver *solver){
+
+	mgFree(solver->mgRho);
+	mgFree(solver->mgPhi);
+	mgFree(solver->mgRes);
+	gFree(solver->res);
+	free(solver);
+}
+void mgSolver(	void (**solve)(),
+				MultigridSolver *(**solverAlloc)(),
+				void (**solverFree)()){
+
+	*solve=mgSolve;
+	*solverAlloc=mgAllocSolver;
+	*solverFree=mgFreeSolver;
+}
+funPtr mgSolver_set(const dictionary *ini){
+	return mgSolver;
+}
+void mgSolve(const MultigridSolver *solver,
+	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo){
+
+	mgSolveRaw(solver->mgAlgo, solver->mgRho, solver->mgPhi, solver->mgRes, mpiInfo);
 }
 
 /******************************************************
@@ -1642,7 +1687,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 
 
-void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
+void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
@@ -1722,10 +1767,10 @@ void mgModeErrorScaling(dictionary *ini){
 
 	if(mpiInfo->mpiRank==0)	aiPrint(&rho->trueSize[1], rho->rank-1);
 
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	funPtr mgAlgo = getMgAlgo(ini);
 
 	//Solve
-	mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	mgSolveRaw(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 	// //Print results
 	// msg(STATUS, "Avg e^2 = %f", avgError);
@@ -1835,7 +1880,7 @@ void mgMode(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	funPtr mgAlgo = getMgAlgo(ini);
 
 	msg(STATUS, "\nMultigrid settings: \n nLevels = %d \n nPreSmooth = %d \n nCoarseSolve = %d \n nPostSmooth = %d",
 	mgRho->nLevels, mgRho->nPreSmooth, mgRho->nCoarseSolve, mgRho->nPostSmooth);
@@ -1873,7 +1918,7 @@ void mgMode(dictionary *ini){
 	while(avgError>tol){
 		// Run solver
 		tStart(t);
-		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolveRaw(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 		tStop(t);
 
 		//Compute error

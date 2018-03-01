@@ -2,6 +2,7 @@
  * @file		multigrid.h
  * @brief		Poisson Solver, multigrid.
  * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
+ * @author      Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid
  * structures and a multigrid solver containing restriction, prolongation
@@ -10,7 +11,6 @@
 
 #ifndef MULTIGRID_H
 #define MULTIGRID_H
-
 
 /**
  * @brief Contains the grids needed in a multigrid solver, as well as other
@@ -48,14 +48,13 @@
 
 } Multigrid;
 
-/**
- * @brief	Function pointers for the different slice operations
- * @see gHaloOp
- */
-typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho,
-                    Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo);
-
-
+typedef struct {
+    Grid *res;
+    Multigrid *mgRho;
+    Multigrid *mgPhi;
+    Multigrid *mgRes;
+    funPtr mgAlgo;
+} MultigridSolver;
 
 /**
  * @brief Allocates multigrid struct
@@ -91,6 +90,11 @@ typedef void (*MgAlgo)(int level,int bottom, int top, Multigrid *mgRho,
 
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi);
+void mgFreeSolver(MultigridSolver *solver);
+void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
+funPtr mgSolver_set(const dictionary *ini);
+
  /**
   * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
   * @param 	multigrid
@@ -102,7 +106,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
   */
 void mgFree(Multigrid *multigrid);
 
-MgAlgo getMgAlgo(const dictionary *ini);
+funPtr getMgAlgo(const dictionary *ini);
 
 
 /**
@@ -197,10 +201,10 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  *  information.
  */
 
-void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,Multigrid *mgRes,
-                const MpiInfo *mpiInfo);
+void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,
+    Multigrid *mgRes, const MpiInfo *mpiInfo);
 
-funPtr mgSolve_set(dictionary *ini);
+funPtr mgSolveRaw_set(dictionary *ini);
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
