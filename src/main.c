@@ -10,7 +10,7 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
-//#include "spectral.h"
+#include "spectral.h"
 #include "object.h"
 #include "collisions.h"
 
@@ -43,8 +43,8 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												puModeParticle_set,
-												puModeInterp_set
-												//sMode_set
+												puModeInterp_set,
+												sMode_set
 												);
 	run(ini);
 
@@ -70,9 +70,7 @@ void regular(dictionary *ini){
 												puAccND1_set,
 												puAccND1KE_set,
 												puAccND0_set,
-												puAccND0KE_set,
-												puBoris3D1_set,
-												puBoris3D1KE_set);
+												puAccND0KE_set);
 
 	void (*distr)() 			= select(ini,	"methods:distr",
 												puDistr3D1_set,
@@ -84,17 +82,13 @@ void regular(dictionary *ini){
 												puExtractEmigrantsND_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolveRaw_set
-												//sSolver_set
-												);
+												mgSolver_set,
+												sSolver_set);
 
-
-	//
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
 	void (*solverFree)() = NULL;
 	solverInterface(&solve, &solverAlloc, &solverFree);
-
 
 	/*
 	 * INITIALIZE PINC VARIABLES
@@ -104,10 +98,8 @@ void regular(dictionary *ini){
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	msg(STATUS, "this faaaaaaaaaaaaaar");
 	void *solver = solverAlloc(ini, rho, phi);
 	// Object *obj = oAlloc(ini);
-
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -149,7 +141,6 @@ void regular(dictionary *ini){
 	/*
 	 * INITIAL CONDITIONS
 	 */
-
 
 	// Initalize particles
 	// pPosUniform(ini, pop, mpiInfo, rngSync);
@@ -296,6 +287,7 @@ void regular(dictionary *ini){
 
 }
 
+
 // delete below here in final version
 
 void BorisTestMode(dictionary *ini){
@@ -318,7 +310,7 @@ void BorisTestMode(dictionary *ini){
 													puDistrND1_set,
 													puDistrND0_set);
 
-	void (*solverInterface)() = select(ini,"methods:poisson", mgSolveRaw_set);
+	void (*solverInterface)() = select(ini,"methods:poisson", mgSolver_set);
 
 	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
 																puExtractEmigrantsND_set);
@@ -388,7 +380,7 @@ void BorisTestMode(dictionary *ini){
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
 	pOpenH5(ini, pop, "pop");
-	//gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
+	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
 	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
 	//gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
   // oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
@@ -408,14 +400,24 @@ void BorisTestMode(dictionary *ini){
 	 */
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
-	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
+	//double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+	//msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
 	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
-	pVelMaxwell(ini, pop, rng);
+	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
+
+	// Manually initialize a single particle
+	if(mpiInfo->mpiRank==0){
+		double pos[3] = {8., 8., 8.};
+		double vel[3] = {0.02, 0., 1.};
+		pNew(pop, 0, pos, vel);
+		//double pos1[3] = {17., 17., 16.};
+		//double vel1[3] = {0.1, 0., 0.1};
+		//pNew(pop, 1, pos1, vel1); //second particle
+	}
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -453,6 +455,11 @@ void BorisTestMode(dictionary *ini){
 	gMul(E, 2.0);
 	puGet3DRotationParameters(ini, T, S, 1.0);
 
+	double x_min = 20;
+	double x_max = 0;
+	double y_min = 20;
+	double y_max = 0;
+
 	/*
 	 * TIME LOOP
 	 */
@@ -473,6 +480,11 @@ void BorisTestMode(dictionary *ini){
 		tStart(t);
 
 		// Move particles
+		adPrint(pop->pos, 3);
+		x_min = pop->pos[0]<x_min ? pop->pos[0] : x_min;
+		x_max = pop->pos[0]>x_max ? pop->pos[0] : x_max;
+		y_min = pop->pos[1]<y_min ? pop->pos[1] : y_min;
+		y_max = pop->pos[1]>y_max ? pop->pos[1] : y_max;
 		puMove(pop);
 		// oRayTrace(pop, obj);
 
@@ -526,12 +538,15 @@ void BorisTestMode(dictionary *ini){
 
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
-		//gWriteH5(rho, mpiInfo, (double) n);
+		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
 		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
 	}
+
+	msg(STATUS, "x in [%f, %f]", x_min, x_max);
+	msg(STATUS, "y in [%f, %f]", y_min, y_max);
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
 

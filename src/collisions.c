@@ -111,6 +111,24 @@ double mccSigmaIonElastic(const dictionary *ini, double eps){
 	double temp = iniGetDouble(ini,"collisions:sigmaIonElastic");
 	return temp;//0.00121875*pow(10,8);//5*pow(10,-3);//temp;
 }
+double mccSigmaCEXFunctional(double a,double b,double v){
+	// educated guess on funtional form
+
+	double sigma = a*exp(-b*v*v);
+	return sigma;//2*0.00121875*pow(10,8);//0.5*pow(10,-1);//temp;
+}
+double mccSigmaIonElasticFunctional(double a,double b,double v){
+	// educated guess on funtional form
+
+	double sigma = a*exp(-b*v*v);
+	return sigma;//2*0.00121875*pow(10,8);//0.5*pow(10,-1);//temp;
+}
+double mccSigmaElectronElasticFunctional(double a,double b,double v){
+	// educated guess on funtional form
+
+	double sigma = a*exp(-b*v*v);
+	return sigma;//2*0.00121875*pow(10,8);//0.5*pow(10,-1);//temp;
+}
 double mccSigmaElectronElastic(const dictionary *ini, double eps){
 	// need a function for calculating real cross sects from data...
 	//double temp = 0.3*pow(10,-1); // hardcoded order of---
@@ -125,10 +143,11 @@ void mccGetPmaxElectronConstantFrq(const dictionary *ini, double dt,
 
 	double max_v = mccGetMaxVel(pop,0); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
 	msg(STATUS,"maxVelocity Electron =  %f", max_v);
+	*Pmax = 1-exp(-((*collFrqElectronElastic)*dt));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "max velocity Electron = %f \n", max_v);
+		fMsg(ini, "collision", "P_coll Electron = %f \n", &Pmax);
 	}
-	*Pmax = 1-exp(-((*collFrqElectronElastic)*dt));
 }
 void mccGetPmaxIonConstantFrq(const dictionary *ini, double dt, double *Pmax,
 	double *collFrqIonElastic,double *collFrqCEX, Population *pop,
@@ -136,10 +155,12 @@ void mccGetPmaxIonConstantFrq(const dictionary *ini, double dt, double *Pmax,
 
 	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
 	msg(STATUS,"maxVelocity Ion =  %f", max_v);
+
+	*Pmax = 1-exp(-((*collFrqIonElastic+*collFrqCEX)*dt));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
+		fMsg(ini, "collision", "P_coll Ion = %f \n", &Pmax);
 	}
-	*Pmax = 1-exp(-((*collFrqIonElastic+*collFrqCEX)*dt));
 }
 
 void mccGetPmaxIon(const dictionary *ini,double m, double thermalVel,
@@ -186,6 +207,8 @@ void mccGetPmaxIon(const dictionary *ini,double m, double thermalVel,
 	//return Pmax, maxfreq;
 }
 
+
+
 void mccGetPmaxIonStatic(const dictionary *ini,const double mccSigmaCEX,
 	const double mccSigmaIonElastic, double dt, double nt, double *Pmax,
 	double *maxfreq, Population *pop, MpiInfo *mpiInfo){
@@ -197,16 +220,15 @@ void mccGetPmaxIonStatic(const dictionary *ini,const double mccSigmaCEX,
 	// determine the speed, v(eps_i) = sqrt(2*eps_i *m_s)
 	// determine, max_eps(sigma_T *v)
 
-	// for now lets do
 	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
-	msg(STATUS,"maxVelocity Ion =  %f", max_v);
+	*maxfreq = (mccSigmaCEX+mccSigmaIonElastic)*max_v*nt;
+	*Pmax = 1-exp(-(*maxfreq*dt));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
+		fMsg(ini, "collision","getPmax Ion =  %f \n", *Pmax);
+		fMsg(ini, "collision","maxVelocity Ion =  %f \n", max_v);
 	}
-	*maxfreq = (mccSigmaCEX+mccSigmaIonElastic)*max_v*nt;
 
-	*Pmax = 1-exp(-(*maxfreq*dt));
-	msg(STATUS,"getPmax Ion =  %f", *Pmax);
 }
 
 void mccGetPmaxElectron(const dictionary *ini, double m, double thermalVel,
@@ -238,6 +260,92 @@ MpiInfo *mpiInfo){
 			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
 		eps = 0.5*NewVelocity*NewVelocity*pop->mass[0];
 		NewFreq = mccSigmaElectronElastic(ini,eps)*NewVelocity*nt;
+		if(NewFreq>*maxfreq){
+			*maxfreq=NewFreq;
+		}
+	}
+
+	//*maxfreq = mccSigmaElectronElastic(eps, DebyeLength)*max_v*nt; //maxfreq = max_eps(sigma_T *v)*nt (or max frequency of colls?)
+	msg(STATUS,"maxfreq electron =  %f", *maxfreq );
+	*Pmax = 1-exp(-(*maxfreq*dt));
+	//*Pmax = 0.01;
+	msg(STATUS,"getPmax Electron =  %f", *Pmax);
+	//return Pmax, maxfreq;
+}
+void mccGetPmaxIonFunctional(const dictionary *ini,
+	double dt, double nt, double *Pmax, double *maxfreq, Population *pop,
+	MpiInfo *mpiInfo,double CEX_a,double CEX_b,double Elastic_a,
+	double Elastic_b){
+	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
+	// Get å functional form of sigma_T (total crossect as funct. of energy)
+	// determine the speed, v(eps_i) = sqrt(2*eps_i *m_s)
+	// determine, max_eps(sigma_T *v)
+
+	// for now lets do
+	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
+	double min_v = mccGetMinVel(pop,1);
+	msg(STATUS,"maxVelocity Ion =  %f minVelocity Ion =  %f", max_v, min_v);
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
+	}
+	*maxfreq = 0; //start at zero
+	//double eps = 0;
+
+	double *vel = pop->vel;
+	double NewFreq = 0;
+	double NewVelocity = 0;
+	int nDims = pop->nDims;
+
+	long int iStart = pop->iStart[1]; //ions as specie 1
+	long int iStop  = pop->iStop[1];
+	for(int i=iStart; i<iStop; i++){
+		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
+			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+		//eps = 0.5*NewVelocity*NewVelocity*pop->mass[1];
+		NewFreq = (mccSigmaCEXFunctional(CEX_a,CEX_b,NewVelocity)
+			+mccSigmaIonElasticFunctional(Elastic_a,Elastic_b,NewVelocity))*NewVelocity*nt;
+		if(NewFreq>*maxfreq){
+			*maxfreq=NewFreq;
+			//msg(STATUS,"sigma*vel =  %.32f", (*maxfreq/nt) );
+		}
+	}
+
+	//*maxfreq = (mccSigmaCEX(eps, DebyeLength)+mccSigmaIonElastic(eps, DebyeLength))*max_v*nt; //maxfreq = max_eps(sigma_T *v)*nt (or max frequency of colls?)
+	//msg(STATUS,"maxfreq Ion =  %f", *maxfreq );
+	*Pmax = 1-exp(-(*maxfreq*dt));
+	//*Pmax = 0.01;
+	//msg(STATUS,"getPmax Ion =  %f", *Pmax);
+	//return Pmax, maxfreq;
+}
+void mccGetPmaxElectronFunctional(const dictionary *ini,
+	double dt, double nt,double *Pmax, double *maxfreq, Population *pop,
+	MpiInfo *mpiInfo,double a, double b){
+	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
+	// Get a functional form of sigma_T (total crossect as funct. of energy)
+	// determine the speed, v(eps_i) = sqrt(2*eps_i *m_s)
+	// determine, max_eps(sigma_T *v)
+
+	// for now lets do
+	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
+	double min_v = mccGetMinVel(pop,0); // only used for debugging now
+	msg(STATUS,"maxVelocity Electron =  %f minVelocity Electron =  %f", max_v, min_v);
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
+	}
+	//double eps = 0.0;//0.5*max_v*max_v*pop->mass[0];
+
+	double *vel = pop->vel;
+	double NewFreq = 0;
+	double NewVelocity = 0;
+	int nDims = pop->nDims;
+
+	long int iStart = pop->iStart[0]; //ions as specie 1
+	long int iStop  = pop->iStop[0];
+	for(int i=iStart; i<iStop; i++){
+		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
+			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+		//eps = 0.5*NewVelocity*NewVelocity*pop->mass[0];
+		NewFreq = mccSigmaElectronElasticFunctional(a,b,NewVelocity)*NewVelocity*nt;
 		if(NewFreq>*maxfreq){
 			*maxfreq=NewFreq;
 		}
@@ -282,6 +390,20 @@ double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, dou
 
 	return MyFreq;
 }
+double mccGetMyCollFreqFunctional(double (*sigma)(double, double,double),
+						double vx,double vy,double vz,double nt,
+						double a,double b){
+
+	// collision freq given a cross section function
+	double v = sqrt(vx*vx + vy*vy + vz*vz);
+	//double eps_i = 0.5*m*v*v;
+
+	//we use v instead of Energy
+	double Mysigma = sigma(a,b,v);
+	double MyFreq = v*Mysigma*nt;
+	return MyFreq;
+}
+
 double mccGetMyCollFreq(const dictionary *ini, double (*sigma)(const dictionary *ini, double),
 						double m, double vx,double vy,double vz, double dt, double nt){
 	// collision freq given a cross section function
@@ -308,7 +430,9 @@ double mccEnergyDiffIonElastic(double Ekin, double theta, double mass1, double m
 	return temp;
 }
 
-double mccEnergyDiffElectronElastic(double Ekin, double theta, double mass1, double mass2){
+double mccEnergyDiffElectronElastic(double Ekin, double theta, double mass1,
+	double mass2){
+
 	double temp;
 	//msg(STATUS, "Ekin = %.32f", Ekin);
 	//msg(STATUS, "theta = %f", theta);
@@ -322,7 +446,12 @@ double mccEnergyDiffElectronElastic(double Ekin, double theta, double mass1, dou
 	return temp;
 }
 
-void mccCollideElectron_debug(const dictionary *ini,Population *pop,  double *Pmax, double *maxfreqElectron, const gsl_rng *rng, double dt,double nt){
+void mccCollideElectron_debug(const dictionary *ini,Population *pop,
+	double *Pmax, double *maxfreqElectron, const gsl_rng *rng, double dt,
+	double nt){
+
+
+	// DEPRECATED! Historic artifact
 
 	msg(STATUS,"colliding Electrons");
 
@@ -488,6 +617,8 @@ void mccCollideElectron_debug(const dictionary *ini,Population *pop,  double *Pm
 void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
 	double *maxfreqIon, const gsl_rng *rng, double timeStep, double nt){
 
+	// DEPRECATED! Historic artifact
+
 	msg(STATUS,"colliding Ions");
 
 	//int nSpecies = pop->nSpecies;
@@ -567,9 +698,11 @@ void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
 		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 		//msg(STATUS,"neutral velx = %f vely = %f velz = %f",vxMW,vyMW,vzMW );
-		double vxTran = vel[q]-vxMW;
-		double vyTran = vel[q+1]-vyMW;
-		double vzTran = vel[q+2]-vzMW;
+
+		//transfer to CM-frame
+		double vxTran = vel[q]-(vel[q]-vxMW)/2.0;
+		double vyTran = vel[q+1]-(vel[q+1]-vyMW)/2.0;
+		double vzTran = vel[q+2]- (vel[q+2]-vzMW)/2.0;
 
 		double MyCollFreq1 = mccGetMyCollFreq(ini,mccSigmaIonElastic, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //prob of coll for particle i
 		double MyCollFreq2 = mccGetMyCollFreq(ini,mccSigmaCEX, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //duplicate untill real cross sections are implemented
@@ -596,7 +729,7 @@ void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
 				R1 = gsl_rng_uniform_pos(rng);
 
 				//The scattering happens in center of mass so we use THETA not chi
-				double argument = 1-2*R; //chi is THETA
+				double argument = (acos(1-2*R)/2.0);
 
 				if(sqrt(argument*argument)>1.0){
 					double newargument = sqrt(argument*argument)/argument;
@@ -715,7 +848,7 @@ void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
 			R1 = gsl_rng_uniform_pos(rng);
 
 			//The scattering happens in center of mass so we use THETA not chi
-			double argument = 1-2*R; //chi is THETA
+			double argument = (acos(1-2*R)/2.0);
 
 			if(sqrt(argument*argument)>1.0){
 				double newargument = sqrt(argument*argument)/argument;
@@ -807,8 +940,7 @@ void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
 
 void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	double *Pmax,double *maxfreqElectron, const gsl_rng *rng,
-	double nt,
-	double mccSigmaElectronElastic, MpiInfo *mpiInfo){
+	double nt, double mccSigmaElectronElastic, MpiInfo *mpiInfo){
 
 	// uses static CROSS-Sections, collfreq is proportional to v
 	//msg(STATUS,"colliding Electrons");
@@ -826,7 +958,7 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	long int q = 0;
 	double vx, vy, vz;
-	double last_q = 0;
+	long int last_i = 0;
 
 	long int errorcounter = 0;
 
@@ -837,17 +969,23 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	long int mccStepSize = floor((double)((iStop-iStart))\
 	/ (double)(NparticleColl));
 	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "colliding %i of %i electrons\n", NparticleColl, (iStop-iStart));
+		fMsg(ini, "collision", "colliding %i of %i electrons\n", (NparticleColl), ((iStop-iStart)));
 	}
 	//msg(STATUS,"colliding %i of %i electrons", NparticleColl, (iStop-iStart));
 
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	//long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
-	for(long int i=iStart;i<mccStop-nDims;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+	//check energies
+	//double ekin = 0; //test value
+	// double ekin_anal = 0;
+	// double ekinafter =0;
+	// double ekindiff =0;
+
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 		Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
-		q = floor((i + (R*mccStepSize))*nDims);
+		q = ((i + floor(R*mccStepSize))*nDims);
 
 		vx = vel[q];
 		vy = vel[q+1];
@@ -875,7 +1013,6 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 				argument = newargument;
 			}
 			angleChi =  acos(argument); // gives nan value if abs(argument) > 1
-
 			anglePhi = 2*PI*R; // set different R?
 			angleTheta = acos(vx);
 
@@ -884,15 +1021,24 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 			vel[q] = vx*cos(angleChi)+A*(vy*vy + vz*vz); //Vx
 			vel[q+1] = vy*cos(angleChi)+A*vz-A*vx*vy; //Vy
 			vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
+			//check energies
+			// ekin_anal = mccEnergyDiffElectronElastic(Ekin, angleChi, mass[0], mass[1]);
+			// ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*mass[0] ;
+			// ekindiff = (Ekin-ekinafter);
+			// msg(STATUS,"analytic energydiff = %.8f, computed energydiff = %.8f",ekin_anal, ekindiff );
+
 		}
-		last_q = q;
+		last_i = i;
 	}
 	// Special handling of last box to let every particle have posibillity to collide
 
 	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 	Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
-	q = ( (last_q) + (R*(iStop*nDims-last_q)) ); // particle q collides
-
+	q = ( (last_i) + floor(R*(((iStop)-last_i))) )*nDims; // particle q collides
+	// msg(STATUS,"          electrons ");
+	// msg(STATUS,"istop = %i, mccstop = %i total pop size = %i",(iStop),mccStop,(iStop-iStart) );
+	// msg(STATUS,"mccstep = %i ,last_i = %i, last_q = %i,prev last_q = %i, last box = %i", mccStepSize,last_i,q,last_q,(iStop-last_q));
+	// msg(STATUS,"           ");
 	vx = vel[q];
 	vy = vel[q+1];
 	vz = vel[q+2];
@@ -923,6 +1069,125 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	}
 	msg(STATUS,"counted  %i Electron collisions on one MPI node", errorcounter);
 }
+
+void mccCollideElectronFunctional(const dictionary *ini, Population *pop,
+	double *Pmax,double *maxfreqElectron, const gsl_rng *rng,
+	double nt, MpiInfo *mpiInfo,double electron_a,double electron_b){
+
+	// uses static CROSS-Sections, collfreq is proportional to v
+	//msg(STATUS,"colliding Electrons");
+
+	int nDims = pop->nDims;
+	double *vel = pop->vel;
+	double *mass = pop->mass;
+
+	double R = gsl_rng_uniform_pos(rng);
+	double Rp = gsl_rng_uniform(rng);
+
+	double angleChi = 0; //scattering angle in x, y
+	double anglePhi = 0; //scattering angle in j
+	double angleTheta = 0;
+	double A = 0; //scaling Factor used for precomputing (speedup)
+	long int q = 0;
+	double vx, vy, vz;
+	long int last_i = 0;
+
+	long int errorcounter = 0;
+
+	double Ekin = 0;
+	long int iStart = pop->iStart[0];		// *nDims??
+	long int iStop = pop->iStop[0];      // make shure theese are actually electrons!
+	long int NparticleColl = (*Pmax)*(pop->iStop[0]-pop->iStart[0]); // 1 dim ?, Number of particles too collide
+	long int mccStepSize = floor((double)((iStop-iStart))\
+	/ (double)(NparticleColl));
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "colliding %i of %i electrons\n", (NparticleColl), ((iStop-iStart)));
+	}
+	//msg(STATUS,"colliding %i of %i electrons", NparticleColl, (iStop-iStart));
+
+	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+
+		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+		Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
+		q = ((i + floor(R*mccStepSize))*nDims);
+
+		vx = vel[q];
+		vy = vel[q+1];
+		vz = vel[q+2];
+		// need n,n+1,n+2 for x,y,j ?
+
+		double MyCollFreq = mccGetMyCollFreqFunctional(mccSigmaElectronElasticFunctional,  \
+			vx,vy,vz,nt,electron_a,electron_b); //prob of coll for particle i
+
+		if (Rp<(MyCollFreq/ *maxfreqElectron)){
+		// Pmax gives the max possible colls. but we will "never" reach this
+		// number, so we need to test for each particles probability.
+			errorcounter += 1;
+
+			R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+
+			Ekin = 0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; // values stored in population for speed??
+
+			double argument = (2+Ekin-2*pow((1+Ekin),R))/(Ekin); // This one has the posibility to be greater than 1!!
+
+			if(sqrt(argument*argument)>1.0){
+				double newargument = sqrt(argument*argument)/argument;
+				fMsg(ini, "collision", "WARNING: old argument = %.32f new arg = %.64f, R = %.32f \n", argument, newargument,R);
+				//msg(WARNING,"old argument = %.32f new arg = %.64f, R = %.32f", argument, newargument,R);
+				argument = newargument;
+			}
+			angleChi =  acos(argument); // gives nan value if abs(argument) > 1
+
+			anglePhi = 2*PI*R; // set different R?
+			angleTheta = acos(vx);
+
+			A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
+
+			vel[q] = vx*cos(angleChi)+A*(vy*vy + vz*vz); //Vx
+			vel[q+1] = vy*cos(angleChi)+A*vz-A*vx*vy; //Vy
+			vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
+		}
+		last_i = i;
+	}
+	// Special handling of last box to let every particle have posibillity to collide
+
+	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+	Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
+	q = ( (last_i) + floor(R*(((iStop)-last_i))) )*nDims; // particle q collides
+
+	vx = vel[q];
+	vy = vel[q+1];
+	vz = vel[q+2];
+	// need n,n+1,n+2 for x,y,j ?
+
+	double MyCollFreq = mccGetMyCollFreqFunctional(mccSigmaElectronElasticFunctional,  \
+		vx,vy,vz,nt,electron_a,electron_b); //prob of coll for particle i
+
+	if (Rp<(MyCollFreq/ *maxfreqElectron)){
+		errorcounter += 1;
+
+		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+
+		Ekin = 0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; // values stored in population for speed??
+
+		angleChi =  acos((2+Ekin-2*pow((1+Ekin),R))/(Ekin)); // gives nan value if abs(argument) > 1
+		anglePhi = 2*PI*R; // set different R?
+		angleTheta = acos(vx);
+
+		A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
+
+		vel[q] = vx*cos(angleChi)+A*(vy*vy + vz*vz); //Vx
+		vel[q+1] = vy*cos(angleChi)+A*vz-A*vx*vy; //Vy
+		vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
+	}
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "counted  %i Electron collisions on one MPI node \n",  errorcounter);
+	}
+	msg(STATUS,"counted  %i Electron collisions on one MPI node", errorcounter);
+}
+
 void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	double *maxfreqIon, const gsl_rng *rng, double nt,
 	double NvelThermal,double mccSigmaCEX,
@@ -943,47 +1208,61 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	double angleTheta = 0;
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	long int q = 0;
-	long int last_q = 0;
 
 	long int errorcounter = 0; // count collisions
 	long int errorcounter1 = 0; // count cex collisions
 
 	double vxMW, vyMW, vzMW;
 
+	long int last_i;
+
 	long int iStart = pop->iStart[1];			// *nDims??
 	long int iStop = pop->iStop[1];      // make shure theese are actually ions!
 	long int NparticleColl = (*Pmax)*(pop->iStop[1]-pop->iStart[1]); // 1 dim ?, Number of particles too collide
-	long int mccStepSize = floor((double)((iStop-iStart))\
-	/ (double)(NparticleColl));
+	long int mccStepSize = (floor((double)((iStop-iStart))\
+	/ (double)(NparticleColl)));
 	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "colliding %i of %i ions \n", NparticleColl, (iStop-iStart));
+		fMsg(ini, "collision", "colliding %i of %i ions \n", (NparticleColl), ((iStop-iStart)));
 	}
 	///msg(STATUS,"colliding %i of %i ions", NparticleColl, (iStop-iStart));
 	//msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
 
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	//long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
-	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+	//check energies
+	// double ekin = 0; //test value
+	// double ekin_anal = 0;
+	// double ekinafter =0;
+	// double ekindiff =0;
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 		Rq = gsl_rng_uniform_pos(rng);
-		q = (i + (Rq*mccStepSize))*nDims; // particle q collides
-		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
-
+		q = (i + floor((Rq*(mccStepSize))) )*nDims ; // particle (q = i*nDims) collides
+		//msg(STATUS,"i=%i,  q = %i", i,q );
+		// if(q>=iStop*nDims){
+		// 	msg(ERROR,"main q = %i out of bounds in Ions, istop*nDims = %i",q,iStop*nDims);
+		// }
 		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
 		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 
-		double vxTran = vel[q]-vxMW;   //simple transfer, should be picked from maxwellian
-		double vyTran = vel[q+1]-vyMW;  //vel-velMaxwellian
-		double vzTran = vel[q+2]-vzMW;  // this will for now break conservation laws???
+		//ekin = (vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1];
 
-		double MyCollFreq1 = mccGetMyCollFreqStatic(mccSigmaIonElastic,vxTran,vyTran,vzTran, nt); //duplicate untill real cross sections are implemented
-		double MyCollFreq2 = mccGetMyCollFreqStatic(mccSigmaCEX,vxTran,vyTran,vzTran, nt); //prob of coll for particle i
+		//transfer to CM-frame
+		double vxTran = vel[q]-(vel[q]-vxMW)/2.0;
+		double vyTran = vel[q+1]-(vel[q+1]-vyMW)/2.0;
+		double vzTran = vel[q+2]- (vel[q+2]-vzMW)/2.0;
+
+		double MyCollFreq1 = mccGetMyCollFreqStatic(mccSigmaIonElastic,vxTran,
+			vyTran,vzTran, nt); //duplicate untill real cross sections are implemented
+		double MyCollFreq2 = mccGetMyCollFreqStatic(mccSigmaCEX,vxTran,vyTran,
+			vzTran, nt); //prob of coll for particle i
 
 		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, ((MyCollFreq1+MyCollFreq2)/ *maxfreqIon));
 		if (Rp<( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)){ // MyCollFreq1+MyCollFreq2 defines total coll freq.
+			//msg(STATUS,"collided");
 			if(Rp < MyCollFreq1/ *maxfreqIon){ // if test slow, but enshures randomness...
 				// elastic:
 				//msg(STATUS,"elastic");
@@ -991,7 +1270,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 
 				R1 = gsl_rng_uniform_pos(rng);
 				//The scattering happens in center of mass so we use THETA not chi
-				angleChi =  acos(1-2*R); //chi is THETA
+				angleChi =  (acos(1-2*R)/2.0);
 
 				anglePhi = 2*PI*R1; // set different R?
 				angleTheta = acos(vel[q]); //C_M frame
@@ -1000,6 +1279,11 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 				+ vxMW; //Vx
 				vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
 				vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
+				//check energies
+				// ekin_anal += mccEnergyDiffIonElastic(ekin, (angleChi), pop->mass[1], pop->mass[1]);
+				// ekinafter = (vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+				// ekindiff += (ekin-ekinafter);
+				// msg(STATUS,"analytic energydiff = %.8f, computed energydiff = %.8f",ekin_anal, ekindiff );
 			}else{
 				errorcounter += 1;
 				errorcounter1 += 1;
@@ -1012,15 +1296,21 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 
 			}
 		}
-		last_q = q;
+		last_i = i;
 	}
+
+
 	// Special handling of last box to let every particle have posibillity to collide
 
 	Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 	Rq = gsl_rng_uniform_pos(rng);
-	q = ( (last_q) + (Rq*(iStop*nDims-last_q)) ); // particle q collides
-
+	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; // particle q collides
+	// if(q>=iStop*nDims || q<last_q){
+	// 	msg(ERROR,"q = %i out of bounds in Ions, istop*nDims = %i, last q = %i",q,iStop*nDims,last_q);
+	// }
+	// msg(STATUS,"istop = %i, total pop size = %i",(iStop),(iStop-iStart) );
+	// msg(STATUS,"mccstep = %i ,last_q = %i, prev last_i = %i, last box = %i", mccStepSize,q,last_i,(iStop-last_i));
 	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
 	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
@@ -1041,7 +1331,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 
 			R1 = gsl_rng_uniform_pos(rng);
 			//The scattering happens in center of mass so we use THETA not chi
-			angleChi =  acos(1-2*R); //chi is THETA
+			angleChi =  (acos(1-2*R)/2.0); //chi is THETA
 
 			anglePhi = 2*PI*R1; // set different R?
 			angleTheta = acos(vel[q]); //C_M frame
@@ -1068,11 +1358,160 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	msg(STATUS,"counted  %i ION collisions on one MPI node, %i as CEX", errorcounter,errorcounter1);
 }
 
+void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pmax,
+	double *maxfreqIon, const gsl_rng *rng, double nt,
+	double NvelThermal, MpiInfo *mpiInfo,double CEX_a,double CEX_b,
+	double ion_elastic_a,double ion_elastic_b){
+
+	// uses static CROSS-Sections, collfreq is proportional to v
+
+	//int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *vel = pop->vel;
+	//double *mass = pop->mass;
+	//double velTh = NvelThermal;//(timeStep/stepSize)*NvelThermal; //neutrals
+	//msg(STATUS,"neutral thermal vel used in Ion is %f", velTh);
+	double R, R1, Rp, Rq;
+
+	double angleChi = 0; //scattering angle in x, y
+	double anglePhi = 0; //scattering angle in j
+	double angleTheta = 0;
+	double A = 0; //scaling Factor used for precomputing (speedup)
+	long int q = 0;
+	long int last_i = 0;
+
+	long int errorcounter = 0; // count collisions
+	long int errorcounter1 = 0; // count cex collisions
+
+	double vxMW, vyMW, vzMW;
+
+	long int iStart = pop->iStart[1];			// *nDims??
+	long int iStop = pop->iStop[1];      // make shure theese are actually ions!
+	long int NparticleColl = (*Pmax)*(pop->iStop[1]-pop->iStart[1]); // 1 dim ?, Number of particles too collide
+	long int mccStepSize = floor((double)((iStop-iStart))\
+	/ (double)(NparticleColl));
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "colliding %i of %i ions \n", (NparticleColl), ((iStop-iStart)));
+	}
+	///msg(STATUS,"colliding %i of %i ions", NparticleColl, (iStop-iStart));
+	//msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
+
+	//long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+
+		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
+		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+		Rq = gsl_rng_uniform_pos(rng);
+		q = (i + floor(Rq*mccStepSize))*nDims; // particle q collides
+		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
+
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+
+		//transfer to CM-frame
+		double vxTran = vel[q]-(vel[q]-vxMW)/2.0;
+		double vyTran = vel[q+1]-(vel[q+1]-vyMW)/2.0;
+		double vzTran = vel[q+2]- (vel[q+2]-vzMW)/2.0;
+
+		double MyCollFreq1 = mccGetMyCollFreqFunctional(mccSigmaIonElasticFunctional,vxTran,vyTran,vzTran,nt,ion_elastic_a,ion_elastic_b); //prob of coll for particle i
+		double MyCollFreq2 = mccGetMyCollFreqFunctional(mccSigmaCEXFunctional,vxTran,vyTran,vzTran,nt,CEX_a,CEX_b); //duplicate untill real cross sections are implemented
+
+
+		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, ((MyCollFreq1+MyCollFreq2)/ *maxfreqIon));
+		if (Rp<( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)){ // MyCollFreq1+MyCollFreq2 defines total coll freq.
+			if(Rp < MyCollFreq1/ *maxfreqIon){ // if test slow, but enshures randomness...
+				// elastic:
+				//msg(STATUS,"elastic");
+				errorcounter += 1;
+
+				R1 = gsl_rng_uniform_pos(rng);
+				//The scattering happens in center of mass so we use THETA not chi
+				angleChi =  (acos(1-2*R)/2.0);
+
+				anglePhi = 2*PI*R1; // set different R?
+				angleTheta = acos(vel[q]); //C_M frame
+				A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
+				vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) \
+				+ vxMW; //Vx
+				vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
+				vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
+			}else{
+				errorcounter += 1;
+				errorcounter1 += 1;
+				// Charge exchange:
+				// flip ion and neutral. Neutral is new ion.
+				//msg(STATUS,"ch-ex");
+				vel[q] = vxMW; //Vx
+				vel[q+1] = vyMW; //Vy
+				vel[q+2] = vzMW; //Vz
+
+			}
+		}
+		last_i = i;
+	}
+	// Special handling of last box to let every particle have posibillity to collide
+
+	Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
+	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+	Rq = gsl_rng_uniform_pos(rng);
+	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; // particle q collides
+
+	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
+	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	//msg(STATUS,"neutral velx = %f vely = %f velz = %f",vxMW,vyMW,vzMW );
+	double vxTran = vel[q]-vxMW;   //simple transfer, should be picked from maxwellian
+	double vyTran = vel[q+1]-vyMW;  //vel-velMaxwellian
+	double vzTran = vel[q+2]-vzMW;  // this will for now break conservation laws???
+
+	double MyCollFreq1 = mccGetMyCollFreqFunctional(mccSigmaIonElasticFunctional,vxTran,vyTran,vzTran,nt,ion_elastic_a,ion_elastic_b); //prob of coll for particle i
+	double MyCollFreq2 = mccGetMyCollFreqFunctional(mccSigmaCEXFunctional,vxTran,vyTran,vzTran,nt,CEX_a,CEX_b); //duplicate untill real cross sections are implemented
+
+
+	if (Rp<( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)){ // MyCollFreq1+MyCollFreq2 defines total coll freq.
+		if(Rp < MyCollFreq1/ *maxfreqIon){ // if test slow, but enshures randomness...
+			// elastic:
+			//msg(STATUS,"elastic");
+			errorcounter += 1;
+
+			R1 = gsl_rng_uniform_pos(rng);
+			//The scattering happens in center of mass so we use THETA not chi
+			angleChi =  (acos(1-2*R)/2.0); //chi is THETA
+
+			anglePhi = 2*PI*R1; // set different R?
+			angleTheta = acos(vel[q]); //C_M frame
+			A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
+			vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) \
+			+ vxMW; //Vx
+			vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
+			vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
+		}else{
+			// Charge exchange:
+			// flip ion and neutral. Neutral is new ion.
+			errorcounter += 1;
+			errorcounter1 += 1;
+			//msg(STATUS,"ch-ex");
+			vel[q] = vxMW; //Vx
+			vel[q+1] = vyMW; //Vy
+			vel[q+2] = vzMW; //Vz
+
+		}
+	}
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "counted  %i ION collisions on one MPI node, %i as CEX \n", errorcounter,errorcounter1);
+	}
+	msg(STATUS,"counted  %i ION collisions on one MPI node, %i as CEX", errorcounter,errorcounter1);
+}
+
+
+
 void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	double *Pmax,double *maxfreqElectron, const gsl_rng *rng,
 	double nt, MpiInfo *mpiInfo){
 
-	// uses static CROSS-Sections, collfreq is proportional to v
+	//  collfreq is constant
 	//msg(STATUS,"colliding Electrons");
 
 	int nDims = pop->nDims;
@@ -1087,7 +1526,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	long int q = 0;
 	double vx, vy, vz;
-	double last_q = 0;
+	double last_i = 0;
 
 	long int errorcounter = 0;
 
@@ -1098,16 +1537,16 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	long int mccStepSize = floor((double)((iStop-iStart))\
 	/ (double)(NparticleColl));
 	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "colliding %i of %i electrons\n", NparticleColl, (iStop-iStart));
+		fMsg(ini, "collision", "colliding %i of %i electrons\n", (NparticleColl), ((iStop-iStart)));
 	}
 	//msg(STATUS,"colliding %i of %i electrons", NparticleColl, (iStop-iStart));
 
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	//long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
-	for(long int i=iStart;i<mccStop-nDims;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-		q = floor((i + (R*mccStepSize))*nDims);
+		q = ((i + floor(R*mccStepSize))*nDims);
 
 		vx = vel[q];
 		vy = vel[q+1];
@@ -1142,22 +1581,19 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 		vel[q+1] = vy*cos(angleChi)+A*vz-A*vx*vy; //Vy
 		vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
 
-
+		last_i = i;
 	}
-	last_q = q;
+
 	// Special handling of last box to let every particle have posibillity to collide
 
 	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-	q = ( (last_q) + (R*(iStop*nDims-last_q)) ); // particle q collides
+	q = ( (last_i) + floor(R*(((iStop)-last_i))) )*nDims; // particle q collides
 
 	vx = vel[q];
 	vy = vel[q+1];
 	vz = vel[q+2];
 	// need n,n+1,n+2 for x,y,j ?
-
-
 	errorcounter += 1;
-
 	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 
 	Ekin = 0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; // values stored in population for speed??
@@ -1197,7 +1633,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	double angleTheta = 0;
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	long int q = 0;
-	long int last_q = 0;
+	long int last_i = 0;
 
 	long int errorcounter = 0; // count collisions
 	long int errorcounter1 = 0; // count cex collisions
@@ -1214,29 +1650,29 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	long int mccStepSize = floor((double)((iStop-iStart))\
 	/ (double)(NparticleColl));
 	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "colliding %i of %i ions \n", NparticleColl, (iStop-iStart));
+		fMsg(ini, "collision", "colliding %i of %i ions \n", (NparticleColl), ((iStop-iStart)));
 	}
 	///msg(STATUS,"colliding %i of %i ions", NparticleColl, (iStop-iStart));
 	//msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
 
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
+	//long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
-	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
+	for(long int i=iStart;i<iStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 		Rq = gsl_rng_uniform_pos(rng);
-		q = (i + (Rq*mccStepSize))*nDims; // particle q collides
+		q = (i + floor(Rq*mccStepSize))*nDims; // particle q collides
 		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
 
 		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
 		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 
-		double vxTran = vel[q]-vxMW;   //simple transfer, should be picked from maxwellian
-		double vyTran = vel[q+1]-vyMW;  //vel-velMaxwellian
-		double vzTran = vel[q+2]-vzMW;  // this will for now break conservation laws???
-
+		//transfer to CM-frame
+		double vxTran = vel[q]-(vel[q]-vxMW)/2.0;
+		double vyTran = vel[q+1]-(vel[q+1]-vyMW)/2.0;
+		double vzTran = vel[q+2]- (vel[q+2]-vzMW)/2.0;
 
 		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, ((MyCollFreq1+MyCollFreq2)/ *maxfreqIon));
 		if(Rp < MyCollFreq1/ maxfreqIon){ // if test slow, but enshures randomness...
@@ -1246,7 +1682,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 
 			R1 = gsl_rng_uniform_pos(rng);
 			//The scattering happens in center of mass so we use THETA not chi
-			angleChi =  acos(1-2*R); //chi is THETA
+			angleChi =  (acos(1-2*R)/2.0);
 
 			anglePhi = 2*PI*R1; // set different R?
 			angleTheta = acos(vel[q]); //C_M frame
@@ -1265,15 +1701,19 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 			vel[q+1] = vyMW; //Vy
 			vel[q+2] = vzMW; //Vz
 		}
+		last_i = i;
 	}
-	last_q = q;
+
 
 	// Special handling of last box to let every particle have posibillity to collide
 
 	Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 	Rq = gsl_rng_uniform_pos(rng);
-	q = ( (last_q) + (Rq*(iStop*nDims-last_q)) ); // particle q collides
+	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; // particle q collides
+
+	// msg(STATUS,"istop = %i, total pop size = %i",(iStop),(iStop-iStart) );
+	// msg(STATUS,"mccstep = %i ,last_q = %i, prev last_i = %i, last box = %i", mccStepSize,q,last_i,(iStop-last_i));
 
 	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
 	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
@@ -1291,7 +1731,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 
 		R1 = gsl_rng_uniform_pos(rng);
 		//The scattering happens in center of mass so we use THETA not chi
-		angleChi =  acos(1-2*R); //chi is THETA
+		angleChi =  (acos(1-2*R)/2.0);
 
 		anglePhi = 2*PI*R1; // set different R?
 		angleTheta = acos(vel[q]); //C_M frame
@@ -1381,7 +1821,7 @@ void mccTestMode(dictionary *ini){
 	puExtractEmigrantsND_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolveRaw_set
+												mgSolver_set
 												//sSolver_set
 												);
 
@@ -1429,6 +1869,13 @@ void mccTestMode(dictionary *ini){
 	double collFrqElectronElastic = iniGetDouble(ini,"collisions:collFrqElectronElastic");
 	double collFrqIonElastic = iniGetDouble(ini,"collisions:collFrqIonElastic");
 	double collFrqCEX = iniGetDouble(ini,"collisions:collFrqCEX");
+
+	double CEX_a = iniGetDouble(ini,"collisions:CEX_a");
+	double CEX_b = iniGetDouble(ini,"collisions:CEX_b");
+	double ion_elastic_a = iniGetDouble(ini,"collisions:ion_elastic_a");
+	double ion_elastic_b = iniGetDouble(ini,"collisions:ion_elastic_b");
+	double electron_a = iniGetDouble(ini,"collisions:electron_a");
+	double electron_b = iniGetDouble(ini,"collisions:electron_b");
 
 	// using Boris algo
 	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
@@ -1574,18 +2021,13 @@ void mccTestMode(dictionary *ini){
 		*   Collisions
 		*/
 
+		//mccCollideElectron_debug(ini,pop, &PmaxElectron, &maxfreqElectron, rng, mccTimestep, nt,DebyeLength); //race conditions?????
+		//mccCollideIon_debug(ini, pop, &PmaxIon, &maxfreqIon, rng, mccTimestep, nt,DebyeLength);
+
 		mccGetPmaxElectronStatic(ini,StaticSigmaElectronElastic, mccTimestep, nt,
 			&PmaxElectron, &maxfreqElectron,pop,mpiInfo);
 		mccGetPmaxIonStatic(ini,StaticSigmaCEX, StaticSigmaIonElastic, mccTimestep,
 			nt, &PmaxIon, &maxfreqIon, pop,mpiInfo);
-		//mccGetPmaxElectronConstantFrq(ini, mccTimestep,
-		//		&PmaxElectron, &collFrqElectronElastic,pop,mpiInfo);
-		//mccGetPmaxIonConstantFrq(ini, mccTimestep, &PmaxIon,
-		//		&collFrqIonElastic,&collFrqCEX, pop,mpiInfo);
-
-		//mccCollideElectron_debug(ini,pop, &PmaxElectron, &maxfreqElectron, rng, mccTimestep, nt,DebyeLength); //race conditions?????
-		//mccCollideIon_debug(ini, pop, &PmaxIon, &maxfreqIon, rng, mccTimestep, nt,DebyeLength);
-
 
 		mccCollideIonStatic(ini, pop, &PmaxIon, &maxfreqIon, rng,
 			nt,NvelThermal,StaticSigmaCEX,StaticSigmaIonElastic,
@@ -1594,12 +2036,30 @@ void mccTestMode(dictionary *ini){
 			&maxfreqElectron, rng, nt,StaticSigmaElectronElastic,
 			mpiInfo);
 
-
+		// mccGetPmaxElectronConstantFrq(ini, mccTimestep,
+		// 		&PmaxElectron, &collFrqElectronElastic,pop,mpiInfo);
+		// mccGetPmaxIonConstantFrq(ini, mccTimestep, &PmaxIon,
+		// 		&collFrqIonElastic,&collFrqCEX, pop,mpiInfo);
 		//
-		//mccCollideElectronConstantFrq(ini, pop,&PmaxElectron,&maxfreqElectron,
-		//	rng,nt,mpiInfo);
-		//mccCollideIonConstantFrq(ini, pop,&PmaxIon, rng,NvelThermal,
-		//	&collFrqIonElastic,&collFrqCEX, mpiInfo);
+		// mccCollideElectronConstantFrq(ini, pop,&PmaxElectron,&maxfreqElectron,
+		// 	rng,nt,mpiInfo);
+		// mccCollideIonConstantFrq(ini, pop,&PmaxIon, rng,NvelThermal,
+		// 	&collFrqIonElastic,&collFrqCEX, mpiInfo);
+
+		// mccGetPmaxElectronFunctional(ini,
+		// 		mccTimestep,nt,&PmaxElectron, &maxfreqElectron,pop,
+		// 		mpiInfo,electron_a, electron_b);
+		// mccGetPmaxIonFunctional(ini,
+		// 		mccTimestep, nt, &PmaxIon, &maxfreqIon, pop,
+		// 		mpiInfo,CEX_a,CEX_b, ion_elastic_a, ion_elastic_b);
+
+		// mccCollideElectronFunctional(ini, pop,
+		// 	&PmaxElectron, &maxfreqElectron, rng, nt, mpiInfo,
+		// 	electron_a, electron_b);
+		// mccCollideIonFunctional(ini, pop, &PmaxIon, &maxfreqIon,
+		// 	rng, nt, NvelThermal, mpiInfo,CEX_a,CEX_b, ion_elastic_a,
+		// 	ion_elastic_b);
+
 		/*
 		*   Collisions
 		*/
@@ -1675,11 +2135,11 @@ void mccTestMode(dictionary *ini){
 		//	gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		//}
-		if( n>= 40000 && n%100 == 0){
+		if( n>= 25000 && n%100 == 0){
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 			//Write h5 files
-			gWriteH5(E, mpiInfo, (double) n);
+			//gWriteH5(E, mpiInfo, (double) n);
 			//gWriteH5(rho, mpiInfo, (double) n);
 			//gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(rho_e, mpiInfo, (double) n);
@@ -1687,7 +2147,7 @@ void mccTestMode(dictionary *ini){
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		if( n< 40000 && n%1000 == 0){
+		if( n< 25000 && n%1000 == 0){
 
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
@@ -1703,7 +2163,7 @@ void mccTestMode(dictionary *ini){
 
 		if(n>nTimeSteps-1){
 			msg(STATUS, "writing over a given timestep to file");
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rho, mpiInfo, (double) n);
 			//gWriteH5(rho_e, mpiInfo, (double) n);
 			//gWriteH5(rho_i, mpiInfo, (double) n);
@@ -1808,7 +2268,7 @@ void mccTestMode2(dictionary *ini){
 
 	//
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolveRaw_set
+												mgSolver_set
 												//sSolver_set
 												);
 
