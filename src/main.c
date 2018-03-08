@@ -37,7 +37,6 @@ int main(int argc, char *argv[]){
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mccTestMode_set,
-												mccTestMode2_set,
 												BorisTestMode_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
@@ -314,19 +313,19 @@ void BorisTestMode(dictionary *ini){
 	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
 	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
 
+
+
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
+
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
 
-	 void (*solve)() = NULL;
-	 void *(*solverAlloc)() = NULL;
-	 void (*solverFree)() = NULL;
-	 solverInterface(&solve, &solverAlloc, &solverFree);
-
-	 /*
-	  * INITIALIZE PINC VARIABLES
-	  */
-
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
@@ -363,19 +362,22 @@ void BorisTestMode(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
+
+	//---------------------------REMOVE v ?
 	int rank = phi->rank;
 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
 	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
 	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+	//----------------------------------------------------
 
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	//gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-  // oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
-  // oReadH5(obj, mpiInfo);
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+	// oOpenH5(ini, obj, mpiInfo, units, 1, "test");
+	// oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);

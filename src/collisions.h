@@ -18,8 +18,8 @@
  *
  */
 
-void mccTestMode2(dictionary *ini);
-funPtr mccTestMode2_set(dictionary *ini);
+// void mccTestMode2(dictionary *ini);
+// funPtr mccTestMode2_set(dictionary *ini);
 
 void mccTestMode(dictionary *ini);
 funPtr mccTestMode_set(dictionary *ini);

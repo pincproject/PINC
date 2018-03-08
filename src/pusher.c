@@ -79,199 +79,6 @@ static inline void addCross(const double *a, const double *b, double *res);
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
 /******************************************************************************
-<<<<<<< HEAD
- * RUN MODE FOR PROBING PUSHER
- *****************************************************************************/
-
-funPtr puModeParticle_set(dictionary *ini){return puModeParticle;}
-void puModeParticle(dictionary *ini){
-
-		/*
-		 * SELECT METHODS
-		 */
-		void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
-													puAcc3D1KE_set,
-													puAccND1_set,
-													puAccND1KE_set,
-													puAccND0_set,
-													puAccND0KE_set,
-													puBoris3D1_set,
-													puBoris3D1KE_set);
-
-		void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																	puExtractEmigrantsND_set);
-
-		/*
-		 * INITIALIZE PINC VARIABLES
-		 */
-		MpiInfo *mpiInfo = gAllocMpi(ini);
-		Population *pop = pAlloc(ini);
-		Grid *E   = gAlloc(ini, VECTOR);
-		Grid *Et  = gAlloc(ini, VECTOR);
-		Grid *rho = gAlloc(ini, SCALAR);
-		Grid *phi = gAlloc(ini, SCALAR);
-
-		gCreateNeighborhood(ini, mpiInfo, rho);
-
-		// Random number seeds
-		gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
-
-		/*
-		 * PREPARE FILES FOR WRITING
-		 */
-		int rank = phi->rank;
-		double *denorm = malloc((rank-1)*sizeof(*denorm));
-		double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-		for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-
-		pOpenH5(ini, pop, "pop");
-
-		hid_t history = xyOpenH5(ini,"history");
-		pCreateEnergyDatasets(history,pop);
-
-		// Add more time series to history if you want
-		// xyCreateDataset(history,"/group/group/dataset");
-
-		free(denorm);
-		free(dimen);
-
-		/*
-		 * INITIAL CONDITIONS
-		 */
-
-		double left = E->nGhostLayers[1];
-		int *L = gGetGlobalSize(ini);
-		double midway = L[0]/2.0;
-
-
-		double stepSize = E->stepSize[1];
-		double timeStep = iniGetDouble(ini,"time:timeStep");
-
-		// sin(omega*t+pi/4) has terms of all orders
-		double equilibrium = 0;
-		double pos[] = {equilibrium + left + (0.5/sqrt(2))*midway};
-		double vel[] = {(0.5/sqrt(2))*timeStep/stepSize};
-
-		pNew(pop,0,pos,vel);
-
-		double slope =  1.0/midway;
-
-		free(L);
-
-		for(int g=1; g<Et->trueSize[1]+1; g++){
-			E->val[g] = fmod(slope*(g-equilibrium-left)+1,2)-1;
-		}
-		gNormalizeE(ini, E);
-		gHaloOp(setSlice,E,mpiInfo,TOHALO);
-
-		pWriteH5(pop, mpiInfo, 0.0, 0.0);
-
-		// Advance velocities half a step
-		gMul(E, 0.5);
-		acc(pop, E);
-		gMul(E, 2.0);
-
-		/*
-		 * TIME LOOP
-		 */
-
-
-
-		// n should start at 1 since that's the timestep we have after the first
-		// iteration (i.e. when storing H5-files).
-		int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-		for(int n = 1; n <= nTimeSteps; n++){
-
-			MPI_Barrier(MPI_COMM_WORLD);
-
-			// pVelAssertMax(pop,1.0);
-
-			puMove(pop);
-
-			extractEmigrants(pop, mpiInfo);
-			puMigrate(pop, mpiInfo, rho);
-
-			// puPeriodic(pop,E);
-
-			pWriteH5(pop, mpiInfo, (double) n, (double)n-0.5);
-
-			pPosAssertInLocalFrame(pop, rho);
-			acc(pop, E);
-
-			pSumKinEnergy(pop);
-			gPotEnergy(rho,phi,pop);
-			pWriteEnergy(history,pop,(double)n);
-
-		}
-
-		/*
-		 * FINALIZE PINC VARIABLES
-		 */
-		gFreeMpi(mpiInfo);
-
-		// Close h5 files
-		pCloseH5(pop);
-		xyCloseH5(history);
-
-		// Free memory
-		gFree(phi);
-		gFree(rho);
-		gFree(E);
-		gFree(Et);
-		pFree(pop);
-
-		gsl_rng_free(rngSync);
-}
-
-funPtr puModeInterp_set(dictionary *ini){
-	int nDims = iniGetInt(ini,"grid:nDims");
-	if(nDims!=1) msg(ERROR,"puModeInterp only works with grid:nDims=1");
-	return puModeInterp;
-}
-void puModeInterp(dictionary *ini){
-
-	Grid *E = gAlloc(ini, VECTOR);
-	Population *pop = pAlloc(ini);
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-
-	double *val = E->val;
-	long int *sizeProd = E->sizeProd;
-	int rank = E->rank;
-
-	int *L = gGetGlobalSize(ini);
-
-	double pos[] = {0.112358*L[0]};
-	double vel[] = {0.};
-	pNew(pop,0,pos,vel);
-	pNew(pop,0,pos,vel);
-
-	for(int g=0;g<sizeProd[rank];g++){
-		val[g] = pow((double)g/L[0],2);	// E(x)=x^2
-	}
-
-	int integer[1];
-	double decimal[1];
-	double complement[1];
-
-	puInterpND0(&pop->vel[0],pos,val,sizeProd,1);
-	puInterpND1(&pop->vel[1],pos,val,sizeProd,1,integer,decimal,complement);
-
-	pOpenH5(ini, pop, "pop");
-	pWriteH5(pop, mpiInfo, 0.0, 0.0);
-	pCloseH5(pop);
-
-	free(L);
-	pFree(pop);
-	gFree(E);
-	gFreeMpi(mpiInfo);
-
-}
-
-/******************************************************************************
-=======
->>>>>>> develop
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
@@ -683,6 +490,7 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 	double *val = E->val;
 
 	for(int s=0;s<nSpecies;s++){
+		gMul(E, pop->charge[s]/pop->mass[s]);
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 		kinEnergy[s]=0;
@@ -719,11 +527,11 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 
 		}
 
-		kinEnergy[s]*=mass[s];
+		kinEnergy[s]*=0.5*mass[s];
 
-		// Specie-specific re-normalization
-		gMul(E,pop->renormE[s]);
+		gMul(E, pop->mass[s]/pop->charge[s]);
 		// Renorm B!?!? That is S, and T ?
+		// no, they have x,y,v, for both fields
 	}
 
 }
@@ -899,6 +707,10 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 
 	for(int s=0;s<nSpecies;s++){
 
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
+
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
@@ -969,7 +781,9 @@ void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
 		//Assuming two species with 0'th as electrons
 		//an 1'st as Ions
 		//msg(STATUS,"in dist, s = %i",s);
@@ -1027,6 +841,9 @@ static void puDistrND1InnerSplit(int s,double *val,double *val_e,double *val_i,
 
 void puDistrND1Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 	// assumes two species s = e, i
+
+	// TESTED?
+
 	gZero(rho);
 	gZero(rho_e);
 	gZero(rho_i);
@@ -1044,6 +861,10 @@ void puDistrND1Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 	double *complement = malloc(nDims*sizeof(*complement));
 
 	for(int s=0;s<nSpecies;s++){
+
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
 
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
@@ -1066,7 +887,9 @@ void puDistrND1Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
 
 	}
 
@@ -1189,6 +1012,8 @@ funPtr puDistrND0Split_set(dictionary *ini){
 }
 void puDistrND0Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 
+	// TESTED?
+
 	gZero(rho);
 	gZero(rho_e);
 	gZero(rho_i);
@@ -1202,6 +1027,9 @@ void puDistrND0Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 	int nSpecies = pop->nSpecies;
 
 	for(int s=0;s<nSpecies;s++){
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
 
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
@@ -1222,7 +1050,9 @@ void puDistrND0Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
 
 		}
 
-		gMul(rho,pop->renormRho[s]);
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
 
 	}
 }
