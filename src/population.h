@@ -10,20 +10,19 @@
 /**
  * @brief	Allocates memory for Population according to ini-file
  * @param	ini		Dictionary to input file
- * @see freePopulation(), posUniform(), velMaxwell()
+ * @return			Population
  *
  * Allocates memory for as many particles and species as specified in
  * populations:nSpecies and population:nAlloc in ini-file. This function only
  * allocates the memory for the particles, it does not generate them.
  *
- * Remember to call freePopulation() to free memory.
+ * Remember to call pFree() to free memory.
  */
 Population *pAlloc(const dictionary *ini);
 
 /**
  * @brief					Frees memory for Population
  * @param[in,out]	pop		Pointer to population to be freed
- * @see allocPopulation()
  */
 void pFree(Population *pop);
 
@@ -147,28 +146,13 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel);
  * named "n=<timestep>" where <timestep> is signified with one decimal allowing
  * interleaved quantities.
  *
- * In PINC it is made an distinction between _non-dimensionalizing_ and
- * _normalizing_. Input quantities are non-dimensionalized by specifying them
- * in terms of Debye lengths, plasma frequency, elementary charges and so on
- * rather than using SI-units. Further on, the program normalizes them with
- * respect to for instance cell size in order to make computations as fast as
- * possible. The data stored in .pop.h5 is non-dimensionalized _and_ normalized
- * as it is often much cheaper to just rescale the axes in the visualization
- * tool rather than re-scaling all quantities in PINC.
- *
- * The file will have four attributes of size nDims attached to the root group
- * ("/") which is useful for interpreting the data. These are:
- *	- Position denormalization factor
- *	- Position dimensionalizing factor
- *	- Velocity denormalization factor
- *	- Velocity dimensionalizing factor
- *
- * The position denormalization factor can be multiplied to the integer axis to
- * convert it to be in terms of Debye lengths. Another multiplication by axis
- * dimensionalizing factor converts the axes to meters. Likewise for the
- * velocity factors.
+ * The population data is stored in normalized values. To obtain physical
+ * values, the output contains two attributes: The "Position denormalization
+ * factor" and "Velocity denormalization factor". Upon multiplication by these,
+ * the position/velocity will become physical values.
  */
-void pOpenH5(const dictionary *ini, Population *pop, const char *fName);
+void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
+	   			const char *fName);
 
 /**
  * @brief	Stores particles in Population in .pop.h5-file

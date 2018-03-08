@@ -432,8 +432,109 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 
 }
 
-void iniApplySuffix(	dictionary *ini, const char *key,
-						const char *suffix, const double *mul, int mulLen){
+void iniSetInt(dictionary *ini, const char *key, int value){
+	iniSetLongInt(ini, key, value);
+}
+
+void iniSetLongInt(dictionary *ini, const char *key, long int value){
+
+	const int numSize=32;
+	char num[numSize];
+	snprintf(num,numSize,"%ld",value);
+	iniparser_set(ini, key, num);
+
+}
+
+void iniSetDouble(dictionary *ini, const char *key, double value){
+
+	const int numSize=32;
+	char num[numSize];
+	snprintf(num,numSize,"%a",value);
+	iniparser_set(ini, key, num);
+
+}
+
+
+void iniSetStr(dictionary *ini, const char *key, const char *value){
+	iniparser_set(ini, key, value);
+}
+
+void iniSetIntArr(		dictionary *ini, const char *key,
+						const int *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%d",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
+}
+
+void iniSetLongIntArr(	dictionary *ini, const char *key,
+						const long int *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%ld",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
+}
+
+void iniSetDoubleArr(	dictionary *ini, const char *key,
+						const double *values, int nElements){
+
+	const int listSize=1024;
+	const int numSize=32;
+	char num[numSize];
+	char list[listSize];
+
+	num[0] = '\0';
+	list[0] = '\0';
+	for(int i=0; i<nElements; i++){
+		snprintf(num,numSize,",%a",values[i]);
+		strcat(list,num);
+	}
+	iniparser_set(ini, key, &list[1]);
+
+}
+
+void iniScaleDouble(dictionary *ini, const char *key, double factor){
+
+	int nElements = iniGetNElements(ini, key);
+	double *arr = iniGetDoubleArr(ini, key, nElements);
+
+	adScale(arr, nElements, factor);
+	iniSetDoubleArr(ini, key, arr, nElements);
+
+	free(arr);
+}
+
+void iniScaleLongInt(dictionary *ini, const char *key, double factor){
+
+	int nElements = iniGetNElements(ini, key);
+	long int *arr = iniGetLongIntArr(ini, key, nElements);
+
+	alScale(arr, nElements, factor);
+	iniSetLongIntArr(ini, key, arr, nElements);
+
+	free(arr);
+}
+
+void iniApplySuffix(dictionary *ini, const char *key,
+					const char *suffix, const double *mul, int mulLen){
 
 	int nElements = iniGetNElements(ini,key);
 	char **strArr = iniGetStrArr(ini,key,nElements);

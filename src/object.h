@@ -41,8 +41,8 @@ void oFree(Object *obj);
  * @param	ini				Dictionary to input file
  * @param	obj             Object
  * @param	mpiInfo			MpiInfo
- * @param	denorm			Quantity denormalization factors
- * @param	dimen			Quantity dimensionalizing factors
+ * @param	axisDenorm		Axis denormalization factor
+ * @param	quantityDenorms	Quantity denormalization factor
  * @param	fName			Filename
  * @return	void
  * @see gOpenH5()
@@ -51,8 +51,7 @@ void oFree(Object *obj);
  *
  */
 void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
-             const double *denorm, const double *dimen, const char *fName);
-
+             const Units *units, double denorm, const char *fName);
 /**
  * @brief	Closes .grid.h5-file
  * @param	obj     Object

@@ -13,17 +13,18 @@ The functions exposed by the core modules are grouped according to task, and is
 given a prefix accordingly. An overview of prefixes and files in the core is
 given below.
 
-Header			| Source		| Prefix		| Description
-----------------|---------------|---------------|------------------------------
-core.h			| &nbsp;		|				| Defines data structures and includes other core header files.
-aux.h			| aux.c			| ad/ai/al		| Common ancillary array operations
-^ 				| ^				| t				| Timing functions
-grid.h			| grid.c		| g				| Grid structure operations
-io.h			| io.c			| ini			| Parse .ini-file
-^				| ^				| xy			| Write (x,y) datapoints to file.
-population.h	| population.c	| p				| Population structure operations.
+| Header       | Source       | Prefix    | Description                        |
+|--------------|--------------|-----------|------------------------------------|
+| core.h       |              |           | Defines common data structures     |
+| aux.h        | aux.c        | ad/ai/al  | Common array operations            |
+| ^            | ^            | t         | Timing functions                   |
+| grid.h       | grid.c       | g         | Grid structure operations          |
+| io.h         | io.c         | ini       | Parse .ini-file                    |
+| ^            | ^            | xy        | Write (x,y) datapoints to file     |
+| population.h | population.c | p         | Population structure operations    |
+| units.h      | units.c      | u         | Units normalization operations     |
 
-Other parts of the code -- solvers, pushers, interpolators -- i.e the numerical
+Other parts of the code -- solvers, pushers, interpolators -- i.e. the numerical
 algorithms, is implemented in separate modules which may depend on the core but
 not on each other. It is also not allowed to make the core depend on the
 modules (the main.c file can depend on them).
@@ -31,12 +32,12 @@ modules (the main.c file can depend on them).
 Each module has a single header file, but is allowed to have multiple source
 files. The modules are listed below:
 
-Header			| Source		| Prefix		| Description
-----------------|---------------|---------------|------------------------------
-multigrid.h		| multigrid.c	| mg			| Multigrid Poisson solver
-object.h		| object.c		| o				| Capacitance matrix method and ray tracing for conducting objects
-pusher.h		| pusher.c		| pu			| Particle pusher and weighting
-spectral.h		| spectral.c	| s				| Spectral Poisson solver
+| Header      | Source      | Prefix | Description                         |
+|-------------|-------------|--------|-------------------------------------|
+| multigrid.h | multigrid.c | mg     | Multigrid Poisson solver            |
+| object.h    | object.c    | o      | Cap. matrix and ray tracing methods |
+| pusher.h    | pusher.c    | pu     | Particle pusher and weighting       |
+| spectral.h  | spectral.c  | s      | Spectral Poisson solver             |
 
 While every developer will need to interact with the core, the developers of the
 different modules need not be aware of each other's work. It is recommended that
