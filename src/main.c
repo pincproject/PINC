@@ -404,8 +404,8 @@ void BorisTestMode(dictionary *ini){
 
 	// Manually initialize a single particle
 	if(mpiInfo->mpiRank==0){
-		double pos[3] = {2., 4., 4.};
-		double vel[3] = {0.0124, 0., 0.};
+		double pos[3] = {4., 4., 4.};
+		double vel[3] = {0.123, 0., 0.};
 		pNew(pop, 0, pos, vel);
 		double pos1[3] = {6., 4., 4.};
 		double vel1[3] = {0.1, 0., 0.1};
@@ -465,7 +465,7 @@ void BorisTestMode(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS,"Computing time-step %i ",n);
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);

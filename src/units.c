@@ -218,6 +218,7 @@ static Units *uSI(const dictionary *ini){
 	free(density);
 	free(stepSize);
 	free(nParticles);
+	msg(STATUS, "time = %f",T);
 
 	Units *units = malloc(sizeof(*units));
 	units->nDims = nDims;

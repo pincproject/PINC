@@ -591,9 +591,9 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	msg(STATUS,"timeStep: %.32f", timeStep);
 	for(int s=0;s<nSpecies;s++){
 		msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
-		double factor = charge[s]/mass[s]*dtFactor;
+		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
 		double tanThetaHalf = 0;
-		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm*timeStep); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
+		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
 		}else{tanThetaHalf = 0.0;}
 		msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
 		if(factor*BNorm*factor*BNorm > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
