@@ -588,17 +588,18 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	//*BExt = *BExt*timeStep;
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
-
+	msg(STATUS,"timeStep: %.32f", timeStep);
 	for(int s=0;s<nSpecies;s++){
+		msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
 		double factor = charge[s]/mass[s]*dtFactor;
 		double tanThetaHalf = 0;
 		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm*timeStep); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
 		}else{tanThetaHalf = 0.0;}
 		msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
-		if(factor*BNorm*factor*BNorm*timeStep*timeStep > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
+		if(factor*BNorm*factor*BNorm > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
 			msg(STATUS,"mass of specie %i: %f",s, mass[s]);
-			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm*timeStep, tanThetaHalf);
-			msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm*timeStep);
+			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm, tanThetaHalf);
+			msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
 			msg(ERROR, "unphysical rotatons encountered in puGet3DRotationParameters");
 		}
 		//if(factor*BNorm*factor*BNorm/ > (3.14*3.14){
@@ -1627,9 +1628,8 @@ void puAddEext(dictionary *ini, Population *pop, Grid *E){
 	long int *sizeProd = E->sizeProd;
 	double *val = E->val;
 	double *Eext = iniGetDoubleArr(ini,"fields:EExt",nDims);
-	for(int d=0;d<nDims;d++){
-		Eext[d]*=((timeStep*timeStep)/stepSize);
-	}
+	//msg(STATUS,"eext = (%f,%f,%f),stepsize = %.64f",Eext[0],Eext[1],Eext[2],timeStep);
+
 	for(long int p=0;p<sizeProd[rank];p+=nDims){
 		for(int d=0;d<nDims;d++){
 			//msg(STATUS, "E1 = %f" , val[p+d] );
@@ -1637,6 +1637,7 @@ void puAddEext(dictionary *ini, Population *pop, Grid *E){
 
 			E->val[p+d] = val[p+d];
 			//msg(STATUS, "E2 = %f" , E->val[p+d] );
+			//msg(STATUS,"eext = (%f,%f,%f),stepsize = %.64f",Eext[0],Eext[1],Eext[2],timeStep);
 		}
 	}
 	free(Eext);

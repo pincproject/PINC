@@ -116,6 +116,7 @@ void uNormalize(dictionary *ini, const Units *units){
 	iniScaleDouble(ini, "population:perturbAmplitude", 1.0/units->length);
 	iniScaleDouble(ini, "fields:BExt", 1.0/units->bField);
 	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
+	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
 }
 /*

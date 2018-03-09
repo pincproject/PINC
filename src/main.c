@@ -404,12 +404,12 @@ void BorisTestMode(dictionary *ini){
 
 	// Manually initialize a single particle
 	if(mpiInfo->mpiRank==0){
-		double pos[3] = {8., 8., 8.};
-		double vel[3] = {0.02, 0., 1.};
+		double pos[3] = {2., 4., 4.};
+		double vel[3] = {0.0124, 0., 0.};
 		pNew(pop, 0, pos, vel);
-		//double pos1[3] = {17., 17., 16.};
-		//double vel1[3] = {0.1, 0., 0.1};
-		//pNew(pop, 1, pos1, vel1); //second particle
+		double pos1[3] = {6., 4., 4.};
+		double vel1[3] = {0.1, 0., 0.1};
+		pNew(pop, 1, pos1, vel1); //second particle
 	}
 
 	// Perturb particles
@@ -473,7 +473,7 @@ void BorisTestMode(dictionary *ini){
 		tStart(t);
 
 		// Move particles
-		adPrint(pop->pos, 3);
+		//adPrint(pop->pos, 3);
 		x_min = pop->pos[0]<x_min ? pop->pos[0] : x_min;
 		x_max = pop->pos[0]>x_max ? pop->pos[0] : x_max;
 		y_min = pop->pos[1]<y_min ? pop->pos[1] : y_min;
@@ -492,19 +492,19 @@ void BorisTestMode(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		gAssertNeutralGrid(rho, mpiInfo);
+		//gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
 		solve(solver, rho, phi, mpiInfo);
 
-		gAssertNeutralGrid(phi, mpiInfo);
+		//gAssertNeutralGrid(phi, mpiInfo);
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 
-		gAssertNeutralGrid(E, mpiInfo);
+		//gAssertNeutralGrid(E, mpiInfo);
 
 
 		// Apply external E
@@ -553,7 +553,7 @@ void BorisTestMode(dictionary *ini){
 
 	// Close h5 files
 	pCloseH5(pop);
-	//gCloseH5(rho);
+	gCloseH5(rho);
 	gCloseH5(phi);
 	//gCloseH5(E);
 	// oCloseH5(obj);

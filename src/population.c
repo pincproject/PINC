@@ -350,7 +350,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nSpecies = pop->nSpecies;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-
+	//msg(STATUS,"velth1 = %f, velth2 = %f",velThermal[0],velThermal[1]);
 	int nDims = pop->nDims;
 
 	for(int s=0;s<nSpecies;s++){

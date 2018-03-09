@@ -145,8 +145,9 @@ void mccGetPmaxElectronConstantFrq(const dictionary *ini, double dt,
 	msg(STATUS,"maxVelocity Electron =  %f", max_v);
 	*Pmax = 1-exp(-((*collFrqElectronElastic)*dt));
 	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "P_coll Electron = %f \n", *Pmax);
 		fMsg(ini, "collision", "max velocity Electron = %f \n", max_v);
-		fMsg(ini, "collision", "P_coll Electron = %f \n", &Pmax);
+
 	}
 }
 void mccGetPmaxIonConstantFrq(const dictionary *ini, double dt, double *Pmax,
@@ -158,8 +159,9 @@ void mccGetPmaxIonConstantFrq(const dictionary *ini, double dt, double *Pmax,
 
 	*Pmax = 1-exp(-((*collFrqIonElastic+*collFrqCEX)*dt));
 	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision", "P_coll Ion = %f \n", *Pmax);
 		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
-		fMsg(ini, "collision", "P_coll Ion = %f \n", &Pmax);
+
 	}
 }
 
@@ -209,27 +211,6 @@ void mccGetPmaxIon(const dictionary *ini,double m, double thermalVel,
 
 
 
-void mccGetPmaxIonStatic(const dictionary *ini,const double mccSigmaCEX,
-	const double mccSigmaIonElastic, double dt, double nt, double *Pmax,
-	double *maxfreq, Population *pop, MpiInfo *mpiInfo){
-
-	// Faster static version. uses static cross sections
-
-	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
-	// Get å functional form of sigma_T (total crossect as funct. of energy)
-	// determine the speed, v(eps_i) = sqrt(2*eps_i *m_s)
-	// determine, max_eps(sigma_T *v)
-
-	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
-	*maxfreq = (mccSigmaCEX+mccSigmaIonElastic)*max_v*nt;
-	*Pmax = 1-exp(-(*maxfreq*dt));
-	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
-		fMsg(ini, "collision","getPmax Ion =  %f \n", *Pmax);
-		fMsg(ini, "collision","dt =  %f \n", dt);
-	}
-
-}
 
 void mccGetPmaxElectron(const dictionary *ini, double m, double thermalVel,
 	double dt, double nt,double *Pmax, double *maxfreq, Population *pop,
@@ -359,6 +340,30 @@ void mccGetPmaxElectronFunctional(const dictionary *ini,
 	//return Pmax, maxfreq;
 }
 
+void mccGetPmaxIonStatic(const dictionary *ini,const double mccSigmaCEX,
+	const double mccSigmaIonElastic, double dt, double nt, double *Pmax,
+	double *maxfreq, Population *pop, MpiInfo *mpiInfo){
+
+	// Faster static version. uses static cross sections
+
+	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
+	// Get å functional form of sigma_T (total crossect as funct. of energy)
+	// determine the speed, v(eps_i) = sqrt(2*eps_i *m_s)
+	// determine, max_eps(sigma_T *v)
+
+	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
+	*maxfreq = (mccSigmaCEX+mccSigmaIonElastic)*max_v*nt;
+	*Pmax = 1-exp(-(*maxfreq));
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision","getPmax Ion =  %f \n", *Pmax);
+		fMsg(ini, "collision", "max velocity Ion = %f \n", max_v);
+		fMsg(ini, "collision","dt =  %f \n", dt);
+	}
+
+}
+
+
+
 void mccGetPmaxElectronStatic(const dictionary *ini,const double StaticSigmaElectronElastic,
 	double dt, double nt,double *Pmax, double *maxfreq, Population *pop,
 	MpiInfo *mpiInfo){
@@ -373,13 +378,15 @@ void mccGetPmaxElectronStatic(const dictionary *ini,const double StaticSigmaElec
 	// for now lets do
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
 	msg(STATUS,"maxVelocity electron =  %f", max_v);
-	if(mpiInfo->mpiRank==0){
-		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
-	}
+
 	//msg(STATUS,"maxveloc electron =  %f", max_v);
 	*maxfreq=StaticSigmaElectronElastic*max_v*nt;
 
-	*Pmax = 1-exp(-(*maxfreq*dt));
+	*Pmax = 1-exp(-(*maxfreq));
+	if(mpiInfo->mpiRank==0){
+		fMsg(ini, "collision","getPmax electron =  %f \n", *Pmax);
+		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
+	}
 }
 
 double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, double nt){
@@ -1860,7 +1867,7 @@ void mccTestMode(dictionary *ini){
 	double maxfreqIon = 0;
 	int nSpecies = pop->nSpecies;
 	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
-	double mccTimestep = 0.04;//iniGetDouble(ini,"time:timeStep");
+	double mccTimestep = iniGetDouble(ini,"time:timeStep");
 	//double mccStepSize = iniGetDouble(ini,"grid:stepSize");
 	//double frequency = iniGetDouble(ini,"collisions:collisionFrequency"); // for static Pmax...
 	double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
@@ -1912,8 +1919,8 @@ void mccTestMode(dictionary *ini){
 	 */
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
-	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho");
-	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
+	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
   // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
@@ -2028,28 +2035,30 @@ void mccTestMode(dictionary *ini){
 
 		//mccCollideElectron_debug(ini,pop, &PmaxElectron, &maxfreqElectron, rng, mccTimestep, nt,DebyeLength); //race conditions?????
 		//mccCollideIon_debug(ini, pop, &PmaxIon, &maxfreqIon, rng, mccTimestep, nt,DebyeLength);
-		msg(STATUS,"dt = %f",mccTimestep);
-		mccGetPmaxElectronStatic(ini,StaticSigmaElectronElastic, mccTimestep, nt,
-			&PmaxElectron, &maxfreqElectron,pop,mpiInfo);
-		mccGetPmaxIonStatic(ini,StaticSigmaCEX, StaticSigmaIonElastic, mccTimestep,
-			nt, &PmaxIon, &maxfreqIon, pop,mpiInfo);
 
-		mccCollideIonStatic(ini, pop, &PmaxIon, &maxfreqIon, rng,
-			nt,NvelThermal,StaticSigmaCEX,StaticSigmaIonElastic,
-			mpiInfo);
-		mccCollideElectronStatic(ini, pop, &PmaxElectron,
-			&maxfreqElectron, rng, nt,StaticSigmaElectronElastic,
-			mpiInfo);
 
-		// mccGetPmaxElectronConstantFrq(ini, mccTimestep,
-		// 		&PmaxElectron, &collFrqElectronElastic,pop,mpiInfo);
-		// mccGetPmaxIonConstantFrq(ini, mccTimestep, &PmaxIon,
-		// 		&collFrqIonElastic,&collFrqCEX, pop,mpiInfo);
+		// mccGetPmaxElectronStatic(ini,StaticSigmaElectronElastic, mccTimestep, nt,
+		// 	&PmaxElectron, &maxfreqElectron,pop,mpiInfo);
+		// mccGetPmaxIonStatic(ini,StaticSigmaCEX, StaticSigmaIonElastic, mccTimestep,
+		// 	nt, &PmaxIon, &maxfreqIon, pop,mpiInfo);
 		//
-		// mccCollideElectronConstantFrq(ini, pop,&PmaxElectron,&maxfreqElectron,
-		// 	rng,nt,mpiInfo);
-		// mccCollideIonConstantFrq(ini, pop,&PmaxIon, rng,NvelThermal,
-		// 	&collFrqIonElastic,&collFrqCEX, mpiInfo);
+		// mccCollideIonStatic(ini, pop, &PmaxIon, &maxfreqIon, rng,
+		// 	nt,NvelThermal,StaticSigmaCEX,StaticSigmaIonElastic,
+		// 	mpiInfo);
+		// mccCollideElectronStatic(ini, pop, &PmaxElectron,
+		// 	&maxfreqElectron, rng, nt,StaticSigmaElectronElastic,
+		// 	mpiInfo);
+
+		mccGetPmaxElectronConstantFrq(ini, mccTimestep,
+				&PmaxElectron, &collFrqElectronElastic,pop,mpiInfo);
+		mccGetPmaxIonConstantFrq(ini, mccTimestep, &PmaxIon,
+				&collFrqIonElastic,&collFrqCEX, pop,mpiInfo);
+
+
+		mccCollideElectronConstantFrq(ini, pop,&PmaxElectron,&maxfreqElectron,
+			rng,nt,mpiInfo);
+		mccCollideIonConstantFrq(ini, pop,&PmaxIon, rng,NvelThermal,
+			&collFrqIonElastic,&collFrqCEX, mpiInfo);
 
 		// mccGetPmaxElectronFunctional(ini,
 		// 		mccTimestep,nt,&PmaxElectron, &maxfreqElectron,pop,
@@ -2140,7 +2149,7 @@ void mccTestMode(dictionary *ini){
 		//	gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		//}
-		if( n>= 25000 && n%100 == 0){
+		if( n>= 30000 && n%100 == 0){
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 			//Write h5 files
@@ -2152,7 +2161,7 @@ void mccTestMode(dictionary *ini){
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		if( n< 25000 && n%1000 == 0){
+		if( n< 30000 && n%1000 == 0){
 
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
@@ -2168,7 +2177,7 @@ void mccTestMode(dictionary *ini){
 
 		if(n>nTimeSteps-1){
 			msg(STATUS, "writing over a given timestep to file");
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rho, mpiInfo, (double) n);
 			//gWriteH5(rho_e, mpiInfo, (double) n);
 			//gWriteH5(rho_i, mpiInfo, (double) n);
