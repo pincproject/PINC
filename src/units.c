@@ -207,6 +207,7 @@ static Units *uSI(const dictionary *ini){
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
 	}
+	msg(STATUS, "weights = %f,%f",weights[0],weights[1]);
 
 	double X  = stepSize[0];
 	double T  = timeStep;

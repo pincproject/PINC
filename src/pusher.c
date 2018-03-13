@@ -535,49 +535,28 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 	}
 
 }
-
-void puGet3DRotationParametersTEST(dictionary *ini, double *T, double *S, double dtFactor){
-
-	// do not use! Delete this one later.....
-
-
-	//p, q needs to malloc 3*nDims*sizeof(double)
-	int nDims = iniGetInt(ini,"grid:nDims");
-	int nSpecies = iniGetInt(ini,"population:nSpecies");
-	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
-	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
-	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double halfTimeStep = 0.5*iniGetDouble(ini,"time:timeStep");
-	double factor;
-	double OmegaNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
-
-	for(int s=0;s<nSpecies;s++){
-		//safety for B = 0
-		if(OmegaNorm == 0.0){
-			factor = 0.0;
-		}else{
-			factor = dtFactor*(charge[s]/mass[s])*tan(halfTimeStep*OmegaNorm)/(OmegaNorm);
-		}
-
-	// for(int s=0;s<nSpecies;s++){
-	// 	double factor = 0.5*charge[s]/mass[s];
-
-		double denom = 1;
-		for(int p=0;p<3;p++){
-			T[3*s+p] = factor*(BExt[p]);
-			denom += pow(T[3*s+p],2);
-		}
-		double mul = 2.0/(denom);
-		for(int p=0;p<3;p++){
-			S[3*s+p] = mul*T[3*s+p];
-		}
-	}
-	free(BExt);
-	free(mass);
-	free(charge);
-}
-
-
+// void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
+//
+// 	int nDims = iniGetInt(ini,"grid:nDims");
+// 	int nSpecies = iniGetInt(ini,"population:nSpecies");
+// 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
+// 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+// 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+//
+// 	for(int s=0;s<nSpecies;s++){
+// 		double factor = (0.5*charge[s]/mass[s])*dtFactor;
+// 		double denom = 1;
+// 		for(int p=0;p<3;p++){
+// 			T[3*s+p] = factor*BExt[p];
+// 			denom += pow(T[3*s+p],2);
+// 		}
+// 		double mul = 2.0/denom;
+// 		for(int p=0;p<3;p++){
+// 			S[3*s+p] = mul*T[3*s+p];
+// 		}
+// 	}
+// }
+//
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
