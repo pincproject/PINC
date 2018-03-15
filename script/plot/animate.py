@@ -9,8 +9,8 @@ h5 = h5py.File('../../data/rho_i.grid.h5','r')
 
 #Nt = h5["/n=90000.0"].shape[1]	# Number of timesteps
 #print(Nt)
-startindex =10000
-stopindex = 10100
+startindex =30000
+stopindex = 30100
 
 """
 for i in range(startindex,stopindex,1000):#start and stop timestep
@@ -49,7 +49,7 @@ for i in range(startindex,stopindex,100):#start and stop timestep
 	X,Y = np.meshgrid(x,y,indexing='ij')
 
 	fig, ax = plt.subplots(1)
-	im = ax.contourf(X,Y,data[:,:,8], 100)
+	im = ax.contourf(X,Y,data[:,:,32], 100)
 
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
