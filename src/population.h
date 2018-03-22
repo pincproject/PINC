@@ -241,6 +241,6 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop);
  * energy for all species. In the former case, the total energy can be obtained
  * simply by addition during post-processing.
  */
-void pWriteEnergy(hid_t xy, Population *pop, double x);
+void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units);
 
 #endif // POPULATION_H

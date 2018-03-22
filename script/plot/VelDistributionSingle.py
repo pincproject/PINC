@@ -11,22 +11,22 @@ import matplotlib.pyplot as plt
 
 # Loading file
 file = h5py.File('../../data/pop.pop.h5','r')
-test = file['/pos/specie 1']
+test = file['/pos/specie 0']
 Nt = len(test) # timesteps
 print(test)
 
-n0 = 6000.5
+n0 = 16666.5
 
 
 #print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 #pos = file['/pos/specie 1/n=%.1f' % n0]
-vel0 = file['/vel/specie 1/n=%.1f' % n0]
+vel0 = file['/vel/specie 0/n=%.1f' % n0]
 
 
 
 print('computing speed')
 
-Np = vel0.shape[0]/10	# Number of particles
+Np = vel0.shape[0]/100	# Number of particles
 Nd = vel0.shape[1]	# Number of dimensions
 
 speed0 = zeros(Np)
@@ -65,7 +65,7 @@ plt.hist(speed0, bins=1000, normed=True)
 plt.ylabel("Probability Density")
 plt.xlabel("Normalized Speed")
 #plt.show()
-plt.savefig("speedIons.png")
+plt.savefig("speedElectrons.png")
 plt.close()
 
 

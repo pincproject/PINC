@@ -14,10 +14,10 @@ file = h5py.File('../../data/pop.pop.h5','r')
 test = file['/pos/specie 1']
 Nt = len(test) # timesteps
 
-n0 = 1.5
-n1 = int(Nt/5) + 0.5
-n2 = int(3*Nt/5) + 0.5
-n3 = Nt - 0.5
+n0 = 1.5#1.5
+n1 = 1000.5#int(Nt/5) + 0.5
+n2 = 1500.5#int(3*Nt/5) + 0.5
+n3 = 2000.5#Nt - 0.5
 
 print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 #pos = file['/pos/specie 1/n=%.1f' % n0]
@@ -63,22 +63,22 @@ plt.figure()
 #plt.plot(v,maxwellian)
 
 plt.subplot(4,1,1)
-plt.hist(speed0, bins=1000, normed=True)
+plt.hist(speed0,range =(0,0.018), bins=1000, normed=True)
 #plt.ylim([0,3000])
 #plt.xlim([0,0.0012])
 
 plt.subplot(4,1,2)
-plt.hist(speed1, bins=1000, normed=True)
+plt.hist(speed1,range =(0,0.018), bins=1000, normed=True)
 #plt.ylim([0,3000])
 #plt.xlim([0,0.0012])
 
 plt.subplot(4,1,3)
-plt.hist(speed2, bins=1000, normed=True)
+plt.hist(speed2,range =(0,0.018), bins=1000, normed=True)
 #plt.ylim([0,3000])
 #plt.xlim([0,0.0012])
 
 plt.subplot(4,1,4)
-plt.hist(speed3, bins=1000, normed=True)
+plt.hist(speed3,range =(0,0.018), bins=1000, normed=True)
 #plt.ylim([0,3000])
 #plt.xlim([0,0.0012])
 

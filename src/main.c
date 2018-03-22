@@ -242,7 +242,7 @@ void regular(dictionary *ini){
 		// gWriteH5(rho, mpiInfo, (double) n);
 		// gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		pWriteEnergy(history,pop,(double)n);
+		pWriteEnergy(history,pop,(double)n,units);
 
 	}
 
@@ -534,7 +534,7 @@ void BorisTestMode(dictionary *ini){
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
 		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		pWriteEnergy(history,pop,(double)n);
+		pWriteEnergy(history,pop,(double)n,units);
 
 	}
 

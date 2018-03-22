@@ -350,7 +350,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nSpecies = pop->nSpecies;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	//msg(STATUS,"velth1 = %f, velth2 = %f",velThermal[0],velThermal[1]);
+	msg(STATUS,"velth1 = %f, velth2 = %f",velThermal[0],velThermal[1]);
 	int nDims = pop->nDims;
 
 	for(int s=0;s<nSpecies;s++){
@@ -424,15 +424,20 @@ void pVelConstant(const dictionary *ini, Population *pop, double constant1, doub
 
 	for(long int i=iStart1;i<iStop1;i++){
 		//for(int d=0;d<nDims;d++){
-			pop->vel[i*nDims] = constant1;
-			//for(int d=0;d<nDims;d++){
+			//pop->vel[i*nDims] = constant1;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant1;
 			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
-		//}
+		}
 		//}
 	}
 	for(long int i=iStart2;i<iStop2;i++){
 		//for(int d=0;d<nDims;d++){
-			pop->vel[i*nDims] = constant2;
+			//pop->vel[i*nDims] = constant2;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant2;
+			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
+		}
 
 	}
 }
@@ -658,24 +663,26 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop){
 	}
 }
 
-void pWriteEnergy(hid_t xy, Population *pop, double x){
+void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units){
 
 	char name[64];
 	int nSpecies = pop->nSpecies;
 
+	double denorm = units->energy;
+
 	sprintf(name,"/energy/potential/total");
-	xyWrite(xy,name,x,pop->potEnergy[nSpecies],MPI_SUM);
+	xyWrite(xy,name,x,denorm*pop->potEnergy[nSpecies],MPI_SUM);
 
 	sprintf(name,"/energy/kinetic/total");
-	xyWrite(xy,name,x,pop->kinEnergy[nSpecies],MPI_SUM);
+	xyWrite(xy,name,x,denorm*pop->kinEnergy[nSpecies],MPI_SUM);
 
 	for(int s=0; s<nSpecies; s++){
 
 		sprintf(name,"/energy/potential/specie %i",s);
-		xyWrite(xy,name,x,pop->potEnergy[s],MPI_SUM);
+		xyWrite(xy,name,x,denorm*pop->potEnergy[s],MPI_SUM);
 
 		sprintf(name,"/energy/kinetic/specie %i",s);
-		xyWrite(xy,name,x,pop->kinEnergy[s],MPI_SUM);
+		xyWrite(xy,name,x,denorm*pop->kinEnergy[s],MPI_SUM);
 	}
 
 }

@@ -7,10 +7,12 @@
 #SBATCH --account=nn9299k
 #
 # Wall clock limit:
-#SBATCH --time=00:05:00
+#SBATCH --time=105:00:00
 #
 # Max memory usage:
-#SBATCH --mem-per-cpu=1G
+#SBATCH --mem-per-cpu=61G
+#
+#SBATCH --nodes=4 --ntasks-per-node=16
 #
 # Outfile
 #SBATCH --output=pinc-%j.out
@@ -32,10 +34,11 @@ module load fftw/3.3.4
 make abel
 #echo $PATH
 ## Copy input files to the work directory:
-#cp MyInputFile $SCRATCH
+#cp /input/FBinstability_SI.ini $SCRATCH
+
 
 ## Make sure the results are copied back to the submit directory (see Work Directory below):
-#chkfile MyResultFile
+#chkfile /data/"*.h5"
 
 ## Do some work:
 #cd $SCRATCH

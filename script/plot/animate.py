@@ -5,12 +5,12 @@ import numpy as np
 import pylab as plt
 
 
-h5 = h5py.File('../../data/rho_i.grid.h5','r')
+h5 = h5py.File('../../data/rho.grid.h5','r')
 
 #Nt = h5["/n=90000.0"].shape[1]	# Number of timesteps
 #print(Nt)
-startindex =30000
-stopindex = 30100
+startindex =10000
+stopindex = 20000
 
 """
 for i in range(startindex,stopindex,1000):#start and stop timestep
@@ -37,7 +37,7 @@ for i in range(startindex,stopindex,1000):#start and stop timestep
 #alternate saves .png to make animations with e.g ffmpg
 """
 count = 0
-for i in range(startindex,stopindex,100):#start and stop timestep
+for i in range(startindex,stopindex,1000):#start and stop timestep
 	dataset = h5["/n=%.1f"%i]
 	data = np.transpose(dataset,(3,2,1,0))
 	data = np.squeeze(data)

@@ -6,6 +6,7 @@ import numpy as np
 hist = h5py.File('../../data/history.xy.h5','r')
 pot = hist['/energy/potential/total']
 kin = hist['/energy/kinetic/total']
+print(hist['/energy/kinetic/specie 0'])
 
 kin = kin[:,1];		# Extract y-axis
 pot = pot[:,1];	# Extract y-axis and invert

@@ -567,14 +567,15 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	double timeStep = iniGetDouble(ini,"time:timeStep");
 	//*BExt = *BExt*timeStep;
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
-	msg(STATUS,"timeStep: %.32f", timeStep);
+	msg(STATUS,"*BExt: %f,%f,%f", BExt[0],BExt[1],BExt[2]);
 	for(int s=0;s<nSpecies;s++){
-		msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
+		//msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
 		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
 		double tanThetaHalf = 0;
 		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
 		}else{tanThetaHalf = 0.0;}
-		msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
+		//msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
+		msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
 		if(factor*BNorm*factor*BNorm > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
 			msg(STATUS,"mass of specie %i: %f",s, mass[s]);
 			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm, tanThetaHalf);
@@ -587,13 +588,13 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 		for(int p=0;p<3;p++){
 			// T[3*s+p] = factor*BExt[p]; // Eq. 4-4 (11) in B&L without tan-correction
 			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
-			msg(STATUS,"T: %f", tanThetaHalf*BExt[p]/BNorm);
+			//msg(STATUS,"T: %f", tanThetaHalf*BExt[p]/BNorm);
 			denom += pow(T[3*s+p],2);
 		}
 		double mul = 2.0/denom;
 		for(int p=0;p<3;p++){
 			S[3*s+p] = mul*T[3*s+p]; // Eq. 4-4 (13) in B&L
-			msg(STATUS,"S: %f", mul*T[3*s+p]);
+			//msg(STATUS,"S: %f", mul*T[3*s+p]);
 		}
 	}
 
@@ -1607,7 +1608,7 @@ void puAddEext(dictionary *ini, Population *pop, Grid *E){
 	long int *sizeProd = E->sizeProd;
 	double *val = E->val;
 	double *Eext = iniGetDoubleArr(ini,"fields:EExt",nDims);
-	//msg(STATUS,"eext = (%f,%f,%f),stepsize = %.64f",Eext[0],Eext[1],Eext[2],timeStep);
+	//msg(STATUS,"eext = (%f,%f,%f)",Eext[0],Eext[1],Eext[2]);
 
 	for(long int p=0;p<sizeProd[rank];p+=nDims){
 		for(int d=0;d<nDims;d++){
