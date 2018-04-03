@@ -9,8 +9,8 @@ h5 = h5py.File('../../data/rho.grid.h5','r')
 
 #Nt = h5["/n=90000.0"].shape[1]	# Number of timesteps
 #print(Nt)
-startindex =10000
-stopindex = 20000
+startindex =40000
+stopindex = 50000
 
 """
 for i in range(startindex,stopindex,1000):#start and stop timestep

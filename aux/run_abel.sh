@@ -1,16 +1,20 @@
 #!/bin/bash
 
 # Job name:
-#SBATCH --job-name=PinC
+#SBATCH --job-name=PinC-FB1
 #
 # Project:
 #SBATCH --account=nn9299k
 #
 # Wall clock limit:
-#SBATCH --time=00:05:00
+#SBATCH --time=110:00:00
 #
 # Max memory usage:
-#SBATCH --mem-per-cpu=1G
+#SBATCH --mem-per-cpu=3936M
+#
+#SBATCH --ntasks=64
+#
+#SBATCH --ntasks-per-node=16
 #
 # Outfile
 #SBATCH --output=pinc-%j.out
@@ -21,22 +25,31 @@ module purge   # clear any inherited modules
 set -o errexit # exit on errors
 
 export LD_LIBRARY_PATH=/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib:$LD_LIBRARY_PATH
-
-
 module load openmpi.gnu
 module load gsl/1.16
 module load fftw/3.3.4
 
+
+##echo $PATH
 #Compile
-#cd mn-fysrp-pic
-make abel
-#echo $PATH
+echo "compiling"
+make clean
+make
 ## Copy input files to the work directory:
-#cp MyInputFile $SCRATCH
+mkdir $SCRATCH/steffemb
+cp $SUBMITDIR/pinc $SCRATCH/steffemb
+cp $SUBMITDIR/FBinstability_SI.ini $SCRATCH/steffemb
+mkdir $SCRATCH/steffemb/data
 
 ## Make sure the results are copied back to the submit directory (see Work Directory below):
-#chkfile MyResultFile
+
+chkfile $SCRATCH/steffemb/data
+chkfile $SCRATCH/steffemb/CollisionDump.txt
 
 ## Do some work:
-#cd $SCRATCH
-#YourCommand
+cd $SCRATCH/steffemb
+##echo "compiling"
+##make clean
+##make
+echo "Running pinc"
+mpirun -np 64 pinc FBinstability_SI.ini

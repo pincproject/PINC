@@ -564,10 +564,10 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
+	//double timeStep = iniGetDouble(ini,"time:timeStep");
 	//*BExt = *BExt*timeStep;
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
-	msg(STATUS,"*BExt: %f,%f,%f", BExt[0],BExt[1],BExt[2]);
+	//msg(STATUS,"*BExt: %f,%f,%f", BExt[0],BExt[1],BExt[2]);
 	for(int s=0;s<nSpecies;s++){
 		//msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
 		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
@@ -575,7 +575,7 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
 		}else{tanThetaHalf = 0.0;}
 		//msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
-		msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
+		//msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
 		if(factor*BNorm*factor*BNorm > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
 			msg(STATUS,"mass of specie %i: %f",s, mass[s]);
 			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm, tanThetaHalf);
@@ -1600,8 +1600,8 @@ static inline void addCross(const double *a, const double *b, double *res){
 }
 
 void puAddEext(dictionary *ini, Population *pop, Grid *E){
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double stepSize = iniGetDouble(ini,"grid:stepSize");
+	//double timeStep = iniGetDouble(ini,"time:timeStep");
+	//double stepSize = iniGetDouble(ini,"grid:stepSize");
 
 	int rank = E->rank;
 	int nDims = pop->nDims;

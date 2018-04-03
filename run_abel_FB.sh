@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Job name:
-#SBATCH --job-name=PinC
+#SBATCH --job-name=PinC-FB1
 #
 # Project:
 #SBATCH --account=nn9299k
 #
 # Wall clock limit:
-#SBATCH --time=105:00:00
+#SBATCH --time=120:00:00
 #
 # Max memory usage:
-#SBATCH --mem-per-cpu=61G
+#SBATCH --mem-per-cpu=3936
 #
 #SBATCH --nodes=4 --ntasks-per-node=16
 #
@@ -30,16 +30,20 @@ module load gsl/1.16
 module load fftw/3.3.4
 
 #Compile
-#cd mn-fysrp-pic
-make abel
+#cd $SUBMITDIRECTORY/mn-fysrp-pic
+make
 #echo $PATH
+#cd ..
 ## Copy input files to the work directory:
-#cp /input/FBinstability_SI.ini $SCRATCH
+#cp $SUBMITDIRECTORY/mn-fysrp-pic/input/FBinstability_SI.ini $SCRATCH
+#cp -R $SUBMITDIRECTORY/mn-fysrp-pic/data $SCRATCH/data
+#cp $SUBMITDIRECTORY/mn-fysrp-pic/pinc $SCRATCH
 
 
 ## Make sure the results are copied back to the submit directory (see Work Directory below):
-#chkfile /data/"*.h5"
+#chkfile /data/"*.h5" $SUBMITDIRECTORY/mn-fysrp-pic/data
+#chkfile CollisionDump.txt $SUBMITDIRECTORY/mn-fysrp-pic
 
 ## Do some work:
 #cd $SCRATCH
-#YourCommand
+#mpirun -np 64 pinc FBinstability_SI.ini

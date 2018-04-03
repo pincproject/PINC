@@ -459,7 +459,7 @@ void mccGetPmaxElectronStatic(const dictionary *ini,const double StaticSigmaElec
 
 	// for now lets do
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
-	msg(STATUS,"maxVelocity electron =  %f", max_v);
+	//msg(STATUS,"maxVelocity electron =  %f", max_v);
 
 	//msg(STATUS,"maxveloc electron =  %f", max_v);
 	*maxfreq=StaticSigmaElectronElastic*max_v*nt;
@@ -535,506 +535,6 @@ double mccEnergyDiffElectronElastic(double Ekin, double theta, double mass1,
 	return temp;
 }
 
-void mccCollideElectron_debug(const dictionary *ini,Population *pop,
-	double *Pmax, double *maxfreqElectron, const gsl_rng *rng, double dt,
-	double nt){
-
-
-	// DEPRECATED! Historic artifact
-
-	msg(STATUS,"colliding Electrons");
-
-	int nDims = pop->nDims;
-	double *vel = pop->vel;
-	double *mass = pop->mass;
-
-	double R = gsl_rng_uniform_pos(rng);
-	double Rp = gsl_rng_uniform(rng);
-
-	double angleChi = 0; //scattering angle in x, y
-	double anglePhi = 0; //scattering angle in j
-	double angleTheta = 0;
-	double A = 0; //scaling Factor used for precomputing (speedup)
-	long int q = 0;
-	double vx, vy, vz;
-
-	long int errorcounter = 0;
-	long int errorcounter3 = 0;
-	long int errorcounter4 = 0;
-	long int debugindex = 0;
-	double Ekin = 0;
-	double EkinAfter = 0;
-	double AccumulatedEnergyDiff = 0;
-	double old_EnergyDiff = -10000;
-	double EnergyDiff = 0;
-	long int iStart = pop->iStart[0];		// *nDims??
-	long int iStop = pop->iStop[0];      // make shure theese are actually electrons!
-	long int NparticleColl = (*Pmax)*(pop->iStop[0]-pop->iStart[0]); // 1 dim ?, Number of particles too collide
-	long int mccStepSize = floor((double)((iStop-iStart))\
-	/ (double)(NparticleColl));
-	//if ((mccStepSize-1)*(NparticleColl) > (iStop-iStart)){ //errorcheck, remove
-	//	msg(WARNING,"particle collisions out of bounds in mccCollideElectron");
-	//}
-
-	msg(STATUS,"colliding %i of %i electrons", NparticleColl, (iStop-iStart));
-	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
-
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
-	if (mccStop > iStop){ //errorcheck, remove
-		msg(WARNING,"particle collisions out of bounds in mccCollideElectron");
-		msg(WARNING,"mccStop = %i is bigger then iStop = %i",mccStop,iStop);
-	}
-	for(long int i=iStart;i<mccStop-nDims;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
-		errorcounter3 += 1;
-		//msg(STATUS,"errorcounter = %i", (errorcounter));
-		if (errorcounter3 > NparticleColl){ //errorcheck, remove
-			msg(ERROR,"errorcounter = %i should be the same or less as the \
-			number of coll	particles = %i", (errorcounter),NparticleColl/nDims);
-		//	msg(WARNING,"particle collisions out of bounds in mccCollideIon");
-			//errorcounter = 0;
-		}
-		if (i > iStop){
-			msg(STATUS,"iStop = %i and index=%i", iStop, i);
-		}
-		if (i < iStart){
-			msg(STATUS,"iStop = %i and index=%i", iStop, i);
-		}
-		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-		Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
-		q = floor((i + (R*mccStepSize))*nDims);
-		//q = i*nDims; //testing with first index
-		if(q>iStop*nDims){
-			msg(ERROR,"index out of range, q>iStop in collideElectron");
-		}
-		//msg(STATUS,"R=%f, Rp = %f, q = %i iStart = %i, iStop = %i", R,Rp,q,iStart,iStop );
-		//if(q>iStart+5)
-		//	msg(ERROR, "qsss");
-
-		vx = vel[q];
-		vy = vel[q+1];
-		vz = vel[q+2];
-		// need n,n+1,n+2 for x,y,j ?
-		//msg(STATUS,"vx = %f, vy = %f, vz = %f", vx,vy,vz);
-
-		double MyCollFreq = mccGetMyCollFreq(ini,mccSigmaElectronElastic, mass[0],vx,vy,vz,dt,nt); //prob of coll for particle i
-
-		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, (MyCollFreq/ *maxfreqElectron));
-		//msg(STATUS,"MyCollFreq %f, maxfreqElectron = %f", MyCollFreq, *maxfreqElectron);
-
-		if (Rp<(MyCollFreq/ *maxfreqElectron)){
-		// Pmax gives the max possible colls. but we will "never" reach this
-		// number, so we need to test for each particles probability.
-			errorcounter += 1;
-			debugindex = i;
-			if (( (MyCollFreq)/ *maxfreqElectron)>1.0000000001){
-				//put in sanity later, need real cross sects
-				msg(WARNING,"MyCollFreqElectron/ *maxfreqElectron > 1, MyCollFreq = %f, maxFreq = %f",MyCollFreq, *maxfreqElectron);
-			}
-			R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-
-			Ekin = 0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; // values stored in population for speed??
-			//msg(STATUS,"ekin = %f, R =  %f", Ekin, R);
-			double argument = (2+Ekin-2*pow((1+Ekin),R))/(Ekin); // This one has the posibility to be greater than 1!!
-
-			if(sqrt(argument*argument)>1.0){
-				double newargument = sqrt(argument*argument)/argument;
-				msg(WARNING,"old argument = %.32f new arg = %.64f, R = %.32f", argument, newargument,R);
-				argument = newargument;
-			}
-			angleChi =  acos(argument); // gives nan value if abs(argument) > 1
-
-			//for debugging
-			if(sqrt(argument*argument)>1.0){
-				msg(ERROR,"argument of cos() is greater than 1. argument = %32f", argument);
-			}
-			if(isnan(angleChi)){
-				msg(STATUS, "abs(argument) = %32f", sqrt(argument*argument));
-				msg(ERROR,"angleChi == nan!!!! new velocity is cos(nan)  argument of acos() is %.32f!!", argument);
-			}
-			//msg(STATUS,"angleChi = %f, power is %.32f, argument is %f",angleChi, pow((1+Ekin),R),argument);
-			anglePhi = 2*PI*R; // set different R?
-			if(vx>0.0){
-				if(vx<0.0000000000000001){vx=0.0000000000000001;}
-				if(vx>0.99999999999999){vx=0.99999999999999;}
-			}
-			if(vx<=0.0){
-				if(vx>-0.0000000000000001){vx=-0.0000000000000001;}
-				if(vx<-0.99999999999999){vx=-0.99999999999999;}
-			}
-			angleTheta = acos(vx);
-			if(sin(angleTheta) == 0.0){
-				msg(ERROR,"float division by zero in collideion");
-			}
-			EnergyDiff = mccEnergyDiffElectronElastic(Ekin, angleChi, mass[0], mass[1]);
-			A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
-			vel[q] = vx*cos(angleChi)+A*(vy*vy + vz*vz); //Vx
-			if(isnan(angleTheta)){
-				msg(STATUS, "abs(argument) = %32f", sqrt(argument*argument));
-				msg(ERROR,"angleTheta == nan!!!! new velocity is nan*(somestuffs)  = %.32f!!", vx*cos(angleChi)+A*(vy*vy + vz*vz));
-			}
-			if(isinf(A)){
-				msg(ERROR,"A is inf in Collide Electron !!");
-			}
-			if(isnan(A)){
-				msg(ERROR,"A is nan in Collide Electron !!");
-			}
-			vel[q+1] = vy*cos(angleChi)+A*vz-A*vx*vy; //Vy
-			vel[q+2] = vz*cos(angleChi)-A*vy-A*vx*vz; //Vz
-			//msg(STATUS,"newvx = %f, newvy = %f, newvz = %f", vel[q],vel[q+1],vel[q+2]);
-			EkinAfter = 0.5*(vel[q]*vel[q] + vel[q+1]*vel[q+1] + vel[q+2]*vel[q+2])*mass[0];
-
-			AccumulatedEnergyDiff += (Ekin-EkinAfter);
-			//msg(STATUS,"this error = %.32f, analerror = %.32f",(Ekin-EkinAfter), EnergyDiff);
-			//msg(STATUS,"abs((Ekin-EkinAfter)*(Ekin-EkinAfter) - EnergyDiff*EnergyDiff) = %.64f",abs(sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff)));
-			if(old_EnergyDiff < sqrt((sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff))*(sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff)))){
-				old_EnergyDiff = sqrt((sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff))*(sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff)));
-				//msg(STATUS,"updated energydiff %f",sqrt((sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff))*(sqrt((Ekin-EkinAfter)*(Ekin-EkinAfter)) - sqrt(EnergyDiff*EnergyDiff))));
-			}
-			if(sqrt(vel[q]*vel[q] + vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])>sqrt(vx*vx+vy*vy+vz*vz)){
-				//msg(STATUS,"argument of acos() = %f", argument);
-				//msg(STATUS,"acos() = %f",angleChi );
-				//msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
-				//msg(STATUS,"vx = %f, vy = %f, vz = %f",vel[q],vel[q+1],vel[q+2]);
-				errorcounter4 += 1;
-			}
-
-
-		}
-
-	}
-	msg(STATUS, "LargestEnergyError = %.32f",old_EnergyDiff );
-	msg(STATUS, "AccumulatedEnergyDiff = %.32f",AccumulatedEnergyDiff );
-	msg(STATUS, "counted %i energy increases",errorcounter4);
-	//msg(STATUS,"errorcounter = %i should be the same as number of coll particles = %i", (errorcounter),NparticleColl);
-	msg(STATUS,"%i Electron collisions actually performed and last index was %i", errorcounter, debugindex);
-	msg(STATUS,"Done colliding Electrons");
-	//free?
-}
-
-void mccCollideIon_debug(const dictionary *ini, Population *pop, double *Pmax,
-	double *maxfreqIon, const gsl_rng *rng, double timeStep, double nt){
-
-	// DEPRECATED! Historic artifact
-
-	msg(STATUS,"colliding Ions");
-
-	//int nSpecies = pop->nSpecies;
-	int nDims = pop->nDims;
-	double *vel = pop->vel;
-	double *mass = pop->mass;
-	double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	//double timeStep = iniGetDouble(ini,"time:timeStep");
-	//double stepSize = iniGetDouble(ini,"grid:stepSize");
-	//double velTh = (timeStep/stepSize)*NvelThermal; //neutrals
-	//free(velThermal);
-
-	double R, R1, Rp, Rq;
-
-	double angleChi = 0; //scattering angle in x, y
-	double anglePhi = 0; //scattering angle in j
-	double angleTheta = 0;
-	double A = 0; //scaling Factor used for precomputing (speedup)
-	long int q = 0;
-	long int last_q = 0;
-	//double fraction = 0.7; //defines fraction of particles colliding w el/ch-ex
-	double vxMW, vyMW, vzMW;
-	long int errorcounter = 0;
-	long int errorcounter1 = 0;
-	long int errorcounter2 = 0;
-	long int errorcounter3 = 0;
-	long int errorcounter4 = 0;
-	long int debugindex = 0;
-	double old_EnergyDiff = 0;
-	double Ekin = 0;
-	double EkinAfter = 0;
-	double EnergyDiff = 1;
-	double AccumulatedEnergyDiff = 0;
-
-	long int iStart = pop->iStart[1];			// *nDims??
-	long int iStop = pop->iStop[1];      // make shure theese are actually ions!
-	long int NparticleColl = (*Pmax)*(pop->iStop[1]-pop->iStart[1]); // 1 dim ?, Number of particles too collide
-	long int mccStepSize = floor((double)((iStop-iStart))\
-	/ (double)(NparticleColl));
-	//if ((mccStepSize-1)*(NparticleColl)/nDims > (iStop-iStart)){ //errorcheck, remove
-	//	msg(WARNING,"particle collisions out of bounds in mccCollideIon");
-	//	msg(WARNING,"%i is bigger than array = %i",(mccStepSize-1)*(NparticleColl),(iStop-iStart) );
-	//}
-
-	msg(STATUS,"colliding %i of %i ions", NparticleColl, (iStop-iStart));
-	msg(STATUS,"Particles per box to pick one from = %i", (mccStepSize));
-
-	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
-	// but also that last index probably never collides...
-	if (mccStop > iStop){ //errorcheck, remove
-		msg(WARNING,"particle collisions out of bounds in mccCollideIon");
-		msg(WARNING,"mccStop = %i is bigger then iStop = %i",mccStop,iStop);
-	}
-	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
-		errorcounter3 += 1;
-		if (errorcounter3 > NparticleColl){ //errorcheck, remove
-			msg(ERROR,"errorcounter = %i should be the same or less as the \
-			number of coll	particles = %i", (errorcounter),NparticleColl/nDims);
-		//	msg(WARNING,"particle collisions out of bounds in mccCollideIon");
-			//errorcounter = 0;
-		}
-		if (i > iStop){
-			msg(STATUS,"iStop = %i and index=%i", iStop, i);
-		}
-		if (i < iStart){
-			msg(STATUS,"iStart = %i and index=%i", iStart, i);
-		}
-		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
-		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-		Rq = gsl_rng_uniform_pos(rng);
-		q = (i + (Rq*mccStepSize))*nDims; // particle q collides
-		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
-		if(q>iStop*nDims){
-			msg(ERROR,"index out of range, q>iStop in collideIon");
-		}
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-		//msg(STATUS,"neutral velx = %f vely = %f velz = %f",vxMW,vyMW,vzMW );
-
-		//transfer to CM-frame
-		double vxTran = vel[q]-(vel[q]-vxMW)/2.0;
-		double vyTran = vel[q+1]-(vel[q+1]-vyMW)/2.0;
-		double vzTran = vel[q+2]- (vel[q+2]-vzMW)/2.0;
-
-		double MyCollFreq1 = mccGetMyCollFreq(ini,mccSigmaIonElastic, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //prob of coll for particle i
-		double MyCollFreq2 = mccGetMyCollFreq(ini,mccSigmaCEX, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //duplicate untill real cross sections are implemented
-
-		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, ((MyCollFreq1+MyCollFreq2)/ *maxfreqIon));
-		if (Rp<( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)){ // MyCollFreq1+MyCollFreq2 defines total coll freq.
-			//Rp > frq ? or Rp < frq ? this collides faster or slower ions more often
-			errorcounter2 += 1;
-			debugindex = i;
-			if (( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)>1.0000000001){
-				//put in sanity later, need real cross sects
-				msg(WARNING,"(MyCollFreq1+MyCollFreq2)/ *maxfreqIon > 1");
-				msg(WARNING,"(MyCollFreq1= %f MyCollFreq2 = %f *maxfreqIon =%f",MyCollFreq1,MyCollFreq2,*maxfreqIon);
-			}
-			if(Rp < MyCollFreq1/ *maxfreqIon){ // if test slow, but enshures randomness...
-				// elastic:
-
-				//msg(STATUS,"elastic");
-
-
-				//msg(ERROR,"Elastic collision"); // temporary test
-				//Ekin = 0.5*(vxTran*vxTran + vyTran*vyTran + vzTran*vzTran)*mass[1];
-				Ekin = 0.5*(vel[q]*vel[q] + vel[q+1]*vel[q+1] + vel[q+2]*vel[q+2])*mass[1]; // lab frame
-				R1 = gsl_rng_uniform_pos(rng);
-
-				//The scattering happens in center of mass so we use THETA not chi
-				double argument = (acos(1-2*R)/2.0);
-
-				if(sqrt(argument*argument)>1.0){
-					double newargument = sqrt(argument*argument)/argument;
-					msg(WARNING,"old argument = %.32f new arg = %.64f", argument, newargument);
-					argument = newargument;
-				}
-				angleChi =  acos(argument); // gives nan value if abs(argument) > 1
-
-				//for debugging
-				if(sqrt(argument*argument)>1.0){
-					msg(ERROR,"argument of cos() is greater than 1. argument = %32f", argument);
-				}
-				if(isnan(angleChi)){
-					msg(STATUS, "abs(argument) = %32f", sqrt(argument*argument));
-					msg(ERROR,"angleChi == nan!!!! new velocity is cos(nan)  argument of acos() is %.32f!!", argument);
-				}
-
-				//angleChi = acos(sqrt(1-R)); // for M_ion = M_neutral
-				anglePhi = 2*PI*R1; // set different R?
-				//angleTheta = 2*angleChi; //NOPE! not the same!
-				angleTheta = acos(vel[q]); //C_M frame
-				double angleTheta_lab = acos(sqrt(1-R));
-				EnergyDiff = mccEnergyDiffIonElastic(Ekin, angleTheta_lab, mass[1], mass[1]);//Acctually Ion and neutral mass
-
-				//if(sin(angleTheta) == 0.0){
-				//	msg(ERROR,"float division by zero in collideion", argument);
-				//}
-				A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
-
-				if(isinf(A)){
-					msg(ERROR,"A is inf in Collide ion !!");
-				}
-				if(isnan(A)){
-					msg(ERROR,"A is nan in Collide Ion !!");
-				}
-				vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) \
-				+ vxMW; //Vx
-				vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
-				vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
-				if(sqrt(vel[q]*vel[q] + vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])>sqrt((vxTran+vxMW)*(vxTran+vxMW)+(vyTran+vyMW)*(vyTran+vyMW)+(vzTran+vzMW)*(vzTran+vxMW))){
-					//msg(STATUS,"argument of acos() = %f", argument);
-					//msg(STATUS,"acos() = %f",angleChi );
-					msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
-					//msg(STATUS,"vx = %f, vy = %f, vz = %f",vel[q],vel[q+1],vel[q+2]);
-					errorcounter4 += 1;
-				}
-				//if(sqrt(A*A)<0.00000001){
-				//	msg(STATUS,"argument of acos() = %f", argument);
-				//	msg(STATUS,"acos() = %f",angleChi );
-				//	msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
-				//}
-				//EkinAfter = 0.5*((vel[q]-vxMW)*(vel[q]-vxMW) + (vel[q+1]-vyMW)*(vel[q+1]-vyMW) + (vel[q+2]-vzMW)*(vel[q+2])-vyMW)*mass[1]; //CM frame
-				EkinAfter = 0.5*((vel[q])*(vel[q]) + (vel[q+1])*(vel[q+1]) + (vel[q+2])*(vel[q+2]))*mass[1]; // lab frame
-				AccumulatedEnergyDiff += (Ekin-EkinAfter);
-				if(old_EnergyDiff > (Ekin-EkinAfter)*(Ekin-EkinAfter) - EnergyDiff*EnergyDiff ){
-					old_EnergyDiff = EnergyDiff;
-				}
-				///msg(STATUS," ");
-				///msg(STATUS, "---------- energydiff = %.32f", (Ekin-EkinAfter) );
-				///msg(STATUS, "analytical energydiff = %.32f",EnergyDiff );
-				///msg(STATUS, "deviation = %.32f",EnergyDiff-(Ekin-EkinAfter) );
-				//msg(STATUS," ");
-				errorcounter1 += 1;
-			}else{
-				// Charge exchange:
-				// flip ion and neutral. Neutral is new ion.
-				//msg(STATUS,"ch-ex");
-				errorcounter += 1;
-				vel[q] = vxMW; //Vx
-				vel[q+1] = vyMW; //Vy
-				vel[q+2] = vzMW; //Vz
-			}
-		}
-		last_q = q;
-	}
-	// Special handling of last box to let every particle have posibillity to collide
-
-	Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
-	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
-	Rq = gsl_rng_uniform_pos(rng);
-	q = ( (last_q) + (Rq*(iStop*nDims-last_q)) ); // particle q collides
-	msg(STATUS,"LAst collision q = %i and iStop*nDims = %i, previous last q = %i", q,iStop*nDims,last_q );
-	if(q>iStop*nDims){
-		msg(ERROR,"index out of range, q>iStop in collideIon last box");
-	}
-	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
-	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-	//msg(STATUS,"neutral velx = %f vely = %f velz = %f",vxMW,vyMW,vzMW );
-	double vxTran = vel[q]-vxMW;   //simple transfer, should be picked from maxwellian
-	double vyTran = vel[q+1]-vyMW;  //vel-velMaxwellian
-	double vzTran = vel[q+2]-vzMW;  // this will for now break conservation laws???
-
-	double MyCollFreq1 = mccGetMyCollFreq(ini,mccSigmaIonElastic, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //prob of coll for particle i
-	double MyCollFreq2 = mccGetMyCollFreq(ini,mccSigmaCEX, mass[1],vxTran,vyTran,vzTran,timeStep,nt); //duplicate untill real cross sections are implemented
-
-
-
-	if (Rp<( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)){ // MyCollFreq1+MyCollFreq2 defines total coll freq.
-		errorcounter2 += 1;
-		debugindex = q;
-		if (( (MyCollFreq1+MyCollFreq2)/ *maxfreqIon)>1.0000000001){
-			//put in sanity later, need real cross sects
-			msg(WARNING,"(MyCollFreq1+MyCollFreq2)/ *maxfreqIon > 1");
-			msg(WARNING,"(MyCollFreq1= %f MyCollFreq2 = %f *maxfreqIon =%f",MyCollFreq1,MyCollFreq2,*maxfreqIon);
-		}
-		if(Rp < MyCollFreq1/ *maxfreqIon){ // if test slow, but enshures randomness...
-			// elastic:
-
-			//msg(STATUS,"elastic");
-
-
-			//msg(ERROR,"Elastic collision"); // temporary test
-			//Ekin = 0.5*(vxTran*vxTran + vyTran*vyTran + vzTran*vzTran)*mass[1];
-			Ekin = 0.5*(vel[q]*vel[q] + vel[q+1]*vel[q+1] + vel[q+2]*vel[q+2])*mass[1]; // lab frame
-			R1 = gsl_rng_uniform_pos(rng);
-
-			//The scattering happens in center of mass so we use THETA not chi
-			double argument = (acos(1-2*R)/2.0);
-
-			if(sqrt(argument*argument)>1.0){
-				double newargument = sqrt(argument*argument)/argument;
-				msg(WARNING,"old argument = %.32f new arg = %.64f", argument, newargument);
-				argument = newargument;
-			}
-			angleChi =  acos(argument); // gives nan value if abs(argument) > 1
-
-			//for debugging
-			if(sqrt(argument*argument)>1.0){
-				msg(ERROR,"argument of cos() is greater than 1. argument = %32f", argument);
-			}
-			if(isnan(angleChi)){
-				msg(STATUS, "abs(argument) = %32f", sqrt(argument*argument));
-				msg(ERROR,"angleChi == nan!!!! new velocity is cos(nan)  argument of acos() is %.32f!!", argument);
-			}
-
-			//angleChi = acos(sqrt(1-R)); // for M_ion = M_neutral
-			anglePhi = 2*PI*R1; // set different R?
-			//angleTheta = 2*angleChi; //NOPE! not the same!
-			angleTheta = acos(vel[q]); //C_M frame
-			double angleTheta_lab = acos(sqrt(1-R));
-			EnergyDiff = mccEnergyDiffIonElastic(Ekin, angleTheta_lab, mass[1], mass[1]);//Acctually Ion and neutral mass
-
-			//if(sin(angleTheta) == 0.0){
-			//	msg(ERROR,"float division by zero in collideion", argument);
-			//}
-			A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta);
-
-			if(isinf(A)){
-				msg(ERROR,"A is inf in Collide ion !!");
-			}
-			if(isnan(A)){
-				msg(ERROR,"A is nan in Collide Ion !!");
-			}
-			vel[q] = vxTran*cos(angleChi)+A*(vyTran*vyTran + vzTran*vzTran) \
-			+ vxMW; //Vx
-			vel[q+1] = vyTran*cos(angleChi)+A*vzTran-A*vxTran*vyTran + vyMW; //Vy
-			vel[q+2] = vzTran*cos(angleChi)-A*vyTran-A*vxTran*vzTran + vzMW; //Vz
-			if(sqrt(vel[q]*vel[q] + vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])>sqrt((vxTran+vxMW)*(vxTran+vxMW)+(vyTran+vyMW)*(vyTran+vyMW)+(vzTran+vzMW)*(vzTran+vxMW))){
-				msg(STATUS,"argument of acos() = %f", argument);
-				msg(STATUS,"acos() = %f",angleChi );
-				msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
-				msg(STATUS,"vx = %f, vy = %f, vz = %f",vel[q],vel[q+1],vel[q+2]);
-				errorcounter4 += 1;
-			}
-			//if(sqrt(A*A)<0.00000001){
-			//	msg(STATUS,"argument of acos() = %f", argument);
-			//	msg(STATUS,"acos() = %f",angleChi );
-			//	msg(STATUS,"A = (sin(angleChi)*sin(anglePhi))/sin(angleTheta) = %f",A );
-			//}
-			//EkinAfter = 0.5*((vel[q]-vxMW)*(vel[q]-vxMW) + (vel[q+1]-vyMW)*(vel[q+1]-vyMW) + (vel[q+2]-vzMW)*(vel[q+2])-vyMW)*mass[1]; //CM frame
-			EkinAfter = 0.5*((vel[q])*(vel[q]) + (vel[q+1])*(vel[q+1]) + (vel[q+2])*(vel[q+2]))*mass[1]; // lab frame
-			AccumulatedEnergyDiff += (Ekin-EkinAfter);
-			if(old_EnergyDiff > (Ekin-EkinAfter)*(Ekin-EkinAfter) - EnergyDiff*EnergyDiff ){
-				old_EnergyDiff = EnergyDiff;
-			}
-			///msg(STATUS," ");
-			///msg(STATUS, "---------- energydiff = %.32f", (Ekin-EkinAfter) );
-			///msg(STATUS, "analytical energydiff = %.32f",EnergyDiff );
-			///msg(STATUS, "deviation = %.32f",EnergyDiff-(Ekin-EkinAfter) );
-			//msg(STATUS," ");
-			errorcounter1 += 1;
-		}else{
-			// Charge exchange:
-			// flip ion and neutral. Neutral is new ion.
-			//msg(STATUS,"ch-ex");
-			errorcounter += 1;
-			vel[q] = vxMW; //Vx
-			vel[q+1] = vyMW; //Vy
-			vel[q+2] = vzMW; //Vz
-		}
-	}
-
-
-
-	//debug printout
-	msg(STATUS, "LargestEnergyError = %.32f",old_EnergyDiff );
-	msg(STATUS, "AccumulatedEnergyDiff = %.32f",AccumulatedEnergyDiff );
-	msg(STATUS, "counted %i energy increases",errorcounter4);
-	msg(STATUS,"%i ion collisions actually performed and last index was %i", errorcounter2, debugindex-iStart);
-	msg(STATUS,"%i ion collisions as ch-ex and %i as elastic, the sum should be %i", errorcounter, errorcounter1,errorcounter2);
-
-	//msg(STATUS,"errorcounter = %i should be the same as number of coll particles = %i", (errorcounter),NparticleColl);
-
-	//free?
-	msg(STATUS,"Done colliding Ions");
-}
-
 void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	double *Pmax,double *maxfreqElectron, const gsl_rng *rng,double NvelThermal,
 	double nt, double mccSigmaElectronElastic, MpiInfo *mpiInfo,
@@ -1078,7 +578,6 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 
 	//check energies
 	//double ekin = 0; //test value
-	// double ekin_anal = 0;
 	// double ekinafter =0;
 	// double ekindiff =0;
 
@@ -1264,7 +763,7 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "counted  %i Electron collisions on one MPI node \n",  errorcounter);
 	}
-	msg(STATUS,"counted  %i Electron collisions on one MPI node", errorcounter);
+	//msg(STATUS,"counted  %i Electron collisions on one MPI node", errorcounter);
 }
 
 void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
@@ -1280,7 +779,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	//double *mass = pop->mass;
 	//double velTh = NvelThermal;//(timeStep/stepSize)*NvelThermal; //neutrals
 	//msg(STATUS,"neutral thermal vel used in Ion is %f", velTh);
-	double R, R1, Rp, Rq;
+	double R1, Rp, Rq;
 
 
 	double angleChi = 0; //scattering angle in x, y
@@ -1311,10 +810,10 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
 	//check energies
-	double ekin = 0; //test value
-	double ekin_anal = 0;
-	double ekinafter =0;
-	double ekindiff =0;
+	//double ekin = 0; //test value
+
+	//double ekinafter =0;
+
 	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
@@ -1342,7 +841,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 		double vx = vxTran/velsquare;
 		double vy = vyTran/velsquare;
 		double vz = vzTran/velsquare;
-		ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
+		//ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
 		//msg(STATUS, "vel befor = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
 
 		double MyCollFreq1 = mccGetMyCollFreqStatic(mccSigmaIonElastic,vel[q],
@@ -1387,7 +886,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 				vel[q+1] *= (velchange/velscatter);
 				vel[q+2] *= (velchange/velscatter);
 
-				ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+				//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 				//transform back to lab frame
 				vel[q] += vxMW;
@@ -1395,7 +894,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 				vel[q+2] += vzMW;
 
 				//check energies
-				ekindiff = (ekin-ekinafter);
+
 				//msg(STATUS, "velchange = %f",velchange);
 				//msg(STATUS,"this is unity? %f",(sqrt((vx*cos(angleChi)+B*(vy*vy + vz*vz) )*(vx*cos(angleChi)+B*(vy*vy + vz*vz) )+(vy*cos(angleChi)+A*vzTran-B*vx*vy)*(vy*cos(angleChi)+A*vzTran-B*vx*vy)+(vz*cos(angleChi)-A*vy-B*vx*vz)*(vz*cos(angleChi)-A*vy-B*vx*vz))));
 				//msg(STATUS, "vel aftr = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
@@ -1481,7 +980,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 			vel[q+1] *= (velchange/velscatter);
 			vel[q+2] *= (velchange/velscatter);
 
-			ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+			//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 			//transform back to lab frame
 			vel[q] += vxMW;
@@ -1502,7 +1001,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop, double *Pmax,
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "counted  %i ION collisions on one MPI node, %i as CEX \n", errorcounter,errorcounter1);
 	}
-	msg(STATUS,"counted  %i ION collisions on one MPI node, %i as CEX", errorcounter,errorcounter1);
+	//msg(STATUS,"counted  %i ION collisions on one MPI node, %i as CEX", errorcounter,errorcounter1);
 }
 
 
@@ -1653,7 +1152,7 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 	//double *mass = pop->mass;
 	//double velTh = NvelThermal;//(timeStep/stepSize)*NvelThermal; //neutrals
 	//msg(STATUS,"neutral thermal vel used in Ion is %f", velTh);
-	double R, R1, Rp, Rq;
+	double R1, Rp, Rq;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -1681,14 +1180,14 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 
 	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 	//check energies
-	double ekin = 0; //test value
-	double ekin_anal = 0;
-	double ekinafter =0;
-	double ekindiff =0;
+	//double ekin = 0; //test value
+
+	//double ekinafter =0;
+
 	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
-		R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+		//R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 		Rq = gsl_rng_uniform_pos(rng);
 		q = (i + floor(Rq*mccStepSize))*nDims; // particle q collides
 		//msg(STATUS,"R=%g, p = %i, q = %i", R,p,q );
@@ -1708,7 +1207,7 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 		double vx = vxTran/velsquare;
 		double vy = vyTran/velsquare;
 		double vz = vzTran/velsquare;
-		ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
+		//ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
 		//msg(STATUS, "vel befor = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
 
 		double MyCollFreq1 = mccGetMyCollFreqFunctional(mccSigmaIonElasticFunctional,vxTran,vyTran,vzTran,nt,ion_elastic_a,ion_elastic_b); //prob of coll for particle i
@@ -1748,14 +1247,14 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 				vel[q+1] *= (velchange/velscatter);
 				vel[q+2] *= (velchange/velscatter);
 
-				ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+				//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 				//transform back to lab frame
 				vel[q] += vxMW;
 				vel[q+1] += vyMW;
 				vel[q+2] += vzMW;
 				//check energies
-				ekindiff = (ekin-ekinafter);
+
 				//msg(STATUS, "velchange = %f",velchange);
 				//msg(STATUS,"this is unity? %f",(sqrt((vx*cos(angleChi)+B*(vy*vy + vz*vz) )*(vx*cos(angleChi)+B*(vy*vy + vz*vz) )+(vy*cos(angleChi)+A*vzTran-B*vx*vy)*(vy*cos(angleChi)+A*vzTran-B*vx*vy)+(vz*cos(angleChi)-A*vy-B*vx*vz)*(vz*cos(angleChi)-A*vy-B*vx*vz))));
 				//msg(STATUS, "vel aftr = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
@@ -1777,7 +1276,7 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 	// Special handling of last box to let every particle have posibillity to collide
 
 	Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
-	R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
+	//R = gsl_rng_uniform_pos(rng); // New random number per particle. maybe print?
 	Rq = gsl_rng_uniform_pos(rng);
 	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; // particle q collides
 
@@ -1834,14 +1333,14 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop, double *Pma
 			vel[q+1] *= (velchange/velscatter);
 			vel[q+2] *= (velchange/velscatter);
 
-			ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+			//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 			//transform back to lab frame
 			vel[q] += vxMW;
 			vel[q+1] += vyMW;
 			vel[q+2] += vzMW;
 			//check energies
-			ekindiff = (ekin-ekinafter);
+
 		}else{
 			// Charge exchange:
 			// flip ion and neutral. Neutral is new ion.
@@ -1884,8 +1383,8 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	double vxMW, vyMW, vzMW;
 	long int last_i = 0;
 
-	double ekinafter = 0;
-	double ekindiff =0;
+	//double ekinafter = 0;
+
 
 
 	long int errorcounter = 0;
@@ -1969,7 +1468,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 		vel[q+1] *= (velchange/velscatter);
 		vel[q+2] *= (velchange/velscatter);
 
-		ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[0] ;
+		//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[0] ;
 
 		//transform back to lab frame
 		vel[q] += vxMW;
@@ -1977,7 +1476,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 		vel[q+2] += vzMW;
 
 		//Tests
-		ekindiff = (Ekin-ekinafter);
+
 		// msg(STATUS, "velchange = %f should be smaller than velsquare = %f",velchange,velsquare);
 		// msg(STATUS,"scattered unit vector = %f should be unity ",velscatter);
 		// msg(STATUS,"ekin before = %f, ekin after = %f, energy after should be %f smaller",Ekin,ekinafter,(1-(1-((2.0*mass[0])/mass[1])*(1-cos(angleChi)))));
@@ -2051,7 +1550,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	vel[q+1] *= (velchange/velscatter);
 	vel[q+2] *= (velchange/velscatter);
 
-	ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+	//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 	//transform back to lab frame
 	vel[q] += vxMW;
@@ -2076,7 +1575,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	double *vel = pop->vel;
 	//double velTh = NvelThermal;//(timeStep/stepSize)*NvelThermal; //neutrals
 	//msg(STATUS,"neutral thermal vel used in Ion is %f", velTh);
-	double R, R1, Rp, Rq;
+	double R1, Rp, Rq;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -2109,8 +1608,8 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	long int mccStop = iStart + mccStepSize*NparticleColl; //enshure non out of bounds
 
 	//check energies
-	double ekin = 0; //test value
-	double ekinafter =0;
+	//double ekin = 0; //test value
+	//double ekinafter =0;
 
 	for(long int i=iStart;i<mccStop;i+=mccStepSize){  //check this statement #segfault long int p=pStart;p<pStart+Pmax*(pStop-pStart);p++)
 
@@ -2139,7 +1638,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 		double vx = vxTran/velsquare;
 		double vy = vyTran/velsquare;
 		double vz = vzTran/velsquare;
-		ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
+		//ekin = 0.5*(vxTran*vxTran+vyTran*vyTran+vzTran*vzTran)*pop->mass[1] ;
 		//msg(STATUS, "vel befor = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
 
 		//msg(STATUS,"is Rp = %f < MyCollFreq/maxfreqElectron = %f", Rp, ((MyCollFreq1+MyCollFreq2)/ *maxfreqIon));
@@ -2178,7 +1677,7 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 			vel[q+1] *= (velchange/velscatter);
 			vel[q+2] *= (velchange/velscatter);
 
-			ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
+			//ekinafter = 0.5*(vel[q]*vel[q]+vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2])*pop->mass[1] ;
 
 			//transform back to lab frame
 			vel[q] += vxMW;
@@ -2408,6 +1907,7 @@ void mccTestMode(dictionary *ini){
 	double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
 	double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
 	double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
+
 	//if using constant collision frquency
 	double collFrqElectronElastic = iniGetDouble(ini,"collisions:collFrqElectronElastic");
 	double collFrqIonElastic = iniGetDouble(ini,"collisions:collFrqIonElastic");
@@ -2477,11 +1977,11 @@ void mccTestMode(dictionary *ini){
 	// Initalize particles
 	//pPosLattice(ini, pop, mpiInfo);
 	pPosUniform(ini, pop, mpiInfo, rngSync);
-	pVelZero(pop);
+	//pVelZero(pop);
 	//double *thermalVelocity = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	//pVelConstant(ini, pop,thermalVelocity[0] ,thermalVelocity[1] ); //constant values for vel.
-	//pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
+	pVelMaxwell(ini, pop, rng);
+	//double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -2683,7 +2183,7 @@ void mccTestMode(dictionary *ini){
 		//	gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		//}
-		if( n>= 10000 && n%1000 == 0){
+		if( n>= 40000 && n%100 == 0){
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 			//Write h5 files
@@ -2694,7 +2194,7 @@ void mccTestMode(dictionary *ini){
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		if( n< 10000 && n%1000 == 0){
+		if( n< 40000 && n%10000 == 0){
 
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
