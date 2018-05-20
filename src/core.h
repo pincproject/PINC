@@ -77,6 +77,10 @@ typedef struct{
 	double *mass;		///< Mass (nSpecies elements)
 	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
 	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
+	double *TemperatureX;/// Experimental
+	double *TemperatureY;
+	double *TemperatureZ;
+	double* TemperatureTot;
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	hid_t h5;			///< HDF5 file handler
@@ -397,7 +401,7 @@ typedef struct{
 	double mass;			///< Mass
 	double length;			///< Length
 	double time;			///< Time
-	
+
 	// Derived units
 	double hyperArea;		///< Length^(nDims-1)
 	double hyperVolume;		///< Length^(nDims)

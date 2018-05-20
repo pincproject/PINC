@@ -533,7 +533,7 @@ void BorisTestMode(dictionary *ini){
 		//gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1.0);
 		pWriteEnergy(history,pop,(double)n,units);
 
 	}

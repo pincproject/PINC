@@ -480,11 +480,17 @@ funPtr puBoris3D1KETEST_set(dictionary *ini){
 
 void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S){
 
+	// Temperature instead of Kinetic Energy, in X,Y,Z
+
 	int nSpecies = pop->nSpecies;
 	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
 	double *pos = pop->pos;
 	double *vel = pop->vel;
 	double *kinEnergy = pop->kinEnergy;
+	double *TemperatureX = pop->TemperatureX;
+	double *TemperatureY = pop->TemperatureY;
+	double *TemperatureZ = pop->TemperatureZ;
+	double *TemperatureTot = pop->TemperatureTot;
 	double *mass = pop->mass;
 	long int *sizeProd = E->sizeProd;
 	double *val = E->val;
@@ -494,6 +500,10 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 		kinEnergy[s]=0;
+		TemperatureX[s] = 0;
+		TemperatureY[s] = 0;
+		TemperatureZ[s] = 0;
+		TemperatureTot[s] = 0;
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3], w[3], vPlus[3], vMinus[3];
 			for(int d=0;d<nDims;d++){
@@ -523,10 +533,22 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 				velSquared += pow(vel[p+d],2);
 			}
 			kinEnergy[s]+=velSquared;
+			TemperatureTot[s]+=velSquared;
+			TemperatureX[s] += pow(vel[p],2);
+			TemperatureY[s] += pow(vel[p+1],2);
+			TemperatureZ[s] += pow(vel[p+2],2);
+
 
 
 		}
 
+		// Thechnically average Energy in X,Y,Z, needs renormalization from PINC
+		// and dividing by Boltzman constant
+		TemperatureTot[s]*=mass[s]/(pStop-pStart);
+		TemperatureX[s]*=mass[s]/(pStop-pStart);
+		TemperatureY[s]*=mass[s]/(pStop-pStart);
+		TemperatureZ[s]*=mass[s]/(pStop-pStart);
+		
 		kinEnergy[s]*=0.5*mass[s];
 
 		gMul(E, pop->mass[s]/pop->charge[s]);

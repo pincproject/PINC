@@ -63,6 +63,10 @@ Population *pAlloc(const dictionary *ini){
 	pop->iStart = iStart;
 	pop->iStop = iStop;
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureX = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureY = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureZ = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureTot = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
@@ -77,6 +81,10 @@ void pFree(Population *pop){
 	free(pop->vel);
 	free(pop->kinEnergy);
 	free(pop->potEnergy);
+	free(pop->TemperatureX);
+	free(pop->TemperatureY);
+	free(pop->TemperatureZ);
+	free(pop->TemperatureTot);
 	free(pop->iStart);
 	free(pop->iStop);
 	free(pop->charge);
@@ -359,12 +367,13 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
+		velTh = velTh;
 
 		for(long int i=iStart;i<iStop;i++){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
-				vel[d] = velDrift[s] + gsl_ran_gaussian_ziggurat(rng,velTh);
+				vel[d] = (velDrift[s] + gsl_ran_gaussian_ziggurat(rng,velTh));
 
 			}
 		}
@@ -523,7 +532,10 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 
 }
 
-void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN,
+	double PopFraction){
+
+	// PopFraction is fraction of population to write. 1.0 is whole pop.
 
 	int mpiRank = mpiInfo->mpiRank;
 	int mpiSize = mpiInfo->mpiSize;
@@ -547,7 +559,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN)
 
 	for(int s=0;s<nSpecies;s++){
 
-		long int nParticles = pop->iStop[s] - pop->iStart[s];
+		long int nParticles = PopFraction*(pop->iStop[s] - pop->iStart[s]);
 		MPI_Allgather(	&nParticles,
 						1,
 						MPI_LONG,
@@ -663,6 +675,26 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop){
 	}
 }
 
+void pCreateTemperatureDatasets(hid_t xy, Population *pop){
+
+	char name[64];
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+		sprintf(name,"/energy/TemperatureTot/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureX/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureY/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureZ/specie %i",s);
+		xyCreateDataset(xy,name);
+	}
+}
+
 void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units){
 
 	char name[64];
@@ -683,6 +715,41 @@ void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units){
 
 		sprintf(name,"/energy/kinetic/specie %i",s);
 		xyWrite(xy,name,x,denorm*pop->kinEnergy[s],MPI_SUM);
+	}
+
+}
+
+void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictionary *ini){
+
+	// Temperature instead of kinetic energy
+	double k_b = 1.38064852e-23;
+
+	char name[64];
+	int nSpecies = pop->nSpecies;
+	double denorm = units->energy;
+	int nDims = pop->nDims;
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
+	int nProcs = nSubdomains[0]+nSubdomains[1]+nSubdomains[2];
+	//msg(STATUS,"nsudims = %i",nSubdomains[2]);
+	//long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+
+	for(int s=0; s<nSpecies; s++){
+		//msg(STATUS,"s = %i, Tx =%f, Tt = %f",s,pop->TemperatureX[s],pop->TemperatureTot[s]);
+		sprintf(name,"/energy/TemperatureTot/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureTot[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
+		// sprintf(name,"/energy/kinetic/specie %i",s);
+		// xyWrite(xy,name,x,denorm*pop->kinEnergy[s]/(nParticles[s]*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureX/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureX[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureY/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureY[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureZ/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureZ[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
 	}
 
 }

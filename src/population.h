@@ -171,7 +171,8 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
  * back to local reference frame after writing so pop should remain unchanged to
  * within machine precision.
  */
-void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN);
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN,
+double PopFraction);
 
 /**
  * @brief	Closes .pop.h5-file
@@ -225,6 +226,8 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
  */
 void pCreateEnergyDatasets(hid_t xy, Population *pop);
 
+void pCreateTemperatureDatasets(hid_t xy, Population *pop);
+
 /**
  * @brief Writes energies to .xy.h5-file
  * @param	xy		.xy.h5-identifier
@@ -242,5 +245,10 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop);
  * simply by addition during post-processing.
  */
 void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units);
+
+/**
+ * Same as pWriteEnergy except temperature instead of kinetic energy.
+ */
+void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictionary *ini);
 
 #endif // POPULATION_H

@@ -49,7 +49,7 @@ for i in range(startindex,stopindex,1000):#start and stop timestep
 	X,Y = np.meshgrid(x,y,indexing='ij')
 
 	fig, ax = plt.subplots(1)
-	im = ax.contourf(X,Y,data[:,:,32], 100)
+	im = ax.contourf(X,Y,data[:,:,8], 100)
 
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])

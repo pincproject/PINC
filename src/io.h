@@ -386,12 +386,17 @@ void createH5Group(hid_t h5, const char *name);
  */
 hid_t xyOpenH5(const dictionary *ini, const char *fName);
 
+hid_t arrOpenH5(const dictionary *ini, const char *fName);
+
+
 /**
  * @brief Closes a .xy.h5-file
  * @param	h5		Identifier to h5-file to close
  * @param			void
  */
 void xyCloseH5(hid_t h5);
+
+void arrCloseH5(hid_t h5);
 
 /**
  * @brief Writes an (x,y) datapoint to a dataset in an H5-file
@@ -444,6 +449,12 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op);
  * example, see xyWrite().
  */
 void xyCreateDataset(hid_t h5, const char *name);
+
+void xyzWriteProbe(hid_t xyz, Grid *grid,double timestep,MpiInfo *mpiInfo);
+
+void arrCreateDataset(hid_t h5, const char *name, const int arrSize);
+
+void xyzProbeCreateDatasets(hid_t xyz,Grid *grid,MpiInfo *mpiInfo);
 
 /**
  * @brief Writes grid structs to a parsefile
