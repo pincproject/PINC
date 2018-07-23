@@ -22,7 +22,7 @@ test = file['/pos/specie 1']
 Nt = len(test) # timesteps
 print(test)
 
-n0 = 94000.5
+n0 = 20000.5
 
 
 #print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
@@ -33,9 +33,10 @@ vel0 = file['/vel/specie 1/n=%.1f' % n0] # ions
 
 print('putting particles in bins')
 
-Np = vel0.shape[0]/1000	# Number of particles (only adding 1/10000)
+Np = vel0.shape[0]	# Number of particles (only adding 1/10000)
 Nd = vel0.shape[1]	# Number of dimensions
 
+print(Np)
 resolution = 30
 
 data = zeros([resolution,2])
@@ -43,18 +44,21 @@ data = zeros([resolution,2])
 
 speed0 = zeros([Np,2])
 
-max_vel = 0.00128739455343 #max(vel0[0,:])
-min_vel = -0.00128739455343 #min(vel0[0,:])
+max_vel = 0.00 #max(vel0[0,:])
+min_vel = -0.00 #min(vel0[0,:])
 
 
 
 # Compute particle speed
 for i in range(Np):
 	speed0[i][0] = vel0[i,0] # v_x
+	if speed0[i][0] > max_vel: max_vel = speed0[i][0]
+	if speed0[i][0] < min_vel: min_vel = speed0[i][0]
 
 for i in range(Np):
 	speed0[i][1] = vel0[i,1] # v_y
-
+	if speed0[i][1] > max_vel: max_vel = speed0[i][1]
+	if speed0[i][1] < min_vel: min_vel = speed0[i][1]
 
 
 xedges = []

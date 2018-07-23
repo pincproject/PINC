@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
 	 * CHOOSE PINC RUN MODE
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
-												mccTestMode_set,
+												mccMode_set,
 												BorisTestMode_set,
 												mgMode_set,
 												mgModeErrorScaling_set,

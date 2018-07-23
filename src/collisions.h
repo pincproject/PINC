@@ -1,7 +1,7 @@
 /**
  * @file		collsisions.h
  * @brief		MCC Colisional module.
- * @author		Steffen Mattias Brask <steffemb@fys.uio.no>
+ * @author		Steffen Mattias Brask <steffen.brask@fys.uio.no>
  *
  * Functions to apply Monte Carlo Collisions between particles
  */
@@ -24,8 +24,16 @@ typedef struct{
 	double mccSigmaCEX;
 	double mccSigmaIonElastic;
 	double mccSigmaElectronElastic;
+	double collFrqCex;
+	double collFrqIonElastic;
+	double collFrqElectronElastic;
+	double CEX_a;
+	double CEX_b;
+	double ion_elastic_a;
+	double ion_elastic_b;
+	double electron_a;
+	double electron_b;
 	double energyConvFactor; // convert from PINC to eV
-	double massUnit; // convert from PINC to real
 
 
 } MccVars;
@@ -50,13 +58,15 @@ typedef struct{
  *
  */
 
-// void mccTestMode2(dictionary *ini);
-// funPtr mccTestMode2_set(dictionary *ini);
+// void mccMode2(dictionary *ini);
+// funPtr mccMode2_set(dictionary *ini);
 
-void mccTestMode(dictionary *ini);
-funPtr mccTestMode_set(dictionary *ini);
+void mccMode(dictionary *ini);
+funPtr mccMode_set(dictionary *ini);
 
 funPtr constCrossect_set(dictionary *ini);
+funPtr functionalCrossect_set(dictionary *ini);
+funPtr constFreq_set(dictionary *ini);
 
 funPtr collissionsOff_set(dictionary *ini);
 

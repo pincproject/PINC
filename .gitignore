@@ -26,3 +26,5 @@ doc.html
 src/version.h
 **.swp
 .DS_Store
+CollisionDump.txt
+FB-5/

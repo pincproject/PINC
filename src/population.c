@@ -729,7 +729,7 @@ void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictiona
 	double denorm = units->energy;
 	int nDims = pop->nDims;
 	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
-	int nProcs = nSubdomains[0]+nSubdomains[1]+nSubdomains[2];
+	int nProcs = nSubdomains[0]*nSubdomains[1]*nSubdomains[2];
 	//msg(STATUS,"nsudims = %i",nSubdomains[2]);
 	//long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
 
@@ -737,7 +737,7 @@ void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictiona
 		//msg(STATUS,"s = %i, Tx =%f, Tt = %f",s,pop->TemperatureX[s],pop->TemperatureTot[s]);
 		sprintf(name,"/energy/TemperatureTot/specie %i",s);
 		xyWrite(xy,name,x,denorm*pop->TemperatureTot[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
-
+		//msg(STATUS, " nprocs = %i temp = %f",nProcs,(denorm*pop->TemperatureX[s]/(nProcs*units->weights[s]*k_b)));
 		// sprintf(name,"/energy/kinetic/specie %i",s);
 		// xyWrite(xy,name,x,denorm*pop->kinEnergy[s]/(nParticles[s]*units->weights[s]*k_b),MPI_SUM);
 

@@ -15,7 +15,7 @@ test = file['/pos/specie 0']
 Nt = len(test) # timesteps
 print(test)
 
-n0 = 1.5
+n0 = 20000.5
 
 
 #print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
@@ -28,7 +28,7 @@ print('computing speed')
 
 Np = vel0.shape[0]	# Number of particles
 Nd = vel0.shape[1]	# Number of dimensions
-
+print(Np)
 speed0 = zeros(Np)
 speed0x = zeros(Np)
 speed0y = zeros(Np)
