@@ -24,5 +24,6 @@ if [ "$NP" -eq 1 ]
 then
 	$DIR/pinc "$@"
 else
-	mpirun --oversubscribe -np "$NP" $DIR/pinc "$@"
+	#mpirun --oversubscribe -np "$NP" $DIR/pinc "$@"
+	mpirun -np "$NP" $DIR/pinc "$@"
 fi
