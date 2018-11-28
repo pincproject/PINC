@@ -548,7 +548,7 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 		TemperatureX[s]*=mass[s]/(pStop-pStart);
 		TemperatureY[s]*=mass[s]/(pStop-pStart);
 		TemperatureZ[s]*=mass[s]/(pStop-pStart);
-		
+
 		kinEnergy[s]*=0.5*mass[s];
 
 		gMul(E, pop->mass[s]/pop->charge[s]);

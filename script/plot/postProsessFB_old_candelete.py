@@ -80,32 +80,11 @@ def plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e):
 	plt.gcf().clear()
 	#plt.show()
 
-def plot_electric_vector(timestep,path,dx):
-
-	print("ploting vctor Electic field at timestep %i"%timestep)
-	h5file = h5py.File(path +'E.grid.h5','r')
-	denorm = h5file.attrs.__getitem__("Quantity denormalization factor")
-	E = np.asarray(h5file['/n=%.1f'%timestep])
-	
-	
-	data = E#np.transpose(E,(2,1,0))
-	data = np.squeeze(data)
-	#print(data.shape)
-
-	x = np.arange(data.shape[0])
-	y = np.arange(data.shape[1])
-
-	X,Y = np.meshgrid(x,y,indexing='ij')
-
-	fig, ax = plt.subplots(1)
-	im = plt.quiver(X,Y,data)#ax.contourf(X*dx,Y*dx,E[:,:,4], 100)
-	plt.show()
-
 def animate(title,path,subdir,h5,startindex,stopindex,step,dt,Omega_i,Omega_e,dx):
 	""" makes plot of data perpendicular to B_0 (assumes in z direction)
 	in folder "subdir" (relative to "path") at "step" intervals"""
 	plt.clf()
-	count = startindex/step
+	count = startindex
 	for i in range(startindex,stopindex,step):#start and stop timestep
 		dataset = h5["/n=%.1f"%i]
 		data = np.transpose(dataset,(3,2,1,0))
@@ -118,16 +97,14 @@ def animate(title,path,subdir,h5,startindex,stopindex,step,dt,Omega_i,Omega_e,dx
 		X,Y = np.meshgrid(x,y,indexing='ij')
 
 		fig, ax = plt.subplots(1)
-		im = ax.contourf(X*dx,Y*dx,data[:,:,4], 100)
+		im = ax.contourf(X*dx,Y*dx,data[:,4,:], 100)
 
+		fig.subplots_adjust(bottom = 0.25)
 		plt.rc('text', usetex = True)
 		plt.rc('font', family='serif')
-		plt.title(title+r" perpendicular to $\displaystyle\vec{B_0}, t=$ %.2f $\displaystyle[\Omega_{i}]$"%((i*dt*Omega_e)) ,fontsize = 16);
-		fig.subplots_adjust(bottom = 0.25)
-
 		plt.xlabel(r"$\displaystyle\vec{E_0}\times\vec{B_0}$ (x-direction) [m]}",fontsize = 16)
 		plt.ylabel(r"$\displaystyle\vec{E_0} $ (y-direction) [m]",fontsize = 16)
-		
+		plt.title(title+r" perpendicular to $\displaystyle\vec{B_0}, t=$ %.2f $\displaystyle[\omega_{pi}]$"%((i*dt*Omega_e)) ,fontsize = 16);
 
 		cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 		fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
@@ -229,11 +206,10 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.plot(time,kinX,label=r'$\displaystyle T_x$')
 	plt.plot(time,kinY,label=r'$\displaystyle T_y$')
 	plt.plot(time,kinZ,label=r'$\displaystyle T_z$')
-	plt.xlabel(r"Time \ $\displaystyle [\Omega_{i}]$")
-	plt.ylabel(r"Temperature \ [K]")
+	plt.xlabel(r"Time \ $\displaystyle [\omega_{pi}]$")
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.legend(loc='upper left')
+	plt.legend(loc='center right')
 	plt.title('Ions')
 	plt.savefig((path +"Temperature_Ions.png"))
 	#plt.show()
@@ -272,7 +248,7 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.plot(time,kinZ,label=r'$\displaystyle T_z$')
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.xlabel(r"Time \ $\displaystyle [\Omega_{i}]$")
+	plt.xlabel(r"Time \ $\displaystyle [\omega_{pi}]$")
 	plt.ylabel(r"Temperature \ [K]")
 	plt.legend(loc='center right')
 	plt.title(r'Electrons')
@@ -286,7 +262,7 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.plot(time,kinTot1,label=r'Temperature \ Ions')
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.xlabel(r"Time \ $\displaystyle[\Omega_{i}]$")
+	plt.xlabel(r"Time \ $\displaystyle[\omega_{pi}]$")
 	plt.ylabel(r"Temperature \ [K]")
 	plt.legend(loc='center right')
 	plt.title(r'Electrons \ vs \ Ions')
@@ -356,7 +332,7 @@ def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e,mem_step=100000):
 
 	bins = np.linspace(min_Vel, max_Vel, numbins)
 
-	## sucessive sub distributions
+	## sucsessive sub distributions
 	while real_index < int(Np-mem_step):
 		print("computing speeds %f %% done"%(((float(100*iterations*mem_step))/Np)))
 		#counter = 0
@@ -451,7 +427,7 @@ def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e,mem_step=100000):
 		counter += 1
 		real_index += 1
 
-	bins = np.linspace(-max_Vel, max_Vel, numbins)
+	bins = np.linspace(min_Vel, max_Vel, numbins)
 	## sucsessive sub distributions
 	while real_index < Np-mem_step:
 		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
@@ -662,7 +638,7 @@ def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e,mem_step=100000):
 		counter += 1
 		real_index += 1
 
-	bins = np.linspace(-max_Vel, max_Vel, numbins)
+	bins = np.linspace(min_Vel, max_Vel, numbins)
 	## sucsessive sub distributions
 	while real_index < Np-mem_step:
 		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
@@ -1330,7 +1306,7 @@ def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid 
 		#print(E.shape)
 		Nx = len(E[:,0,0])
 		Ny = len(E[0,:,0])
-		Nz = len(E[0,0,:])
+		Nz = len(E[0,:,0])
 
 		array = np.zeros((Nx,Ny,Nz))
 		##print("%f,%f,%f"%(i,j,k))
@@ -1366,11 +1342,11 @@ def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid 
 
 	nx, ny     = (nSteps, nSteps)
 	xmax, ymax = nx*dx, ny*dx
-	x          = np.linspace(0, xmax, nx)
-	y          = np.linspace(0, ymax, ny)
+	x          = np.linspace(-xmax, xmax, nx)
+	y          = np.linspace(-ymax, ymax, ny)
 	#dx         = x[1] - x[0]
 	dy         = dx#y[1] - y[0]
-	X, Y       = np.meshgrid(x, y, indexing = "ij")
+	X, Y       = np.meshgrid(x, y)
 	Z          = array[:,:,0]#(X*X+Y*Y)<1**2          # circular hole
 
 	#Z          = np.exp(-(X*X + Y*Y)/1**2)   # Gauss
@@ -1379,8 +1355,8 @@ def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid 
 
 	ZFT    = np.fft.fft2(Z)        # compute 2D-FFT
 	ZFT    = np.fft.fftshift(ZFT)  # Shift the zero-frequency component to the center of the spectrum.
-	kx     = (-nx/2 + np.arange(0,nx))*2*np.pi/(xmax)
-	ky     = (-ny/2 + np.arange(0,ny))*2*np.pi/(ymax)
+	kx     = (-nx/2 + np.arange(0,nx))*2*np.pi/(2*xmax)
+	ky     = (-ny/2 + np.arange(0,ny))*2*np.pi/(2*ymax)
 	KX, KY = np.meshgrid(kx, ky)
 	"""
 	nx, ny     = (500, 500)
@@ -1480,7 +1456,7 @@ def post_process_all(starttime,endtime,step,path,dt,dx):
 	"""TLWR, kernel "sort of" """
 
 	# DEFAULT VALUES
-	nSteps = 32 # number of spatial steps
+	nSteps = 128 # number of spatial steps
 	q = 1.602e-19 # charge
 	B = 0.000015#7.5e-6 # mag. field
 	M_i = 5e-26 #mass Ions
@@ -1490,21 +1466,20 @@ def post_process_all(starttime,endtime,step,path,dt,dx):
 	Omega_e = (q*B)/M_e
 	Omega_pe = np.sqrt((n_0*q*q)/(M_e*eps_0))
 	Omega_pi = np.sqrt((n_0*q*q)/(M_i*eps_0))
-	Omega_e = Omega_i #using ion plasma frq
+	Omega_e = Omega_pi #using ion plasma frq
 	final_timestep = endtime#30000
 
-	
+	#plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e) # high cost
 
 	# grid plots
 
 	#animate_by_name("phi",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
-	#animate_by_name("rho",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
+	animate_by_name("rho",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
 	
 	#plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e) # high cost
-	#plot_electric_vector(endtime,path,dx)
 
 	#plot_energy(path)
-	plot_temperature(path,dt,Omega_i,Omega_e)
+	#plot_temperature(path,dt,Omega_i,Omega_e)
 
 	import time
 
@@ -1523,7 +1498,7 @@ def post_process_all(starttime,endtime,step,path,dt,dx):
 	end = time.time()
 	print("plot_speed_density used %f sec"%(end - start))
 
-	#plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = endtime, grid = "phi")
+	#plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = final_timestep, grid = "E")
 
 
-post_process_all(0,70000,100,path="../../data/",dt = 3e-6,dx=0.08)
+post_process_all(0,50000,100,path="../../data/",dt = 3e-6,dx=0.08)

@@ -420,11 +420,13 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
 	double nt = mccVars->nt;//iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	double StaticSigmaElectronElastic = mccVars->mccSigmaElectronElastic;//iniGetDouble(ini,"collisions:sigmaElectronElastic");
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
+	double min_v = mccGetMinVel(pop,0);
 	mccVars->maxFreqElectron=StaticSigmaElectronElastic*max_v*nt;
 	mccVars->pMaxElectron = 1-exp(-(mccVars->maxFreqElectron));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision","getPmax electron =  %f \n", mccVars->pMaxElectron);
 		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
+		fMsg(ini, "collision", "min velocity electron = %f \n", min_v);
 	}
 }
 
@@ -1239,6 +1241,10 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 			msg(STATUS, "vel bef  = %f",testvel);
 			msg(STATUS, "vel aftr  = %f",testvel2);
 		}
+		if(testvel2<1e-32){
+			msg(STATUS, "vel bef  = %f",testvel);
+			msg(STATUS, "vel aftr  = %f",testvel2);
+		}
 		//msg(STATUS, "vel aftr = %f,%f,%f",vel[q],vel[q+1],vel[q+2]);
 		//msg(STATUS, "Ekin = %f, NewEkin = %f",Ekin,newEkin);
 		last_i = i;
@@ -1264,6 +1270,10 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	scatterElectron(vx,vy,vz,rng,mccVars,pop);
 	double testvel2 = sqrt(vel[q]*vel[q]+ vel[q+1]*vel[q+1]+vel[q+2]*vel[q+2]);
 	if(testvel<testvel2){
+		msg(STATUS, "vel bef  = %f",testvel);
+		msg(STATUS, "vel aftr  = %f",testvel2);
+	}
+	if(testvel2<1e-32){
 		msg(STATUS, "vel bef  = %f",testvel);
 		msg(STATUS, "vel aftr  = %f",testvel2);
 	}
@@ -1699,12 +1709,12 @@ void mccMode(dictionary *ini){
 	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	//Write initial h5 files
-	gWriteH5(E, mpiInfo, 0.0);
-	gWriteH5(rho, mpiInfo, 0.0);
-	gWriteH5(rho_e, mpiInfo, 0.0);
-	gWriteH5(rho_i, mpiInfo, 0.0);
-	gWriteH5(phi, mpiInfo, 0.0);
-	//pWriteH5(pop, mpiInfo, 0.0, 0.5);
+	//gWriteH5(E, mpiInfo, 0.0);
+	//gWriteH5(rho, mpiInfo, 0.0);
+	//gWriteH5(rho_e, mpiInfo, 0.0);
+	//gWriteH5(rho_i, mpiInfo, 0.0);
+	//gWriteH5(phi, mpiInfo, 0.0);
+	pWriteH5(pop, mpiInfo, 0.0, 0.5,1);
 	pWriteTemperature(temperature,pop,0.0,units,ini);
 	pWriteEnergy(history,pop,0.0,units);
 	xyzWriteProbe(probe, phi,0.0,mpiInfo);
@@ -1830,7 +1840,7 @@ void mccMode(dictionary *ini){
 		gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
 		// gAddTo(Ext);
-		//gZero(E); //temporary test
+		//gZero(E); ////temporary test
 		puAddEext(ini, pop, E);
 
 		// Accelerate particle and compute kinetic energy for step n
@@ -1846,16 +1856,16 @@ void mccMode(dictionary *ini){
 		// Compute potential energy for step n
 		gPotEnergy(rho,phi,pop);
 
-		if( n%100 == 0){
+		if( n%500 == 0){
 			// Example of writing another dataset to history.xy.h5
 			// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 			//Write h5 files
-			gWriteH5(E, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(rho_e, mpiInfo, (double) n);
-			gWriteH5(rho_i, mpiInfo, (double) n);
-			gWriteH5(phi, mpiInfo, (double) n);
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+			//gWriteH5(E, mpiInfo, (double) n);
+			//gWriteH5(rho, mpiInfo, (double) n);
+			//gWriteH5(rho_e, mpiInfo, (double) n);
+			//gWriteH5(rho_i, mpiInfo, (double) n);
+			//gWriteH5(phi, mpiInfo, (double) n);
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1);
 		}
 		// if( n%10000 == 0 && n<20000){
 		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1);
@@ -1869,9 +1879,10 @@ void mccMode(dictionary *ini){
 		// 	//gWriteH5(phi, mpiInfo, (double) n);
 		// 	//gWriteH5(phi, mpiInfo, (double) n);
 		// }
-		if(n==20000){
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1); //0.0001
-		}
+
+		//if(n == 30000){
+			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1); //0.0001
+		//}
 
 
 		//if( n< 40000 && n%500 == 0){
