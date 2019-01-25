@@ -557,28 +557,7 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 	}
 
 }
-// void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
-//
-// 	int nDims = iniGetInt(ini,"grid:nDims");
-// 	int nSpecies = iniGetInt(ini,"population:nSpecies");
-// 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
-// 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
-// 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-//
-// 	for(int s=0;s<nSpecies;s++){
-// 		double factor = (0.5*charge[s]/mass[s])*dtFactor;
-// 		double denom = 1;
-// 		for(int p=0;p<3;p++){
-// 			T[3*s+p] = factor*BExt[p];
-// 			denom += pow(T[3*s+p],2);
-// 		}
-// 		double mul = 2.0/denom;
-// 		for(int p=0;p<3;p++){
-// 			S[3*s+p] = mul*T[3*s+p];
-// 		}
-// 	}
-// }
-//
+
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
@@ -586,45 +565,27 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	//double timeStep = iniGetDouble(ini,"time:timeStep");
-	//*BExt = *BExt*timeStep;
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
-	//msg(STATUS,"*BExt: %f,%f,%f", BExt[0],BExt[1],BExt[2]);
 	for(int s=0;s<nSpecies;s++){
-		//msg(STATUS,"charge[s] =%f, mass = %f",charge[s],mass[s]);
+
 		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
 		double tanThetaHalf = 0;
-		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm); // *timeStep must be with or else we change physics scince velocities are scaled by dt?
+		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm);
 		}else{tanThetaHalf = 0.0;}
-		//msg(STATUS,"tanThetaHalf: %f", tanThetaHalf);
-		//msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
-		if(factor*BNorm*factor*BNorm > ((3.14*3.14)/2.0)){ // debugging (or sanity?)
-			msg(STATUS,"mass of specie %i: %f",s, mass[s]);
-			msg(STATUS,"thetaHalf: % f tanThetaHalf: %f",factor*BNorm, tanThetaHalf);
-			msg(STATUS,"is magnitude of (pi/2)= %f > ThetaHalf: %f",((3.14)/2.),factor*BNorm);
-			msg(ERROR, "unphysical rotatons encountered in puGet3DRotationParameters");
-		}
-		//if(factor*BNorm*factor*BNorm/ > (3.14*3.14){
-
 		double denom = 1;
 		for(int p=0;p<3;p++){
-			// T[3*s+p] = factor*BExt[p]; // Eq. 4-4 (11) in B&L without tan-correction
 			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
-			//msg(STATUS,"T: %f", tanThetaHalf*BExt[p]/BNorm);
 			denom += pow(T[3*s+p],2);
 		}
 		double mul = 2.0/denom;
 		for(int p=0;p<3;p++){
 			S[3*s+p] = mul*T[3*s+p]; // Eq. 4-4 (13) in B&L
-			//msg(STATUS,"S: %f", mul*T[3*s+p]);
 		}
 	}
-
     free(BExt);
     free(mass);
     free(charge);
 }
-
 
 funPtr puDistr3D1_set(dictionary *ini){
 	puSanity(ini,"puDistr3D1",3,1);

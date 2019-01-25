@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 
 file = h5py.File('../../data/pop.pop.h5','r')
 
-pos = file['/pos/specie 1']
+pos = file['/pos/specie 0']
 #vel = file['/vel/specie 0']
 
 #for item in f.attrs.keys():
 #    print item + ":", f.attrs[item]
 
 
-particleNum = 101
+particleNum = 1005
 
 Nt_start = 1 #1
-Nt_stop = 500 #pos.shape[1]
+Nt_stop = 200 #pos.shape[1]
 
 Np = pos['n=1.0'].shape[0]	# Number of particles
 Nd = pos['n=1.0'].shape[1]	# Number of dimensions

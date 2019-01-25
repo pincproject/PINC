@@ -2,7 +2,10 @@ import h5py
 import pylab as plt
 import numpy as np
 
-hist = h5py.File('../../data/temperature.xy.h5','r')
+plt.rcParams.update({'font.size': 16})
+
+path = '../'
+hist = h5py.File('../temperature.xy.h5','r')
 #pot = hist['/energy/potential/total']
 kinX = hist['/energy/TemperatureX/specie 1']
 kinY = hist['/energy/TemperatureY/specie 1']
@@ -26,14 +29,17 @@ kinTot1 = kinTot1[:,1];		# Extract y-axis
 #print("Relative error: %.2f%%\n"%(relError*100))
 
 #plt.plot(pot,label='potential')
-print(kinX[-1])
+#print(kinX[-1])
 plt.plot(kinX,label='Temp x')
 plt.plot(kinY,label='Temp y')
 plt.plot(kinZ,label='Temp z')
 #plt.plot(kinTot,label='Temperature tot')
 #plt.plot(tot,label='total')
-plt.legend(loc='center right')
+plt.legend(loc='lower left')
+plt.xlabel("Timesteps")
+plt.ylabel("Energy [K]")
 plt.title('Ions')
+plt.savefig(path+"velocityIons.png")
 plt.show()
 
 
@@ -67,14 +73,20 @@ plt.plot(kinY,label='Temp y')
 plt.plot(kinZ,label='Temp z')
 #plt.plot(kinTot,label='Temperature tot')
 #plt.plot(tot,label='total')
-plt.legend(loc='center right')
+plt.legend(loc='lower left')
+plt.xlabel("Timesteps")
+plt.ylabel("Energy [K]")
 plt.title('Electrons')
+plt.savefig(path+"velocityElectrons.png")
 plt.show()
 
 plt.plot(kinTot0,label='Temperature Electrons')
 plt.plot(kinTot1,label='Temperature Ions')
 #plt.plot(kinTot,label='Temperature tot')
 #plt.plot(tot,label='total')
-plt.legend(loc='center right')
+plt.legend(loc='lower left')
 plt.title('Electrons vs Ions')
+plt.xlabel("Timesteps")
+plt.ylabel("Energy [K]")
+plt.savefig(path+"ElectronsVSIons.png")
 plt.show()

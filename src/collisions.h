@@ -38,90 +38,216 @@ typedef struct{
 
 } MccVars;
 
-/**
- * @brief Contains Method functions for MCC (collisions)
- */
-typedef struct{
-	///< Function pointer to ConstantCrossect coll method function
-	void (*mccCollideConstantCrossect)(const dictionary *ini, Population *pop,
-		MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
-
-} MccMethod;
-
-
-
-/**
- * @brief Run designed for testing MCC
- * @param 	ini
- *
- *  Run designed for testing MCC
- *
- */
-
-// void mccMode2(dictionary *ini);
-// funPtr mccMode2_set(dictionary *ini);
-
 void mccMode(dictionary *ini);
 funPtr mccMode_set(dictionary *ini);
 
 funPtr constCrossect_set(dictionary *ini);
 funPtr functionalCrossect_set(dictionary *ini);
 funPtr constFreq_set(dictionary *ini);
-
 funPtr collissionsOff_set(dictionary *ini);
 
+
 /**
- * @brief brief description
- * @param one 		one description
- * @param two		two description
+ * @brief allocates necesarry variables for the collision module.
+ * @param ini 		pointer to input file as dictionary
+ * @param units		pointer to units
  *
- * Looong description of mccTest
+ * ini, and units must exist and be initialized before this function.
  */
 
-
-int mccTest(int one, int two);
-
 MccVars *mccAlloc(const dictionary *ini, const Units *units);
+
+/**
+ * @brief updates Pmax for electrons in the constant collision freq. model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
 
 void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	MccVars *mccVars,Population *pop,MpiInfo *mpiInfo);
 
+
+/**
+ * @brief updates Pmax for Ions in the constant collision freq. model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
 void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	Population *pop,MpiInfo *mpiInfo);
 
+
+/**
+ * @brief updates Pmax for Ions in the functional cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
 void mccGetPmaxIonFunctional(const dictionary *ini,
 	MccVars *mccVars,Population *pop,
 	MpiInfo *mpiInfo);
 
+/**
+ * @brief updates Pmax for Electrons in the functional cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
 void mccGetPmaxElectronFunctional(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo);
 
-void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,
-	Population *pop, MpiInfo *mpiInfo);
 
+
+/**
+ * @brief updates Pmax for Ions in the constant cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ * @param *rng		pointer to random number generator
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
+void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,
+	Population *pop, MpiInfo *mpiInfo,const gsl_rng *rng);
+
+
+/**
+ * @brief updates Pmax for Electrons in the constant cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *pop		pointer to particle population
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * mccAlloc() must be called prior to this function. Function is called in the
+ * main collission function.
+ */
 void mccGetPmaxElectronStatic(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo);
 
-void mccCollideElectronStatic(const dictionary *ini, Population *pop,
-	MccVars *mccVars, const gsl_rng *rng,
-	MpiInfo *mpiInfo);
 
+/**
+ * @brief main collision function for electron constant cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the constant cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
+void mccCollideElectronStatic(const dictionary *ini, Population *pop,
+	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
+
+
+/**
+ * @brief main collision function for Ion constant cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the constant cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
 void mccCollideIonStatic(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 
+
+/**
+ * @brief main collision function for Electrons functional cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the functional cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
 void mccCollideElectronFunctional(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo);
 
+
+/**
+ * @brief main collision function for Ion functional cross-sect collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the functional cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
 void mccCollideIonFunctional(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,MpiInfo *mpiInfo);
 
+
+
+/**
+ * @brief main collision function for electron constant frequency collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the constant cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
 void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo);
 
+
+
+/**
+ * @brief main collision function for ion constant frequency collision model
+ * @param *ini		pointer to input file as dictionary
+ * @param *pop		pointer to particle population
+ * @param *mccVars		pointer to mcc specific variables
+ * @param *rng		pointer to random number generator
+ * @param *mpiInfo		pointer to mpi specific variables
+ *
+ * This function is called in the method handler for the constant cross-sect
+ * collision model. Initialization, i.e. Allocation must be performed prior to
+ * this call. In practice only a call to collide() should be necessary in the
+ * main time loop, and the rest is defined in the input file.
+ */
 void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 

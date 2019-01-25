@@ -4,11 +4,9 @@
 import h5py
 import numpy as np
 import pylab as plt
-from matplotlib import colors, ticker, cm
 # from mayavi import mlab
 #from numba import jit
 import sys, os, inspect
-from numpy import inf
 
 #constants
 k_b = 1.38064852*10**(-23)
@@ -18,7 +16,7 @@ eps_0 = 8.854*10**(-12)
 def findAverageESquare(input_File,starttime,endtime):
 	"""find what timesteps E exists, and return
 	array with avg E values"""
-
+	
 	denorm = input_File.attrs.__getitem__("Quantity denormalization factor")
 	avg_E_square = []
 	max_E_square = []
@@ -29,7 +27,7 @@ def findAverageESquare(input_File,starttime,endtime):
 		val = 0
 		max_E = 0
 		try: #dont exit on errors!! =  (-.0)
-
+			
 			E = np.asarray(input_File['/n=%.1f'%t])
 			print(t)
 			size = len(E[:,0,0])*len(E[0,:,0])*len(E[0,0,:])
@@ -39,18 +37,18 @@ def findAverageESquare(input_File,starttime,endtime):
 					for k in range(len(E[0,0,:])):
 						temp = np.sqrt(E[i,j,k,0]*E[i,j,k,0]+E[i,j,k,1]*E[i,j,k,1]+E[i,j,k,2]*E[i,j,k,2])
 						val += denorm*temp/(size)
-
+						
 						if max_E < temp:
 							max_E = temp #max E at t
 							#print(val)
-
+							
 			#each timestep store val
 			avg_E_square.append(val)
 			max_E_square.append(max_E)
 			time.append(t)
 		except:
 			0
-
+		
 	return avg_E_square,max_E_square,time
 
 
@@ -80,54 +78,31 @@ def plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e):
 	plt.gcf().clear()
 	#plt.show()
 
-def plot_electric_vector(timestep,path,dx):
-
-	print("ploting vctor Electic field at timestep %i"%timestep)
-	h5file = h5py.File(path +'E.grid.h5','r')
-	denorm = h5file.attrs.__getitem__("Quantity denormalization factor")
-	E = np.asarray(h5file['/n=%.1f'%timestep])
-	
-	
-	data = E#np.transpose(E,(2,1,0))
-	data = np.squeeze(data)
-	#print(data.shape)
-
-	x = np.arange(data.shape[0])
-	y = np.arange(data.shape[1])
-
-	X,Y = np.meshgrid(x,y,indexing='ij')
-
-	fig, ax = plt.subplots(1)
-	im = plt.quiver(X,Y,data)#ax.contourf(X*dx,Y*dx,E[:,:,4], 100)
-	plt.show()
-
 def animate(title,path,subdir,h5,startindex,stopindex,step,dt,Omega_i,Omega_e,dx):
 	""" makes plot of data perpendicular to B_0 (assumes in z direction)
 	in folder "subdir" (relative to "path") at "step" intervals"""
 	plt.clf()
-	count = startindex/step
+	count = startindex	
 	for i in range(startindex,stopindex,step):#start and stop timestep
 		dataset = h5["/n=%.1f"%i]
 		data = np.transpose(dataset,(3,2,1,0))
 		data = np.squeeze(data)
 		#print(data.shape)
-
+	
 		x = np.arange(data.shape[0])
 		y = np.arange(data.shape[1])
 
 		X,Y = np.meshgrid(x,y,indexing='ij')
-
+	
 		fig, ax = plt.subplots(1)
 		im = ax.contourf(X*dx,Y*dx,data[:,:,4], 100)
-
+		
+		fig.subplots_adjust(bottom = 0.25)
 		plt.rc('text', usetex = True)
 		plt.rc('font', family='serif')
-		plt.title(title+r" perpendicular to $\displaystyle\vec{B_0}, t=$ %.2f $\displaystyle[\Omega_{i}]$"%((i*dt*Omega_e)) ,fontsize = 16);
-		fig.subplots_adjust(bottom = 0.25)
-
 		plt.xlabel(r"$\displaystyle\vec{E_0}\times\vec{B_0}$ (x-direction) [m]}",fontsize = 16)
-		plt.ylabel(r"$\displaystyle\vec{E_0} $ (y-direction) [m]",fontsize = 16)
-		
+		plt.ylabel(r"$\displaystyle\vec{E_0} $ (y-direction) [m]",fontsize = 16)	
+		plt.title(title+r" perpendicular to $\displaystyle\vec{B_0}, t=$ %.2f $\displaystyle[\omega_{pi}]$"%((i*dt*Omega_e)) ,fontsize = 16);
 
 		cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 		fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
@@ -136,20 +111,20 @@ def animate(title,path,subdir,h5,startindex,stopindex,step,dt,Omega_i,Omega_e,dx
 		plt.savefig((path +subdir +"dt%i.png")%count) #save to file
 		count +=1
 		#plt.show()
-
+				
 def animate_by_name(name,path,starttime,endtime,step,dt,Omega_i,Omega_e,dx):
-	"""given "name" of file uses function animate()
+	"""given "name" of file uses function animate() 
 	to open file "name" and write to subdir "name" """
 	print("working the "+name+" field")
 	h5 = h5py.File(path +name+'.grid.h5','r')
 	if not os.path.exists(path + name+"/"):
 		os.mkdir(path + name+"/")
 	animate(name,path,name+"/",h5,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
-
+		
 def plot_energy(path):
 	fig = plt.figure()
 	plt.rc('text', usetex = True)
-
+	
 	#plt.clf()
 	hist = h5py.File('../../data/history.xy.h5','r')
 	pot = hist['/energy/potential/total']
@@ -178,7 +153,7 @@ def plot_energy(path):
 	plt.ylabel("Total  Kinetic Energy")
 	plt.legend(loc='lower right')
 	plt.savefig((path +"Energy_kinetic.png")) #save to file
-	plt.legend([])
+	plt.legend([])	
 	plt.clf()
 	plt.cla()
 	plt.close()
@@ -212,10 +187,10 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	kinTot1 = kinTot1[:,1];		# Extract y-axis
 	time = np.linspace(0,len(kinX),len(kinX))
 	time = time*dt*Omega_e
-	#print(time)
+	#print(time) 
 	#pot = pot[:,1];	# Extract y-axis and invert
 	#tot = pot+kinX;		# Collect total energy
-
+	
 	#print(len(tot))
 	#avgEn = np.average(tot)
 	#maxEn = np.max(tot)
@@ -223,17 +198,16 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	#absError = max(maxEn-avgEn,avgEn-minEn)
 	#relError = absError/avgEn;
 	#print("Relative error: %.2f%%\n"%(relError*100))
-
+	
 	#plt.plot(pot,label='potential')
 	#print(kinX[-1])
 	plt.plot(time,kinX,label=r'$\displaystyle T_x$')
 	plt.plot(time,kinY,label=r'$\displaystyle T_y$')
 	plt.plot(time,kinZ,label=r'$\displaystyle T_z$')
-	plt.xlabel(r"Time \ $\displaystyle [\Omega_{i}]$")
-	plt.ylabel(r"Temperature \ [K]")
+	plt.xlabel(r"Time \ $\displaystyle [\omega_{pi}]$")
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.legend(loc='upper left')
+	plt.legend(loc='center right')
 	plt.title('Ions')
 	plt.savefig((path +"Temperature_Ions.png"))
 	#plt.show()
@@ -272,7 +246,7 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.plot(time,kinZ,label=r'$\displaystyle T_z$')
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.xlabel(r"Time \ $\displaystyle [\Omega_{i}]$")
+	plt.xlabel(r"Time \ $\displaystyle [\omega_{pi}]$")
 	plt.ylabel(r"Temperature \ [K]")
 	plt.legend(loc='center right')
 	plt.title(r'Electrons')
@@ -286,7 +260,7 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.plot(time,kinTot1,label=r'Temperature \ Ions')
 	#plt.plot(kinTot,label='Temperature tot')
 	#plt.plot(tot,label='total')
-	plt.xlabel(r"Time \ $\displaystyle[\Omega_{i}]$")
+	plt.xlabel(r"Time \ $\displaystyle[\omega_{pi}]$")
 	plt.ylabel(r"Temperature \ [K]")
 	plt.legend(loc='center right')
 	plt.title(r'Electrons \ vs \ Ions')
@@ -295,10 +269,9 @@ def plot_temperature(path,dt,Omega_i,Omega_e):
 	plt.close()
 	plt.clf()
 	#fig = plt.figure()
-
-
-def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e,mem_step=100000):
-	#Handles large datasets, use memstep*3*float as a guide on memory usage.
+	
+def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e):
+	#decide
 
 	min_Vel = 0.
 	max_Vel = 0.0 #found later
@@ -309,538 +282,441 @@ def plot_velocity_distribution(step,path,dt,Omega_pi,Omega_e,mem_step=100000):
 	test = file['/pos/specie 1']
 	Nt = len(test) # timesteps
 
-	n0 = step +0.5#1.5
+	n0 = 1.5#1.5
+	n1 = step*int(Nt/3) + 0.5
+	n2 = step*int(2*Nt/3) + 0.5
+	n3 = step*(Nt-1) + 0.5
+	
 
 
+	print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 	#pos = file['/pos/specie 1/n=%.1f' % n0]
 	vel0 = file['/vel/specie 1/n=%.1f' % n0]
+	vel1 = file['/vel/specie 1/n=%.1f' % n1]
+	vel2 = file['/vel/specie 1/n=%.1f' % n2]
+	vel3 = file['/vel/specie 1/n=%.1f' % n3]
 
 
 	print('computing speed specie 1')
 
-	Np = int(vel0.shape[0]/part_distr)	# Number of particles
-	Nd = vel0.shape[1]	# Number of dimensions
+	Np = vel0.shape[0]	# Number of particles
 
+	if vel1.shape[0]<Np: Np=vel1.shape[0]
+	if vel2.shape[0]<Np: Np=vel2.shape[0]
+	if vel3.shape[0]<Np: Np=vel3.shape[0]
+	Nd = vel0.shape[1]	# Number of dimensions	
+	
 	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
 
+	speed0 = np.zeros(Np)
+	speed0x = np.zeros(Np)
+	speed0y = np.zeros(Np)
+	speed0z = np.zeros(Np)
+	speed1 = np.zeros(Np)
+	speed1x = np.zeros(Np)
+	speed1y = np.zeros(Np)
+	speed1z = np.zeros(Np)
+	speed2 = np.zeros(Np)
+	speed2x = np.zeros(Np)
+	speed2y = np.zeros(Np)
+	speed2z = np.zeros(Np)
+	speed3 = np.zeros(Np)
+	speed3x = np.zeros(Np)
+	speed3y = np.zeros(Np)
+	speed3z = np.zeros(Np)
 
-	mem_step = int(mem_step)
-	Np = int(Np)
-	real_index = 0 # index of real distribution
-	#counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
+	# Compute particle speed
+	for i in range(Np-2):
+		speed0[i] = np.linalg.norm(vel0[i,:])
+		speed0x[i] = vel0[i,0]
+		speed0y[i] = vel0[i,1]
+		speed0z[i] = vel0[i,2]
 
+		speed1[i] = np.linalg.norm(vel1[i,:])
+		speed1x[i] = vel1[i,0]
+		speed1y[i] = vel1[i,1]
+		speed1z[i] = vel1[i,2]
 
-	numbins = 1000
-	real_hist = np.zeros(numbins-1, dtype='int32')
+		speed2[i] = np.linalg.norm(vel2[i,:])
+		speed2x[i] = vel2[i,0]
+		speed2y[i] = vel2[i,1]
+		speed2z[i] = vel2[i,2]
 
-	## first sub distr
-	speed0 = np.zeros(mem_step)
-	temp_vel = np.zeros((mem_step,3),dtype='float64')
-	print("computing speeds %f %% done"%(((float(100*0*mem_step))/Np)))
-	temp_vel = vel0[real_index:mem_step,:]
+		speed3[i] = np.linalg.norm(vel3[i,:])
+		speed3x[i] = vel3[i,0]
+		speed3y[i] = vel3[i,1]
+		speed3z[i] = vel3[i,2]
 
-	for counter in range(0,int(mem_step)): #could be for loop
+		if speed0[i] > max_Vel: max_Vel = speed0[i]
+		if speed1[i] > max_Vel: max_Vel = speed1[i]
+		if speed2[i] > max_Vel: max_Vel = speed2[i]
+		if speed3[i] > max_Vel: max_Vel = speed3[i] 
 
-		# Compute particle speed
-		temp = np.linalg.norm(temp_vel[counter,:])
-
-		speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-		#print(speed0[counter])
-		if real_index < mem_step:
-			if speed0[counter] > max_Vel: max_Vel = speed0[counter] + speed0[counter]/10.
-
-		#counter += 1
-		real_index += 1
-
-	bins = np.linspace(min_Vel, max_Vel, numbins)
-
-	## sucessive sub distributions
-	while real_index < int(Np-mem_step):
-		print("computing speeds %f %% done"%(((float(100*iterations*mem_step))/Np)))
-		#counter = 0
-		#speed0 = np.zeros(mem_step)
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#speed0z = np.zeros(mem_step)
-
-		#temp_vel = np.zeros((mem_step,3),dtype='float64')
-		temp_vel = vel0[real_index:(iterations+1)*mem_step,:]
-		for counter in range(0,int(mem_step)): #could be for loop
-
-			# Compute particle speed
-			temp = np.linalg.norm(temp_vel[counter,:])
-			speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-			#counter += 1
-			real_index += 1
-		iterations +=1
-
-		htemp, jnk = np.histogram(speed0, bins)
-    	#real_hist+=htemp
-		real_hist += htemp
-		#print(real_hist)
-
-	## LAST asymetric part
-	temp_vel = vel0[real_index:Np,:]
-
-	for counter in range(0,Np-real_index): #could be for loop
-
-		# Compute particle speed
-		temp = np.linalg.norm(temp_vel[counter,:])
-		speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-		#counter += 1
-		real_index += 1
-	iterations +=1
-
-	htemp, jnk = np.histogram(speed0, bins)
-	#real_hist+=htemp
-	real_hist += htemp
-	#print(real_hist)
-
-
+	# Analytical distributions
+	"""
+	v = linspace(0,6,100)
+	v2 = linspace(-6,6,100)
+	vth = 0.02
+	dv = 1
+	if Nd==2: dv = 2*pi*v
+	if Nd==3: dv = 4*pi*(v**2)
+	gaussian   = ((1/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2/vth)**2)
+	maxwellian = ((1/(2*pi*(vth**2)))**(Nd/2.0))*exp(-0.5*(v /vth)**2)*dv
+	"""
+	
+	print('Plotting')
+	
 	# Plots
 	plt.figure()
-	plt.subplot(1,1,1)
 	plt.rc('text', usetex = True)
 	plt.rc('font', family='serif')
-	#plt.hist(real_hist,range =jnk, bins=numbins, normed=False)
-	plt.plot(np.linspace(min_Vel,max_Vel,numbins-1),real_hist)
+
+	plt.subplot(4,1,1)
 	plt.title(r"Velocity distribution Ions (part of distr)",fontsize = 16)
-	plt.xlabel(r"Normalized Speed T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)),fontsize = 16)
+	plt.hist(speed0,range =(min_Vel,max_Vel), bins=100, normed=False)
+	
+	plt.subplot(4,1,2)
+	plt.hist(speed1,range =(min_Vel,max_Vel), bins=100, normed=False)
+	
+	plt.subplot(4,1,3)
+	plt.hist(speed2,range =(min_Vel,max_Vel), bins=100, normed=False)
+	
+	plt.subplot(4,1,4)
+	plt.hist(speed3,range =(min_Vel,max_Vel), bins=100, normed=False)
+	
+	plt.xlabel(r"Normalized Speed T = %.2f,%.2f,%.2f,%.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi),(n1*dt*Omega_pi),(n2*dt*Omega_pi),(n3*dt*Omega_pi)),fontsize = 16)
 	#plt.show()
 	plt.savefig(path+"speedIons.png")
 	plt.close()
 	plt.clf()
 
 	### x,y,z
-	min_Vel = 0.
-	max_Vel = 0.0 #found later
-	real_index = 0 # index of real distribution
-	#counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
-
-	real_histX = np.zeros(numbins-1, dtype='int32')
-	real_histY = np.zeros(numbins-1, dtype='int32')
-	real_histZ = np.zeros(numbins-1, dtype='int32')
-
-
-	## first sub distr
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_velY = np.zeros((mem_step),dtype='float64')
-	temp_velZ = np.zeros((mem_step),dtype='float64')
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_velY = vel0[real_index:mem_step,1]
-	temp_velZ = vel0[real_index:mem_step,2]
-	speed0x = np.zeros(mem_step)
-	speed0y = np.zeros(mem_step)
-	speed0z = np.zeros(mem_step)
-	for counter in range(0,int(mem_step)):
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-		speed0z[counter] = temp_velZ[counter] #vel0[real_index,2]
-		if real_index < mem_step:
-			if speed0x[counter] > max_Vel: max_Vel = speed0x[counter] + speed0x[counter]/10.
-			if speed0y[counter] > max_Vel: max_Vel = speed0y[counter] + speed0y[counter]/10.
-			if speed0z[counter] > max_Vel: max_Vel = speed0z[counter] + speed0z[counter]/10.
-
-			if speed0x[counter] < min_Vel: min_Vel = speed0x[counter] - speed0x[counter]/10.
-			if speed0y[counter] < min_Vel: min_Vel = speed0y[counter] - speed0y[counter]/10.
-			if speed0z[counter] < min_Vel: min_Vel = speed0z[counter] - speed0z[counter]/10.
-		counter += 1
-		real_index += 1
-
-	bins = np.linspace(-max_Vel, max_Vel, numbins)
-	## sucsessive sub distributions
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#speed0z = np.zeros(mem_step)
-
-		temp_velX = vel0[real_index:(iterations+1)*mem_step,0]
-		temp_velY = vel0[real_index:(iterations+1)*mem_step,1]
-		temp_velZ = vel0[real_index:(iterations+1)*mem_step,2]
-		for counter in range(0,int(mem_step)): #could be for loop
-			#Compute particle speed
-			speed0x[counter] = temp_velX[counter]#vel0[real_index,0]
-			speed0y[counter] = temp_velY[counter]#vel0[real_index,1]
-			speed0z[counter] = temp_velZ[counter]#vel0[real_index,2]
-			real_index += 1
-		iterations +=1
-		htempX, jnk = np.histogram(speed0x, bins)
-		htempY, jnk = np.histogram(speed0y, bins)
-		htempZ, jnk = np.histogram(speed0z, bins)
-		real_histX += htempX
-		real_histY += htempY
-		real_histZ += htempZ
-		#print(real_hist)
-
-
-	## LAST asymetric part
-	temp_vel = vel0[real_index:Np,:]
-
-	temp_velX = vel0[real_index:Np,0]
-	temp_velY = vel0[real_index:Np,1]
-	temp_velZ = vel0[real_index:Np,2]
-
-	for counter in range(0,Np-real_index): #could be for loop
-
-		# Compute particle speed
-		speed0x[counter] = temp_velX[counter]#vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter]#vel0[real_index,1]
-		speed0z[counter] = temp_velZ[counter]#vel0[real_index,2]
-		#counter += 1
-		real_index += 1
-	iterations +=1
-
-	htempX, jnk = np.histogram(speed0x, bins)
-	htempY, jnk = np.histogram(speed0y, bins)
-	htempZ, jnk = np.histogram(speed0z, bins)
-	#real_hist+=htemp
-	real_histX += htempX
-	real_histY += htempY
-	real_histZ += htempZ
-	#print(real_hist)
 
 	plt.figure()
 	plt.subplot(3,1,1)
 	plt.title(r"Velocity distribution Ions (part of distr)",fontsize = 16)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1),real_histX)
+	plt.hist(speed0x,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.subplot(3,1,2)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1), real_histY)
+	plt.hist(speed0y,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
 	plt.subplot(3,1,3)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1),real_histZ)
+	plt.hist(speed0z,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.xlabel(r"Normalized Speed x,y,z-dimension T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)),fontsize = 16)
-
+	
 	#plt.show()
 	plt.savefig(path+"speedIons0xyz.png")
 	plt.close()
 	plt.clf()
 
+	###
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Ions (part of distr)",fontsize = 16)
+	plt.hist(speed1x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed1y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed1z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed x,y,z-dimension T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)),fontsize = 16)
+	
+	#plt.show()
+	plt.savefig(path+"speedIons1xyz.png")
+	plt.close()
+	plt.clf()
+
+	###
+
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Ions (part of distr)",fontsize = 16)
+	plt.hist(speed2x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed2y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed2z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed x,y,z-dimension T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)),fontsize = 16)
+	#plt.show()
+	plt.savefig(path+"speedIons2xyz.png")
+	plt.close()
+	plt.clf()
+
+	###
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Ions (part of distr)",fontsize = 16)
+	plt.hist(speed3x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed3y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed3z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed x,y,z-dimension T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)),fontsize = 16)
+	#plt.show()
+	plt.savefig(path+"speedIons3xyz.png")
+	plt.close()
+	plt.clf()
+
+	
 	############################
-
-
+	
+	
 	#Electrons
-
+	
 	min_Vel = 0.
 	max_Vel = 0.0
-
+	
 	test = file['/pos/specie 0']
-
-
+	
+	print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 	#pos = file['/pos/specie 1/n=%.1f' % n0]
 	vel0 = file['/vel/specie 0/n=%.1f' % n0]
-
-
+	vel1 = file['/vel/specie 0/n=%.1f' % n1]
+	vel2 = file['/vel/specie 0/n=%.1f' % n2]
+	vel3 = file['/vel/specie 0/n=%.1f' % n3]
+	
+	
 	print('computing speed specie 0')
-	Np = vel0.shape[0]/part_distr	# Number of particles
+	
+	Np = vel0.shape[0]	# Number of particles
+	if vel1.shape[0]<Np: Np=vel1.shape[0]
+	if vel2.shape[0]<Np: Np=vel2.shape[0]
+	if vel3.shape[0]<Np: Np=vel3.shape[0]
 	Nd = vel0.shape[1]	# Number of dimensions
-	Np = int(Np)
+	
 	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
+	
+	speed0 = np.zeros(Np)
+	speed0x = np.zeros(Np)
+	speed0y = np.zeros(Np)
+	speed0z = np.zeros(Np)
+	speed1 = np.zeros(Np)
+	speed1x = np.zeros(Np)
+	speed1y = np.zeros(Np)
+	speed1z = np.zeros(Np)
+	speed2 = np.zeros(Np)
+	speed2x = np.zeros(Np)
+	speed2y = np.zeros(Np)
+	speed2z = np.zeros(Np)
+	speed3 = np.zeros(Np)
+	speed3x = np.zeros(Np)
+	speed3y = np.zeros(Np)
+	speed3z = np.zeros(Np)
+	
+	# Compute particle speed
+	for i in range(Np-2):
+		speed0[i] = np.linalg.norm(vel0[i,:])
+		speed0x[i] = vel0[i,0]
+		speed0y[i] = vel0[i,1]
+		speed0z[i] = vel0[i,2]
+		
+		speed1[i] = np.linalg.norm(vel1[i,:])
+		speed1x[i] = vel1[i,0]
+		speed1y[i] = vel1[i,1]
+		speed1z[i] = vel1[i,2]
 
+		speed2[i] = np.linalg.norm(vel2[i,:])
+		speed2x[i] = vel2[i,0]
+		speed2y[i] = vel2[i,1]
+		speed2z[i] = vel2[i,2]
 
-
-	real_index = 0 # index of real distribution
-	#counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
-
-
-	numbins = 1000
-	real_hist = np.zeros(numbins-1, dtype='int32')
-	## first sub distr
-	speed0 = np.zeros(mem_step)
-	temp_vel = np.zeros((mem_step,3),dtype='float64')
-	print("computing speeds %f %% done"%(((float(100*0*mem_step))/Np)))
-	temp_vel = vel0[real_index:mem_step,:]
-
-	for counter in range(0,int(mem_step)): #could be for loop
-
-		# Compute particle speed
-		temp = np.linalg.norm(temp_vel[counter,:])
-
-		speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-		#print(speed0[counter])
-		if real_index < mem_step:
-			if speed0[counter] > max_Vel: max_Vel = speed0[counter] + speed0[counter]/10.
-
-		#counter += 1
-		real_index += 1
-
-	bins = np.linspace(min_Vel, max_Vel, numbins)
-
-	## sucsessive sub distributions
-	while real_index < int(Np-mem_step):
-		print("computing speeds %f %% done"%(((float(100*iterations*mem_step))/Np)))
-		#counter = 0
-		#speed0 = np.zeros(mem_step)
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#speed0z = np.zeros(mem_step)
-
-		#temp_vel = np.zeros((mem_step,3),dtype='float64')
-		temp_vel = vel0[real_index:(iterations+1)*mem_step,:]
-		for counter in range(0,int(mem_step)): #could be for loop
-
-			# Compute particle speed
-			temp = np.linalg.norm(temp_vel[counter,:])
-			speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-			#counter += 1
-			real_index += 1
-		iterations +=1
-
-		htemp, jnk = np.histogram(speed0, bins)
-    	#real_hist+=htemp
-		real_hist += htemp
-		#print(real_hist)
-
-	## LAST asymetric part
-	temp_vel = vel0[real_index:Np,:]
-	for counter in range(0,Np-real_index): #could be for loop
-
-		# Compute particle speed
-		temp = np.linalg.norm(temp_vel[counter,:])
-		speed0[counter] = temp#np.linalg.norm(temp_vel[counter,:])
-		#counter += 1
-		real_index += 1
-	iterations +=1
-
-	htemp, jnk = np.histogram(speed0, bins)
-	#real_hist+=htemp
-	real_hist += htemp
-	#print(real_hist)
-
+		speed3[i] = np.linalg.norm(vel3[i,:])
+		speed3x[i] = vel3[i,0]
+		speed3y[i] = vel3[i,1]
+		speed3z[i] = vel3[i,2]
+		if speed0[i] > max_Vel: max_Vel = speed0[i]
+		if speed1[i] > max_Vel: max_Vel = speed1[i]
+		if speed2[i] > max_Vel: max_Vel = speed2[i]
+		if speed3[i] > max_Vel: max_Vel = speed3[i]
+	
+	# Analytical distributions
+	"""
+	v = linspace(0,6,100)
+	v2 = linspace(-6,6,100)
+	vth = 0.02
+	dv = 1
+	if Nd==2: dv = 2*pi*v
+	if Nd==3: dv = 4*pi*(v**2)
+	gaussian   = ((1/(2*pi*(vth**2)))**(  0.5 ))*exp(-0.5*(v2/vth)**2)
+	maxwellian = ((1/(2*pi*(vth**2)))**(Nd/2.0))*exp(-0.5*(v /vth)**2)*dv
+	"""
+	
+	print('Plotting')
+	
 	# Plots
 	plt.figure()
 	#plt.plot(v,maxwellian)
-	plt.subplot(1,1,1)
+	plt.subplot(4,1,1)
 	plt.title(r"Velocity distribution Electrons (part of distr)",fontsize = 16)
-	plt.plot(np.linspace(min_Vel,max_Vel,numbins-1),real_hist)
-	plt.xlabel(r"Normalized Speed T = %.2f $\displaystyle [\omega_{pi}]$"%(n0*dt*Omega_pi),fontsize = 16)
+	plt.hist(speed0,range =(min_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(4,1,2)
+	plt.hist(speed1,range =(min_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(4,1,3)
+	plt.hist(speed2,range =(min_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("Probability Density unormalized")
+	plt.subplot(4,1,4)
+	plt.hist(speed3,range =(min_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed T = %.2f,%.2f,%.2f,%.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi),(n1*dt*Omega_pi),(n2*dt*Omega_pi),(n3*dt*Omega_pi)),fontsize = 16)
 	#plt.show()
 	plt.savefig(path+"speedElectrons.png")
 	plt.close()
-
-
-
-	min_Vel = 0.
-	max_Vel = 0.0 #found later
-	real_index = 0 # index of real distribution
-	counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
-
-	real_histX = np.zeros(numbins-1, dtype='int32')
-	real_histY = np.zeros(numbins-1, dtype='int32')
-	real_histZ = np.zeros(numbins-1, dtype='int32')
-
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_velY = np.zeros((mem_step),dtype='float64')
-	temp_velZ = np.zeros((mem_step),dtype='float64')
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_velY = vel0[real_index:mem_step,1]
-	temp_velZ = vel0[real_index:mem_step,2]
-	speed0x = np.zeros(mem_step)
-	speed0y = np.zeros(mem_step)
-	speed0z = np.zeros(mem_step)
-	for counter in range(0,int(mem_step)):
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-		speed0z[counter] = temp_velZ[counter] #vel0[real_index,2]
-		if real_index < mem_step:
-			if speed0x[counter] > max_Vel: max_Vel = speed0x[counter] + speed0x[counter]/10.
-			if speed0y[counter] > max_Vel: max_Vel = speed0y[counter] + speed0y[counter]/10.
-			if speed0z[counter] > max_Vel: max_Vel = speed0z[counter] + speed0z[counter]/10.
-
-			if speed0x[counter] < min_Vel: min_Vel = speed0x[counter] - speed0x[counter]/10.
-			if speed0y[counter] < min_Vel: min_Vel = speed0y[counter] - speed0y[counter]/10.
-			if speed0z[counter] < min_Vel: min_Vel = speed0z[counter] - speed0z[counter]/10.
-		counter += 1
-		real_index += 1
-
-	bins = np.linspace(-max_Vel, max_Vel, numbins)
-	## sucsessive sub distributions
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#speed0z = np.zeros(mem_step)
-
-		temp_velX = vel0[real_index:(iterations+1)*mem_step,0]
-		temp_velY = vel0[real_index:(iterations+1)*mem_step,1]
-		temp_velZ = vel0[real_index:(iterations+1)*mem_step,2]
-		for counter in range(0,int(mem_step)): #could be for loop
-			#Compute particle speed
-			speed0x[counter] = temp_velX[counter]#vel0[real_index,0]
-			speed0y[counter] = temp_velY[counter]#vel0[real_index,1]
-			speed0z[counter] = temp_velZ[counter]#vel0[real_index,2]
-			real_index += 1
-		iterations +=1
-		htempX, jnk = np.histogram(speed0x, bins)
-		htempY, jnk = np.histogram(speed0y, bins)
-		htempZ, jnk = np.histogram(speed0z, bins)
-		real_histX += htempX
-		real_histY += htempY
-		real_histZ += htempZ
-		#print(real_hist)
-
-	## LAST asymetric part
-	temp_vel = vel0[real_index:Np,:]
-
-	temp_velX = vel0[real_index:Np,0]
-	temp_velY = vel0[real_index:Np,1]
-	temp_velZ = vel0[real_index:Np,2]
-
-	for counter in range(0,Np-real_index): #could be for loop
-
-		# Compute particle speed
-		speed0x[counter] = temp_velX[counter]#vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter]#vel0[real_index,1]
-		speed0z[counter] = temp_velZ[counter]#vel0[real_index,2]
-		#counter += 1
-		real_index += 1
-	iterations +=1
-
-	htempX, jnk = np.histogram(speed0x, bins)
-	htempY, jnk = np.histogram(speed0y, bins)
-	htempZ, jnk = np.histogram(speed0z, bins)
-	#real_hist+=htemp
-	real_histX += htempX
-	real_histY += htempY
-	real_histZ += htempZ
-	#print(real_hist)
-
 
 	### x,y,z
 	plt.figure()
 	plt.subplot(3,1,1)
 	plt.title(r"Velocity distribution Electrons x,y,z-dimension (part of distr)",fontsize = 16)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1),real_histX)
+	plt.hist(speed0x,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.subplot(3,1,2)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1),real_histY)
+	plt.hist(speed0y,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
 	plt.subplot(3,1,3)
-	plt.plot(np.linspace(-max_Vel,max_Vel,numbins-1),real_histZ)
+	plt.hist(speed0z,range =(-max_Vel,max_Vel), bins=100, normed=False)
 	plt.xlabel(r"Normalized Speed T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)),fontsize = 16)
 	#plt.show()
 	plt.savefig(path+"speedElectrons0xyz.png")
 	plt.close()
 	plt.clf()
 
+	###
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Electrons x,y,z-dimension (part of distr)",fontsize = 16)
+	plt.hist(speed1x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed1y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed1z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)),fontsize = 16)
+	#plt.show()
+	plt.savefig(path+"speedElectrons1xyz.png")
+	plt.close()
+	plt.clf()
 
-def plot_vx_vy(step,path,dt,Omega_pi,Omega_e,resolution = 30,mem_step=100000):
+	###
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Electrons x,y,z-dimension (part of distr)",fontsize = 16)
+	plt.hist(speed2x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed2y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed2z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)),fontsize = 16)
+	#plt.show()
+	plt.savefig(path+"speedElectrons2xyz.png")
+	plt.close()
+	plt.clf()
+
+	###
+	plt.figure()
+	plt.subplot(3,1,1)
+	plt.title(r"Velocity distribution Electrons x,y,z-dimension (part of distr)",fontsize = 16)
+	plt.hist(speed3x,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.subplot(3,1,2)
+	plt.hist(speed3y,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.ylabel("z \hspace{4cm}  y \hspace{4cm}  x",fontsize = 16)
+	plt.subplot(3,1,3)
+	plt.hist(speed3z,range =(-max_Vel,max_Vel), bins=100, normed=False)
+	plt.xlabel(r"Normalized Speed  T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)),fontsize = 16)	
+	#plt.show()
+	plt.savefig(path+"speedElectrons3xyz.png")
+	plt.close()
+	plt.clf()
+
+
+def plot_vx_vy(step,path,dt,Omega_pi,Omega_e,resolution = 30):
 	""" Function plots vx vs vy for both species."""
 
 	# Loading file
-
-
 	print("ploting Vx-Vy")
 	file = h5py.File(path + 'pop.pop.h5','r')
 	test = file['/pos/specie 1']
 	Nt = len(test) # timesteps
 
-	n0 = step + 0.5#1.5
+	n0 = 1.5#1.5
+	n1 = step*int(Nt/3) + 0.5
+	n2 = step*int(2*Nt/3) + 0.5
+	n3 = step*(Nt-1) + 0.5
 
+	#print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
+	#pos = file['/pos/specie 1/n=%.1f' % n0]
 	vel0 = file['/vel/specie 0/n=%.1f' % n0] # Electrons
+	vel1 = file['/vel/specie 0/n=%.1f' % n1] # 
+	vel2 = file['/vel/specie 0/n=%.1f' % n2] # 
+	vel3 = file['/vel/specie 0/n=%.1f' % n3] # 
 	print('putting particles in bins specie 0')
 
-	Np = vel0.shape[0]/part_distr	# Number of particles
+#	Np = vel0.shape[0]	# Number of particles (only adding 1/10000)
+	Np = vel0.shape[0]	# Number of particles
+	if vel1.shape[0]<Np: Np=vel1.shape[0]
+	if vel2.shape[0]<Np: Np=vel2.shape[0]
+	if vel3.shape[0]<Np: Np=vel3.shape[0]
 	Nd = vel0.shape[1]	# Number of dimensions
-
-	mem_step = int(mem_step)
-	Np = int(Np)
 	#data = np.zeros([resolution,2])
+	speed0 = np.zeros([Np,2])
+	speed1 = np.zeros([Np,2])
+	speed2 = np.zeros([Np,2])
+	speed3 = np.zeros([Np,2])
 	max_vel = 0.0#0128739455343 #max(vel0[0,:])
-	min_vel = 0.0#0128739455343 #min(vel0[0,:])
+	min_vel = -0.0#0128739455343 #min(vel0[0,:])
 
-	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
+	# Compute particle speed
+	for i in range(Np):
+		speed0[i][0] = vel0[i,0] # v_x
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
+		
+		speed1[i][0] = vel1[i,0] # v_x
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
+		
+		speed2[i][0] = vel2[i,0] # v_x
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
 
-	real_index = 0 # index of real distribution
-	counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
+		speed3[i][0] = vel3[i,0] # v_x
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
+		
 
-	numbins = resolution
-	real_hist = np.zeros((numbins-1,numbins-1), dtype='int32')
+	for i in range(Np):
+		speed0[i][1] = vel0[i,1] # v_y
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
 
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_velY = np.zeros((mem_step),dtype='float64')
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_velY = vel0[real_index:mem_step,1]
-	speed0x = np.zeros(mem_step)
-	speed0y = np.zeros(mem_step)
+		speed1[i][1] = vel1[i,1] # v_y
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
 
-	### FIRST part
+		speed2[i][1] = vel2[i,1] # v_y
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
 
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-
-		if real_index < mem_step:
-			if max_vel < speed0x[counter]: max_vel = speed0x[counter]+speed0x[counter]/10
-			if speed0x[counter] < min_vel: min_vel = speed0x[counter]-speed0x[counter]/10
-			if max_vel < speed0y[counter]: max_vel = speed0y[counter]+speed0y[counter]/10
-			if min_vel > speed0y[counter]: min_vel = speed0y[counter]-speed0y[counter]/10
-		counter += 1
-		real_index += 1
-
-	## sucsessive part
-
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#print("allocated")
-		temp_velX = vel0[real_index:mem_step*(iterations+1),0]
-		temp_velY = vel0[real_index:mem_step*(iterations+1),1]
-		#print(temp_velX )
-		while counter < mem_step: #could be for loop
-			#Compute particle speed
-			speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-			speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-			counter += 1
-			real_index += 1
-		iterations +=1
-		#print(min_vel)
-		#print(max_vel)
-		#print(speed0y)
-		bins = np.linspace(min_vel, max_vel, numbins)
-		htemp, jnk1,jnk2 = np.histogram2d(speed0x,speed0y, bins=(bins, bins), range=[[min_vel, max_vel], [min_vel, max_vel]])
-		#print(bins)
-
-		real_hist += htemp
-		#print(len(bins))
-		#print(len(real_hist[:,0]))
-		#print(len(real_hist[0,:]))
-		#print(htemp)
-
-	### LAST asymetric part
-	temp_velX = vel0[real_index:Np,0]
-	temp_velY = vel0[real_index:Np,1]
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-		counter += 1
-		real_index += 1
-	iterations +=1
-	bins = np.linspace(min_vel, max_vel, numbins)
-	htemp, jnk1,jnk2 = np.histogram2d(speed0x,speed0y, bins=(bins, bins), range=[[min_vel, max_vel], [min_vel, max_vel]])
-	real_hist += htemp
-
+		speed3[i][1] = vel3[i,1] # v_y
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
 
 	### set up figure and plot n0
-	real_hist = np.transpose(real_hist)
-	bins = np.linspace(min_vel, max_vel, numbins-1)
+	xedges = []
+	yedges = []
+	
+	for i in range(0,resolution):
+		xedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
+		yedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
+
+	x = speed0[:,0]
+	y = speed0[:,1]
+
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
 	fig, ax = plt.subplots(1)
-	im = ax.contourf(bins,bins,real_hist, resolution)
+	im = ax.contourf(x,y,H, resolution)
 	plt.rc('text', usetex = True) #latex
 	plt.rc('font', family='serif')
 	plt.xlabel("Vx")
@@ -856,27 +732,32 @@ def plot_vx_vy(step,path,dt,Omega_pi,Omega_e,resolution = 30,mem_step=100000):
 
 	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
         	               linewidth=0, antialiased=False)
-
+	
 	fig.colorbar(surf, shrink=0.5, aspect=5)
 	"""
 	#plt.show()
 
-	plt.savefig(path+"Vx_Vy_Electrons.png")
-	plt.clf()
 
-	### logplot
-	bins = np.linspace(min_vel, max_vel, numbins-1)
+
+
+	plt.savefig(path+"Vx_Vy_Electrons0.png")
+	plt.clf()	
+	
+	### set up figure and plot n1
+	plt.figure()	
+
+	x = speed1[:,0]
+	y = speed1[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
 	fig, ax = plt.subplots(1)
-	real_hist = np.log10(real_hist)
-	real_hist[real_hist<=-inf] =0
-	real_hist[real_hist>=inf] =0
-	#print(real_hist)
-	im = ax.contourf(bins,bins,real_hist, resolution) #locator=ticker.LogLocator()
-	plt.rc('text', usetex = True) #latex
-	plt.rc('font', family='serif')
+	im = ax.contourf(x,y,H, resolution)
 	plt.xlabel("Vx")
 	plt.ylabel("Vy")
-	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)))
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
@@ -887,143 +768,281 @@ def plot_vx_vy(step,path,dt,Omega_pi,Omega_e,resolution = 30,mem_step=100000):
 
 	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
         	               linewidth=0, antialiased=False)
-
+	
 	fig.colorbar(surf, shrink=0.5, aspect=5)
 	"""
 	#plt.show()
 
-	plt.savefig(path+"Vx_Vy_Electrons_log.png")
+	plt.savefig(path+"Vx_Vy_Electrons1.png")
 	plt.clf()
 
-	### Ions
+	### set up figure and plot n2
+	plt.figure()	
+
+	x = speed2[:,0]
+	y = speed2[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("Vx")
+	plt.ylabel("Vy")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Electrons2.png")
+	plt.clf()
+
+
+### set up figure and plot n3
+	plt.figure()	
+
+	x = speed3[:,0]
+	y = speed3[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("Vx")
+	plt.ylabel("Vy")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n3*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Electrons3.png")
+	plt.clf()
+
+	### electrons
 	test = file['/pos/specie 1']
 	Nt = len(test) # timesteps
 
 	vel0 = file['/vel/specie 1/n=%.1f' % n0] # ions
+	vel1 = file['/vel/specie 1/n=%.1f' % n0] #
+	vel2 = file['/vel/specie 1/n=%.1f' % n0] #
+	vel3 = file['/vel/specie 1/n=%.1f' % n0] #
 	print('putting particles in bins specie 1')
-	Np = vel0.shape[0]/part_distr	# Number of particles
+	Np = vel0.shape[0]	# Number of particles (only adding 1/10000)
 	Nd = vel0.shape[1]	# Number of dimensions
+
+
 	#data = np.zeros([resolution,2])
+	speed0 = np.zeros([Np,2])
+	speed1 = np.zeros([Np,2])
+	speed2 = np.zeros([Np,2])
+	speed3 = np.zeros([Np,2])
 	max_vel = 0.0#0128739455343 #max(vel0[0,:])
-	min_vel = 0.0#0128739455343 #min(vel0[0,:])
+	min_vel = -0.0#0128739455343 #min(vel0[0,:])
 
-	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
+	# Compute particle speed
+	for i in range(Np):
+		speed0[i][0] = vel0[i,0] # v_x
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
+		
+		speed1[i][0] = vel1[i,0] # v_x
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
+		
+		speed2[i][0] = vel2[i,0] # v_x
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
 
-	real_index = 0 # index of real distribution
-	counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
+		speed3[i][0] = vel3[i,0] # v_x
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
+		
 
-	numbins = resolution
-	real_hist = np.zeros((numbins-1,numbins-1), dtype='int32')
+	for i in range(Np):
+		speed0[i][1] = vel0[i,1] # v_y
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
 
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_velY = np.zeros((mem_step),dtype='float64')
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_velY = vel0[real_index:mem_step,1]
-	speed0x = np.zeros(mem_step)
-	speed0y = np.zeros(mem_step)
+		speed1[i][1] = vel1[i,1] # v_y
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
 
-	### FIRST part
+		speed2[i][1] = vel2[i,1] # v_y
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
 
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
+		speed3[i][1] = vel3[i,1] # v_y
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
 
-		if real_index < mem_step:
-			if max_vel < speed0x[counter]: max_vel = speed0x[counter]+speed0x[counter]/10
-			if speed0x[counter] < min_vel: min_vel = speed0x[counter]-speed0x[counter]/10
-			if max_vel < speed0y[counter]: max_vel = speed0y[counter]+speed0y[counter]/10
-			if min_vel > speed0y[counter]: min_vel = speed0y[counter]-speed0y[counter]/10
-		counter += 1
-		real_index += 1
-
-	## sucsessive part
-
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speed0x = np.zeros(mem_step)
-		#speed0y = np.zeros(mem_step)
-		#print("allocated")
-		temp_velX = vel0[real_index:mem_step*(iterations+1),0]
-		temp_velY = vel0[real_index:mem_step*(iterations+1),1]
-		#print(temp_velX )
-		while counter < mem_step: #could be for loop
-			#Compute particle speed
-			speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-			speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-			counter += 1
-			real_index += 1
-		iterations +=1
-		#print(min_vel)
-		#print(max_vel)
-		#print(speed0y)
-		bins = np.linspace(min_vel, max_vel, numbins)
-		htemp, jnk1,jnk2 = np.histogram2d(speed0x,speed0y, bins=(bins, bins), range=[[min_vel, max_vel], [min_vel, max_vel]])
-		#print(bins)
-
-		real_hist += htemp
-		#print(len(bins))
-		#print(len(real_hist[:,0]))
-		#print(len(real_hist[0,:]))
-		#print(htemp)
-
-	### LAST asymetric part
-	temp_velX = vel0[real_index:Np,0]
-	temp_velY = vel0[real_index:Np,1]
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speed0x[counter] = temp_velX[counter] #vel0[real_index,0]
-		speed0y[counter] = temp_velY[counter] #vel0[real_index,1]
-		counter += 1
-		real_index += 1
-	iterations +=1
-	bins = np.linspace(min_vel, max_vel, numbins)
-	htemp, jnk1,jnk2 = np.histogram2d(speed0x,speed0y, bins=(bins, bins), range=[[min_vel, max_vel], [min_vel, max_vel]])
-	real_hist += htemp
+	xedges = []
+	yedges = []
+	
 
 	### set up figure and plot n0
-	real_hist = np.transpose(real_hist)
-	bins = np.linspace(min_vel, max_vel, numbins-1)
+
+	for i in range(0,resolution):
+		xedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
+		yedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
+
+	x = speed0[:,0]
+	y = speed0[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
 	plt.figure()
+	X,Y = np.meshgrid(x,y,indexing='ij')
+
 	#alternative 1
 	fig, ax = plt.subplots(1)
-	im = ax.contourf(bins,bins,real_hist, resolution)
+	im = ax.contourf(x,y,H, resolution)
 	plt.xlabel("Vx")
 	plt.ylabel("Vy")
 	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
-	#plt.show()
-	plt.savefig(path+"Vx_Vy_Ions.png")
-	plt.clf()
-
-	### logplot
-	plt.figure()
-	#alternative 1
-	fig, ax = plt.subplots(1)
-	real_hist = np.log10(real_hist)
-	real_hist[real_hist<=-inf] =0
-	real_hist[real_hist>=inf] =0
-	#print(real_hist)
-	im = ax.contourf(bins,bins,real_hist, resolution)#locator=ticker.LogLocator()
-	plt.xlabel("Vx")
-	plt.ylabel("Vy")
-	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
-	fig.subplots_adjust(bottom = 0.25)
-	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
-	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
-	#plt.show()
-	plt.savefig(path+"Vx_Vy_Ions_log.png")
-	plt.clf()
-
-
-def plot_speed_density(dx,dt,nSteps,path,Omega_pi,step,resolution=30,mem_step=1000):
-
+	"""
 	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Ions0.png")
+	plt.clf()
+	### set up figure and plot n1
+	plt.figure()	
+
+	x = speed1[:,0]
+	y = speed1[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("Vx")
+	plt.ylabel("Vy")
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Ions1.png")
+	plt.clf()
+
+	### set up figure and plot n2
+	plt.figure()	
+
+	x = speed2[:,0]
+	y = speed2[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("Vx")
+	plt.ylabel("Vy")
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Ions2.png")
+	plt.clf()
+
+	### set up figure and plot n3
+	plt.figure()	
+
+	x = speed3[:,0]
+	y = speed3[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_vel, max_vel], [min_vel, max_vel]])
+	x = np.linspace(min_vel,max_vel,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("Vx")
+	plt.ylabel("Vy")
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n3*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+
+	plt.savefig(path+"Vx_Vy_Ions3.png")
+	plt.clf()
+
+def plot_speed_density(dx,dt,nSteps,path,Omega_pi,step,resolution=30):
+	
+	#alternative 2 
 	"""
 	from mpl_toolkits.mplot3d import Axes3D
 	from matplotlib import cm
@@ -1036,402 +1055,483 @@ def plot_speed_density(dx,dt,nSteps,path,Omega_pi,step,resolution=30,mem_step=10
 	test = file['/pos/specie 1']
 	Nt = len(test) # timesteps
 
-	n0 = step + 0.5#1.5
+	n0 = 1.5#1.5
+	n1 = step*int(Nt/3) + 0.5
+	n2 = step*int(2*Nt/3) + 0.5
+	n3 = step*(Nt-1) + 0.5
+
 	#print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 	#pos = file['/pos/specie 1/n=%.1f' % n0]
+
 	#specie 0
 	vel0 = file['/vel/specie 0/n=%.1f' % n0] # Electrons
+	vel1 = file['/vel/specie 0/n=%.1f' % n1] # 
+	vel2 = file['/vel/specie 0/n=%.1f' % n2] # 
+	vel3 = file['/vel/specie 0/n=%.1f' % n3] # 
+
 	pos0 = file['/pos/specie 0/n=%.1f' %(n0-0.5)] # Electrons
-
-
-	Np = vel0.shape[0]/part_distr	# Number of particles
-	Nd = vel0.shape[1]	# Number of dimensions
-	max_vel = 0.0#0128739455343 #max(vel0[0,:])
-	min_vel = -0.0#0128739455343 #min(vel0[0,:])
-	max_pos = nSteps#max(pos0[:,0])#0.0
-	min_pos = 0.0#min(pos0[:,0])#-0.0
-
-	mem_step = int(mem_step)
-	Np = int(Np)
-
-
-	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
-
-	real_index = 0 # index of real distribution
-	counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
-
-	numbins = resolution
-	real_hist = np.zeros((numbins-1,numbins-1), dtype='int32')
-
-	#alloc
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_posX = np.zeros((mem_step),dtype='float64')
-	speedX = np.zeros(mem_step)
-	posX = np.zeros(mem_step)
-	#read part
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_posX = pos0[real_index:mem_step,1]
-
-
-	### FIRST part
-
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speedX[counter] = temp_velX[counter]
-		posX[counter] = temp_posX[counter]
-		if real_index < mem_step:
-			#if max_pos < posX[counter]: max_pos = posX[counter]+posX[counter]/10.
-			#if min_pos > posX[counter]: min_pos = posX[counter]-posX[counter]/10.
-
-			if max_vel < speedX[counter]: max_vel = speedX[counter]+speedX[counter]/10.
-			if min_vel > speedX[counter]: min_vel = speedX[counter]-speedX[counter]/10.
-		counter += 1
-		real_index += 1
-
-	### Successive parts
-
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speedX = np.zeros(mem_step)
-		#posX = np.zeros(mem_step)
-		temp_velX = vel0[real_index:mem_step*(iterations+1),0]
-		temp_posX = pos0[real_index:mem_step*(iterations+1),1]
-		while counter < mem_step: #could be for loop
-			#Compute particle speed
-			speedX[counter] = temp_velX[counter]
-			posX[counter] = temp_posX[counter]
-			counter += 1
-			real_index += 1
-		iterations +=1
-		#print(min_vel)
-		#print(max_vel)
-		#print(speed0y)
-		binsx = np.linspace(min_pos, max_pos, numbins)
-		binsy = np.linspace(min_vel, max_vel, numbins)
-		htemp, jnk1,jnk2 = np.histogram2d(posX,speedX, bins=(binsx, binsy), range=[[min_pos, max_pos], [min_vel, max_vel]])
-		real_hist += htemp
-		#print(real_hist)
-
-	### LAST asymetric part
-	temp_velX = vel0[real_index:Np,0]
-	temp_posX = pos0[real_index:Np,1]
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speedX[counter] = temp_velX[counter]
-		posX[counter] = temp_posX[counter]
-		counter += 1
-		real_index += 1
-	iterations +=1
-
-	binsx = np.linspace(min_pos, max_pos, numbins)
-	binsy = np.linspace(min_vel, max_vel, numbins)
-	htemp, jnk1,jnk2 = np.histogram2d(posX,speedX, bins=(binsx, binsy), range=[[min_pos, max_pos], [min_vel, max_vel]])
-	real_hist += htemp
-	#print(real_hist)
-
-
-
-	### set up figure and plot n0
-	binsx = np.linspace(min_pos, max_pos, numbins-1)
-	binsy = np.linspace(min_vel, max_vel, numbins-1)
-
-	# ### set up figure and plot n0
-	real_hist = np.transpose(real_hist)
-	fig, ax = plt.subplots(1)
-	im = ax.contourf(binsx,binsy,real_hist, resolution)
-	plt.xlabel("x")
-	plt.ylabel("Vx")
-	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
-	fig.subplots_adjust(bottom = 0.25)
-	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
-	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
-
-	#plt.show()
-	plt.rc('text', usetex = True) #latex
-	plt.rc('font', family='serif')
-
-	plt.savefig(path+"x_Vx_Electrons.png")
-	plt.clf()
-
-	#### LOG plot
-	fig, ax = plt.subplots(1)
-	real_hist = np.log10(real_hist)
-	real_hist[real_hist<=-inf] =0
-	real_hist[real_hist>=inf] =0
-	im = ax.contourf(binsx,binsy,real_hist, resolution)
-	plt.xlabel("x")
-	plt.ylabel("Vx")
-	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
-	fig.subplots_adjust(bottom = 0.25)
-	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
-	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
-
-	#plt.show()
-	plt.rc('text', usetex = True) #latex
-	plt.rc('font', family='serif')
-
-	plt.savefig(path+"x_Vx_Electrons_LOG.png")
-	plt.clf()
-
-
-	#specie 1
-	vel0 = file['/vel/specie 1/n=%.1f' % n0] # Ions
-	pos0 = file['/pos/specie 1/n=%.1f' %(n0-0.5)] # Ions
+	pos1 = file['/pos/specie 0/n=%.1f' %(n1-0.5)] # 
+	pos2 = file['/pos/specie 0/n=%.1f' %(n2-0.5)] # 
+	pos3 = file['/pos/specie 0/n=%.1f' %(n3-0.5)] #
 	print('putting particles in bins specie 0')
 
-	Np = vel0.shape[0]/part_distr	# Number of particles
+#	Np = vel0.shape[0]	# Number of particles (only adding 1/10000)
+	Np = vel0.shape[0]	# Number of particles
+	if vel1.shape[0]<Np: Np=vel1.shape[0]
+	if vel2.shape[0]<Np: Np=vel2.shape[0]
+	if vel3.shape[0]<Np: Np=vel3.shape[0]
 	Nd = vel0.shape[1]	# Number of dimensions
+	data0 = np.zeros([Np,2])
+	data1 = np.zeros([Np,2])
+	data2 = np.zeros([Np,2])
+	data3 = np.zeros([Np,2])
 	max_vel = 0.0#0128739455343 #max(vel0[0,:])
 	min_vel = -0.0#0128739455343 #min(vel0[0,:])
-	max_pos = nSteps#0.0
+	max_pos = 0.0
 	min_pos = -0.0
 
+	# Compute particle speed
+	for i in range(Np):
+		data0[i][0] = pos0[i,0] # x
+		if max_pos < pos0[i,0]: max_pos = pos0[i,0]
+		if min_pos > pos0[i,0]: min_pos = pos0[i,0]
+		
+		data1[i][0] = pos1[i,0] # x
+		if max_pos < pos1[i,0]: max_pos = pos1[i,0]
+		if min_pos > pos1[i,0]: min_pos = pos1[i,0]
+		
+		data2[i][0] = pos2[i,0] # x
+		if max_pos < pos2[i,0]: max_pos = pos2[i,0]
+		if min_pos > pos2[i,0]: min_pos = pos2[i,0]
 
-	print("number of particles = %i"%Np)
-	print("ploting %i at a time"%(mem_step))
+		data3[i][0] = pos3[i,0] # x
+		if max_pos < pos3[i,0]: max_pos = pos3[i,0]
+		if min_pos > pos3[i,0]: min_pos = pos3[i,0]
+		
 
-	real_index = 0 # index of real distribution
-	counter = 0 # index of local distribution
-	iterations = 1 # to get percentage done
+	for i in range(Np):
+		data0[i][1] = vel0[i,0] # v_x
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
 
-	numbins = resolution
-	real_hist = np.zeros((numbins-1,numbins-1), dtype='int32')
+		data1[i][1] = vel1[i,0] # v_x
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
 
+		data2[i][1] = vel2[i,0] # v_x
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
 
-
-	#alloc
-	temp_velX = np.zeros((mem_step),dtype='float64')
-	temp_posX = np.zeros((mem_step),dtype='float64')
-	speedX = np.zeros(mem_step)
-	posX = np.zeros(mem_step)
-	#read part
-	temp_velX = vel0[real_index:mem_step,0]
-	temp_posX = pos0[real_index:mem_step,1]
-
-
-	### FIRST part
-
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speedX[counter] = temp_velX[counter]
-		posX[counter] = temp_posX[counter]
-		if real_index < mem_step:
-			#if max_pos < posX[counter]: max_pos = posX[counter]+posX[counter]/10.
-			#if min_pos > posX[counter]: min_pos = posX[counter]-posX[counter]/10.
-
-			if max_vel < speedX[counter]: max_vel = speedX[counter]+speedX[counter]/10.
-			if min_vel > speedX[counter]: min_vel = speedX[counter]-speedX[counter]/10.
-		counter += 1
-		real_index += 1
-
-	### Successive parts
-
-	while real_index < Np-mem_step:
-		print("computing velocities %i %% done"%(((float(100*iterations*mem_step))/Np)))
-		counter = 0
-		#speedX = np.zeros(mem_step)
-		#posX = np.zeros(mem_step)
-		temp_velX = vel0[real_index:mem_step*(iterations+1),0]
-		temp_posX = pos0[real_index:mem_step*(iterations+1),1]
-		while counter < mem_step: #could be for loop
-			#Compute particle speed
-			speedX[counter] = temp_velX[counter]
-			posX[counter] = temp_posX[counter]
-			counter += 1
-			real_index += 1
-		iterations +=1
-		#print(min_vel)
-		#print(max_vel)
-		#print(speed0y)
-		binsx = np.linspace(min_pos, max_pos, numbins)
-		binsy = np.linspace(min_vel, max_vel, numbins)
-		htemp, jnk1,jnk2 = np.histogram2d(posX,speedX, bins=(binsx, binsy), range=[[min_pos, max_pos], [min_vel, max_vel]])
-		real_hist += htemp
-		#print(real_hist)
-
-	### LAST asymetric part
-	temp_velX = vel0[real_index:Np,0]
-	temp_posX = pos0[real_index:Np,1]
-	while counter < mem_step: #could be for loop
-		#Compute particle speed
-		speedX[counter] = temp_velX[counter]
-		posX[counter] = temp_posX[counter]
-		counter += 1
-		real_index += 1
-	iterations +=1
-
-	binsx = np.linspace(min_pos, max_pos, numbins)
-	binsy = np.linspace(min_vel, max_vel, numbins)
-	htemp, jnk1,jnk2 = np.histogram2d(posX,speedX, bins=(binsx, binsy), range=[[min_pos, max_pos], [min_vel, max_vel]])
-	real_hist += htemp
-	#print(real_hist)
-
-
+		data3[i][1] = vel3[i,0] # v_x
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
 
 	### set up figure and plot n0
-	real_hist = np.transpose(real_hist)
-	binsx = np.linspace(min_pos, max_pos, numbins-1)
-	binsy = np.linspace(min_vel, max_vel, numbins-1)
+	xedges = []
+	yedges = []
+	
+	for i in range(0,resolution):
+		xedges.append(min_pos+((max_pos-min_pos)/resolution)*(i))
+		yedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
 
+	x = data0[:,0]
+	y = data0[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
 	fig, ax = plt.subplots(1)
-	im = ax.contourf(binsx,binsy,real_hist, resolution)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
+	#plt.show()
+	plt.rc('text', usetex = True) #latex
+	plt.rc('font', family='serif')
+
+	plt.savefig(path+"x_Vx_Electrons0.png")
+	plt.clf()
+
+	### set up figure and plot n1
+	plt.figure()	
+	x = data1[:,0]
+	y = data1[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Electrons1.png")
+	plt.clf()
+
+	### set up figure and plot n2
+	plt.figure()	
+	x = data2[:,0]
+	y = data2[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Electrons2.png")
+	plt.clf()
+
+	### set up figure and plot n1
+	plt.figure()	
+	x = data3[:,0]
+	y = data3[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Electrons  T = %.2f $\displaystyle [\omega_{pi}]$"%((n3*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Electrons3.png")
+	plt.clf()
+
+	#specie 1
+	vel0 = file['/vel/specie 1/n=%.1f' % n0] # Electrons
+	vel1 = file['/vel/specie 1/n=%.1f' % n1] # 
+	vel2 = file['/vel/specie 1/n=%.1f' % n2] # 
+	vel3 = file['/vel/specie 1/n=%.1f' % n3] # 
+
+	pos0 = file['/pos/specie 1/n=%.1f' %(n0-0.5)] # Electrons
+	pos1 = file['/pos/specie 1/n=%.1f' %(n1-0.5)] # 
+	pos2 = file['/pos/specie 1/n=%.1f' %(n2-0.5)] # 
+	pos3 = file['/pos/specie 1/n=%.1f' %(n3-0.5)] #
+	print('putting particles in bins specie 0')
+
+#	Np = vel0.shape[0]	# Number of particles (only adding 1/10000)
+	Np = vel0.shape[0]	# Number of particles
+	if vel1.shape[0]<Np: Np=vel1.shape[0]
+	if vel2.shape[0]<Np: Np=vel2.shape[0]
+	if vel3.shape[0]<Np: Np=vel3.shape[0]
+	Nd = vel0.shape[1]	# Number of dimensions
+	data0 = np.zeros([Np,2])
+	data1 = np.zeros([Np,2])
+	data2 = np.zeros([Np,2])
+	data3 = np.zeros([Np,2])
+	max_vel = 0.0#0128739455343 #max(vel0[0,:])
+	min_vel = -0.0#0128739455343 #min(vel0[0,:])
+	max_pos = 0.0
+	min_pos = -0.0
+
+	# Compute particle speed
+	for i in range(Np):
+		data0[i][0] = pos0[i,0] # x
+		if max_pos < pos0[i,0]: max_pos = pos0[i,0]
+		if min_pos > pos0[i,0]: min_pos = pos0[i,0]
+		
+		data1[i][0] = pos1[i,0] # x
+		if max_pos < pos1[i,0]: max_pos = pos1[i,0]
+		if min_pos > pos1[i,0]: min_pos = pos1[i,0]
+		
+		data2[i][0] = pos2[i,0] # x
+		if max_pos < pos2[i,0]: max_pos = pos2[i,0]
+		if min_pos > pos2[i,0]: min_pos = pos2[i,0]
+
+		data3[i][0] = pos3[i,0] # x
+		if max_pos < pos3[i,0]: max_pos = pos3[i,0]
+		if min_pos > pos3[i,0]: min_pos = pos3[i,0]
+		
+
+	for i in range(Np):
+		data0[i][1] = vel0[i,0] # v_x
+		if max_vel < vel0[i,0]: max_vel = vel0[i,0]
+		if min_vel > vel0[i,0]: min_vel = vel0[i,0]
+
+		data1[i][1] = vel1[i,0] # v_x
+		if max_vel < vel1[i,0]: max_vel = vel1[i,0]
+		if min_vel > vel1[i,0]: min_vel = vel1[i,0]
+
+		data2[i][1] = vel2[i,0] # v_x
+		if max_vel < vel2[i,0]: max_vel = vel2[i,0]
+		if min_vel > vel2[i,0]: min_vel = vel2[i,0]
+
+		data3[i][1] = vel3[i,0] # v_x
+		if max_vel < vel3[i,0]: max_vel = vel3[i,0]
+		if min_vel > vel3[i,0]: min_vel = vel3[i,0]
+
+	### set up figure and plot n0
+	xedges = []
+	yedges = []
+	
+	for i in range(0,resolution):
+		xedges.append(min_pos+((max_pos-min_pos)/resolution)*(i))
+		yedges.append(min_vel+((max_vel-min_vel)/resolution)*(i))
+
+	x = data0[:,0]
+	y = data0[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
 	plt.xlabel("x")
 	plt.ylabel("Vx")
 	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	"""
+	#alternative 2
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
 
+	surf = ax.plot_surface(X, Y, H, cmap=cm.coolwarm,
+        	               linewidth=0, antialiased=False)
+	
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	"""
 	#plt.show()
 
-	plt.savefig(path+"x_Vx_Ions.png")
+	plt.savefig(path+"x_Vx_Ions0.png")
 	plt.clf()
 
-	######## LOG plot
-
-	### set up figure and plot n0
-	binsx = np.linspace(min_pos, max_pos, numbins-1)
-	binsy = np.linspace(min_vel, max_vel, numbins-1)
-
+	### set up figure and plot n1
+	plt.figure()	
+	x = data1[:,0]
+	y = data1[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
 	fig, ax = plt.subplots(1)
-	real_hist = np.log10(real_hist)
-	real_hist[real_hist<=-inf] =0
-	real_hist[real_hist>=inf] =0
-	im = ax.contourf(binsx,binsy,real_hist, resolution)
+	im = ax.contourf(x,y,H, resolution)
 	plt.xlabel("x")
 	plt.ylabel("Vx")
-	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n0*dt*Omega_pi)))
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n1*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Ions1.png")
+	plt.clf()
+
+	### set up figure and plot n2
+	plt.figure()	
+	x = data2[:,0]
+	y = data2[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n2*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Ions2.png")
+	plt.clf()
+
+	### set up figure and plot n1
+	plt.figure()	
+	x = data3[:,0]
+	y = data3[:,1]
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_pos, max_pos], [min_vel, max_vel]])
+	x = np.linspace(min_pos,max_pos,len(H[0,:]))
+	y = np.linspace(min_vel,max_vel,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("x")
+	plt.ylabel("Vx")
+	plt.title(r"Ions  T = %.2f $\displaystyle [\omega_{pi}]$"%((n3*dt*Omega_pi)))
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
+	#plt.show()
+
+	plt.savefig(path+"x_Vx_Ions3.png")
+	plt.clf()
+
+def plot_kx_ky(dx,dt,path,endtime,Omega_pi,resolution =64):
+
+	probe = h5py.File(path+'probe.xyz.h5','r')
+	x = probe['/X']
+	y = probe['/Y']
+	
+	Fs = 1./dx # not Fs but spatial sample rate
+	t = np.arange(len(x[:,0]))*dt
+	space = np.arange(len(x[0,:]))*dx
+	x_0 = x[0,:]		# probe in x-space, time = 0
+	y_0 = y[0,:]		# probe in y-space, time = 0
+	
+	
+	n = len(space)
+	#y = np.asarray([0,1,0,3,2,5,0,7,0,9])
+	#print(y)
+	size = n*dx
+	kx = space/size # two sides frequency range
+	ky = space/size # two sides frequency range
+	kx = kx[range(n//2)] # one side frequency range
+	ky = ky[range(n//2)]
+	
+	X_0 = np.fft.fft(x[0,:])/n
+	Y_0 = np.fft.fft(y[0,:])/n
+	for i in range(1,10000):
+		X_0 += np.fft.fft(x[i,:])/n
+		Y_0 += np.fft.fft(y[i,:])/n
+
+	X_0 = X_0/10000
+	Y_0 = Y_0/10000
+	X_0 = X_0[range(n//2)]
+	Y_0 = Y_0[range(n//2)]
+	
+	##plt.plot(space,x_0)
+	#plt.show()
+	
+	#plt.plot(kx,abs(X_0))
+	#plt.show()
+
+	### set up figure and plot n0
+	
+	X_0 = np.real(X_0)
+	Y_0 = np.real(Y_0)	
+	min_ky = min(Y_0)
+	min_kx = min(X_0)
+	max_kx = max(X_0)
+	max_ky = max(Y_0)	
+	
+	xedges = []
+	yedges = []
+	
+	for i in range(0,resolution):
+		xedges.append(min_kx+((max_kx-min_kx)/resolution)*(i))
+		yedges.append(min_ky+((max_ky-min_ky)/resolution)*(i))
+
+	x = X_0
+	y = Y_0
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_kx, max_kx], [min_kx, max_ky]])
+	x = np.linspace(min_kx,max_kx,len(H[0,:]))
+	y = np.linspace(min_ky,max_ky,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("kx")
+	plt.ylabel("ky")
+	plt.title("first 1000 timesteps")
 	fig.subplots_adjust(bottom = 0.25)
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
 
-	#plt.show()
-
-	plt.savefig(path+"x_Vx_Ions_LOG.png")
+	plt.savefig(path+"kx_ky_0.png")
 	plt.clf()
 
 
-	print(real_index)
+	
 
 
+	x = probe['/X']
+	y = probe['/Y']
 
-def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid = "E"):
+	X_0 = np.fft.fft(x[endtime-10000,:])/n
+	Y_0 = np.fft.fft(y[endtime-10000,:])/n
+	for i in range(int(endtime-9999),int(endtime)):
+		X_0 += np.fft.fft(x[i,:])/n
+		Y_0 += np.fft.fft(y[i,:])/n
 
-	print("using timestep %i"%(timeStep))
-	if grid == "E":
-		print("using E grid")
-		h5file = h5py.File(path +'E.grid.h5','r')
-		E = np.asarray(h5file['/n=%.1f'%(timeStep)])
-		#print(E.shape)
+	X_0 = X_0/10000
+	Y_0 = Y_0/10000
+	X_0 = X_0[range(n//2)]
+	Y_0 = Y_0[range(n//2)]
 
-		#print(E.shape)
-		Nx = len(E[:,0,0])
-		Ny = len(E[0,:,0])
-		Nz = len(E[0,0,:])
-
-		array = np.zeros((Nx,Ny,Nz))
-		##print("%f,%f,%f"%(i,j,k))
-		for i in range(Nx): # x
-			for j in range(Ny): #y
-				for k in range(Nz):
-					array[i,j,k] = np.sqrt(E[i,j,k,0]*E[i,j,k,0]+E[i,j,k,1]*E[i,j,k,1]+E[i,j,k,2]*E[i,j,k,2])
-
-		array = np.transpose(array, (2,1,0))
-		array = np.squeeze(array)
-
-	if grid == "rho":
-		h5file = h5py.File(path +'rho.grid.h5','r')
-		rho = np.asarray(h5file['/n=%.1f'%(timeStep)])
-		array = np.transpose(rho, (3,2,1,0))
-		array = np.squeeze(array)
-		print("using rho grid")
-
-	if grid == "phi":
-		h5file = h5py.File(path +'phi.grid.h5','r')
-		phi = np.asarray(h5file['/n=%.1f'%(timeStep)])
-		array = np.transpose(phi, (3,2,1,0))
-		array = np.squeeze(array)
-		print("using rho phi")
-	#FFT_array = np.fft.fft2(array[:,:,Nz/2])
-	#FFT_array = np.fft.fftshift(FFT_array)
-	###plt.plot(np.abs(FFT_array))
-	#plt.contourf((np.abs(FFT_array)))
-	###plt.hist2d(FFT_array,FFT_array)
+	##plt.plot(space,x_0)
 	#plt.show()
-	#print((abs(np.real(FFT_array))))
+	
+	#plt.plot(kx,abs(X_0))
+	##plt.show()
 
+	### set up figure and plot n0
+	
+	X_0 = np.real(X_0)
+	Y_0 = np.real(Y_0)	
+	min_ky = min(Y_0)
+	min_kx = min(X_0)
+	max_kx = max(X_0)
+	max_ky = max(Y_0)	
+	
+	xedges = []
+	yedges = []
+	
+	for i in range(0,resolution):
+		xedges.append(min_kx+((max_kx-min_kx)/resolution)*(i))
+		yedges.append(min_ky+((max_ky-min_ky)/resolution)*(i))
 
-	nx, ny     = (nSteps, nSteps)
-	xmax, ymax = nx*dx, ny*dx
-	x          = np.linspace(0, xmax, nx)
-	y          = np.linspace(0, ymax, ny)
-	#dx         = x[1] - x[0]
-	dy         = dx#y[1] - y[0]
-	X, Y       = np.meshgrid(x, y, indexing = "ij")
-	Z          = array[:,:,0]#(X*X+Y*Y)<1**2          # circular hole
+	x = X_0
+	y = Y_0
+	H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges), range=[[min_kx, max_kx], [min_kx, max_ky]])
+	x = np.linspace(min_kx,max_kx,len(H[0,:]))
+	y = np.linspace(min_ky,max_ky,len(H[:,0]))
+	X,Y = np.meshgrid(x,y,indexing='ij')
+	#alternative 1	
+	fig, ax = plt.subplots(1)
+	im = ax.contourf(x,y,H, resolution)
+	plt.xlabel("kx")
+	plt.ylabel("ky")
+	plt.title("last 1000 timesteps")
+	fig.subplots_adjust(bottom = 0.25)
+	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
+	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
 
-	#Z          = np.exp(-(X*X + Y*Y)/1**2)   # Gauss
-	#Z           = (np.abs(X)<0.5 ) * (np.abs(Y)<2 )  # rectangle
-	#Z          = (((X+1)**2+Y**2)<0.25**2) + (((X-1)**2+Y**2)<0.25**2)   # two circular holes
+	plt.savefig(path+"kx_ky_last.png")
+	plt.clf()
 
-	ZFT    = np.fft.fft2(Z)        # compute 2D-FFT
-	ZFT    = np.fft.fftshift(ZFT)  # Shift the zero-frequency component to the center of the spectrum.
-	kx     = (-nx/2 + np.arange(0,nx))*2*np.pi/(xmax)
-	ky     = (-ny/2 + np.arange(0,ny))*2*np.pi/(ymax)
-	KX, KY = np.meshgrid(kx, ky)
-	"""
-	nx, ny     = (500, 500)
-	xmax, ymax = 20, 20
-	x          = np.linspace(-xmax, xmax, nx)
-	y          = np.linspace(-ymax, ymax, ny)
-	dx         = x[1] - x[0]
-	dy         = y[1] - y[0]
-	X, Y       = np.meshgrid(x, y)
-	Z          = (X*X+Y*Y)<1**2          # circular hole
-	#Z          = np.exp(-(X*X + Y*Y)/1**2)   # Gauss
-	#Z           = (np.abs(X)<0.5 ) * (np.abs(Y)<2 )  # rectangle
-	#Z          = (((X+1)**2+Y**2)<0.25**2) + (((X-1)**2+Y**2)<0.25**2)   # two circular holes
-
-	ZFT    = np.fft.fft2(Z)        # compute 2D-FFT
-	ZFT    = np.fft.fftshift(ZFT)  # Shift the zero-frequency component to the center of the spectrum.
-	kx     = (-nx/2 + np.arange(0,nx))*2*np.pi/(2*xmax)
-	ky     = (-ny/2 + np.arange(0,ny))*2*np.pi/(2*ymax)
-	KX, KY = np.meshgrid(kx, ky)
-
-
-	"""
-	# plot Z and it's Fourier transform ZFT
-	fig, (ax0, ax1) = plt.subplots(ncols=2)
-	plot1 = ax0.pcolormesh(X,Y,Z)
-	plot2 = ax1.pcolormesh(KX,KY,np.abs(np.log10(ZFT)))
-	ax0.set_title('real space')
-	ax1.set_title('Fourier space')
-	ax0.set_xlabel('x')
-	ax0.set_ylabel('y')
-	ax1.set_xlabel('kx')
-	ax1.set_ylabel('ky')
-	plt.show()
-
-	"""
-	FFTx = np.linspace(0,1./(2*(dx)),N/2)
-	X_0 = np.real(np.fft.fft(x[0,:]))
-	Y_0 = (np.fft.fft(y[0,:]))
-	for i in range(len(t)-1000,len(t)):
-		X_0 += np.real(np.fft.fft(x[i,:]))
-		Y_0 += np.real(np.fft.fft(y[i,:]))
-
-
-	def testdata(N):
-		data = np.zeros(N)
-		k = 1.
-		for i in range(N):
-			data[i] = np.sin(k*i)
-		fftdata = np.fft.fft(data)
-		return fftdata, data
-	"""
 
 
 
@@ -1445,20 +1545,20 @@ def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid 
 	import numpy as np
 	# Learn about API authentication here: https://plot.ly/python/getting-started
 	# Find your api_key here: https://plot.ly/settings/api
-
+	
 	Fs = 150.0;  # sampling rate
 	Ts = 1.0/Fs; # sampling interval
 	t = np.arange(0,1,Ts) # time vector
-
+	
 	ff = 5;   # frequency of the signal
 	y = np.sin(2*np.pi*ff*t)
-
+	
 	n = len(y) # length of the signal
 	k = np.arange(n)
 	T = n/Fs
 	frq = k/T # two sides frequency range
 	frq = frq[range(n//2)] # one side frequency range
-
+	
 	Y = np.fft.fft(y)/n # fft computing and normalization
 	Y = Y[range(n//2)]
 
@@ -1475,55 +1575,69 @@ def plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = 0,resolution =64,grid 
 	"""
 
 
-part_distr = 1 #part of distribution to plot, for debugging
+
 def post_process_all(starttime,endtime,step,path,dt,dx):
 	"""TLWR, kernel "sort of" """
 
 	# DEFAULT VALUES
-	nSteps = 32 # number of spatial steps
+	nSteps = 128
 	q = 1.602e-19 # charge
-	B = 0.000015#7.5e-6 # mag. field
+	B = 7.5e-6 # mag. field
 	M_i = 5e-26 #mass Ions
-	M_e = 4e-29 #9.109e-31#
+	M_e = 9.109e-31#4e-29 
 	n_0 = 1.*10**(9)
 	Omega_i = (q*B)/M_i
 	Omega_e = (q*B)/M_e
 	Omega_pe = np.sqrt((n_0*q*q)/(M_e*eps_0))
 	Omega_pi = np.sqrt((n_0*q*q)/(M_i*eps_0))
-	Omega_e = Omega_i #using ion plasma frq
-	final_timestep = endtime#30000
+	Omega_e = Omega_pi #using ion plasma frq
 
-	
+	#plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e)
 
 	# grid plots
-
-	#animate_by_name("phi",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
-	#animate_by_name("rho",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
 	
-	#plot_electic_field_in_time(starttime,endtime,step,path,dt,Omega_i,Omega_e) # high cost
-	#plot_electric_vector(endtime,path,dx)
-
+	#animate_by_name("rho",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
+	#animate_by_name("phi",path,starttime,endtime,step,dt,Omega_i,Omega_e,dx)
+	
 	#plot_energy(path)
-	plot_temperature(path,dt,Omega_i,Omega_e)
+	#plot_temperature(path,dt,Omega_i,Omega_e)
+	
+	#plot_velocity_distribution(1000,path,dt,Omega_pi,Omega_e)
+	
+	#plot_vx_vy(1000,path,dt,Omega_pi,Omega_e,resolution = 50)
 
-	import time
+	plot_speed_density(dx,dt,nSteps,path,Omega_pi,1000,resolution = 50) #step = 1000
 
-	start = time.time()
-	#plot_velocity_distribution(final_timestep,path,dt,Omega_pi,Omega_e,mem_step=1e5)
-	end = time.time()
-	print("plot_velocity_distibution used %f sec"%(end - start))
-
-	start = time.time()
-	#plot_vx_vy(final_timestep,path,dt,Omega_pi,Omega_e,resolution = 50,mem_step=1e5)
-	end = time.time()
-	print("plot_vx_vy used %f sec"%(end - start))
-
-	start = time.time()
-	#plot_speed_density(dx,dt,nSteps,path,Omega_pi,final_timestep,resolution = 50,mem_step=1e5) #step = 1000
-	end = time.time()
-	print("plot_speed_density used %f sec"%(end - start))
-
-	#plot_kx_ky_grid(dx,dt,path,Omega_pi,nSteps,timeStep = endtime, grid = "phi")
+	plot_kx_ky(dx,dt,path,Omega_pi,nSteps)
 
 
-post_process_all(0,70000,100,path="../../data/",dt = 3e-6,dx=0.08)
+
+
+
+post_process_all(0,30000,100,path="../../data/",dt = 5e-8,dx=0.04)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

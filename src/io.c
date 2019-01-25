@@ -796,11 +796,11 @@ void arrWrite(hid_t h5, const char* name, double timestep, Grid *grid,int dim,
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
 	int *nSubdomains = mpiInfo->nSubdomains;
-	long int *size = grid->size;
+	//long int *size = grid->size;
 	long int *sizeProd = grid->sizeProd;
 	int *trueSize = grid->trueSize;
 	double *val = grid->val;
-	int nDims =  mpiInfo->nDims;
+	//int nDims =  mpiInfo->nDims;
 	double *data = NULL;
 	double *data_line = NULL;
 	int arrSize = 0;

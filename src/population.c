@@ -433,20 +433,20 @@ void pVelConstant(const dictionary *ini, Population *pop, double constant1, doub
 
 	for(long int i=iStart1;i<iStop1;i++){
 		//for(int d=0;d<nDims;d++){
-			pop->vel[i*nDims] = constant1;
-			//for(int d=0;d<nDims;d++){
-				//pop->vel[i*nDims+d] = constant1;
+			//pop->vel[i*nDims] = constant1;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant1;
 			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
-		//}
+		}
 		//}
 	}
 	for(long int i=iStart2;i<iStop2;i++){
 		//for(int d=0;d<nDims;d++){
-			pop->vel[i*nDims] = constant2;
-			//for(int d=0;d<nDims;d++){
-			//	pop->vel[i*nDims+d] = constant2;
+			//pop->vel[i*nDims] = constant2;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant2;
 			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
-		//}
+		}
 
 	}
 }

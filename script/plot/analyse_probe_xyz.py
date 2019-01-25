@@ -5,6 +5,7 @@
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
 import sys, os, inspect
 from matplotlib import ticker, cm
 import matplotlib.colors as colors
@@ -179,13 +180,12 @@ def construct_omega_k_data(starttime,endtime,dx,dt,path,Cs,Csi):
 	
 	plt.show()
 	"""
-
 	fig, ax = plt.subplots()
 	analytic_omega = FFTx[:N/16]*Cs#*(1+Psi)
 	analytic_omega_iso = FFTx[:N/16]*Csi#*(1+Psi)
 	print("FFTarray t = %f, x = %f"%(len(FFTarray[:,0]),len(FFTarray[0,:])))
 	print("t = %f, x = %f"%(len(FFTtime),len(FFTx)))
-	cs = ax.contourf(FFTx[:N//2],FFTtime[:Nt//8],(abs(FFTarray[:Nt//8,:N//2])),1000) # ,locator=ticker.LogLocator()
+	cs = ax.contourf(FFTx[:N//2],FFTtime[:Nt//2],(abs(FFTarray[:Nt//2,:N//2])),1000) # ,locator=ticker.LogLocator()
 	plt.plot(FFTx[:N/16],analytic_omega,"black")
 	plt.plot(FFTx[:N/16],analytic_omega_iso,"white")
 	cbar = fig.colorbar(cs)
@@ -203,7 +203,7 @@ def construct_omega_k_data(starttime,endtime,dx,dt,path,Cs,Csi):
 	analytic_omega_iso = FFTx[:N/16]*Csi#*(1+Psi)
 	print("FFTarray t = %f, x = %f"%(len(FFTarray[:,0]),len(FFTarray[0,:])))
 	print("t = %f, x = %f"%(len(FFTtime),len(FFTx)))
-	cs = ax.contourf(FFTx[:N//2],FFTtime[:Nt//4],np.log10(abs(FFTarray[:Nt//4,:N//2])),1000) # ,locator=ticker.LogLocator()
+	cs = ax.contourf(FFTx[:N//2],FFTtime[:Nt//2],np.log10(abs(FFTarray[:Nt//2,:N//2])),1000) # ,locator=ticker.LogLocator()
 	plt.plot(FFTx[:N/16],analytic_omega,"black")
 	plt.plot(FFTx[:N/16],analytic_omega_iso,"white")
 	cbar = fig.colorbar(cs)
@@ -214,7 +214,7 @@ def construct_omega_k_data(starttime,endtime,dx,dt,path,Cs,Csi):
 	#plt.ylabel(r"$\displaystyle  \Omega [2\pi /t] $", fontsize = 16)
 	plt.xlabel("k [2pi/m]", fontsize = 16)
 	plt.ylabel("Omega [2pi/t]", fontsize = 16)
-	plt.show()	
+	plt.show()		
 	"""
 	testdata = np.fft.fft(data[(time_start_index),:])[:N//2]
 	#print(np.real(testdata))
@@ -307,16 +307,24 @@ def construct_omega_k(array):
 
 
 
-def construct_time_x_data(starttime,endtime,dx,dt,path,Cs,Omega_i):
+def construct_time_x_data(starttime,endtime,dx,dt,path,Cs,Csi,Omega_i):
 
+
+	import scipy
+	from scipy import ndimage
 
 	probe = h5py.File(path+'probe.xyz.h5','r')
 	data = probe['/X']
+	h5file = h5py.File(path +'phi.grid.h5','r')
+	denorm = h5file.attrs.__getitem__("Quantity denormalization factor")
 	
 	
 	#N = nSteps
-	array = data[starttime:endtime,:]
+	array = np.array(denorm*data[starttime:endtime,:])[:,::-1]
+	#array = np.flip(array, 0)
+
 	Nt = len(array[:,0])
+	nSteps = len(array[0,:])
 	print(Nt)
 
 	nx, nt     = (nSteps, Nt)
@@ -336,32 +344,53 @@ def construct_time_x_data(starttime,endtime,dx,dt,path,Cs,Omega_i):
 	#ZFT = np.transpose(ZFT)
 	#print(ZFT)
 	ZFT    = np.fft.fftshift(ZFT)  # Shift the zero-frequency component to the center of the spectrum.
-	kx     = (np.arange(0,nx))*2*np.pi/(2*xmax)
-	ky     = (np.arange(0,nt))*2*np.pi/(2*ymax)
+	kx     = np.linspace(-(1.)/((2*dx)),(1.)/((2*dx))+dx,nx+1)#(np.arange(-nx/2,nx/2))*((1.)/(2*(dx)))
+	ky     = np.linspace(-(1.)/((2*dt)),(1.)/((2*dt))+dt,nt+1)#(np.arange(-nt/2,nt/2))*((1.)/(2*(dt)))
 	#print(np.arange(0,nx/2))
-	KX, KY = np.meshgrid(kx, ky)
+	KX, KY = np.meshgrid( kx, ky)
 
-	analytic_omega = -kx*Cs#*(1+Psi)
-
-	fig, ax = plt.subplots(ncols=1)
-	plotsingle = ax.pcolormesh(X,Y*Omega_i,Z)	
-	ax.set_title('real space')	
-	ax.set_xlabel('x')	
-	ax.set_ylabel('time [Omega_i]')
-	plt.show()
+	analytic_omega = kx*Cs#*(1+Psi)
+	analytic_omega_iso = kx*Csi#*(1+Psi)
 
 	# plot Z and it's Fourier transform ZFT
-	fig, (ax0, ax1) = plt.subplots(ncols=2)
-	plot1 = ax0.pcolormesh(X,Y,Z)
-	plot2 = ax1.pcolormesh(KX,KY,(np.abs(np.log10(ZFT))))
-	ax0.set_title('real space')
-	ax1.set_title('Fourier space')
-	ax1.plot(kx,analytic_omega,"black")
-	ax0.set_xlabel('x')
-	ax0.set_ylabel('time [s]')
-	ax1.set_xlabel('kx')
-	ax1.set_ylabel('omega')
+
+	fig = plt.figure(1)
+	fig.clf()
+	#plotsingle = ax.pcolormesh(np.transpose(Z))
+	ax1 = fig.add_subplot(1,1,1)
+	plot1 = ax1.pcolormesh(Omega_i*y,x,np.rot90(Z))	
+
+	plt.rc('text', usetex = True)
+	plt.rc('font', family='serif')
+	
+	ax1.set_title(r"Keogram of $\displaystyle \phi$")	
+	ax1.set_ylabel('x-space [m]')	
+	ax1.set_xlabel(r"Time \ $\displaystyle[\Omega_{i}]$")
+	cbar = plt.colorbar(plot1, ax = ax1)
+	cbar.set_label(r'electric potential [V]', rotation=270)
+	#cbar.set_label(r'Log scaled', rotation=270)	
 	plt.show()
+
+	fig = plt.figure(2)
+	#plot1 = ax0.pcolormesh(X,Y*Omega_i,Z)
+	cmap = plt.get_cmap('YlOrRd')
+	fig.clf()
+	ax1 = fig.add_subplot(1,1,1)
+	plot2 = ax1.pcolormesh((KX),(KY),((np.abs(np.log10(ZFT)))),cmap=cmap)
+	#plt.gca().invert_xaxis()
+	#ax0.set_title('real space')
+	ax1.set_title(r'Fourier space')
+	ax1.plot(kx,analytic_omega,"blue",linestyle='--',label = "Cs")
+	plt.plot(kx,analytic_omega_iso,"blue",label= "C_{si}")
+	cbar = plt.colorbar(plot2, ax = ax1)
+	cbar.set_label(r'Log scaled magnitude', rotation=270)	
+	#ax0.set_xlabel('x')
+	#ax0.set_ylabel('t')
+	ax1.set_xlabel(r"$\displaystyle k_x \ [2 \pi / m]$")
+	ax1.set_ylabel(r"$\displaystyle \omega \ [2 \pi / s]$")
+	plt.legend(fontsize=12)
+	plt.show()
+	#plt.savefig((path +"omega_k_Filtered_zoomed_last.png"))
 
 
 
@@ -381,10 +410,10 @@ def find_omega_k(starttime,endtime,path,dt,dx):
 	gamma_iso = 5/3.
 	T_i = k_b*300 # K
 	T_e = k_b*300 # K
-	B0 = 0.000015 # mag. field
-	E0 = 0.03
-	nu_e = 840
-	nu_i = 540
+	B0 = 0.00005 # mag. field
+	E0 = 0.1
+	nu_e = 2800
+	nu_i = 1800
 	Omega_i = (q*B0)/M_i
 	Omega_e = (q*B0)/M_e
 	Psi = (nu_e*nu_i)/(Omega_e*Omega_i)
@@ -392,13 +421,13 @@ def find_omega_k(starttime,endtime,path,dt,dx):
 	Csi = np.sqrt((gamma_iso*T_i+gamma_iso*T_e)/M_i)
 	Vd = E0/B0
 	Cs = Vd/(1+Psi)
-	
+	print(Cs)
 
 	#construct_omega_k_data(starttime,endtime,dx,dt,path,Cs,Csi)
 
-	construct_time_x_data(starttime,endtime,dx,dt,path,Cs,Omega_i)
+	construct_time_x_data(starttime,endtime,dx,dt,path,Cs,Csi,Omega_i)
 
 
 if __name__ == "__main__":
-	find_omega_k(40000,80000,path="../../data/",dt = 3e-6,dx=0.08)
+	find_omega_k(12500,25000,path="../../data/",dt = 3e-6,dx=0.04)
 
