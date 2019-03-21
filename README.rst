@@ -10,8 +10,8 @@ Contributors
 
 Authors:
 
-- `Sigvald Marholm`_: main developer, architecture,data structures, pushers, weighting schemes, spectral solver, paralellization
-- Gullik Killie: architecture, multigrid solver, paralellization
+- `Sigvald Marholm`_: architecture and data structures, pushers, weighting schemes, spectral solver, paralellization
+- Gullik Killie: architecture and data structures, multigrid solver, paralellization
 - Vigdis Holta (see separate branch): Neumann boundaries, blob instability for fusion simulations
 - Steffen Brask (see separate branch): Collision module, Farley-Buneman instability
 - Jan Deca (see separate branches): Capacitance matrix method for plasma-object interactions
