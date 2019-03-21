@@ -1,9 +1,9 @@
 PINC
 ====
 
-*Particle-In-Cell* (PINC) is an open source scientific program for simulating plasmas using the *Particle-In-Cell* (PIC) method on a structured mesh. The field quantities are solved using the *Geometric Multigrid Method*. The focus is on plasma-object interaction, collisions in Farley Buneman instabilities, and blob instability in fusions.
+*Particle-In-Cell* (PINC) is an open source scientific program for simulating plasmas using the *Particle-In-Cell* (PIC) method on a structured mesh. The field quantities are solved using the *Geometric Multigrid Method*. The focus is on plasma-object interaction, collisions in Farley-Buneman instabilities, and blob instability in tokamaks.
 
-A user guid is unfortunately unavailable.
+A user guide is unfortunately unavailable.
 
 Contributors
 ------------
