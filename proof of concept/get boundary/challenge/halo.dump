@@ -1,0 +1,540 @@
+
+halo.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <getSlice>:
+   0:	41 57                	push   %r15
+   2:	48 89 f8             	mov    %rdi,%rax
+   5:	41 56                	push   %r14
+   7:	41 55                	push   %r13
+   9:	41 54                	push   %r12
+   b:	55                   	push   %rbp
+   c:	48 89 cd             	mov    %rcx,%rbp
+   f:	53                   	push   %rbx
+  10:	48 89 f3             	mov    %rsi,%rbx
+  13:	48 83 ec 38          	sub    $0x38,%rsp
+  17:	48 8b 0a             	mov    (%rdx),%rcx
+  1a:	48 89 54 24 08       	mov    %rdx,0x8(%rsp)
+  1f:	48 85 c9             	test   %rcx,%rcx
+  22:	7e 33                	jle    57 <getSlice+0x57>
+  24:	48 8b 36             	mov    (%rsi),%rsi
+  27:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+  2e:	00 
+  2f:	31 d2                	xor    %edx,%edx
+  31:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+  36:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+  3b:	48 83 c2 08          	add    $0x8,%rdx
+  3f:	48 39 fa             	cmp    %rdi,%rdx
+  42:	75 ed                	jne    31 <getSlice+0x31>
+  44:	48 01 d0             	add    %rdx,%rax
+  47:	48 01 f2             	add    %rsi,%rdx
+  4a:	48 83 f9 01          	cmp    $0x1,%rcx
+  4e:	48 89 13             	mov    %rdx,(%rbx)
+  51:	0f 84 34 05 00 00    	je     58b <getSlice+0x58b>
+  57:	44 8b 65 00          	mov    0x0(%rbp),%r12d
+  5b:	45 85 e4             	test   %r12d,%r12d
+  5e:	0f 8e b4 05 00 00    	jle    618 <getSlice+0x618>
+  64:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+  69:	4c 8d 6d dc          	lea    -0x24(%rbp),%r13
+  6d:	c7 44 24 18 00 00 00 	movl   $0x0,0x18(%rsp)
+  74:	00 
+  75:	48 8b 4f f8          	mov    -0x8(%rdi),%rcx
+  79:	4c 8d 67 b8          	lea    -0x48(%rdi),%r12
+  7d:	48 85 c9             	test   %rcx,%rcx
+  80:	7e 33                	jle    b5 <getSlice+0xb5>
+  82:	48 8b 33             	mov    (%rbx),%rsi
+  85:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+  8c:	00 
+  8d:	31 d2                	xor    %edx,%edx
+  8f:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+  94:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+  99:	48 83 c2 08          	add    $0x8,%rdx
+  9d:	48 39 fa             	cmp    %rdi,%rdx
+  a0:	75 ed                	jne    8f <getSlice+0x8f>
+  a2:	48 01 d0             	add    %rdx,%rax
+  a5:	48 01 f2             	add    %rsi,%rdx
+  a8:	48 83 f9 01          	cmp    $0x1,%rcx
+  ac:	48 89 13             	mov    %rdx,(%rbx)
+  af:	0f 84 71 05 00 00    	je     626 <getSlice+0x626>
+  b5:	44 8b 5d fc          	mov    -0x4(%rbp),%r11d
+  b9:	45 85 db             	test   %r11d,%r11d
+  bc:	0f 8e a1 04 00 00    	jle    563 <getSlice+0x563>
+  c2:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+  c7:	c7 44 24 1c 00 00 00 	movl   $0x0,0x1c(%rsp)
+  ce:	00 
+  cf:	48 8b 4f f0          	mov    -0x10(%rdi),%rcx
+  d3:	48 85 c9             	test   %rcx,%rcx
+  d6:	7e 33                	jle    10b <getSlice+0x10b>
+  d8:	48 8b 33             	mov    (%rbx),%rsi
+  db:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+  e2:	00 
+  e3:	31 d2                	xor    %edx,%edx
+  e5:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+  ea:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+  ef:	48 83 c2 08          	add    $0x8,%rdx
+  f3:	48 39 fa             	cmp    %rdi,%rdx
+  f6:	75 ed                	jne    e5 <getSlice+0xe5>
+  f8:	48 01 d0             	add    %rdx,%rax
+  fb:	48 01 f2             	add    %rsi,%rdx
+  fe:	48 83 f9 01          	cmp    $0x1,%rcx
+ 102:	48 89 13             	mov    %rdx,(%rbx)
+ 105:	0f 84 54 05 00 00    	je     65f <getSlice+0x65f>
+ 10b:	44 8b 55 f8          	mov    -0x8(%rbp),%r10d
+ 10f:	45 85 d2             	test   %r10d,%r10d
+ 112:	0f 8e 02 04 00 00    	jle    51a <getSlice+0x51a>
+ 118:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 11d:	c7 44 24 20 00 00 00 	movl   $0x0,0x20(%rsp)
+ 124:	00 
+ 125:	48 8b 4f e8          	mov    -0x18(%rdi),%rcx
+ 129:	48 85 c9             	test   %rcx,%rcx
+ 12c:	7e 33                	jle    161 <getSlice+0x161>
+ 12e:	48 8b 33             	mov    (%rbx),%rsi
+ 131:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 138:	00 
+ 139:	31 d2                	xor    %edx,%edx
+ 13b:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 140:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 145:	48 83 c2 08          	add    $0x8,%rdx
+ 149:	48 39 fa             	cmp    %rdi,%rdx
+ 14c:	75 ed                	jne    13b <getSlice+0x13b>
+ 14e:	48 01 d0             	add    %rdx,%rax
+ 151:	48 01 f2             	add    %rsi,%rdx
+ 154:	48 83 f9 01          	cmp    $0x1,%rcx
+ 158:	48 89 13             	mov    %rdx,(%rbx)
+ 15b:	0f 84 1e 05 00 00    	je     67f <getSlice+0x67f>
+ 161:	44 8b 4d f4          	mov    -0xc(%rbp),%r9d
+ 165:	45 85 c9             	test   %r9d,%r9d
+ 168:	0f 8e 63 03 00 00    	jle    4d1 <getSlice+0x4d1>
+ 16e:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 173:	c7 44 24 24 00 00 00 	movl   $0x0,0x24(%rsp)
+ 17a:	00 
+ 17b:	48 8b 4f e0          	mov    -0x20(%rdi),%rcx
+ 17f:	48 85 c9             	test   %rcx,%rcx
+ 182:	7e 33                	jle    1b7 <getSlice+0x1b7>
+ 184:	48 8b 33             	mov    (%rbx),%rsi
+ 187:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 18e:	00 
+ 18f:	31 d2                	xor    %edx,%edx
+ 191:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 196:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 19b:	48 83 c2 08          	add    $0x8,%rdx
+ 19f:	48 39 fa             	cmp    %rdi,%rdx
+ 1a2:	75 ed                	jne    191 <getSlice+0x191>
+ 1a4:	48 01 d0             	add    %rdx,%rax
+ 1a7:	48 01 f2             	add    %rsi,%rdx
+ 1aa:	48 83 f9 01          	cmp    $0x1,%rcx
+ 1ae:	48 89 13             	mov    %rdx,(%rbx)
+ 1b1:	0f 84 b8 04 00 00    	je     66f <getSlice+0x66f>
+ 1b7:	44 8b 45 f0          	mov    -0x10(%rbp),%r8d
+ 1bb:	45 85 c0             	test   %r8d,%r8d
+ 1be:	0f 8e c4 02 00 00    	jle    488 <getSlice+0x488>
+ 1c4:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 1c9:	c7 44 24 28 00 00 00 	movl   $0x0,0x28(%rsp)
+ 1d0:	00 
+ 1d1:	48 8b 4f d8          	mov    -0x28(%rdi),%rcx
+ 1d5:	48 85 c9             	test   %rcx,%rcx
+ 1d8:	7e 33                	jle    20d <getSlice+0x20d>
+ 1da:	48 8b 33             	mov    (%rbx),%rsi
+ 1dd:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 1e4:	00 
+ 1e5:	31 d2                	xor    %edx,%edx
+ 1e7:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 1ec:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 1f1:	48 83 c2 08          	add    $0x8,%rdx
+ 1f5:	48 39 fa             	cmp    %rdi,%rdx
+ 1f8:	75 ed                	jne    1e7 <getSlice+0x1e7>
+ 1fa:	48 01 d0             	add    %rdx,%rax
+ 1fd:	48 01 f2             	add    %rsi,%rdx
+ 200:	48 83 f9 01          	cmp    $0x1,%rcx
+ 204:	48 89 13             	mov    %rdx,(%rbx)
+ 207:	0f 84 fb 03 00 00    	je     608 <getSlice+0x608>
+ 20d:	8b 7d ec             	mov    -0x14(%rbp),%edi
+ 210:	85 ff                	test   %edi,%edi
+ 212:	0f 8e 27 02 00 00    	jle    43f <getSlice+0x43f>
+ 218:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 21d:	c7 44 24 2c 00 00 00 	movl   $0x0,0x2c(%rsp)
+ 224:	00 
+ 225:	48 8b 7f d0          	mov    -0x30(%rdi),%rdi
+ 229:	48 85 ff             	test   %rdi,%rdi
+ 22c:	7e 38                	jle    266 <getSlice+0x266>
+ 22e:	48 8b 0b             	mov    (%rbx),%rcx
+ 231:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 238:	00 
+ 239:	31 d2                	xor    %edx,%edx
+ 23b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+ 240:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 245:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 24a:	48 83 c2 08          	add    $0x8,%rdx
+ 24e:	48 39 f2             	cmp    %rsi,%rdx
+ 251:	75 ed                	jne    240 <getSlice+0x240>
+ 253:	48 01 d0             	add    %rdx,%rax
+ 256:	48 01 ca             	add    %rcx,%rdx
+ 259:	48 83 ff 01          	cmp    $0x1,%rdi
+ 25d:	48 89 13             	mov    %rdx,(%rbx)
+ 260:	0f 84 92 03 00 00    	je     5f8 <getSlice+0x5f8>
+ 266:	8b 75 e8             	mov    -0x18(%rbp),%esi
+ 269:	85 f6                	test   %esi,%esi
+ 26b:	0f 8e 7e 01 00 00    	jle    3ef <getSlice+0x3ef>
+ 271:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 276:	c7 44 24 14 00 00 00 	movl   $0x0,0x14(%rsp)
+ 27d:	00 
+ 27e:	48 8b 7f c8          	mov    -0x38(%rdi),%rdi
+ 282:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+ 288:	48 85 ff             	test   %rdi,%rdi
+ 28b:	7e 39                	jle    2c6 <getSlice+0x2c6>
+ 28d:	48 8b 0b             	mov    (%rbx),%rcx
+ 290:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 297:	00 
+ 298:	31 d2                	xor    %edx,%edx
+ 29a:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+ 2a0:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 2a5:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 2aa:	48 83 c2 08          	add    $0x8,%rdx
+ 2ae:	48 39 f2             	cmp    %rsi,%rdx
+ 2b1:	75 ed                	jne    2a0 <getSlice+0x2a0>
+ 2b3:	48 01 d0             	add    %rdx,%rax
+ 2b6:	48 01 ca             	add    %rcx,%rdx
+ 2b9:	48 83 ff 01          	cmp    $0x1,%rdi
+ 2bd:	48 89 13             	mov    %rdx,(%rbx)
+ 2c0:	0f 84 22 03 00 00    	je     5e8 <getSlice+0x5e8>
+ 2c6:	8b 4d e4             	mov    -0x1c(%rbp),%ecx
+ 2c9:	85 c9                	test   %ecx,%ecx
+ 2cb:	0f 8e d2 00 00 00    	jle    3a3 <getSlice+0x3a3>
+ 2d1:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 2d6:	45 31 f6             	xor    %r14d,%r14d
+ 2d9:	48 8b 7f c0          	mov    -0x40(%rdi),%rdi
+ 2dd:	0f 1f 00             	nopl   (%rax)
+ 2e0:	48 85 ff             	test   %rdi,%rdi
+ 2e3:	7e 39                	jle    31e <getSlice+0x31e>
+ 2e5:	48 8b 0b             	mov    (%rbx),%rcx
+ 2e8:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 2ef:	00 
+ 2f0:	31 d2                	xor    %edx,%edx
+ 2f2:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+ 2f8:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 2fd:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 302:	48 83 c2 08          	add    $0x8,%rdx
+ 306:	48 39 f2             	cmp    %rsi,%rdx
+ 309:	75 ed                	jne    2f8 <getSlice+0x2f8>
+ 30b:	48 01 d0             	add    %rdx,%rax
+ 30e:	48 01 ca             	add    %rcx,%rdx
+ 311:	48 83 ff 01          	cmp    $0x1,%rdi
+ 315:	48 89 13             	mov    %rdx,(%rbx)
+ 318:	0f 84 ba 02 00 00    	je     5d8 <getSlice+0x5d8>
+ 31e:	8b 55 e0             	mov    -0x20(%rbp),%edx
+ 321:	85 d2                	test   %edx,%edx
+ 323:	7e 2f                	jle    354 <getSlice+0x354>
+ 325:	45 31 ff             	xor    %r15d,%r15d
+ 328:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+ 32f:	00 
+ 330:	4c 89 e9             	mov    %r13,%rcx
+ 333:	4c 89 e2             	mov    %r12,%rdx
+ 336:	48 89 de             	mov    %rbx,%rsi
+ 339:	48 89 c7             	mov    %rax,%rdi
+ 33c:	41 83 c7 01          	add    $0x1,%r15d
+ 340:	e8 00 00 00 00       	callq  345 <getSlice+0x345>
+ 345:	44 3b 7d e0          	cmp    -0x20(%rbp),%r15d
+ 349:	7c e5                	jl     330 <getSlice+0x330>
+ 34b:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 350:	48 8b 7f c0          	mov    -0x40(%rdi),%rdi
+ 354:	48 85 ff             	test   %rdi,%rdi
+ 357:	7e 33                	jle    38c <getSlice+0x38c>
+ 359:	48 8b 0b             	mov    (%rbx),%rcx
+ 35c:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 363:	00 
+ 364:	31 d2                	xor    %edx,%edx
+ 366:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
+ 36d:	00 00 00 
+ 370:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 375:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 37a:	48 83 c2 08          	add    $0x8,%rdx
+ 37e:	48 39 f2             	cmp    %rsi,%rdx
+ 381:	75 ed                	jne    370 <getSlice+0x370>
+ 383:	48 01 d0             	add    %rdx,%rax
+ 386:	48 01 ca             	add    %rcx,%rdx
+ 389:	48 89 13             	mov    %rdx,(%rbx)
+ 38c:	41 83 c6 01          	add    $0x1,%r14d
+ 390:	44 3b 75 e4          	cmp    -0x1c(%rbp),%r14d
+ 394:	0f 8c 46 ff ff ff    	jl     2e0 <getSlice+0x2e0>
+ 39a:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 39f:	48 8b 7f c8          	mov    -0x38(%rdi),%rdi
+ 3a3:	48 85 ff             	test   %rdi,%rdi
+ 3a6:	7e 2c                	jle    3d4 <getSlice+0x3d4>
+ 3a8:	48 8b 0b             	mov    (%rbx),%rcx
+ 3ab:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 3b2:	00 
+ 3b3:	31 d2                	xor    %edx,%edx
+ 3b5:	0f 1f 00             	nopl   (%rax)
+ 3b8:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 3bd:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 3c2:	48 83 c2 08          	add    $0x8,%rdx
+ 3c6:	48 39 f2             	cmp    %rsi,%rdx
+ 3c9:	75 ed                	jne    3b8 <getSlice+0x3b8>
+ 3cb:	48 01 d0             	add    %rdx,%rax
+ 3ce:	48 01 ca             	add    %rcx,%rdx
+ 3d1:	48 89 13             	mov    %rdx,(%rbx)
+ 3d4:	83 44 24 14 01       	addl   $0x1,0x14(%rsp)
+ 3d9:	8b 74 24 14          	mov    0x14(%rsp),%esi
+ 3dd:	3b 75 e8             	cmp    -0x18(%rbp),%esi
+ 3e0:	0f 8c a2 fe ff ff    	jl     288 <getSlice+0x288>
+ 3e6:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 3eb:	48 8b 7f d0          	mov    -0x30(%rdi),%rdi
+ 3ef:	48 85 ff             	test   %rdi,%rdi
+ 3f2:	7e 30                	jle    424 <getSlice+0x424>
+ 3f4:	48 8b 0b             	mov    (%rbx),%rcx
+ 3f7:	48 8d 34 fd 00 00 00 	lea    0x0(,%rdi,8),%rsi
+ 3fe:	00 
+ 3ff:	31 d2                	xor    %edx,%edx
+ 401:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+ 408:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 40d:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 412:	48 83 c2 08          	add    $0x8,%rdx
+ 416:	48 39 f2             	cmp    %rsi,%rdx
+ 419:	75 ed                	jne    408 <getSlice+0x408>
+ 41b:	48 01 d0             	add    %rdx,%rax
+ 41e:	48 01 ca             	add    %rcx,%rdx
+ 421:	48 89 13             	mov    %rdx,(%rbx)
+ 424:	83 44 24 2c 01       	addl   $0x1,0x2c(%rsp)
+ 429:	8b 74 24 2c          	mov    0x2c(%rsp),%esi
+ 42d:	3b 75 ec             	cmp    -0x14(%rbp),%esi
+ 430:	0f 8c f3 fd ff ff    	jl     229 <getSlice+0x229>
+ 436:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 43b:	48 8b 4f d8          	mov    -0x28(%rdi),%rcx
+ 43f:	48 85 c9             	test   %rcx,%rcx
+ 442:	7e 29                	jle    46d <getSlice+0x46d>
+ 444:	48 8b 33             	mov    (%rbx),%rsi
+ 447:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 44e:	00 
+ 44f:	31 d2                	xor    %edx,%edx
+ 451:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 456:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 45b:	48 83 c2 08          	add    $0x8,%rdx
+ 45f:	48 39 fa             	cmp    %rdi,%rdx
+ 462:	75 ed                	jne    451 <getSlice+0x451>
+ 464:	48 01 d0             	add    %rdx,%rax
+ 467:	48 01 f2             	add    %rsi,%rdx
+ 46a:	48 89 13             	mov    %rdx,(%rbx)
+ 46d:	83 44 24 28 01       	addl   $0x1,0x28(%rsp)
+ 472:	8b 7c 24 28          	mov    0x28(%rsp),%edi
+ 476:	3b 7d f0             	cmp    -0x10(%rbp),%edi
+ 479:	0f 8c 56 fd ff ff    	jl     1d5 <getSlice+0x1d5>
+ 47f:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 484:	48 8b 4f e0          	mov    -0x20(%rdi),%rcx
+ 488:	48 85 c9             	test   %rcx,%rcx
+ 48b:	7e 29                	jle    4b6 <getSlice+0x4b6>
+ 48d:	48 8b 33             	mov    (%rbx),%rsi
+ 490:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 497:	00 
+ 498:	31 d2                	xor    %edx,%edx
+ 49a:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 49f:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 4a4:	48 83 c2 08          	add    $0x8,%rdx
+ 4a8:	48 39 fa             	cmp    %rdi,%rdx
+ 4ab:	75 ed                	jne    49a <getSlice+0x49a>
+ 4ad:	48 01 d0             	add    %rdx,%rax
+ 4b0:	48 01 f2             	add    %rsi,%rdx
+ 4b3:	48 89 13             	mov    %rdx,(%rbx)
+ 4b6:	83 44 24 24 01       	addl   $0x1,0x24(%rsp)
+ 4bb:	8b 7c 24 24          	mov    0x24(%rsp),%edi
+ 4bf:	3b 7d f4             	cmp    -0xc(%rbp),%edi
+ 4c2:	0f 8c b7 fc ff ff    	jl     17f <getSlice+0x17f>
+ 4c8:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 4cd:	48 8b 4f e8          	mov    -0x18(%rdi),%rcx
+ 4d1:	48 85 c9             	test   %rcx,%rcx
+ 4d4:	7e 29                	jle    4ff <getSlice+0x4ff>
+ 4d6:	48 8b 33             	mov    (%rbx),%rsi
+ 4d9:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 4e0:	00 
+ 4e1:	31 d2                	xor    %edx,%edx
+ 4e3:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 4e8:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 4ed:	48 83 c2 08          	add    $0x8,%rdx
+ 4f1:	48 39 fa             	cmp    %rdi,%rdx
+ 4f4:	75 ed                	jne    4e3 <getSlice+0x4e3>
+ 4f6:	48 01 d0             	add    %rdx,%rax
+ 4f9:	48 01 f2             	add    %rsi,%rdx
+ 4fc:	48 89 13             	mov    %rdx,(%rbx)
+ 4ff:	83 44 24 20 01       	addl   $0x1,0x20(%rsp)
+ 504:	8b 7c 24 20          	mov    0x20(%rsp),%edi
+ 508:	3b 7d f8             	cmp    -0x8(%rbp),%edi
+ 50b:	0f 8c 18 fc ff ff    	jl     129 <getSlice+0x129>
+ 511:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 516:	48 8b 4f f0          	mov    -0x10(%rdi),%rcx
+ 51a:	48 85 c9             	test   %rcx,%rcx
+ 51d:	7e 29                	jle    548 <getSlice+0x548>
+ 51f:	48 8b 33             	mov    (%rbx),%rsi
+ 522:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 529:	00 
+ 52a:	31 d2                	xor    %edx,%edx
+ 52c:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 531:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 536:	48 83 c2 08          	add    $0x8,%rdx
+ 53a:	48 39 fa             	cmp    %rdi,%rdx
+ 53d:	75 ed                	jne    52c <getSlice+0x52c>
+ 53f:	48 01 d0             	add    %rdx,%rax
+ 542:	48 01 f2             	add    %rsi,%rdx
+ 545:	48 89 13             	mov    %rdx,(%rbx)
+ 548:	83 44 24 1c 01       	addl   $0x1,0x1c(%rsp)
+ 54d:	8b 7c 24 1c          	mov    0x1c(%rsp),%edi
+ 551:	3b 7d fc             	cmp    -0x4(%rbp),%edi
+ 554:	0f 8c 79 fb ff ff    	jl     d3 <getSlice+0xd3>
+ 55a:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 55f:	48 8b 4f f8          	mov    -0x8(%rdi),%rcx
+ 563:	48 85 c9             	test   %rcx,%rcx
+ 566:	0f 8f c5 00 00 00    	jg     631 <getSlice+0x631>
+ 56c:	83 44 24 18 01       	addl   $0x1,0x18(%rsp)
+ 571:	8b 7c 24 18          	mov    0x18(%rsp),%edi
+ 575:	39 7d 00             	cmp    %edi,0x0(%rbp)
+ 578:	0f 8f ff fa ff ff    	jg     7d <getSlice+0x7d>
+ 57e:	48 8b 7c 24 08       	mov    0x8(%rsp),%rdi
+ 583:	48 8b 17             	mov    (%rdi),%rdx
+ 586:	e9 90 00 00 00       	jmpq   61b <getSlice+0x61b>
+ 58b:	48 63 55 00          	movslq 0x0(%rbp),%rdx
+ 58f:	48 c1 e2 03          	shl    $0x3,%rdx
+ 593:	48 01 13             	add    %rdx,(%rbx)
+ 596:	ba 01 00 00 00       	mov    $0x1,%edx
+ 59b:	48 8b 0b             	mov    (%rbx),%rcx
+ 59e:	48 8d 34 d5 00 00 00 	lea    0x0(,%rdx,8),%rsi
+ 5a5:	00 
+ 5a6:	31 d2                	xor    %edx,%edx
+ 5a8:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 5ad:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 5b2:	48 83 c2 08          	add    $0x8,%rdx
+ 5b6:	48 39 f2             	cmp    %rsi,%rdx
+ 5b9:	75 ed                	jne    5a8 <getSlice+0x5a8>
+ 5bb:	48 01 d0             	add    %rdx,%rax
+ 5be:	48 01 ca             	add    %rcx,%rdx
+ 5c1:	48 89 13             	mov    %rdx,(%rbx)
+ 5c4:	48 83 c4 38          	add    $0x38,%rsp
+ 5c8:	5b                   	pop    %rbx
+ 5c9:	5d                   	pop    %rbp
+ 5ca:	41 5c                	pop    %r12
+ 5cc:	41 5d                	pop    %r13
+ 5ce:	41 5e                	pop    %r14
+ 5d0:	41 5f                	pop    %r15
+ 5d2:	c3                   	retq   
+ 5d3:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+ 5d8:	48 63 55 e0          	movslq -0x20(%rbp),%rdx
+ 5dc:	48 c1 e2 03          	shl    $0x3,%rdx
+ 5e0:	48 01 13             	add    %rdx,(%rbx)
+ 5e3:	e9 71 fd ff ff       	jmpq   359 <getSlice+0x359>
+ 5e8:	48 63 55 e4          	movslq -0x1c(%rbp),%rdx
+ 5ec:	48 c1 e2 03          	shl    $0x3,%rdx
+ 5f0:	48 01 13             	add    %rdx,(%rbx)
+ 5f3:	e9 b0 fd ff ff       	jmpq   3a8 <getSlice+0x3a8>
+ 5f8:	48 63 55 e8          	movslq -0x18(%rbp),%rdx
+ 5fc:	48 c1 e2 03          	shl    $0x3,%rdx
+ 600:	48 01 13             	add    %rdx,(%rbx)
+ 603:	e9 ec fd ff ff       	jmpq   3f4 <getSlice+0x3f4>
+ 608:	48 63 55 ec          	movslq -0x14(%rbp),%rdx
+ 60c:	48 c1 e2 03          	shl    $0x3,%rdx
+ 610:	48 01 13             	add    %rdx,(%rbx)
+ 613:	e9 2c fe ff ff       	jmpq   444 <getSlice+0x444>
+ 618:	48 89 ca             	mov    %rcx,%rdx
+ 61b:	48 85 d2             	test   %rdx,%rdx
+ 61e:	0f 8f 77 ff ff ff    	jg     59b <getSlice+0x59b>
+ 624:	eb 9e                	jmp    5c4 <getSlice+0x5c4>
+ 626:	48 63 55 fc          	movslq -0x4(%rbp),%rdx
+ 62a:	48 c1 e2 03          	shl    $0x3,%rdx
+ 62e:	48 01 13             	add    %rdx,(%rbx)
+ 631:	48 8b 33             	mov    (%rbx),%rsi
+ 634:	48 8d 3c cd 00 00 00 	lea    0x0(,%rcx,8),%rdi
+ 63b:	00 
+ 63c:	31 d2                	xor    %edx,%edx
+ 63e:	f2 0f 10 04 16       	movsd  (%rsi,%rdx,1),%xmm0
+ 643:	f2 0f 11 04 10       	movsd  %xmm0,(%rax,%rdx,1)
+ 648:	48 83 c2 08          	add    $0x8,%rdx
+ 64c:	48 39 fa             	cmp    %rdi,%rdx
+ 64f:	75 ed                	jne    63e <getSlice+0x63e>
+ 651:	48 01 d0             	add    %rdx,%rax
+ 654:	48 01 f2             	add    %rsi,%rdx
+ 657:	48 89 13             	mov    %rdx,(%rbx)
+ 65a:	e9 0d ff ff ff       	jmpq   56c <getSlice+0x56c>
+ 65f:	48 63 55 f8          	movslq -0x8(%rbp),%rdx
+ 663:	48 c1 e2 03          	shl    $0x3,%rdx
+ 667:	48 01 13             	add    %rdx,(%rbx)
+ 66a:	e9 b0 fe ff ff       	jmpq   51f <getSlice+0x51f>
+ 66f:	48 63 55 f0          	movslq -0x10(%rbp),%rdx
+ 673:	48 c1 e2 03          	shl    $0x3,%rdx
+ 677:	48 01 13             	add    %rdx,(%rbx)
+ 67a:	e9 0e fe ff ff       	jmpq   48d <getSlice+0x48d>
+ 67f:	48 63 55 f4          	movslq -0xc(%rbp),%rdx
+ 683:	48 c1 e2 03          	shl    $0x3,%rdx
+ 687:	48 01 13             	add    %rdx,(%rbx)
+ 68a:	e9 47 fe ff ff       	jmpq   4d6 <getSlice+0x4d6>
+ 68f:	90                   	nop
+
+0000000000000690 <getHalo>:
+ 690:	41 56                	push   %r14
+ 692:	4d 63 c0             	movslq %r8d,%r8
+ 695:	41 55                	push   %r13
+ 697:	41 54                	push   %r12
+ 699:	4e 8d 64 c2 f8       	lea    -0x8(%rdx,%r8,8),%r12
+ 69e:	55                   	push   %rbp
+ 69f:	4a 8d 6c 81 fc       	lea    -0x4(%rcx,%r8,4),%rbp
+ 6a4:	53                   	push   %rbx
+ 6a5:	48 83 ec 10          	sub    $0x10,%rsp
+ 6a9:	48 89 74 24 08       	mov    %rsi,0x8(%rsp)
+ 6ae:	49 8b 34 24          	mov    (%r12),%rsi
+ 6b2:	48 85 f6             	test   %rsi,%rsi
+ 6b5:	7e 3d                	jle    6f4 <getHalo+0x64>
+ 6b7:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+ 6bc:	48 8d 0c f5 00 00 00 	lea    0x0(,%rsi,8),%rcx
+ 6c3:	00 
+ 6c4:	31 d2                	xor    %edx,%edx
+ 6c6:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
+ 6cd:	00 00 00 
+ 6d0:	f2 0f 10 04 10       	movsd  (%rax,%rdx,1),%xmm0
+ 6d5:	f2 0f 11 04 17       	movsd  %xmm0,(%rdi,%rdx,1)
+ 6da:	48 83 c2 08          	add    $0x8,%rdx
+ 6de:	48 39 ca             	cmp    %rcx,%rdx
+ 6e1:	75 ed                	jne    6d0 <getHalo+0x40>
+ 6e3:	48 01 d7             	add    %rdx,%rdi
+ 6e6:	48 01 c2             	add    %rax,%rdx
+ 6e9:	48 83 fe 01          	cmp    $0x1,%rsi
+ 6ed:	48 89 54 24 08       	mov    %rdx,0x8(%rsp)
+ 6f2:	74 6c                	je     760 <getHalo+0xd0>
+ 6f4:	8b 45 00             	mov    0x0(%rbp),%eax
+ 6f7:	85 c0                	test   %eax,%eax
+ 6f9:	7e 79                	jle    774 <getHalo+0xe4>
+ 6fb:	4c 8d 75 fc          	lea    -0x4(%rbp),%r14
+ 6ff:	4d 8d 6c 24 f8       	lea    -0x8(%r12),%r13
+ 704:	31 db                	xor    %ebx,%ebx
+ 706:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
+ 70d:	00 00 00 
+ 710:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 715:	4c 89 f1             	mov    %r14,%rcx
+ 718:	4c 89 ea             	mov    %r13,%rdx
+ 71b:	83 c3 01             	add    $0x1,%ebx
+ 71e:	e8 00 00 00 00       	callq  723 <getHalo+0x93>
+ 723:	3b 5d 00             	cmp    0x0(%rbp),%ebx
+ 726:	48 89 c7             	mov    %rax,%rdi
+ 729:	7c e5                	jl     710 <getHalo+0x80>
+ 72b:	49 8b 04 24          	mov    (%r12),%rax
+ 72f:	48 85 c0             	test   %rax,%rax
+ 732:	7e 1f                	jle    753 <getHalo+0xc3>
+ 734:	48 8b 4c 24 08       	mov    0x8(%rsp),%rcx
+ 739:	48 c1 e0 03          	shl    $0x3,%rax
+ 73d:	31 d2                	xor    %edx,%edx
+ 73f:	90                   	nop
+ 740:	f2 0f 10 04 11       	movsd  (%rcx,%rdx,1),%xmm0
+ 745:	f2 0f 11 04 17       	movsd  %xmm0,(%rdi,%rdx,1)
+ 74a:	48 83 c2 08          	add    $0x8,%rdx
+ 74e:	48 39 c2             	cmp    %rax,%rdx
+ 751:	75 ed                	jne    740 <getHalo+0xb0>
+ 753:	48 83 c4 10          	add    $0x10,%rsp
+ 757:	5b                   	pop    %rbx
+ 758:	5d                   	pop    %rbp
+ 759:	41 5c                	pop    %r12
+ 75b:	41 5d                	pop    %r13
+ 75d:	41 5e                	pop    %r14
+ 75f:	c3                   	retq   
+ 760:	48 63 45 00          	movslq 0x0(%rbp),%rax
+ 764:	48 c1 e0 03          	shl    $0x3,%rax
+ 768:	48 01 44 24 08       	add    %rax,0x8(%rsp)
+ 76d:	b8 01 00 00 00       	mov    $0x1,%eax
+ 772:	eb c0                	jmp    734 <getHalo+0xa4>
+ 774:	48 89 f0             	mov    %rsi,%rax
+ 777:	eb b6                	jmp    72f <getHalo+0x9f>

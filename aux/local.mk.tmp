@@ -1,0 +1,33 @@
+##
+## @file		local makefile input
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+## @copyright	University of Oslo, Norway
+## @brief		local makefile input
+## @date		23.02.16
+##
+## Local adjustments to the makefile can be stored in a file local.mk for which
+## this file (local.mk.tmp) is a template. Supported local adjustments are
+## indicated below
+##
+
+# Which command/program to use to compile and link source code.
+# If you do not set this it defaults to 'mpicc'.
+#
+# CC = mycomplier
+
+# Which optimization flag(s) to use for your compiler. Default is '-O3'.
+#
+# COPT = -myflag
+
+# Which include paths (for .h files) to use and lib paths (for .so/.dylib files)
+# to use for both compiling (C) and linking (L).s) 
+
+# Local flags to add to the compiler and linker. For instance, you can add -I
+# to add path with header files, -L for paths containing libraries, and -l to
+# specify library files to use. CLOCAL and LLOCAL is for compilation and
+# linking, respectively.
+#
+# CLOCAL = 	-Ilib/iniparser/src\
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3
+# LLOCAL = 	-Ilib/iniparser/src\
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3

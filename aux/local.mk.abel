@@ -1,0 +1,50 @@
+##
+## @file		local makefile input
+## @brief		local makefile input
+## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+##
+## Local adjustments to the makefile can be stored in a file local.mk for which
+## this file (local.mk.tmp) is a template. Supported local adjustments are
+## indicated below
+##
+
+# Which command/program to use to compile and link source code.
+# If you do not set this it defaults to 'mpicc'.
+#
+# CC = mycomplier
+
+# Which optimization flag(s) to use for your compiler. Default is '-O3'.
+#
+# COPT = -myflag
+
+# Local flags to add to the compiler. Especially useful if you have libraries
+# installed in non-standard manners. For instance, you can add -I to add path
+# with header files, -L for paths containing libraries, and -l to specify
+# library files to use, although for the libraries in use the -l parameters
+# are most likely already correctly set in the makefile. For instance, if you
+# have a library with header files in /usr/mylib/include/ and the library
+# files in /usr/mylib/lib/ then you may want to do like this:
+#
+#
+# CLOCAL =	-Ilib/iniparser/src		\
+# 			-I/usr/mylib/include/	\
+#			-L/usr/mylib/lib/		\
+#			-I/usr/mylib2/include	\
+#			-L/usr/mylib2/lib		\
+#			-lm						\
+#			-lgslcblas				\
+#			-lgsl					\
+#			-lhdf5
+
+CLOCAL =	-Ilib/iniparser/src									\
+			-I/usit/abel/u1/sigvaldm/hdf5-1.8.17/include		\
+			-L/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib			\
+			-I/cluster/software/VERSIONS/gsl-1.16/include/gsl	\
+			-L/cluster/software/VERSIONS/gsl-1.16/lib			\
+			-lm													\
+			-lgslcblas											\
+			-lgsl												\
+			-lhdf5												\
+			-lfftw3
+
+LLOCAL = $(CLOCAL)

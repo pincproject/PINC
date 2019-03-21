@@ -1,0 +1,354 @@
+
+	TODO and wishlist
+
+This file describes tasks that needs to be done with PINC. The todo-list is
+reserved for prioritized tasks that needs soon to be done, or are ongoing. The
+wish-list is other items that is either considered an optional future
+implementation, or even a necessary task but which is too far into the future
+to consider properly at this point.
+
+Please add tasks as they come into your mind, but please follow the formatting
+conventions of this file, and add your name to the task so others know who to
+ask if they don't understand what's the meaning. Keep few elements on the
+todo-list. We will move elements from the wish list to the todo-list as we go.
+The wish-list can be used freely.
+
+															Sigvald Marholm
+															17.02.16
+
+===============================================================================
+	TODO-list
+-------------------------------------------------------------------------------
+
+ENERGY DIAGNOSTIC
+
+	Calculate total (for the whole system of particles) kinetic and potential
+	energy each time step and store to some (probably new) .h5 file. This is
+	useful for studying energy conservation of the algorithm. Potential energy
+	for each particle should be computed as charge times potential rather than
+	for instance using the E-field squared due to accuracy (see Birdsall and
+	Langdon).
+															Sigvald Marholm
+															17.02.16
+TEST SIMULATIONS
+
+	Performing the following full PIC test simulations:
+		- Two heavily charged particles oscillationg in a potential well.
+		- Consider thermalization of particles of non-thermal particles.
+		- Langmuir oscillations while observing energy conservation.
+		- Two-stream instability
+
+															Sigvald Marholm
+															17.02.16
+ABSORBING/REFLECTING PARTICLE BOUNDARIES
+
+	Implement absorbing/reflecting particles boundaries. How to is already
+	planned.
+															Sigvald Marholm
+															17.02.16
+SAFE PARTICLE MIGRATION
+
+	Today the particle migration algorithm is not safe, i.e. it is prone to
+	segmentation faults. Check buffer of emigrants as it fill up locally and
+	make sure not to overrun it, and also make sure before sending MPI message
+	that receiver has enough space. If not, dump .pop.h5 for later
+	continuation of simulation with more resources.
+															Sigvald Marholm
+															17.02.16
+FUNC.C
+
+	Separate functions assigning values to a grid (gVal-functions) to a	
+	separate grid.func.c files which may be like a collection of functions.
+	Similarly, pPos and pVel functions may be put in population.func.c.
+
+															Sigvald Marholm
+															17.02.16
+SEPARATE PARTICLE MIGRATION
+
+	The particle migration and boundary condition handling of particles has
+	become rather complex and is larger than the rest of the pusher.
+	It needs to be a separate module.
+															Sigvald Marholm
+															17.02.16
+SEPARATE MPIINFO
+
+	Rename MpiInfo to e.g. Domain an separate it into a new module with its
+	own prefix. It describes the domain decomposition. Other means of
+	parallelization probably requires other functionality, and can have other
+	functions and, if necessary, structs. This also means that one should stop
+	using MpiInfo as input for functions which, for instance, only need to
+	retrieve the MPI rank. There are probably no functions which takes in
+	MpiInfo for this reason today which needs to be fast. So there is no reason
+	to misuse the future Domain struct like that. However, it is not
+	necessarily considered misuse of the Domain struct to use it for functions
+	while using other parallelization techniques. For instance, a function
+	imposing boundary conditions on the particles while taking care of which
+	subdomains they should be sent to should also work on a single-subdomain
+	simulation. Thus no need to re-implement boundary conditions for different
+	parallization techniques. In such cases, the number of subdomains one, and
+	not equal to the MPI rank.
+															Sigvald Marholm
+															17.02.16
+
+IDIOMATIC PINC PROGRAMMING PDF-FILE
+
+	Introduction to new programmers on how to write idiomatic PINC code, i.e.
+	how we typically write code, our design philosophies and so on. This may
+	include for instance why we use 1D arrays, why we use C rather than C++,
+	how we work with generally sized stuff (e.g. N dimensions) in 1D arrays in
+	the most convenient and efficient way. How to use arithmetics rather than
+	branch predicitions, etc. I intend to put relevant examples mainly from
+	PINC in this file. This should ensure that we all write code in a coherent
+	and efficient way. 
+															Sigvald Marholm
+															17.02.16
+
+MG OPTIMAL SETTINGS
+	
+	Making a routine that runs with several different MG cycle settings, and
+	finds the optimal settings.
+
+															Gullik Vetvik Killie
+															25.02.16
+
+INIPARSER SAFETY
+
+	Iniparser doesn't give a warning for empty inputs, but rather an invalid
+	value (often set to zero). Change this so we get an ERROR for invalid input
+	key.
+
+															Sigvald Marholm
+															02.03.16
+
+MG CYCLES
+
+	Build additional MG cycles, for example FMG and W cycles. This can be done
+	with the building using different V cycles that starts and end at different
+	levels. They should be setable from the input file.
+
+															Gullik Vetvik Killie
+															26.02.16
+
+
+ATTRIBUTES FOR HISTORY H5 FILE
+
+	History H5 file should have attributes specifying how to normalize the
+	quantities stored.
+															Sigvald Marholm
+															16.03.16
+
+
+===============================================================================
+	WISH-list
+-------------------------------------------------------------------------------
+
+VELOCITY DISTRIBUTION DIAGNOSTIC
+
+	Calculate velocity distribution and store to file. Most of the diagnostic
+	can be post-processing on the .h5 files in for instance Python. However, it
+	may be of interest to directly extract the velocity distribution in PINC
+	since storing all particles each time-step and manually computing the
+	velocity distribution is both too time- and memory-consuming. This feature
+	enables us to visualize the time evolution of the velocity distribution
+	more easily.
+															Sigvald Marholm
+															17.02.16
+ELIMINATE INT TYPE
+
+	Since int is the same size as long int on most architectures, consider
+	using only long int (or better: making a typedef for long int). This will
+	cut array-functions (e.g. aiSum) by a third, and make the program more
+	streamlined in general.
+															Sigvald Marholm
+															17.02.16
+SCRIPT FOR DUSTY SPECIES
+
+	In the case of simulations of large objects with dust, it is unfeasible to
+	implement each dust grain as a separate object that may accumulate charge.
+	Instead, one can sample the charge-mass ration from a theoretical/empirical
+	distribution and add a dust specie for each sample.
+															Sigvald Marholm
+															17.02.16
+OBJECTS ON FIELD GRID
+
+	Implement objects that follow the grid of the fields and thus may have
+	stair-casing. Includes ray-tracing and capacitance matrix method. Should be
+	significantly faster than objects on individal grids. Objects may be
+	specified by bitmap images (Jan's idea) or better yet, as .h5-files.
+	A good plan of ray-tracing is already in-place. Capacitance matrix is not.
+
+															Sigvald Marholm
+															17.02.16
+OBJECTS WITH INDIVIDUAL GRIDS
+
+	Implements objects that may have non-simple geometries with separate meshes
+	and position not necessarily coinciding with field grid (inherit algorithm
+	from DiP3D).
+															Sigvald Marholm
+															17.02.16
+LOADING POPULATION
+
+	Possibility to load .pop.h5 file as initial conditions. This enables us to
+	proceed from previous simulations stopped due to insufficient resources. It
+	is also a way for the user to define exotic initial distributions to the
+	particles, as the user can place the particles arbitrarily in a script.
+
+															Sigvald Marholm
+															17.02.16
+LOADING GRIDS/IMPOSING EXTERNAL FIELDS
+
+	Possibility to load .grid.h5 files which can be used as externally applied
+	fields, e.g. potential wells or external magnetic fields.
+
+															Sigvald Marholm
+															17.02.16
+1st ORDER ND WEIGHTING FUNCTIONS
+
+	The algorithm is already created. Just to put it into the PINC source code.
+
+															Sigvald Marholm
+															17.02.16
+
+0th ORDER WEIGHTING FUNCTIONS
+
+	ND and possibly 3D if any significant benefit. Should be simple.
+
+															Sigvald Marholm
+															17.02.16
+
+2nd ORDER WEIGHTING FUNCTIONS (SPLINES)
+
+	3D and/or possibly ND if not too hard.
+															Sigvald Marholm
+															17.02.16
+
+BORIS ALGORITHM
+
+	Implement boris algorithm to allow for external magnetic field. It would be
+	interesting with two versions, one that takes a constant homogeneous
+	B-field by means of a simple vector, and one that takes inhomogeneous (and
+	possibly quasi-static) B-fields by means of a Grid struct. Take care of
+	proper normalization of the boris algorithm.
+															Sigvald Marholm
+															17.02.16
+INJECTION OF PARTICLES
+
+	Injection of particles according to a certain distribution (see Birdsall
+	and Langdon) at boundary to model incoming flux of particles of an open
+	domain.
+															Sigvald Marholm
+															17.02.16
+TEST PARTICLE METHOD
+
+	Implement test particle method. I.e. import a fixed field which is output
+	from another simulation through .h5-file and place particles on that field
+	and follow their trajectories in space. We already have all the components
+	needed. Useful for generating streamline-like stuff.
+															Sigvald Marholm
+															17.02.16
+
+IMPLICIT METHOD
+
+	Semi-implicit solver.
+															Sigvald Marholm
+															17.02.16
+POLAR GRID
+
+	Polar grid. May not be that useful, actually.
+															Sigvald Marholm
+															17.02.16
+CURVILINEAR TRANSFORMS
+
+	Non-uniform grids through transformations from curvilinear grid to unifrom
+	grid. Has several restrictions, and may not be worth implementing. May be
+	better to consider non-structured grids instead, however, that may be
+	difficult to implement directly in PINC. See cPic.
+															Sigvald Marholm
+															17.02.16
+PHOTOELECTRON EMISSION
+
+	Sounds cool!
+															Sigvald Marholm
+															17.02.16
+SANITATION
+
+	Implement a proper sanitation proceedure, e.g. checking that all functions
+	are used only with input thay can be used on. Requires some good software
+	design.
+															Sigvald Marholm
+															17.02.16
+MAKING A BUILD SERVER
+
+	Making a Git build server that compiles the code pushed and runs unit
+	tests on it. If PINC fails to build, the push is rejected.
+
+															Sigvald Marholm
+															17.02.16
+CREATING PLASMA STREAMS APP
+
+	In the vein of atomify, and the other educational apps, create at CompPhys,
+	it would be nice to look into the possibility of running PinC in realtime
+	on a tablet/phone.
+						
+															Gullik Vetvik Killie
+															17-03.16
+
+===============================================================================
+	DONE-list
+-------------------------------------------------------------------------------
+
+COMPLETE MAIN ROUTINE	
+
+	Write a complete main routine which is actually able to call the correct
+	sequence of the functions we already have, and run a complete simulation.
+	We need to think about how the main file selects which functions and
+	modules to run based on the information in the ini-file.
+															Sigvald Marholm
+															17.02.16
+	Done by:	Gullik Killie
+				07.03.16
+
+CLEANING UP OUR GIT WORKFLOW
+
+	Our workflow in Git is a mess with back and forth merging. It has worked
+	well enough since we are only two programmers, both dedicated on code
+	quality. It becomes exponentially (I guess) more important the more
+	programmers we become. It is of utmost importance that our feature branches
+	are short-lived and merged back into master (or develop) for others to
+	benefit of our work without messy merging operations. We should also, then,
+	consider migrating to Gitflow rather than Feature Branch Workflow. Also,
+	it would probably be nice that new programmers are not allowed to merge
+	directly, but that origin relay the request of merging back to the
+	repository administrator (that's me) so that he can verify their code
+	before accepting the merge, and call them a motherfucker whenever they
+	write bad code,	or disobey our conventions. As they become accustomed to
+	our standards, they can gain right to merge themselves.
+															Sigvald Marholm
+															17.02.16
+	Done by:	Sigvald Marholm
+				16.03.16
+				
+
+
+
+MEMORY LEAKS
+	
+	Go through and locate a memory leak probably found in the interactHalo functions.
+
+															Gullik Vetvik Killie
+
+															26.02.16
+	Done by:	Gullik Killie
+		14.03.16
+
+UPDATE INTRODUCTION FILE
+
+	Update introduction file, more thourough discussion of how to use Git.
+	Consider switching from feature branch work flow to Gitflow.
+
+															Sigvald Marholm
+															17.02.16
+	Done by:	Sigvald Marholm
+				16.03.16
+
+
