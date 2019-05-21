@@ -1496,7 +1496,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  void inline static mgVRecursiveInner(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
   									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
-
+    
  	//Solve and return at coarsest level
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, TOHALO);
@@ -1516,7 +1516,6 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	Grid *phi = mgPhi->grids[level];
  	Grid *rho = mgRho->grids[level];
  	Grid *res = mgRes->grids[level];
-
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
  	gNeutralizeGrid(rho,mpiInfo);
@@ -1695,7 +1694,6 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	// gZero(mgPhi->grids[0]);
 	double tol = 1.E-10;
 	double barRes = 2.;
-
 	if(nLevels >1){
 		while(barRes > tol){
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
@@ -1704,7 +1702,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
 			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
 			barRes = sqrt(barRes);
-			// msg(STATUS, "barRes = %f", barRes);
+			//msg(STATUS, "barRes = %f", barRes);
 		}
 		// for(int c = 0; c < nMGCycles; c++){
 		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);

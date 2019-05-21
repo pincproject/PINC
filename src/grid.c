@@ -386,6 +386,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
 	// TBD: Ommitting this seems to yield race condition between consecutive
 	// calls to gHaloOpDim(). I'm not quite sure why so this should be
 	// investigated further.
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Send and recieve upper (tag 1)
@@ -785,7 +786,6 @@ void gAddTo(Grid *result, Grid *addition){
 	long int *sizeProd = result->sizeProd;
 	double *resultVal = result->val;
 	double *addVal = addition->val;
-
 	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] += addVal[g];
 
 }
