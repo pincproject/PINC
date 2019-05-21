@@ -12,14 +12,14 @@
  * @brief Represents an object
  */
 typedef struct{
-	Grid *domain;					///< Represents precense of objects
+	Grid *domain;					///< Represents presence of objects
 	long int *lookupInterior;		///< Indices of the interior of the objects
 	long int *lookupInteriorOffset;	///< Offset in the above per object (nObjects+1 elements)
-    long int *lookupSurface;        ///< Indices of the surface nodes of the objects
-    long int *lookupSurfaceOffset;  ///< Offset in the above per object (nObjects+1 elements)
-    double *capMatrixAll;           ///< Array holding the capacitance matrices for each object
-    long int *capMatrixAllOffsets;  ///< Offset in the above per object (nObjects*(size+1) elements)
-    double *capMatrixSum;           ///< Array holding the total sum of capMatrix elements (nObjects elements)
+  long int *lookupSurface;        ///< Indices of the surface nodes of the objects
+  long int *lookupSurfaceOffset;  ///< Offset in the above per object (nObjects+1 elements)
+  double *capMatrix;              ///< Array holding the capacitance matrices for each object
+  double capMatrixInvSum;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
+  double *invNeedCoffeeMatrix;    ///< Better name wanted...
 	int nObjects;					///< Number of objects
 } Object;
 
@@ -76,17 +76,18 @@ void oCloseH5(Object *obj);
 void oReadH5(Object *obj, const MpiInfo *mpiInfo);
 
 /**
- * @brief   Compute the capacitance matrix for each object.
+ * @brief   Compute the capacitance matrix. (one big matrix containing all objects)
  * @param	obj		Object
  * @param	ini		input settings
  * @return	void
  *
- * Compute the capacitance matrix for each object.
+ * Compute the capacitance matrix.
  */
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo);
+void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
+                               const MpiInfo *mpiInfo);
 
 /**
- * @brief	Apply the capacitance matrices
+ * @brief	Apply the capacitance matrix
  * @param   rho         Grid
  * @param   phi         Grid
  * @param	obj         Object
@@ -95,7 +96,8 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
  *
  * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
  */
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo);
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
+                             const MpiInfo *mpiInfo);
 
 /**
  * @brief	Collect the charge inside each object
@@ -107,7 +109,8 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
  *
  * Collect the charge inside each object.
  */
-void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
+                          const MpiInfo *mpiInfo);
 
 /**
  * TO IMPLEMENT!
