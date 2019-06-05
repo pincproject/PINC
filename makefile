@@ -53,7 +53,7 @@ LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
 all: version $(EXEC) cleantestdata doc
 
-jan: version $(EXEC)
+trym: version $(EXEC)
 
 local: version $(EXEC).local cleantestdata doc
 

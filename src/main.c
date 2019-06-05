@@ -110,19 +110,20 @@ void regular(dictionary *ini){
 	 * PREPARE FILES FOR WRITING
 	 */
 
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
+	//int rank = phi->rank;
+/* 	double *denorm = malloc((rank-1)*sizeof(*denorm));
 	double *dimen = malloc((rank-1)*sizeof(*dimen));
 
 	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
-	for(int d=1; d < rank; d++) dimen[d-1] = 1.;
+	for(int d=1; d < rank; d++) dimen[d-1] = 1.; */
+	double denorm = 1.;
 
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-    gOpenH5(ini, rhoObj, mpiInfo, denorm, dimen, "rhoObj");        // for capMatrix - objects
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-    oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");          // for capMatrix - objects
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, denorm, "rho");
+    gOpenH5(ini, rhoObj, mpiInfo, units, denorm, "rhoObj");        // for capMatrix - objects
+	gOpenH5(ini, phi, mpiInfo, units, denorm, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, denorm, "E");
+    oOpenH5(ini, obj, mpiInfo, units, denorm, "test");          // for capMatrix - objects
     oReadH5(obj, mpiInfo);                                      // for capMatrix - objects
 
 
@@ -135,18 +136,15 @@ void regular(dictionary *ini){
 	/*
 	 * INITIAL CONDITIONS
 	 */
-    
-    //Compute capacitance matrix
-    oComputeCapacitanceMatrix(obj, ini, mpiInfo);               // for capMatrix - objects
 
-    //Compute capacitance matrix
-    
+    //Compute capacitance matrix 
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
     
 	// Initalize particles
 	// pPosUniform(ini, pop, mpiInfo, rngSync);
 	pPosLattice(ini, pop, mpiInfo);
 	pVelZero(pop);
+	
 	// pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
@@ -175,7 +173,7 @@ void regular(dictionary *ini){
 
 	// Get initial E-field
 
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	solve(solver, rho, phi, mpiInfo); //sSolve, not MGSOLVE! 05/09/19
     gWriteH5(phi, mpiInfo, (double) 0);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -227,44 +225,21 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
         // Keep writing Rho here.
-    gWriteH5(rho, mpiInfo, (double) n);
+    	gWriteH5(rho, mpiInfo, (double) n);
         gWriteH5(rhoObj, mpiInfo, (double) n);
         // Add object charge to rho.
         gAddTo(rho, rhoObj);
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 		//gAssertNeutralGrid(rho, mpiInfo);
-
-        // Keep writing Rho here.
-        //gWriteH5(rho, mpiInfo, (double) n);                 // for capMatrix - objects
-        //gWriteH5(rhoObj, mpiInfo, (double) n);              // for capMatrix - objects
-        // Add object charge to rho.
-        gAddTo(rho, rhoObj);                                // for capMatrix - objects
-        gHaloOp(addSlice, rho, mpiInfo, FROMHALO);          // for capMatrix - objects
         
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
         
         // Second run with solver to account for charges
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
-        
-		// gAssertNeutralGrid(rho, mpiInfo);
-
-		// Compute electric potential phi
-		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-
-		// mgSolve(solver, rho, phi, mpiInfo);
-		// sSolve(solver, rho, phi, mpiInfo);
 
 		solve(solver, rho, phi, mpiInfo);
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
-
-		//gAssertNeutralGrid(phi, mpiInfo);
-
-		// Second run with solver to account for charges
-		oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
-        solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-        //oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
-        //solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
         
 		// Compute E-field
 		gFinDiff1st(phi, E);
@@ -291,7 +266,7 @@ void regular(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-    gWriteH5(E, mpiInfo, (double) n);
+    	gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
 		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
@@ -308,19 +283,15 @@ void regular(dictionary *ini){
 	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
-  gCloseH5(rhoObj);       // for capMatrix - objects
+ 	gCloseH5(rhoObj);       // for capMatrix - objects
 	gCloseH5(phi);
 	gCloseH5(E);
-  oCloseH5(obj);          // for capMatrix - objects
+  	oCloseH5(obj);          // for capMatrix - objects
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
-    mgFree(mgRhoObj);
-	mgFree(mgPhi);
-	mgFree(mgRes);
 	gFree(rho);
-  gFree(rhoObj);          // for capMatrix - objects
+  	gFree(rhoObj);          // for capMatrix - objects
 	gFree(phi);
 	gFree(E);
 	pFree(pop);

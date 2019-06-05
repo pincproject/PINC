@@ -17,9 +17,9 @@ typedef struct{
 	long int *lookupInteriorOffset;	///< Offset in the above per object (nObjects+1 elements)
   long int *lookupSurface;        ///< Indices of the surface nodes of the objects
   long int *lookupSurfaceOffset;  ///< Offset in the above per object (nObjects+1 elements)
-  double *capMatrix;              ///< Array holding the capacitance matrices for each object
-  double capMatrixInvSum;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
-  double *invNeedCoffeeMatrix;    ///< Better name wanted...
+  double *capMatrixAll;              ///< Array holding the capacitance matrices for each object
+  long int *capMatrixAllOffsets;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
+  double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
 	int nObjects;					///< Number of objects
 } Object;
 

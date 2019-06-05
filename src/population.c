@@ -17,6 +17,25 @@
 #include <hdf5.h>
 #include "iniparser.h"
 
+
+/******************************************************************************
+ * DECLARING LOCAL FUNCTIONS
+ *****************************************************************************/
+
+/**
+ * @brief	Sets normalization parameters in Population
+ * @param	ini				Dictionary to input file
+ * @param	pop[in,out]		Population
+ *
+ * Normalizes charge and mass and sets specie-specific renormalization
+ * parameters in Population.
+ *
+ */
+static void pSetNormParams(const dictionary *ini, Population *pop);
+static void pBackscatter(Population *pop);
+static void pSecondaryElectron(Population *pop);
+
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/

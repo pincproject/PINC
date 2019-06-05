@@ -241,4 +241,9 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop);
  */
 void pWriteEnergy(hid_t xy, Population *pop, double x);
 
+/*
+Interact code
+*/
+void pInteractWithObject(Population *pop);
+
 #endif // POPULATION_H

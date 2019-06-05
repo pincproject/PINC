@@ -28,3 +28,4 @@ src/version.h
 .DS_Store
 pinc.log
 run_abel.sh
+/.vscode
