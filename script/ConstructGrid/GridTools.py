@@ -11,12 +11,12 @@
 """
 
 import numpy as np
-import vtk as vtk
+from vtk import vtkUnstructuredGridReader
 from math import *
 
 # Read an unstructured grid VTK file
 def readUnstructuredVTK(infile):
-    reader = vtk.vtkUnstructuredGridReader()
+    reader = vtkUnstructuredGridReader()
     reader.SetFileName(infile)
     reader.ReadAllVectorsOn()
     reader.ReadAllScalarsOn()

@@ -37,10 +37,10 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
 # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
-#infile = ["sphere.vtk", "box.vtk", "box.vtk", "arrow.vtk"]
-infile = ["box", "box"]
+infile = ["sphere"]
+#infile = ["box", "box"]
 # Outputfiles and comment.
-outfile = ["box_box.vtk", "box_box.h5","box and box"]
+outfile = ["sphere.grid.h5", "test sphere"]
 
 # Object file contents. Provide one entry for each file in "infile".
 # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
@@ -71,7 +71,8 @@ print "\n Welcome to ConstructGrid for PINC!\n"
 start = time.time()
 
 # Partial sanity check (currently only checks whether you are overwriting input files).
-gg.checkSanity(infile,outfile)
+#No sanity checks here, Trym is insane 170619
+#gg.checkSanity(infile,outfile)
 
 # Initialise the grid.
 grid = np.zeros((gridpar[6],gridpar[7],gridpar[8]))
