@@ -22,7 +22,7 @@ from math import *
 import numpy as np
 import time as time
 import vtk as vtk
-from matplotlib.pylab import * # only needed for testing purposes
+#from matplotlib.pylab import * # only needed for testing purposes
 import src.GridTools as gg # import all tools to generate the grid
 content = [1, (0,0,0),1]*100 # initialise default
 transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
