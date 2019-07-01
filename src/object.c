@@ -16,7 +16,13 @@
 /******************************************************************************
  *  LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
-
+/**
+ * @brief   Object debug functions
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ */
+void print_gsl_mat(gsl_matrix_view A);
 /**
  * @brief   Count the number of objects and fills the lookup tables.
  * @param	obj		Object
@@ -47,6 +53,29 @@ void oGhost(long int node, const int *nGhostLayersBefore,
 /******************************************************************************
  *  LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
+
+void print_gsl_mat(const gsl_matrix_view A){
+    
+    FILE *f;
+    f = fopen("matrix.txt", "w");
+
+    const gsl_matrix *mat = &A.matrix;
+    double element;
+
+    for(size_t i=0; i<mat->size1; i++){
+        
+        for(size_t j=0; j<mat->size2; j++){
+            element = gsl_matrix_get(mat, i, j);
+            fprintf(f, "%.2g\t", element);
+        }
+        fprintf(f, "\n");
+    }
+
+    fclose(f);
+}
+ 
+
+
 
 //Check whether a certain node is a ghost node.
 bool isGhostNode(Grid *grid, long int node) {
@@ -145,13 +174,13 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     //funPtr mgAlgo = getMgAlgo(ini);
     //Grid *res = gAlloc(ini, SCALAR);
     //Multigrid *mgRes = mgAlloc(ini, res);
-    Grid *rho = gAlloc(ini, SCALAR);
-    Grid *phi = gAlloc(ini, SCALAR);
+    //Grid *rho = gAlloc(ini, SCALAR);
+    //Grid *phi = gAlloc(ini, SCALAR);
     Grid *mgPhi = gAlloc(ini, SCALAR); //mgAllocSolver converts mgPhi to Multigrid
     Grid *mgRho = gAlloc(ini, SCALAR);
     MultigridSolver *solver = mgAllocSolver(ini, mgRho, mgPhi);
 
-    gZero(rho);
+    gZero(mgRho);
     
     // Find the number of surface nodes for each object.
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
@@ -209,7 +238,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
             
             // Set the surface node to 1 charge.
             if (rank==j) {
-                rho->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
+                mgRho->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
             }
             
             // Solve for the potential.
@@ -217,11 +246,11 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
             
             // Set the surface node back to zero.
             if (rank==j) {
-                rho->val[lookupSurf[inode]] = 0;
+                mgRho->val[lookupSurf[inode]] = 0;
             }
             // Fill column i of the capacitance matrix.
             for (int k=beginIndex; k<endIndex; k++) {
-                capMatrix[totSNGlob*k + i] = phi->val[lookupSurf[lookupSurfOff[a] + k-beginIndex]];
+                capMatrix[totSNGlob*k + i] = mgPhi->val[lookupSurf[lookupSurfOff[a] + k-beginIndex]];
             }
             
             // Increase the counters. If you looped over all nodes on this core, increase the rank and reset inode.
@@ -241,12 +270,23 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         // Actually, the inverse is the capacitance matrix. Probably have to rethink the variable names.
         gsl_matrix_view A = gsl_matrix_view_array(capMatrix, totSNGlob, totSNGlob);
         gsl_matrix_view invA = gsl_matrix_view_array(invCapMatrix, totSNGlob, totSNGlob);
-        
+
+        //debug 290619
+        print_gsl_mat(A);
+        // FILE *a_mat_file;
+        // FILE *inv_mat_file;
+        // a_mat_file = fopen("mat.txt", "w");
+        // inv_mat_file = fopen("inv.txt", "w");
+        // gsl_matrix_fprintf(a_mat_file, &A.matrix, "%g");
+        // gsl_matrix_fprintf(inv_mat_file, &invA.matrix, "%g");
+        // fclose(a_mat_file);
+        // fclose(inv_mat_file);
         int s;
         gsl_permutation *p = gsl_permutation_alloc(totSNGlob);
         gsl_linalg_LU_decomp(&A.matrix, p, &s);
         gsl_linalg_LU_invert(&A.matrix, p, &invA.matrix);
-        
+        print_gsl_mat(invA);
+
         // Add the invCapMatrix for object a to the big array.
         for (long int l=0; l<totSNGlob*totSNGlob; l++) {
             capMatrixAll[a*totSNGlob*totSNGlob+l] = invCapMatrix[l];

@@ -6,6 +6,7 @@
 
 CC		= mpicc
 COPT	= -O3
+DOPT 	= -O0
 
 CLOCAL = 	-Ilib/iniparser/src\
 			-lm -lgsl -lblas -lhdf5 -lfftw3
@@ -16,8 +17,9 @@ LLOCAL =	-Ilib/iniparser/src\
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	= -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
-LFLAGS	= -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
+CFLAGS	= -g -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
+DFLAGS 	= -g $(DOPT) -fno-eliminate-unused-debug-symbols -std=c11 -Wall $(CLOCAL) $(CADD) #flags for debugging
+LFLAGS	= -g -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
 
 SDIR	= src
 ODIR	= src/obj
@@ -53,7 +55,7 @@ LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
 all: version $(EXEC) cleantestdata doc
 
-trym: version $(EXEC)
+debug: version $(EXEC).debug
 
 local: version $(EXEC).local cleantestdata doc
 
@@ -76,6 +78,11 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"
 	@$(CC) $^ -o $@ $(LFLAGS)
 	@echo "PINC is built"
+
+$(EXEC).debug: $(ODIR)/main.o $(OBJ) $(LIBOBJ)
+	@echo "Linking PINC"
+	@$(CC) $^ -o $@ $(DFLAGS)
+	@echo "PINC debug version is built"
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
