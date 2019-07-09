@@ -34,28 +34,29 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 ####################
 
 # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
+gridpar = [0,0.2*64,0,0.2*64,0,0.2*64,64,64,64]
+#gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
 # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
 infile = ["sphere"]
 #infile = ["box", "box"]
 # Outputfiles and comment.
 outfile = ["sphere.grid.h5", "test sphere"]
-
+boundaryFile = ["bound.grid.h5", "bounding box"]
 # Object file contents. Provide one entry for each file in "infile".
 # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
 # identifier (one per file, assume all objects in file have the same floating potential) {-> Sigvald, we could use a predefined
 # number say "666" for insulators or dielectrics.} Note, the default is "0" for free voxels.]
 content[0] = [1, (0,0,0),1]
-content[1] = [1, (0,0,0),2]
+#content[1] = [1, (0,0,0),2]
 #content[2] = [1, (0,0,0),3]
 #content[3] = [2, (0.1,0,0),(0.9,0,0),4]
 
 # Define the transformation. Provide one entry for each file in "infile".
 # Translate x,y,z; Rotate x,y,z (in degrees); Scale x,y,z
-transfo[0] = [0.5,0.5,0.5,0,0,0,1,1,1]
+transfo[0] = [6,6,6,0,0,0,1,1,1]
 #transfo[1] = [-1.5,-1.5,-1.5,45,45,45,0.5,0.5,0.5]
-transfo[1] = [2.6,2.6,2.6,0,0,0,1,1,1]
+#transfo[1] = [2.6,2.6,2.6,0,0,0,1,1,1]
 #transfo[3] = [0.75,0.75,-0.75,45,-45,-45,2,5,5]
 
 ####################
@@ -97,6 +98,9 @@ for i in range(len(infile)):
     content[i] = gg.transformSeeds(content[i], transfo[i])
     # Now use floodfill.
     grid = gg.floodFill(grid,gridpar,content[i])
+    # Compute bounding box of object
+    box = gg.boundingBox(grid)
+    print box
     # Time info.
     ostop = time.time()
     print " Compute time:", ostop-ostart, "sec.\n"
@@ -105,6 +109,7 @@ for i in range(len(infile)):
 wstart = time.time()
 print " 4. Write output:"
 gg.writeOutput(grid, gridpar, outfile)
+gg.writeOutput(box, gridpar, boundaryFile)
 wstop = time.time()
 print " Compute time:", wstop-wstart, "sec.\n"
 

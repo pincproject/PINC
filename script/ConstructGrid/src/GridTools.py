@@ -283,6 +283,22 @@ def floodfill3Dstack(stack, grid,nnn,ident):
         
         return stack,nnn
 
+#Finds the bounding box for the grid, works for one object currently
+def boundingBox(grid):
+
+    out = np.zeros(grid.shape)
+    x = np.any(grid, axis=(1, 2))
+    y = np.any(grid, axis=(0, 2))
+    z = np.any(grid, axis=(0, 1))
+
+    xmin, xmax = np.where(x)[0][[0, -1]]
+    ymin, ymax = np.where(y)[0][[0, -1]]
+    zmin, zmax = np.where(z)[0][[0, -1]]
+
+    out[xmin-1:xmax+1,ymin-1:ymax+1,zmin-1:zmax+1] = 2
+
+    return out
+
 # Algorithm to find the circumfering voxels of the object/geometry.
 def pointTriangleDistance(TRI, P):
     # function [dist,PP0] = pointTriangleDistance(TRI,P)
