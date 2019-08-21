@@ -75,8 +75,6 @@ void print_gsl_mat(const gsl_matrix_view A){
 }
  
 
-
-
 //Check whether a certain node is a ghost node.
 bool isGhostNode(Grid *grid, long int node) {
     
@@ -524,6 +522,39 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     }
 }
 
+//Relies on a courant number < 1 (otherwise particle might be inside object)
+void oParticleCollision(Population *pop, const Object *obj){
+
+    long int *vicinity = pop->objVicinity;
+    long int *neighbourNodes;
+    long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
+
+    for(int i=0;i < nCloseParticles;i++){
+        double iPos = pop->pos[i*pop->nDims];
+
+    }
+}
+
+//pos_new = pos_old + vel*delta_t
+//try http://geomalgorithms.com/a05-_intersect-1.html algorithm
+//implementation based onhttps://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
+double *oIntersectPoint(double *particleVel, double *ParticlePos, double *surfNormal, 
+     double *surfPoint){ 
+
+        double *w;
+        double *Psi = particleVel;
+        int ndotu = adDotProd(particleVel,surfNormal,3);
+        adSub(ParticlePos, surfPoint, w, 3);
+
+        //Compute intersection
+        double si = -1.*(double) adDotProd(surfNormal,w,3) / (double) ndotu;
+        adScale(Psi,3,si);
+        adAdd(w,Psi,Psi,3);
+        adAdd(surfPoint,Psi,Psi,3);
+
+        return Psi;
+
+}
 
 /*****************************************************************************
  *  ALLOC/DESTRUCTORS

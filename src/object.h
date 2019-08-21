@@ -116,13 +116,21 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
  * TO IMPLEMENT!
  *
  */
-void oRayTrace(Population *pop, const Object *obj);
+void oParticleVicinity(Population *pop, Object *obj);
 
+
+void oParticleCollision(Population *pop, const Object *obj);
+
+/**
+ * @brief	Computes the local point a nearby particle with collide with an object
+ * @param   pos         Positon (population->)
+ * @param   rhoObj      Grid
+ * @param	obj         Object
+ * @param	mpiInfo		MpiInfo
+ * @return	void
+ *
+ * Computes the local point a nearby particle with collide with an object
+ */
+double *oIntersectPoint(double *particleVel, double *ParticlePos, double *surfNormal, 
+                        double *surfPoint);
 #endif // OBJECT_H
-
-
-
-
-
-
-

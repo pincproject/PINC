@@ -10,6 +10,7 @@
 #define _XOPEN_SOURCE 700
 
 #include "core.h"
+#include "object.h"
 #include <math.h>
 #include <mpi.h>
 #include <gsl/gsl_rng.h>
@@ -81,6 +82,7 @@ Population *pAlloc(const dictionary *ini){
 	pop->nDims = nDims;
 	pop->iStart = iStart;
 	pop->iStop = iStop;
+	pop->objVicinity = malloc(sizeof(long int) * iStart[nSpecies]);
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
@@ -98,6 +100,7 @@ void pFree(Population *pop){
 	free(pop->potEnergy);
 	free(pop->iStart);
 	free(pop->iStop);
+	free(pop->objVicinity);
 	free(pop->charge);
 	free(pop->mass);
 	free(pop);
@@ -462,6 +465,10 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
+void pCutVicinity(Population *pop, long int p){
+
+}
+
 void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	   			const char *fName){
 
@@ -685,6 +692,50 @@ void pSumPotEnergy(Population *pop){
 		pop->potEnergy[nSpecies] += pop->potEnergy[s];
 	}
 
+}
+
+
+void pObjVicinityParticles(Population *pop, const Object *obj){
+
+	double *val = obj->domain->val;
+	int nSpecies = pop->nSpecies;
+	int counter = 0;
+	long int *sizeProd = obj->domain->sizeProd;
+
+	for(int s=0; s < nSpecies; s++) {
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+		
+		for(int i=iStart;i<iStop;i++){
+			
+			double *pos = &pop->pos[3*i];
+						
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
+
+			// Index of nodes surrounding particle i
+			long int p 		= j*3 + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + 3; //sizeProd[1];
+			long int pk 	= p + sizeProd[2];
+			long int pjk 	= pk + 3; //sizeProd[1];
+			long int pl 	= p + sizeProd[3];
+			long int pjl 	= pl + 3; //sizeProd[1];
+			long int pkl 	= pl + sizeProd[2];
+			long int pjkl 	= pkl + 3; //sizeProd[1];
+
+			// All neighbours must be part of bounding box, value of obj->domain->val 
+			// at a vicinity node is set to 2
+			int sum = val[p]+val[pj]+val[pk]+val[pjk]+val[pl]+val[pjl]+val[pkl]+val[pjkl];
+
+			if(sum == 16){
+				pop->objVicinity[counter] = i;
+				counter++;
+			}
+		}
+	}
 }
 
 /******************************************************************************

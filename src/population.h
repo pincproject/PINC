@@ -242,6 +242,15 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop);
 void pWriteEnergy(hid_t xy, Population *pop, double x);
 
 /*
+Finding particles in population close to object, discards
+particles that will not intersect object next timestep
+pop->vicinity contains index of particles that are close
+to the object
+*/
+void pVicinityParticles(Population *pop, const Object *obj);
+
+
+/*
 Interact code
 */
 void pInteractWithObject(Population *pop);

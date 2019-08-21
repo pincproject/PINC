@@ -134,6 +134,10 @@ void alAdd(const long int *a, const long int *b, long int *res, long int n){
 	for(long int i=0;i<n;i++) res[i]=a[i]+b[i];
 }
 
+void adSub(const double *a, const double *b, double *res, long int n){
+	for(long int i=0;i<n;i++) res[i] = a[i] - b[i];
+}
+
 void adMul(const double *a, const double *b, double *res, long int n){
 	for(long int i=0;i<n;i++) res[i]=a[i]*b[i];
 }
@@ -272,6 +276,13 @@ long int alProd(const int *a, long int n){
 	return res;
 }
 
+void adCrossProd(const double *a, const double *b, double *res){
+	
+	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
+	res[1] += -(a[0]*b[2]-a[2]*b[0]);
+	res[2] +=  (a[0]*b[1]-a[1]*b[0]);
+}
+
 int adDotProd(const double *a, const double *b, long int n){
 	double res = 0;
 	for(long int i=0;i<n;i++) res += a[i]*b[i];
@@ -289,6 +300,28 @@ int alDotProd(const long int *a, const long int *b, long int n){
 	for(long int i=0;i<n;i++) res += a[i]*b[i];
 	return res;
 }
+
+void adNormal(const double *a, const double *b, double *res, long int n){
+    
+	double length = 1.;
+
+    adCrossProd(a, b, res);
+    length = adDotProd(res, res,3);
+    length = sqrt(length);
+
+    for(int i=0;i<2;i++) res[i] /= length;
+}
+
+//w = v - 2(v . n)n where n=norm, v=ray, w=res, surface points a and b (x,y,z) locations
+void adReflect(const double *ray, const double *a, const double *b, double *res){
+    
+	double *norm;
+	adNormal(a,b,norm,3);
+    int ray_dot_n = adDotProd(ray,norm,3);
+
+    for(int i=0;i<3;i++) res[i] = ray[i] - 2 * ray_dot_n * norm[i];
+}
+
 
 int adEq(const double *a, const double *b, long int n, double tol){
 	for(long int i=0;i<n;i++) if(fabs(a[i]-b[i])>tol) return 0;

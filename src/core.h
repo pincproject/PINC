@@ -73,6 +73,7 @@ typedef struct{
 	double *vel;		///< Velocity
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
+	long int *objVicinity; ///< buffer of particle indecies close to objects
 	double *charge;		///< Charge (nSpecies elements)
 	double *mass;		///< Mass (nSpecies elements)
 	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
