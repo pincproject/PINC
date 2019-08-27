@@ -8,6 +8,7 @@
 
 #include "core.h"
 #include "pusher.h"
+#include "object.h"
 #include <math.h>
 
 /******************************************************************************
@@ -82,9 +83,12 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order);
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-void puMove(Population *pop){
+void puMove(Population *pop, Object *obj){
 
 	int nSpecies = pop->nSpecies;
+	long int *coll = pop->collisions;
+	int nColl = sizeof(pop->collisions) / sizeof(long int);
+
 	int nDims = pop->nDims;
 	double *pos = pop->pos;
 	double *vel = pop->vel;
@@ -95,6 +99,14 @@ void puMove(Population *pop){
 		long int pStop = pop->iStop[s]*nDims;
 
 		for(long int p=pStart;p<pStop;p++){
+
+			//code for particle/object collision, pos[p] += vel[p] if no intersection
+			int collision = 0;
+			for(int n; n<nColl; n++){
+				if(p == coll[n]){
+					oParticleCollision(pop, obj);
+				}
+			}
 			pos[p] += vel[p];
 		}
 	}

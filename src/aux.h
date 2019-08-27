@@ -184,7 +184,7 @@ double adMax(const double *a, long int n);
 ///@brief Returns unit normal vector. Assumes 3D eucledian vector
 void adNormal(const double *a, const double *b, double *res, long int n);
 ///@brief Returns vector reflected by an arbitrary plane
-void adReflect(const double *a, const double *surfNeighbours, double *res);
+void adReflect(const double *ray, const double *a, const double *b, double *res);
 ///@brief Returns maximum value in an array
 int aiMax(const int *a, long int n);
 ///@brief Returns maximum value in an array

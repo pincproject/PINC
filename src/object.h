@@ -116,10 +116,22 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
  * TO IMPLEMENT!
  *
  */
-void oParticleVicinity(Population *pop, Object *obj);
 
 
-void oParticleCollision(Population *pop, const Object *obj);
+/*
+Finding particles in population close to object, discards
+particles that will not intersect object next timestep
+pop->vicinity contains index of particles that are close
+to the object
+*/
+void oVicinityParticles(Population *pop, Object *obj);
+
+//determines if particle will collide
+bool oParticleIntersection(Population *pop, long int particleId, Object *obj);
+
+
+//determines collision type, then moves particle accordingly 
+void oFindParticleCollisions(Population *pop, Object *obj);
 
 /**
  * @brief	Computes the local point a nearby particle with collide with an object
@@ -131,6 +143,6 @@ void oParticleCollision(Population *pop, const Object *obj);
  *
  * Computes the local point a nearby particle with collide with an object
  */
-double *oIntersectPoint(double *particleVel, double *ParticlePos, double *surfNormal, 
-                        double *surfPoint);
+void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal, 
+                        double *surfPoint, double *intersection);
 #endif // OBJECT_H

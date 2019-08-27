@@ -209,7 +209,7 @@ void regular(dictionary *ini){
 
 		// Move particles
 		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
-		puMove(pop);
+		puMove(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);

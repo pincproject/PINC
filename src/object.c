@@ -11,7 +11,6 @@
 #include "spectral.h"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
-#include <stdbool.h>
 
 /******************************************************************************
  *  LOCAL FUNCTION DECLARATIONS
@@ -271,14 +270,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
         //debug 290619
         print_gsl_mat(A);
-        // FILE *a_mat_file;
-        // FILE *inv_mat_file;
-        // a_mat_file = fopen("mat.txt", "w");
-        // inv_mat_file = fopen("inv.txt", "w");
-        // gsl_matrix_fprintf(a_mat_file, &A.matrix, "%g");
-        // gsl_matrix_fprintf(inv_mat_file, &invA.matrix, "%g");
-        // fclose(a_mat_file);
-        // fclose(inv_mat_file);
+
         int s;
         gsl_permutation *p = gsl_permutation_alloc(totSNGlob);
         gsl_linalg_LU_decomp(&A.matrix, p, &s);
@@ -522,29 +514,130 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     }
 }
 
+bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
+    
+    //find nearest nodes
+    double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
+
+    //
+}
+
+//stores index of particles that are close to an object at the current timestep
+void oVicinityParticles(Population *pop, Object *obj){
+
+	double *val = obj->domain->val;
+	int nSpecies = pop->nSpecies;
+	int counter = 0;
+	long int *sizeProd = obj->domain->sizeProd;
+
+	for(int s=0; s < nSpecies; s++) {
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+		
+		for(int i=iStart;i<iStop;i++){
+			
+			double *pos = &pop->pos[3*i];
+						
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
+
+			// Index of nodes surrounding particle i
+			long int p 		= j*3 + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + 3; //sizeProd[1];
+			long int pk 	= p + sizeProd[2];
+			long int pjk 	= pk + 3; //sizeProd[1];
+			long int pl 	= p + sizeProd[3];
+			long int pjl 	= pl + 3; //sizeProd[1];
+			long int pkl 	= pl + sizeProd[2];
+			long int pjkl 	= pkl + 3; //sizeProd[1];
+
+			// All neighbours must be part of bounding box, value of obj->domain->val 
+			// at a vicinity node is set to 2, obj->domain->val set to 1 for object itself.
+            // When particle does not have an object node as a neighbour, this sum will 16
+			int sum = val[p]+val[pj]+val[pk]+val[pjk]+val[pl]+val[pjl]+val[pkl]+val[pjkl];
+
+			if(sum < 16 && sum > 0){
+				pop->objVicinity[counter] = i;
+				counter++;
+			}
+		}
+	}
+}
+
 //Relies on a courant number < 1 (otherwise particle might be inside object)
-void oParticleCollision(Population *pop, const Object *obj){
+//checks which particles in object vicinity will collide => overwrites pop->collisions
+void oFindParticleCollisions(Population *pop, Object *obj){
 
+    long int *lookupIntOff = obj->lookupInteriorOffset;
+    long int *sizeProd = obj->domain->sizeProd;
+
+    oVicinityParticles(pop, obj);
     long int *vicinity = pop->objVicinity;
-    long int *neighbourNodes;
     long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
+    long int counter = 0;
+    alSetAll(pop->collisions, nCloseParticles, 0);
 
-    for(int i=0;i < nCloseParticles;i++){
-        double iPos = pop->pos[i*pop->nDims];
 
+    for(int i=0;i<nCloseParticles;i++){
+        
+        double *pos = &pop->pos[3*i];
+        double *vel = &pop->vel[3*i];
+        double *nextPos;
+        adAdd(pos,vel,nextPos,3);
+        
+        // Integer parts of position in next time step
+        int j = (int) nextPos[0];
+        int k = (int) nextPos[1];
+        int l = (int) nextPos[2];
+        
+        long int p = j + k*sizeProd[2] + l*sizeProd[3];
+        
+        // Check whether p is one of the object nodes
+        for (long int a=0; a<obj->nObjects; a++) {
+            for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+                if ((obj->lookupInterior[b])==p) {
+                    pop->collisions[counter] = p;
+                    counter++;
+                }
+            }
+        }
     }
+}
+
+//Finds nearest 3 object surface nodes to a specific particle of index p
+//3 object surface nodes needed to compute normal from cross product of surface vectors
+double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *obj){
+
+    double *pos = NULL;
+    for(int i=0; i<3; i++){
+        pos[i] = pop->pos[3*particleId + i];
+    }
+
+    
+    return pos;
+
 }
 
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
-//implementation based onhttps://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
-double *oIntersectPoint(double *particleVel, double *ParticlePos, double *surfNormal, 
-     double *surfPoint){ 
+//implementation based on https://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
+void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal, 
+     double *surfPoint, double *intersect){ 
 
-        double *w;
-        double *Psi = particleVel;
-        int ndotu = adDotProd(particleVel,surfNormal,3);
-        adSub(ParticlePos, surfPoint, w, 3);
+        double epsilon = 1e-6;
+        double *pos = &pop->pos[3*id];
+        double *vel = &pop->vel[3*id];
+        double *w = NULL;
+        double *Psi = vel;
+        int ndotu = adDotProd(vel,surfNormal,3);
+
+        if(ndotu < epsilon){
+            msg(ERROR, "Particle %i, will not collide with any object next timestep!", id);
+        }
+        adSub(pos, surfPoint, w, 3);
 
         //Compute intersection
         double si = -1.*(double) adDotProd(surfNormal,w,3) / (double) ndotu;
@@ -552,8 +645,12 @@ double *oIntersectPoint(double *particleVel, double *ParticlePos, double *surfNo
         adAdd(w,Psi,Psi,3);
         adAdd(surfPoint,Psi,Psi,3);
 
-        return Psi;
+        intersect[0]=Psi[0], intersect[1]=Psi[1], intersect[1]=Psi[1];
+}
 
+void oParticleCollision(Population *pop, Object *obj){
+
+    msg(WARNING, "Collision types not yet implemented!");
 }
 
 /*****************************************************************************

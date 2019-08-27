@@ -315,7 +315,7 @@ void adNormal(const double *a, const double *b, double *res, long int n){
 //w = v - 2(v . n)n where n=norm, v=ray, w=res, surface points a and b (x,y,z) locations
 void adReflect(const double *ray, const double *a, const double *b, double *res){
     
-	double *norm;
+	double *norm = NULL;
 	adNormal(a,b,norm,3);
     int ray_dot_n = adDotProd(ray,norm,3);
 

@@ -29,4 +29,5 @@ src/version.h
 pinc.log
 run_abel.sh
 .gdbinit
+.code-workspace.code-workspace
 /.vscode
