@@ -253,6 +253,13 @@ void pVicinityParticles(Population *pop, const Object *obj);
 /*
 Interact code
 */
+void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *));
+void pBackscatter(Population *pop);
+void pSecondaryElectron(Population *pop);
+void pReflect(Population *pop);
+void pAdhere(Population *pop);
+
+
 void pInteractWithObject(Population *pop);
 
 #endif // POPULATION_H

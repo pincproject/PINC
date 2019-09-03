@@ -607,6 +607,17 @@ void oFindParticleCollisions(Population *pop, Object *obj){
     }
 }
 
+//Moves a particle according to the type of collision, also creates and removes new particles
+void oParticleCollision(Population *pop, Object *obj, long int i){
+
+    void (*collisionType)(Population *);
+
+    pFindCollisionType(pop, obj, i, collisionType);
+
+    collisionType();
+}
+
+
 //Finds nearest 3 object surface nodes to a specific particle of index p
 //3 object surface nodes needed to compute normal from cross product of surface vectors
 double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *obj){
@@ -648,7 +659,7 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
         intersect[0]=Psi[0], intersect[1]=Psi[1], intersect[1]=Psi[1];
 }
 
-void oParticleCollision(Population *pop, Object *obj){
+void oParticleCollision(Population *pop, Object *obj, long int n){
 
     msg(WARNING, "Collision types not yet implemented!");
 }

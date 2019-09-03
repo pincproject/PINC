@@ -129,13 +129,15 @@ void oVicinityParticles(Population *pop, Object *obj);
 //determines if particle will collide
 bool oParticleIntersection(Population *pop, long int particleId, Object *obj);
 
+//"collides" a single particle based on collision type
+void oParticleCollision(Population *pop, Object *obj, long int n);
 
 //determines collision type, then moves particle accordingly 
 void oFindParticleCollisions(Population *pop, Object *obj);
 
 /**
  * @brief	Computes the local point a nearby particle with collide with an object
- * @param   pos         Positon (population->)
+ * @param   pos         Position (population->)
  * @param   rhoObj      Grid
  * @param	obj         Object
  * @param	mpiInfo		MpiInfo

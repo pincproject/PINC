@@ -471,6 +471,7 @@ typedef void (*funPtr)();
  * INCLUDING CORE MODULES
  *****************************************************************************/
 
+#include "object.h"
 #include "population.h"
 #include "grid.h"
 #include "io.h"

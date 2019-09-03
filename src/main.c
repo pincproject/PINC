@@ -11,7 +11,7 @@
 #include "pusher.h"
 #include "multigrid.h"
 #include "spectral.h"
-#include "object.h"
+//#include "object.h"
 
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }

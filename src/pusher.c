@@ -100,14 +100,20 @@ void puMove(Population *pop, Object *obj){
 
 		for(long int p=pStart;p<pStop;p++){
 
+			bool collided = false;
 			//code for particle/object collision, pos[p] += vel[p] if no intersection
-			int collision = 0;
-			for(int n; n<nColl; n++){
+			for(long int n; n<nColl; n++){
 				if(p == coll[n]){
+					
 					oParticleCollision(pop, obj);
+					collided = true;
 				}
 			}
-			pos[p] += vel[p];
+
+			if(!collided){
+				pos[p] += vel[p];
+			}
+
 		}
 	}
 }
