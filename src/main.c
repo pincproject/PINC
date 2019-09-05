@@ -10,6 +10,7 @@
 #include "core.h"
 #include "pusher.h"
 #include "multigrid.h"
+#include "spectral.h"
 #include "object.h"
 
 void regular(dictionary *ini);
@@ -24,7 +25,6 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
 	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
-	parseIndirectInput(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE
@@ -32,8 +32,7 @@ int main(int argc, char *argv[]){
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
-												puModeParticle_set,
-												puModeInterp_set);
+												sMode_set);
 	run(ini);
 
 	/*
@@ -41,8 +40,8 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	//msg(STATUS,"PINC completed successfully!"); // Needs MPI
-    msg(STATUS,"All done, now go have a beer!");
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
+  //msg(STATUS,"All done, now go have a beer!");
 	MPI_Finalize();
 
 	return 0;
@@ -53,47 +52,49 @@ void regular(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
+	void (*acc)()   			= select(ini,	"methods:acc",
+												puAcc3D1_set,
 												puAcc3D1KE_set,
 												puAccND1_set,
 												puAccND1KE_set,
 												puAccND0_set,
 												puAccND0KE_set);
 
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
+	void (*distr)() 			= select(ini,	"methods:distr",
+												puDistr3D1_set,
+												puDistrND1_set,
+												puDistrND0_set);
 
-	void (*solve)() = select(ini,"methods:poisson", mgSolve_set);
+	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
+												puExtractEmigrants3D_set,
+												puExtractEmigrantsND_set);
 
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolver_set,
+												sSolver_set);
 
-	// char *str;
-	//
-	// str = iniGetStr("methods:acc");
-	// void (*acc)() = NULL;
-	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
-	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
-	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
 
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
+
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
 	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *rhoObj = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
 	Grid *phi = gAlloc(ini, SCALAR);
-	
-    Multigrid *mgRho = mgAlloc(ini, rho);
-    Multigrid *mgRhoObj = mgAlloc(ini, rhoObj);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-	
-    Object *obj = oAlloc(ini);
+	void *solver = solverAlloc(ini, rho, phi);
+
+	  Grid *rhoObj = gAlloc(ini, SCALAR);
+		Multigrid *mgRho = mgAlloc(ini, rho);
+		Multigrid *mgRhoObj = mgAlloc(ini, rhoObj);
+		Object *obj = oAlloc(ini);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -101,32 +102,22 @@ void regular(dictionary *ini){
 	// Setting Boundary slices
 	gSetBndSlices(phi, mpiInfo);
 
-	//Set mgSolve
-	MgAlgo mgAlgo = getMgAlgo(ini);
-
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
 
-
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
 
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-    gOpenH5(ini, rhoObj, mpiInfo, denorm, dimen, "rhoObj");
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-
-    oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
+		// DIMENSIONS NEED TO BE CHECKED!!
+    gOpenH5(ini, rhoObj, mpiInfo, units, 1, "rhoObj");
+	  oOpenH5(ini, obj, mpiInfo, units, 1, "test");
     oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
@@ -135,50 +126,47 @@ void regular(dictionary *ini){
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
 
-	free(denorm);
-	free(dimen);
-
 	/*
 	 * INITIAL CONDITIONS
 	 */
 
     //Compute capacitance matrix
-    
-    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
-    
-	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
-	pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
 
-	// pPosLattice(ini, pop, mpiInfo);
-	// pVelZero(pop);
+    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
+
+	// Initalize particles
+	// pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosLattice(ini, pop, mpiInfo);
+	pVelZero(pop);
+	// pVelMaxwell(ini, pop, rng);
+	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
+
 	puMigrate(pop, mpiInfo, rho);
 
 	/*
 	 * INITIALIZATION (E.g. half-step)
 	 */
-    
+
     // Clean objects from any charge first.
     gZero(rhoObj);
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);
     gZero(rhoObj);
-    
-    
+
+
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
     gWriteH5(rho, mpiInfo, (double) 0);
 
 	// Get initial E-field
-	solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-    gWriteH5(phi, mpiInfo, (double) 0);
+	solve(solver, rho, phi, mpiInfo);
+	  gWriteH5(phi, mpiInfo, (double) 0);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -193,7 +181,7 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
-	Timer *t = tAlloc(rank);
+	Timer *t = tAlloc(mpiInfo->mpiRank);
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -221,7 +209,7 @@ void regular(dictionary *ini){
 
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);
-        
+
 		// Compute charge density
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -234,16 +222,24 @@ void regular(dictionary *ini){
 		//gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
-		solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		// solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
+		// mgSolve(solver, rho, phi, mpiInfo);
+		// sSolve(solver, rho, phi, mpiInfo);
+
+		solve(solver, rho, phi, mpiInfo);
+
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		//gAssertNeutralGrid(phi, mpiInfo);
 
 		// Second run with solver to account for charges
-		oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
-        solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-        //oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
+		    oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
         //solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
-        
+				solve(solver, rho, phi, mpiInfo);
+				//oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);
+        //solve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -289,21 +285,22 @@ void regular(dictionary *ini){
     gCloseH5(rhoObj);
 	gCloseH5(phi);
 	gCloseH5(E);
-	oCloseH5(obj);
+	// oCloseH5(obj);
 	xyCloseH5(history);
 
 	// Free memory
-	mgFree(mgRho);
+	  mgFree(mgRho);
     mgFree(mgRhoObj);
-	mgFree(mgPhi);
-	mgFree(mgRes);
+	//mgFree(mgPhi);
+	//mgFree(mgRes);
+	solverFree(solver);
 	gFree(rho);
 	gFree(rhoObj);
 	gFree(phi);
-	gFree(res);
 	gFree(E);
 	pFree(pop);
-	oFree(obj);
+	uFree(units);
+	// oFree(obj);
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);

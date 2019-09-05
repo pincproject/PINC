@@ -42,9 +42,7 @@ nTest = 4
 
 meanE2Phi      = np.zeros(nTest)
 meanE2E        = np.zeros(nTest)
-stepSize        = np.zeros(nTest)
-
-
+stepSize       = np.zeros(nTest)
 
 for n in range(nTest):
     pinc.mgErrorScaling()

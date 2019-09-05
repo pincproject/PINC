@@ -2,21 +2,121 @@
 
 \mainpage
 
-\section sec_intro Introduction to PINC source code
-
-Function prefix description:
-
-Prefix		| Header		| Source		| Description
-------------|---------------|---------------|------------------------------------------------------
-ad/ai/al	| core.h		| aux.c			| Array operations (set value, arithmetic operations between vectors and vector/scalar, find extremums, test for equality, print for debugging)
-g			| core.h		| grid.c		| Handle grid quantities using the Grid struct (alloc/free, store to file, set values, arithmetic operations, extract slices, potential energy, finite differencing)
-ini			| core.h		| io.c			| Open and read simulation settings from .ini-file
-mg			| multigrid.h	| multigrid.c	| Multigrid Poisson solver (acting on Grid and Multigrid)
-p			| core.h		| population.c	| Handle particle quantities using the Population struct (alloc/free, store to file, set values, transform between subdomains)
-pu			| pusher.h		| pusher.c		| Particle pusher (accelerate and move particles, and weighting)
-t			| core.h		| aux.c			| Timing functions for code profiling
-xy			| core.h		| io.c			| Create .xy.h5 file and append simple (x,y) datapoints to it
+\section sec_intro Introduction to the PINC source code
 
 
+PINC (Particle-IN-Cell) is structured in a modular way with a core which defines
+the data structures which the rest of the code acts on. The data structures are
+defined in core.h, which also includes the header files for the core modules.
+
+The functions exposed by the core modules are grouped according to task, and is
+given a prefix accordingly. An overview of prefixes and files in the core is
+given below.
+
+| Header       | Source       | Prefix    | Description                        |
+|--------------|--------------|-----------|------------------------------------|
+| core.h       |              |           | Defines common data structures     |
+| aux.h        | aux.c        | ad/ai/al  | Common array operations            |
+| ^            | ^            | t         | Timing functions                   |
+| grid.h       | grid.c       | g         | Grid structure operations          |
+| io.h         | io.c         | ini       | Parse .ini-file                    |
+| ^            | ^            | xy        | Write (x,y) datapoints to file     |
+| population.h | population.c | p         | Population structure operations    |
+| units.h      | units.c      | u         | Units normalization operations     |
+
+Other parts of the code -- solvers, pushers, interpolators -- i.e. the numerical
+algorithms, is implemented in separate modules which may depend on the core but
+not on each other. It is also not allowed to make the core depend on the
+modules (the main.c file can depend on them).
+
+Each module has a single header file, but is allowed to have multiple source
+files. The modules are listed below:
+
+| Header      | Source      | Prefix | Description                         |
+|-------------|-------------|--------|-------------------------------------|
+| multigrid.h | multigrid.c | mg     | Multigrid Poisson solver            |
+| object.h    | object.c    | o      | Cap. matrix and ray tracing methods |
+| pusher.h    | pusher.c    | pu     | Particle pusher and weighting       |
+| spectral.h  | spectral.c  | s      | Spectral Poisson solver             |
+
+While every developer will need to interact with the core, the developers of the
+different modules need not be aware of each other's work. It is recommended that
+new developers starts by getting acquainted with the Grid and Population
+structs from the core by reading their documentation. All developers should try
+to write code compliant with the coding practices (separate document) and in
+general try to follow the idioms already in use (unless there is good reason
+to do otherwise).
+
+Interchangeability
+------------------
+Various algorithms/methods (e.g. pushers) for carrying out a given computation
+may be implemented as different functions with similar input (e.g. puAcc3D1(),
+puAccND0()). Upon program execution, a function pointer is assigned one of
+these functions according to a setting in the input .ini-file. Subsequently
+using this function pointer will assure the right method is used. The select()
+routine is used to select a method.
+
+Various methods may impose restrictions to which input settings will work. For
+instance, puAcc3D1() only works for 3-dimensional simulations. Running
+puAcc3D1() on non-3D-data will fail ungracefully. We don't want to spend
+time in this performance-critical function to test the .ini-file. Instead,
+we put the sanity checks in a _set function with the following declaration:
+
+\code
+funPtr puAcc3D1_set(const dictionary* ini);
+\endcode
+
+This function must return the address of puAcc3D1().
+
+Interchangeability between field solvers is slightly more involved.
+Specifically, they must all provide an interface consisting of the following:
+
+- A solver struct
+- A solve function
+- An allocator and initializer for the solver struct
+- A free routine for the solver struct
+- A function returning the solver, allocator and free-routine
+- A _set function
+
+E.g. for the spectral solver (with prefix s) the struct would be named
+SpectralSolver. All variables which are specific to this solver must be kept in
+this struct. The allocator/initializer must allocate it's variables, and can
+do initial calculations. It's declaration is:
+
+\code
+SpectralSolver* sAlloc(const dictionary *ini, const Grid *rho, Grid *phi);
+\endcode
+
+where rho and phi is the source and unknown of the Poisson equation,
+respectively. The free-routine looks as follows:
+
+\code
+void sFree(SpectralSolver *solver);
+\endcode
+
+When the Poisson-equation is to be solved, the following function is invoked:
+
+\code
+void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi, const MpiInfo *mpiInfo);
+\endcode
+
+Use const on rho if appropriate. Moreover, a sSolver_set() function is written
+to perform the necessary sanity checks. However, since it cannot return three
+functions specific to this solver (sAlloc, sFree and sSolve) it instead returns
+another function which may be defined like this:
+
+\code
+void sSolver(	void (**solve)(),
+				SpectralSolver *(**solverAlloc)(),
+				void (**solverFree)()){
+
+	*solve=sSolve;
+	*solverAlloc=sAlloc;
+	*solverFree=sFree;
+}
+\endcode
+
+When called with the address of three function pointers of appropriate type,
+these function pointers will be set accordingly.
 
 */

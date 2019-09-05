@@ -81,7 +81,7 @@ void gFreeMpi(MpiInfo *mpiInfo);
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param sliceOp			SliceOpPointer
+ * @param sliceOp			Slicing operation
  * @param *Grid	Grid struct
  * @param *mpiInfo		MpiInfo struct
  * @param d				Along which dimension it should exhange ghost cells
@@ -137,12 +137,12 @@ void gFreeMpi(MpiInfo *mpiInfo);
  * NB! Only works with 1 ghost layer.
  * @see gHaloOp
  */
-void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
+void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir);
 
 
 /**
  * @brief Send and recieves the overlapping layers of the subdomains
- * @param sliceOp			SliceOpPointer
+ * @param sliceOp			Slicing operation
  * @param *grid				Grid struct
  * @param *mpiInfo			MpiInfo struct
  *
@@ -152,9 +152,8 @@ void gHaloOpDim(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, int 
  * NB! Only works with 1 ghost layer.
  * @see gExchangeSlice
  * @see gHaloOpDim
- * @see SliceOpPointer
  */
-void gHaloOp(SliceOpPointer sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
+void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
@@ -427,8 +426,7 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * @param	ini				Dictionary to input file
  * @param	grid			Grid
  * @param	mpiInfo			MpiInfo
- * @param	denorm			Quantity denormalization factors
- * @param	dimen			Quantity dimensionalizing factors
+ * @param	denorm			Quantity denormalization factor
  * @param	fName			Filename
  * @return	void
  * @see gWriteH5(), gCloseH5()
@@ -440,32 +438,17 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo);
  * quantity is stored, named "n=<timestep>" where <timestep> is signified with
  * one decimal allowing for interleaved quantities.
  *
- * In PINC it is made an distinction between _non-dimensionalizing_ and
- * _normalizing_. Input quantities are non-dimensionalized by specifying them
- * in terms of Debye lengths, plasma frequency, elementary charges and so on
- * rather than using SI-units. Further on, the program normalizes them with
- * respect to for instance cell size in order to make computations as fast as
- * possible. The data stored in .grid.h5 is non-dimensionalized _and_ normalized
- * as it is often much cheaper to just rescale the axis in the visualization
- * tool rather than re-scaling all quantities in PINC.
- *
- * The file will have four attributes of size nDims attached to the root group
- * ("/") which is useful for interpreting the data. These are:
- *	- Axis denormalization factor
- *	- Axis dimensionalizing factor
- *	- Quantity denormalization factor
- *	- Quantity dimensionalizing factor
- *
- * The axis denormalization factor can be multiplied to the integer axis to
- * convert it to be in terms of Debye lengths. Another multiplication by axis
- * dimensionalizing factor converts the axes to meters. Likewise for the
- * quantity factors. However, since the quantity factors depend on which
- * quantity it is (e.g. charge density or electric field), it must be specified
- * in the inputs denorm and dimen in this function. They are expected to be of
- * length nDims.
+ * The grid data is stored in normalized values. To obtain physical values, the
+ * output contains two attributes: The "Quantity denormalization factor" is a
+ * factor that denormalizes the values of the stored quantity upon
+ * multiplication. The values are stored on a integer-based grid. If these
+ * integer position of the grid nodes are multiplied by the "Axis
+ * denormalization factor", physical coordinates are obtained. "Axis
+ * denormalization facotr" is basically the same as the step size in physical
+ * units.
  */
-void gOpenH5(	const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
-	 			const double *denorm, const double *dimen, const char *fName);
+void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
+			 const Units *units, double denorm, const char *fName);
 
 /**
  * @brief	Store values in Grid to .grid.h5-file

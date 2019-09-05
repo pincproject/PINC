@@ -8,13 +8,16 @@ CC		= mpicc
 COPT	= -O3
 
 CLOCAL = 	-Ilib/iniparser/src\
-			-lm -lblas -lgsl -lhdf5
+			-lm -lgsl -lblas -lhdf5 -lfftw3
+LLOCAL =	-Ilib/iniparser/src\
+			-lm -lgsl -lblas -lhdf5 -lfftw3
 
 -include local.mk
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	=	-std=c11 -Wall $(CLOCAL) $(COPT) $(CADD)\
+CFLAGS	= -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
+LFLAGS	= -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
 
 SDIR	= src
 ODIR	= src/obj
@@ -25,8 +28,8 @@ TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h
-SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h spectral.h units.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c spectral.c units.c
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox
 
@@ -59,17 +62,17 @@ test: version $(EXEC).test cleantestdata doc
 
 $(EXEC).test: $(TODIR)/main.test.o $(OBJ) $(TESTOBJ) $(LIBOBJ)
 	@echo "Linking Unit Tests"
-	@$(CC) $^ -o $(EXEC) $(CFLAGS)
+	@$(CC) $^ -o $(EXEC) $(LFLAGS)
 	@echo "PINC is built"
 
 $(EXEC).local: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC (using main.local.c)"
-	@$(CC) $^ -o $(EXEC) $(CFLAGS)
+	@$(CC) $^ -o $(EXEC) $(LFLAGS)
 	@echo "PINC is built"
 
 $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"
-	@$(CC) $^ -o $@ $(CFLAGS)
+	@$(CC) $^ -o $@ $(LFLAGS)
 	@echo "PINC is built"
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)

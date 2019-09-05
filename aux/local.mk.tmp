@@ -1,7 +1,9 @@
 ##
 ## @file		local makefile input
-## @brief		local makefile input
 ## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+## @copyright	University of Oslo, Norway
+## @brief		local makefile input
+## @date		23.02.16
 ##
 ## Local adjustments to the makefile can be stored in a file local.mk for which
 ## this file (local.mk.tmp) is a template. Supported local adjustments are
@@ -17,21 +19,15 @@
 #
 # COPT = -myflag
 
-# Local flags to add to the compiler. Especially useful if you have libraries
-# installed in non-standard manners. For instance, you can add -I to add path
-# with header files, -L for paths containing libraries, and -l to specify
-# library files to use, although for the libraries in use the -l parameters
-# are most likely already correctly set in the makefile. For instance, if you
-# have a library with header files in /usr/mylib/include/ and the library
-# files in /usr/mylib/lib/ then you may want to do like this:
+# Which include paths (for .h files) to use and lib paths (for .so/.dylib files)
+# to use for both compiling (C) and linking (L).s) 
+
+# Local flags to add to the compiler and linker. For instance, you can add -I
+# to add path with header files, -L for paths containing libraries, and -l to
+# specify library files to use. CLOCAL and LLOCAL is for compilation and
+# linking, respectively.
 #
-#
-# CLOCAL =	-Ilib/iniparser/src		\
-# 			-I/usr/mylib/include/	\
-#			-L/usr/mylib/lib/		\
-#			-I/usr/mylib2/include	\
-#			-L/usr/mylib2/lib		\
-#			-lm						\
-#			-lgslcblas				\
-#			-lgsl					\
-#			-lhdf5
+# CLOCAL = 	-Ilib/iniparser/src\
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3
+# LLOCAL = 	-Ilib/iniparser/src\
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3

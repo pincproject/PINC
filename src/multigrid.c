@@ -2,12 +2,12 @@
  * @file		multigrid.c
  * @brief		Poisson Solver, multigrid.
  * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
+ *          	Sigvald Marholm <sigvaldm@fys.uio.no>
  *
  * Functions dealing with the initialisation and destruction of multigrid structures and
  * a multigrid solver containing restriction, prolongation operatorors and smoothers
  *
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,8 +20,8 @@
  * 				Local functions
  *****************************************************************************/
 
-funPtr mgSolve_set(dictionary *ini){
-	return mgSolve;
+funPtr mgSolveRaw_set(dictionary *ini){
+	return mgSolveRaw;
 }
 
 
@@ -82,7 +82,7 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
     free(coarseSolverName);
 }
 
-void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
+void mgSetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	char *restrictor = iniGetStr(ini, "multigrid:restrictor");
 	char *prolongator = iniGetStr(ini, "multigrid:prolongator");
 
@@ -110,11 +110,11 @@ void mgsetRestrictProlong(const dictionary *ini,Multigrid *multigrid){
 	free(prolongator);
 }
 
-MgAlgo getMgAlgo(const dictionary *ini){
+funPtr getMgAlgo(const dictionary *ini){
 
 	char *mgAlgo = iniGetStr(ini, "multigrid:cycle");
 
-	MgAlgo algorithm;
+	funPtr algorithm;
 
 	if(!strcmp(mgAlgo, "mgVRegular"))	algorithm = &mgVRegular;
 	if(!strcmp(mgAlgo, "mgVRecursive"))	algorithm = &mgVRecursive;
@@ -133,7 +133,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 
 	int *trueSize = grid->trueSize;
 	int *nGhostLayers = grid->nGhostLayers;
-	double *stepSize = grid->stepSize;
 	bndType *bnd = grid->bnd;
 	int rank = grid->rank;
 
@@ -181,15 +180,9 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
 		for(int d = 0; d < 2*rank; d++)	subNGhostLayers[d] = nGhostLayers[d];
 
-		//Copying boundaries and stepSize
+		//Copying boundaries
 		bndType *subBnd = malloc(rank*2*sizeof(*subBnd));
 		for(int d = 0; d < 2*rank; d++)	subBnd[d] = bnd[d];
-
-
-
-		double *subStepSize = malloc(rank*sizeof(*subStepSize));
-		for(int d = 0; d < rank; d++)	subStepSize[d] = stepSize[d];
-
 
 		//Assign to grid
 		Grid *grid = malloc(sizeof(Grid));
@@ -199,7 +192,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		grid->trueSize = subTrueSize;
 		grid->sizeProd = subSizeProd;
 		grid->nGhostLayers = subNGhostLayers;
-		grid->stepSize = subStepSize;
 
 		grid->sendSlice = sendSlice;
 		grid->recvSlice = recvSlice;
@@ -324,8 +316,15 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
 	// Sanity check (true grid points need to be a multiple of 2^(multigrid levels)
 	for(int d = 0; d < nDims; d++){
-		if(trueSize[d+1] % (int) 2*(nLevels-1)){ //Sloppy and wrong
-			msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels");
+
+		// Computes 2^nLevels. pow() is for doubles.
+		int power = 1;
+		for(int i = 0; i<nLevels; i++) power *= 2;
+
+		if(trueSize[d+1] % (int) pow(2,nLevels)){
+			/* msg(ERROR, "The number of True Grid Points needs to be a multiple of 2^nLevels"); */
+			msg(STATUS, "2^nLevels=%d", power);
+			msg(ERROR, "All elements in grid:trueSize must be a multiple of 2^mgLevels=%d", power);
 		}
 	}
 
@@ -343,7 +342,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
 
     //Setting the algorithms to be used, pointer functions
 	mgSetSolver(ini, multigrid);
-	mgsetRestrictProlong(ini, multigrid);
+	mgSetRestrictProlong(ini, multigrid);
 
   	return multigrid;
 
@@ -360,6 +359,51 @@ void mgFree(Multigrid *multigrid){
 	free(multigrid);
 
 	return;
+}
+
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi){
+
+	MultigridSolver *solver = (MultigridSolver *)malloc(sizeof(*solver));
+
+	Grid *res = gAlloc(ini, SCALAR);
+	Multigrid *mgRho = mgAlloc(ini, rho);
+	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+	funPtr mgAlgo = getMgAlgo(ini);
+
+	solver->res = res;
+	solver->mgRho = mgRho;
+	solver->mgRes = mgRes;
+	solver->mgPhi = mgPhi;
+	solver->mgAlgo = mgAlgo;
+
+	return solver;
+}
+
+void mgFreeSolver(MultigridSolver *solver){
+
+	mgFree(solver->mgRho);
+	mgFree(solver->mgPhi);
+	mgFree(solver->mgRes);
+	gFree(solver->res);
+	free(solver);
+}
+void mgSolver(	void (**solve)(),
+				MultigridSolver *(**solverAlloc)(),
+				void (**solverFree)()){
+
+	*solve=mgSolve;
+	*solverAlloc=mgAllocSolver;
+	*solverFree=mgFreeSolver;
+}
+funPtr mgSolver_set(const dictionary *ini){
+	return mgSolver;
+}
+void mgSolve(const MultigridSolver *solver,
+	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo){
+
+	mgSolveRaw(solver->mgAlgo, solver->mgRho, solver->mgPhi, solver->mgRes, mpiInfo);
 }
 
 /******************************************************
@@ -1641,7 +1685,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 
 
-void mgSolve(MgAlgo mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
+void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
@@ -1688,6 +1732,10 @@ funPtr mgModeErrorScaling_set(dictionary *ini){
 	return mgModeErrorScaling;
 }
 void mgModeErrorScaling(dictionary *ini){
+
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
+
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -1720,10 +1768,10 @@ void mgModeErrorScaling(dictionary *ini){
 
 	if(mpiInfo->mpiRank==0)	aiPrint(&rho->trueSize[1], rho->rank-1);
 
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	funPtr mgAlgo = getMgAlgo(ini);
 
 	//Solve
-	mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+	mgSolveRaw(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 
 	// //Print results
 	// msg(STATUS, "Avg e^2 = %f", avgError);
@@ -1742,53 +1790,47 @@ void mgModeErrorScaling(dictionary *ini){
 	/*********************************************************************
 	*			STORE GRIDS
 	********************************************************************/
-	int runNumber 	= iniGetInt(ini, "time:startTime");
-	int rank 		= rho->rank;
+	int runNumber 	= iniGetInt(ini, "multigrid:runNumber");
 
 	char *fName 	= malloc(8*sizeof(fName));
-	double *denorm 	= malloc((rank-1)*sizeof(*denorm));
-	double *dimen 	= malloc((rank-1)*sizeof(*dimen));
-
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
 	sprintf(fName, "rho_%d", runNumber);
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, rho, mpiInfo, units, 1.0, fName);
 	gWriteH5(rho, mpiInfo, 0.);
 	gCloseH5(rho);
 
 	sprintf(fName, "phi_%d", runNumber);
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, phi, mpiInfo, units, 1.0, fName);
 	gWriteH5(phi, mpiInfo, 0.);
 	gCloseH5(phi);
 
 	sprintf(fName, "res_%d", runNumber);
-	gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, res, mpiInfo, units, 1.0, fName);
 	gWriteH5(res, mpiInfo, 0.);
 	gCloseH5(res);
 
 	sprintf(fName, "E_%d", runNumber);
-	gOpenH5(ini, E, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, E, mpiInfo, units, 1.0, fName);
 	gWriteH5(E, mpiInfo, 0.);
 	gCloseH5(E);
 
 	sprintf(fName, "sol_%d", runNumber);
-	gOpenH5(ini, sol, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, sol, mpiInfo, units, 1.0, fName);
 	gWriteH5(sol, mpiInfo, 0.);
 	gCloseH5(sol);
 
 	sprintf(fName, "error_%d", runNumber);
-	gOpenH5(ini, error, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, error, mpiInfo, units, 1.0, fName);
 	gWriteH5(error, mpiInfo, 0.);
 	gCloseH5(error);
 
 	sprintf(fName, "solE_%d", runNumber);
-	gOpenH5(ini, solE, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, solE, mpiInfo, units, 1.0, fName);
 	gWriteH5(solE, mpiInfo, 0.);
 	gCloseH5(solE);
 
 	sprintf(fName, "errorE_%d", runNumber);
-	gOpenH5(ini, errorE, mpiInfo, denorm, dimen, fName);
+	gOpenH5(ini, errorE, mpiInfo, units, 1.0, fName);
 	gWriteH5(errorE, mpiInfo, 0.);
 	gCloseH5(errorE);
 
@@ -1796,8 +1838,6 @@ void mgModeErrorScaling(dictionary *ini){
 	//Freedom
 	gFreeMpi(mpiInfo);
 	free(fName);
-	free(denorm);
-	free(dimen);
 
 	gFree(rho);
 	gFree(phi);
@@ -1806,6 +1846,7 @@ void mgModeErrorScaling(dictionary *ini){
 	gFree(error);
 	gFree(sol);
 
+	uFree(units);
 
 }
 
@@ -1814,6 +1855,8 @@ funPtr mgMode_set(dictionary *ini){
 }
 void mgMode(dictionary *ini){
 
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
 	//Mpi
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
@@ -1833,7 +1876,7 @@ void mgMode(dictionary *ini){
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 
-	MgAlgo mgAlgo = getMgAlgo(ini);
+	funPtr mgAlgo = getMgAlgo(ini);
 
 	msg(STATUS, "\nMultigrid settings: \n nLevels = %d \n nPreSmooth = %d \n nCoarseSolve = %d \n nPostSmooth = %d",
 	mgRho->nLevels, mgRho->nPreSmooth, mgRho->nCoarseSolve, mgRho->nPostSmooth);
@@ -1871,7 +1914,7 @@ void mgMode(dictionary *ini){
 	while(avgError>tol){
 		// Run solver
 		tStart(t);
-		mgSolve(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
+		mgSolveRaw(mgAlgo, mgRho, mgPhi, mgRes, mpiInfo);
 		tStop(t);
 
 		//Compute error
@@ -1894,14 +1937,9 @@ void mgMode(dictionary *ini){
 	/*********************************************************************
 	*			STORE GRIDS
 	********************************************************************/
-	int runNumber = iniGetInt(ini, "time:startTime");
+	int runNumber = iniGetInt(ini, "multigrid:runNumber");
 
 	if(runNumber == 0){
-		double *denorm = malloc((rank-1)*sizeof(*denorm));
-		double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-		for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-		for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
 
 		//(Re)Compute E, error and residual
 		gHaloOp(setSlice, phi, mpiInfo, 0);
@@ -1912,21 +1950,21 @@ void mgMode(dictionary *ini){
 		mgResidual(res,rho, phi, mpiInfo);
 
 
-		gOpenH5(ini, E, mpiInfo, denorm, dimen, "E_0");
+		gOpenH5(ini, E, mpiInfo, units, 1.0, "E_0");
 		gWriteH5(E, mpiInfo, 0.);
 		gCloseH5(E);
 
-		gOpenH5(ini, sol, mpiInfo, denorm, dimen, "sol_0");
+		gOpenH5(ini, sol, mpiInfo, units, 1.0, "sol_0");
 		gWriteH5(sol, mpiInfo, 0.);
 		gCloseH5(sol);
 
-		gOpenH5(ini, error, mpiInfo, denorm, dimen, "error_0");
+		gOpenH5(ini, error, mpiInfo, units, 1.0, "error_0");
 		gWriteH5(error, mpiInfo, 0.);
 		gCloseH5(error);
 
 
 		//Saving lvl of grids
-		char fName[12];
+		char fName[64];
 		for(int lvl = 0; lvl <mgRho->nLevels; lvl ++){
 
 			rho = mgRho->grids[lvl];
@@ -1934,11 +1972,11 @@ void mgMode(dictionary *ini){
 			res = mgRes->grids[lvl];
 
 			sprintf(fName, "rho_%d", lvl);
-			gOpenH5(ini, rho, mpiInfo, denorm, dimen, fName);
+			gOpenH5(ini, rho, mpiInfo, units, 1.0, fName);
 			sprintf(fName, "phi_%d", lvl);
-			gOpenH5(ini,  phi, mpiInfo, denorm, dimen, fName);
+			gOpenH5(ini,  phi, mpiInfo, units, 1.0, fName);
 			sprintf(fName, "res_%d", lvl);
-			gOpenH5(ini, res, mpiInfo, denorm, dimen, fName);
+			gOpenH5(ini, res, mpiInfo, units, 1.0, fName);
 
 
 			gWriteH5(rho,mpiInfo,0.);
@@ -1950,10 +1988,6 @@ void mgMode(dictionary *ini){
 			gCloseH5(res);
 
 		}
-
-
-		free(denorm);
-		free(dimen);
 
 	}
 
@@ -1976,5 +2010,5 @@ void mgMode(dictionary *ini){
 
 	gsl_rng_free(rng);
 
-	return;
+	uFree(units);
 }
