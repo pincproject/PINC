@@ -112,13 +112,21 @@ void regular(dictionary *ini){
 	 */
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+		gOpenH5(ini, rhoObj, mpiInfo, units, 1, "rhoObj");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
 
 		// DIMENSIONS NEED TO BE CHECKED!!
-    gOpenH5(ini, rhoObj, mpiInfo, units, 1, "rhoObj");
+
 	  oOpenH5(ini, obj, mpiInfo, units, 1, "test");
-    oReadH5(obj, mpiInfo);
+    oReadH5(obj->domain, mpiInfo, "Object");
+
+		//Communicate the boundary nodes
+		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+		// Count the number of objects and fills the lookup tables.
+		oFillLookupTables(obj,mpiInfo);
+		//Find all the object nodes which are part of the object surface.
+		oFindObjectSurfaceNodes(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -135,12 +143,13 @@ void regular(dictionary *ini){
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
-	// pVelMaxwell(ini, pop, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
+	//pVelZero(pop);
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
+	pVelAssertMax(pop,maxVel);
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
 
@@ -154,19 +163,23 @@ void regular(dictionary *ini){
 	 */
 
     // Clean objects from any charge first.
+		msg(STATUS,"Clean Objects");
     gZero(rhoObj);
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);
     gZero(rhoObj);
+		msg(STATUS,"Cleaned");
+
 
 
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-    gWriteH5(rho, mpiInfo, (double) 0);
-
+    //gWriteH5(rho, mpiInfo, (double) 0);
+	msg(STATUS,"distr charge");
 	// Get initial E-field
 	solve(solver, rho, phi, mpiInfo);
-	  gWriteH5(phi, mpiInfo, (double) 0);
+	  //gWriteH5(phi, mpiInfo, (double) 0);
+	msg(STATUS,"Solved field");
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);

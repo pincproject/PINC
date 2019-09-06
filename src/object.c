@@ -18,22 +18,6 @@
  *****************************************************************************/
 
 /**
- * @brief   Count the number of objects and fills the lookup tables.
- * @param	obj		Object
- * @param	ini		input settings
- * @return	void
- */
-void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
-
-/**
- * @brief   Find all the object nodes which are part of the object surface.
- * @param	obj		Object
- * @param	ini		input settings
- * @return	void
- */
-void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
-
-/**
  * @brief   Check whether a certain node is a ghost node.
  * @param	grid	Grid
  * @param	node	long int
@@ -323,25 +307,29 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
         }
 
+        msg(STATUS,"MPI_Allreduce");
         // Make sure every codes has the complete matrix (needed for BLAS).
         MPI_Allreduce(MPI_IN_PLACE, capMatrix, (totSNGlob*totSNGlob), \
                       MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+        msg(STATUS,"Reduced");
         // Compute the inverse of the capacitance matrix.
         // Actually, the inverse is the capacitance matrix. Probably have to rethink the variable names.
         gsl_matrix_view A = gsl_matrix_view_array(capMatrix, totSNGlob, totSNGlob);
         gsl_matrix_view invA = gsl_matrix_view_array(invCapMatrix, totSNGlob, totSNGlob);
-
+        msg(STATUS,"inversed");
         int s;
         gsl_permutation *p = gsl_permutation_alloc(totSNGlob);
         gsl_linalg_LU_decomp(&A.matrix, p, &s);
         gsl_linalg_LU_invert(&A.matrix, p, &invA.matrix);
 
+        msg(STATUS,"Add to big Arr");
         // Add the invCapMatrix for object a to the big array.
         for (long int l=0; l<totSNGlob*totSNGlob; l++) {
             capMatrixAll[a*totSNGlob*totSNGlob+l] = invCapMatrix[l];
         }
 
+        msg(STATUS,"Comp Total sum");
         // Compute here to total sum of elements in the capacitance matrix (needed later).
         capMatrixSum[a] = adSum(invCapMatrix,totSNGlob*totSNGlob);
         // We need the inverse later on.
@@ -351,10 +339,19 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
     long int *capMatrixAllOffsets = nodCorGlob;
 
+    msg(STATUS,"Add to obj");
     // Add to object
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = capMatrixAllOffsets;
     obj->capMatrixSum = capMatrixSum;
+
+    //free
+    gFree(rho);
+    gFree(res);
+    gFree(phi);
+    mgFree(mgPhi);
+    mgFree(mgRho);
+    mgFree(mgRes);
 }
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
@@ -542,35 +539,57 @@ void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
     gOpenH5(ini, obj->domain,   mpiInfo, units, denorm, "object");
 }
 
-void oReadH5(Object *obj, const MpiInfo *mpiInfo){
+void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]){
 
-    // Identical to gReadH5()
-    hid_t fileSpace = obj->domain->h5FileSpace;
-    hid_t memSpace = obj->domain->h5MemSpace;
-    hid_t file = obj->domain->h5;
-    double *val = obj->domain->val;
+	hid_t fileSpace = grid->h5FileSpace;
+	hid_t memSpace = grid->h5MemSpace;
+	hid_t file = grid->h5;
+	double *val = grid->val;
 
-    hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+	// Enable collective datawriting
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
-    char name[64];
-    sprintf(name,"Object"); //Only line which is different from gReadH5().
+	//char name[64];
+	//sprintf(name,name);
 
-    hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
-    H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+	hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+	H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
 
-    H5Dclose(dataset);
-    H5Pclose(pList);
+	H5Dclose(dataset);
+	H5Pclose(pList);
 
-    //Communicate the boundary nodes -> DON'T DO THIS HERE!
-    gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
-
-    // Count the number of objects and fills the lookup tables.
-    oFillLookupTables(obj,mpiInfo);
-
-    // Find all the object nodes which are part of the object surface.
-    oFindObjectSurfaceNodes(obj, mpiInfo);
 }
+//
+// void oReadH5(Object *obj, const MpiInfo *mpiInfo){
+//
+//     // Identical to gReadH5()
+//     hid_t fileSpace = obj->domain->h5FileSpace;
+//     hid_t memSpace = obj->domain->h5MemSpace;
+//     hid_t file = obj->domain->h5;
+//     double *val = obj->domain->val;
+//
+//     hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+//     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+//
+//     char name[64];
+//     sprintf(name,"Object"); //Only line which is different from gReadH5().
+//
+//     hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+//     H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+//
+//     H5Dclose(dataset);
+//     H5Pclose(pList);
+//
+//     //Communicate the boundary nodes -> DON'T DO THIS HERE!
+//     gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+//
+//     // Count the number of objects and fills the lookup tables.
+//     oFillLookupTables(obj,mpiInfo);
+//
+//     // Find all the object nodes which are part of the object surface.
+//     oFindObjectSurfaceNodes(obj, mpiInfo);
+// }
 
 
 /******************************************************************************

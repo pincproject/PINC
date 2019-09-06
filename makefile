@@ -5,7 +5,7 @@
 ##
 
 CC		= mpicc
-COPT	= -O3
+COPT	= -g ##-O3
 
 CLOCAL = 	-Ilib/iniparser/src\
 			-lm -lgsl -lblas -lhdf5 -lfftw3

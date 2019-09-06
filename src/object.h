@@ -73,8 +73,9 @@ void oCloseH5(Object *obj);
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Object *obj, const MpiInfo *mpiInfo);
 
+//void oReadH5(Object *obj, const MpiInfo *mpiInfo);
+void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]);
 /**
  * @brief   Compute the capacitance matrix for each object.
  * @param	obj		Object
@@ -109,6 +110,24 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
  */
 void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 
+
+/**
+ * @brief   Count the number of objects and fills the lookup tables.
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ */
+void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
+
+/**
+ * @brief   Find all the object nodes which are part of the object surface.
+ * @param	obj		Object
+ * @param	ini		input settings
+ * @return	void
+ */
+void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
+
+
 /**
  * TO IMPLEMENT!
  *
@@ -116,10 +135,3 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 void oRayTrace(Population *pop, const Object *obj);
 
 #endif // OBJECT_H
-
-
-
-
-
-
-

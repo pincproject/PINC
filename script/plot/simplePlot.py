@@ -5,7 +5,7 @@ import numpy as np
 import pylab as plt
 
 
-fileRho = h5py.File('../../test_rho.grid.h5','r')
+fileRho = h5py.File('../../data/rho.grid.h5','r')
 rho = fileRho['/n=0.0']
 rho = np.transpose(rho,(3,2,1,0))
 rho = np.squeeze(rho)
