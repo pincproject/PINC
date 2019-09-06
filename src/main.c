@@ -96,6 +96,11 @@ void regular(dictionary *ini){
 		Multigrid *mgRhoObj = mgAlloc(ini, rhoObj);
 		Object *obj = oAlloc(ini);
 
+		Grid *res = gAlloc(ini, SCALAR);
+		Multigrid *mgRes = mgAlloc(ini, res);
+		Multigrid *mgPhi = mgAlloc(ini, phi);
+
+
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -112,13 +117,16 @@ void regular(dictionary *ini){
 	 */
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
-		gOpenH5(ini, rhoObj, mpiInfo, units, 1, "rhoObj");
+		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
 
 		// DIMENSIONS NEED TO BE CHECKED!!
+		//oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");
+    //oReadH5(obj, mpiInfo);
 
-	  oOpenH5(ini, obj, mpiInfo, units, 1, "test");
+		//TODO: add error handling/check if object grids size is not same as global grid size
+	  oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "test");
     oReadH5(obj->domain, mpiInfo, "Object");
 
 		//Communicate the boundary nodes
@@ -151,7 +159,7 @@ void regular(dictionary *ini){
 
 	pVelAssertMax(pop,maxVel);
 	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
+	pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
@@ -174,11 +182,11 @@ void regular(dictionary *ini){
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-    //gWriteH5(rho, mpiInfo, (double) 0);
+    gWriteH5(rho, mpiInfo, (double) 0);
 	msg(STATUS,"distr charge");
 	// Get initial E-field
 	solve(solver, rho, phi, mpiInfo);
-	  //gWriteH5(phi, mpiInfo, (double) 0);
+	  gWriteH5(phi, mpiInfo, (double) 0);
 	msg(STATUS,"Solved field");
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -187,8 +195,12 @@ void regular(dictionary *ini){
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
+	msg(STATUS,"initial Acc");
 	acc(pop, E);
+	msg(STATUS,"done");
 	gMul(E, 2.0);
+
+	msg(STATUS,"Starting time");
 
 	/*
 	 * TIME LOOP

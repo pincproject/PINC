@@ -159,6 +159,7 @@ funPtr puAcc3D1KE_set(dictionary *ini){
 }
 void puAcc3D1KE(Population *pop, Grid *E){
 
+	//msg(STATUS,"In Acc");
 	int nSpecies = pop->nSpecies;
 	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
 	double *pos = pop->pos;
@@ -169,6 +170,7 @@ void puAcc3D1KE(Population *pop, Grid *E){
 	long int *sizeProd = E->sizeProd;
 	double *val = E->val;
 
+	//msg(STATUS,"Starting species loop");
 	for(int s=0;s<nSpecies;s++){
 
 		gMul(E, pop->charge[s]/pop->mass[s]);
@@ -177,22 +179,27 @@ void puAcc3D1KE(Population *pop, Grid *E){
 		long int pStop = pop->iStop[s]*nDims;
 
 		kinEnergy[s]=0;
-
+		//msg(STATUS,"Starting particle loop");
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3];
+			//msg(STATUS,"Interpolating");
+			//msg(STATUS,"&pos[p] = %f",&pos[p]);
 			puInterp3D1(dv,&pos[p],val,sizeProd);
+			//msg(STATUS,"Done, comp vel for particle");
 			double velSquared=0;
 			for(int d=0;d<nDims;d++){
+				//msg(STATUS,"summing velocity");
 				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
 				vel[p+d] += dv[d];
 			}
 			kinEnergy[s]+=velSquared;
 		}
-
+		msg(STATUS,"Exit particle loop");
 		kinEnergy[s]*=0.5*mass[s];
 
 		gMul(E, pop->mass[s]/pop->charge[s]);
 	}
+	msg(STATUS,"Exit specie loop");
 }
 funPtr puAccND1KE_set(dictionary *ini){
 	puSanity(ini,"puAccND1KE",0,1);

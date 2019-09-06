@@ -5,7 +5,7 @@ import numpy as np
 import pylab as plt
 
 
-h5 = h5py.File('../../data/rho.grid.h5','r')
+h5 = h5py.File('../../data/phi.grid.h5','r')
 
 for i in range(1,2000,1):
 	dataset = h5["/n=%.1f"%i]

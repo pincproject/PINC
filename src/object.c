@@ -446,6 +446,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         long int iStart = pop->iStart[s];
         long int iStop = pop->iStop[s];
 
+
         for(int i=iStart;i<iStop;i++){
 
             double *pos = &pop->pos[3*i];
@@ -560,6 +561,9 @@ void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]){
 	H5Pclose(pList);
 
 }
+
+
+//
 //
 // void oReadH5(Object *obj, const MpiInfo *mpiInfo){
 //
