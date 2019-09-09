@@ -459,12 +459,14 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
             long int p = j + k*sizeProd[2] + l*sizeProd[3];
 
+
             // Check wether p is one of the object nodes and collect the charge if so.
             for (long int a=0; a<obj->nObjects; a++) {
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
                         pCut(pop, s, p, pos, vel);
+                        msg(STATUS,"cut particle: %i, with pos %f,%f,%f",p,pos[0],pos[1],pos[2]);
                     }
                 }
             }
