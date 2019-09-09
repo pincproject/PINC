@@ -183,6 +183,10 @@ void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict f
  *
  * Remember to free returned arrays.
  *
+ * The iniSet..() functions should be used only in rare occasions (e.g. during
+ * startup). They do not change the ini-file, but the dictionary variable. All
+ * usage of that variable afterwards will have altered values.
+ *
  * @param		ini			ini-file dictionary
  * @param		key			Key to get value from ("section:key")
  * @param		nElements	Number of elements to fetch (in case of arrays)
@@ -228,13 +232,33 @@ long int iniGetLongInt(const dictionary* ini, const char *key);
 double iniGetDouble(const dictionary* ini, const char *key);
 ///@brief Allocate and get string (remeber to free)
 char* iniGetStr(const dictionary *ini, const char *key);
-
 ///@brief Allocate and get array of integers (remember to free)
 int* iniGetIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of long ints (remember to free)
 long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements);
 ///@brief Allocate and get array of doubles (remember to free)
 double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements);
+///@brief Set key to int
+void iniSetInt(dictionary *ini, const char *key, int value);
+///@brief Set key to long int
+void iniSetLongInt(dictionary *ini, const char *key, long int value);
+///@brief Set key to double
+void iniSetDouble(dictionary *ini, const char *key, double value);
+///@brief Set key to string
+void iniSetStr(dictionary *ini, const char *key, const char *value);
+///@brief Set key to array of int
+void iniSetIntArr(		dictionary *ini, const char *key,
+						const int *values, int nElements);
+///@brief Set key to array of long int
+void iniSetLongIntArr(	dictionary *ini, const char *key,
+						const long int *values, int nElements);
+///@brief Set key to array of double
+void iniSetDoubleArr(	dictionary *ini, const char *key,
+						const double *values, int nElements);
+///@brief Scale long int (or int) array or scalar stored in key by factor.
+void iniScaleLongInt(dictionary *ini, const char *key, double factor);
+///@brief Scale double array or scalar stored in key by factor.
+void iniScaleDouble(dictionary *ini, const char *key, double factor);
 
 /**
  * @brief Get the array of strings associated to a key.
@@ -268,7 +292,6 @@ int iniGetNElements(const dictionary* ini, const char* key);
  */
 void iniApplySuffix(dictionary *ini, const char *key, const char *suffix, const double *mul, int mulLen);
 
-void parseIndirectInput(dictionary *ini);
 
 ///@}
 

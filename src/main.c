@@ -25,7 +25,6 @@ int main(int argc, char *argv[]){
 	dictionary *ini = iniOpen(argc,argv); // No printing before this
 	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
-	parseIndirectInput(ini);
 
 	/*
 	 * CHOOSE PINC RUN MODE
@@ -33,8 +32,6 @@ int main(int argc, char *argv[]){
 	void (*run)() = select(ini,"methods:mode",	regular_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
-												puModeParticle_set,
-												puModeInterp_set,
 												sMode_set);
 	run(ini);
 
@@ -83,6 +80,9 @@ void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
+
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
 	Grid *E   = gAlloc(ini, VECTOR);
@@ -90,7 +90,7 @@ void regular(dictionary *ini){
     Grid *rhoObj = gAlloc(ini, SCALAR);     // for capMatrix - objects
 	Grid *phi = gAlloc(ini, SCALAR);
 	void *solver = solverAlloc(ini, rho, phi);
-	
+
     Object *obj = oAlloc(ini);              // for capMatrix - objects
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -107,20 +107,17 @@ void regular(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
+	pOpenH5(ini, pop, units, "pop");
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+  // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
+  // oReadH5(obj, mpiInfo);
 
-	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
-	for(int d=1; d < rank; d++) dimen[d-1] = 1.;
 
-	pOpenH5(ini, pop, "pop");
-	gOpenH5(ini, rho, mpiInfo, denorm, dimen, "rho");
-    gOpenH5(ini, rhoObj, mpiInfo, denorm, dimen, "rhoObj");        // for capMatrix - objects
-	gOpenH5(ini, phi, mpiInfo, denorm, dimen, "phi");
-	gOpenH5(ini, E,   mpiInfo, denorm, dimen, "E");
-    oOpenH5(ini, obj, mpiInfo, denorm, dimen, "test");          // for capMatrix - objects
-    oReadH5(obj, mpiInfo);                                      // for capMatrix - objects
+		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
+		oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "test");          // for capMatrix - objects
+		oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -128,25 +125,22 @@ void regular(dictionary *ini){
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
 
-	free(denorm);
-	free(dimen);
-
 	/*
 	 * INITIAL CONDITIONS
 	 */
-    
+
     //Compute capacitance matrix
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);               // for capMatrix - objects
 
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
-	// pVelMaxwell(ini, pop, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
+	//pVelZero(pop);
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
-	pPosPerturb(ini, pop, mpiInfo);
+	//pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
@@ -161,7 +155,7 @@ void regular(dictionary *ini){
     gZero(rhoObj);                                          // for capMatrix - objects
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
     gZero(rhoObj);                                          // for capMatrix - objects
-    
+
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -182,7 +176,7 @@ void regular(dictionary *ini){
 	 * TIME LOOP
 	 */
 
-	Timer *t = tAlloc(rank);
+	Timer *t = tAlloc(mpiInfo->mpiRank);
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -207,11 +201,11 @@ void regular(dictionary *ini){
 		puMigrate(pop, mpiInfo, rho);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
-		pPosAssertInLocalFrame(pop, rho);
+		//pPosAssertInLocalFrame(pop, rho);
 
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
-        
+
 		// Compute charge density
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -222,12 +216,12 @@ void regular(dictionary *ini){
         // Add object charge to rho.
         gAddTo(rho, rhoObj);                                // for capMatrix - objects
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);          // for capMatrix - objects
-        
+
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
-        
+
         // Second run with solver to account for charges
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
-        
+
 		// gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
@@ -242,9 +236,9 @@ void regular(dictionary *ini){
 
 		gAssertNeutralGrid(phi, mpiInfo);
 
-        
-        
-        
+
+
+
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -269,10 +263,10 @@ void regular(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		gWriteH5(E, mpiInfo, (double) n);
+		//gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
 	}
@@ -285,6 +279,7 @@ void regular(dictionary *ini){
 	gFreeMpi(mpiInfo);
 
 	// Close h5 files
+	msg(STATUS, "closing H5 files");
 	pCloseH5(pop);
 	gCloseH5(rho);
     gCloseH5(rhoObj);       // for capMatrix - objects
@@ -296,13 +291,16 @@ void regular(dictionary *ini){
 	// Free memory
 	// sFree(solver);
 	// mgFreeSolver(solver);
+	msg(STATUS, "Freeing memory");
 	solverFree(solver);
 	gFree(rho);
     gFree(rhoObj);          // for capMatrix - objects
 	gFree(phi);
 	gFree(E);
 	pFree(pop);
-    oFree(obj);             // for capMatrix - objects
+	uFree(units);
+	msg(STATUS, "Freeing object");
+	 oFree(obj);
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);

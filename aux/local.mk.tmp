@@ -28,6 +28,6 @@
 # linking, respectively.
 #
 # CLOCAL = 	-Ilib/iniparser/src\
-#			-lm -lgslcblas -lgsl -lhdf5
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3
 # LLOCAL = 	-Ilib/iniparser/src\
-#			-lm -lgslcblas -lgsl -lhdf5
+# 			-lm -lgslcblas -lgsl -lhdf5 -lfftw3

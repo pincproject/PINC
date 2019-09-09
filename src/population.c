@@ -18,21 +18,6 @@
 #include "iniparser.h"
 
 /******************************************************************************
- * DECLARING LOCAL FUNCTIONS
- *****************************************************************************/
-
-/**
- * @brief	Sets normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- *
- * Normalizes charge and mass and sets specie-specific renormalization
- * parameters in Population.
- *
- */
-static void pSetNormParams(const dictionary *ini, Population *pop);
-
-/******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
@@ -79,8 +64,8 @@ Population *pAlloc(const dictionary *ini){
 	pop->iStop = iStop;
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
-
-	pSetNormParams(ini,pop);
+	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 
 	return pop;
 
@@ -90,8 +75,6 @@ void pFree(Population *pop){
 
 	free(pop->pos);
 	free(pop->vel);
-	free(pop->renormE);
-	free(pop->renormRho);
 	free(pop->kinEnergy);
 	free(pop->potEnergy);
 	free(pop->iStart);
@@ -240,14 +223,9 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 	int nSpecies = pop->nSpecies;
 
 	int nElements = nDims *nSpecies;
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
 	double *amplitude = iniGetDoubleArr(ini,"population:perturbAmplitude",nElements);
 	double *mode = iniGetDoubleArr(ini,"population:perturbMode",nElements);
 
-	for(int e = 0; e < nElements; e++) {
-		if (nDims > 1)	amplitude[e] /= stepSize[e%(nDims-1)];
-		else amplitude[e] /= stepSize[0];
-	}
 	int *L = gGetGlobalSize(ini);
 	double *pos = pop->pos;
 
@@ -330,7 +308,7 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 			for(int d=0; d<nDims; d++){
 
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
-					msg(ERROR,	"Particle i=%li (of specie %i) is out of bounds"
+					msg(ERROR,	"Particle i=%li (of specie %i) is out of bounds "
 					 			"in dimension %i: %f>%i",
 								i, s, d, pos[i*nDims+d], size[d+1]-1);
 				}
@@ -369,8 +347,6 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nSpecies = pop->nSpecies;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double stepSize = iniGetDouble(ini,"grid:stepSize");
 
 	int nDims = pop->nDims;
 
@@ -379,7 +355,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = (timeStep/stepSize)*velThermal[s];
+		double velTh = velThermal[s];
 
 		for(long int i=iStart;i<iStop;i++){
 
@@ -467,7 +443,8 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
+void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
+	   			const char *fName){
 
 	/*
 	 * CREATE FILE
@@ -483,7 +460,7 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	group = H5Gcreate(file,"/vel",H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 	H5Gclose(group);
 
-	char name[18];	// int is max 5 digits + "/pos/specie " + '\0'
+	char name[32];	// int is max 5 digits + "/pos/specie " + '\0'
 
 	int nSpecies = pop->nSpecies;
 	for(int s=0;s<nSpecies;s++){
@@ -502,28 +479,8 @@ void pOpenH5(const dictionary *ini, Population *pop, const char *fName){
 	 * CREATE ATTRIBUTES
 	 */
 
-	int nDims = pop->nDims;
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double debye = 0; // TBD: Does not work
-
-	double vThermal = 0; // TBD: Does not work
-
-	double *attrData = malloc(nDims*sizeof(*attrData));
-
-	setH5Attr(file, "Position denormalization factor", stepSize, nDims);
-
-	adSetAll(attrData,nDims,debye);
-	setH5Attr(file, "Position dimensionalizing factor", attrData, nDims);
-
-	for(int d=0;d<nDims;d++) attrData[d]=stepSize[d]/timeStep;
-	setH5Attr(file, "Velocity denormalization factor", attrData, nDims);
-
-	adSetAll(attrData,nDims,vThermal);
-	setH5Attr(file, "Velocity dimensionalizing factor", attrData, nDims);
-
-	free(stepSize);
-	free(attrData);
+	setH5Attr(file, "Position denormalization factor", &units->length, 1);
+	setH5Attr(file, "Velocity denormalization factor", &units->velocity, 1);
 
 }
 
@@ -649,7 +606,7 @@ void pCloseH5(Population *pop){
 
 void pCreateEnergyDatasets(hid_t xy, Population *pop){
 
-	char name[32];
+	char name[64];
 	int nSpecies = pop->nSpecies;
 
 	sprintf(name,"/energy/potential/total");
@@ -669,7 +626,7 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop){
 
 void pWriteEnergy(hid_t xy, Population *pop, double x){
 
-	char name[32];
+	char name[64];
 	int nSpecies = pop->nSpecies;
 
 	sprintf(name,"/energy/potential/total");
@@ -751,57 +708,4 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
 		}
 	}
-}
-
-static void pSetNormParams(const dictionary *ini, Population *pop){
-
-	int nSpecies = pop->nSpecies;
-	int nDims = pop->nDims;
-	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
-	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-	double *multiplicity = iniGetDoubleArr(ini,"population:multiplicity",nSpecies);
-
-	double *stepSize = iniGetDoubleArr(ini,"grid:stepSize",nDims);
-	double timeStep = iniGetDouble(ini,"time:timeStep");
-	double cellVolume = adProd(stepSize,nDims);
-
-	// Multiply charge and mass by multiplicity
-	adMul(charge,multiplicity,charge,nSpecies);
-	adMul(mass,multiplicity,mass,nSpecies);
-
-	/*
-	 * Normalizing charge and mass (used in energy computations)
-	 */
-	double *chargeBar = malloc(nSpecies*sizeof(*chargeBar));
-	double *massBar = malloc(nSpecies*sizeof(*massBar));
-	for(int s=0;s<nSpecies;s++){
-		chargeBar[s] = (pow(timeStep,2)/cellVolume)*(charge[0]/mass[0])*charge[s];
-		// massBar[s] 	= (pow(timeStep,4)/cellVolume)*pow(charge[0]/mass[0],2)*mass[s];
-		massBar[s]	 = pow(timeStep,2)*mass[s];
-	}
-	pop->charge=chargeBar;
-	pop->mass=massBar;
-
-	/*
-	 * Computing renormalization factors (used in update equations)
-	 */
-	double *renormE = malloc(nSpecies*sizeof(*renormE));
-	double *renormRho = malloc(nSpecies*sizeof(*renormRho));
-	for(int s=0;s<nSpecies-1;s++){
-		renormE[s] = (charge[s+1]/mass[s+1])/(charge[s]/mass[s]);
-		renormRho[s] = chargeBar[s]/chargeBar[s+1];
-		// renormRho[s] = charge[s]/charge[s+1];
-	}
-	renormE[nSpecies-1] = (charge[0]/mass[0])/(charge[nSpecies-1]/mass[nSpecies-1]);
-	// renormRho[nSpecies-1] = chargeBar[nSpecies-1];
-	renormRho[nSpecies-1] = pow(timeStep,2)*(charge[0]/mass[0])*charge[nSpecies-1];
-
-	pop->renormE = renormE;
-	pop->renormRho = renormRho;
-
-	free(charge);
-	free(mass);
-	free(multiplicity);
-	free(stepSize);
-
 }

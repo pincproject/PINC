@@ -1,38 +1,34 @@
 #!/bin/bash
 
-# Job name:
-#SBATCH --job-name=PinC
-#
-# Project:
+# NB:
+# Using --mem-per-cpu higher than 3936 is penalized,
+# i.e. you pay for two (or more) cores. It would be
+# more efficient to instead increase the number of
+# cores and make some use of what you pay for.
+# C.f. Processor equivalents in Abel documentation.
+
+#SBATCH --job-name=PINC
 #SBATCH --account=nn9299k
-#
-# Wall clock limit:
 #SBATCH --time=00:05:00
-#
-# Max memory usage:
-#SBATCH --mem-per-cpu=1G
-#
-# Outfile
-#SBATCH --output=pinc-%j.out
+#SBATCH --mem-per-cpu=3936
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
 
 ## Set up job environment:
 source /cluster/bin/jobsetup
 module purge   # clear any inherited modules
 set -o errexit # exit on errors
 
-module load openmpi.gnu
+module load openmpi.gnu/1.10.2
 module load gsl/1.16
+module load fftw/3.3.4
 
-#Compile
-#cd mn-fysrp-pic
-make abel
-#echo $PATH
-## Copy input files to the work directory:
-#cp MyInputFile $SCRATCH
+export LD_LIBRARY_PATH=/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib/:$LD_LIBRARY_PATH   
 
-## Make sure the results are copied back to the submit directory (see Work Directory below):
-#chkfile MyResultFile
+# Compile
+# Strictly speaking it is not necessary to do this for every job
+make veryclean
+make
 
-## Do some work:
-#cd $SCRATCH
-#YourCommand
+# Run
+./mpinc.sh langmuirCold.ini &> pinc.log

@@ -22,13 +22,6 @@
 #include "version.h"
 
 /******************************************************************************
- * DEFINING PHYSICAL CONSTANTS (following SI standard)
- *****************************************************************************/
-
-#define BOLTZMANN 1.3806488e-23
-#define ELECTRON_MASS 9.10938215e-31
-
-/******************************************************************************
  * DEFINING CORE DATATYPES (used by several modules)
  *****************************************************************************/
 /**
@@ -57,7 +50,7 @@
  * this is true also for the last specie. The last element is then simply the
  * number of particles allocated in total.
  *
- * The position of the particles is normalized with respect to 'stepSize' in
+ * The position of the particles is normalized with respect to the step size in
  * Grid, such that a particle with local position (1,2,3) is located _on_ node
  * (1,2,3) in the grid. Particles are usually specified in local frame but may
  * temporarily be expressed in global frame. See MpiInfo.
@@ -80,10 +73,8 @@ typedef struct{
 	double *vel;		///< Velocity
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
-	double *renormRho;	///< Re-normalization factors for rho (nSpecies elements)
-	double *renormE;	///< Re-normalization factors for E (nSpecies elements)
-	double *charge;		///< Normalized charge (q-bar)
-	double *mass;		///< Normalized mass (m-bar)
+	double *charge;		///< Charge (nSpecies elements)
+	double *mass;		///< Mass (nSpecies elements)
 	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
 	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpecies;		///< Number of species
@@ -256,11 +247,6 @@ typedef enum{
  * Naturally, domain decomposition doesn't affect the first (non-physical)
  * dimension in the array.
  *
- * 'stepSize' is the step-size of each dimension in terms of Debye lengths (or
- * possibly some other quantity in the future). This doesn't make sense for the
- * first non-physical dimension and is therefore arbitrarily set to 1. Thence
- * the product of all elements in 'stepSize' is the volume of a cell.
- *
  * 'h5' is a HDF5 file identifier used to store the grid quantity to an .h5-file
  * and are used by gWriteH5(). The other two h5-variables are also used by
  * gWriteH5() since they only needs to be computed once.
@@ -270,24 +256,162 @@ typedef enum{
  */
 
 typedef struct{
-	double *val;				///< Array of values on the grid
-	int rank;					///< Number of dimensions of array (not grid)
-	int *size;					///< Size of array (including ghosts) (rank elements)
-	int *trueSize;				///< Size of array (excluding ghosts) (rank elements)
-	long int *sizeProd;			///< Cumulative product of size (rank+1 elements)
-	int *nGhostLayers;			///< Number of ghost layers in grid (2*rank elements)
-	double *stepSize;			///< Step-sizes in Debye lengths (rank elements)
+	double *val;		///< Array of values on the grid
+	int rank;			///< Number of dimensions of array (not grid)
+	int *size;			///< Size of array (including ghosts) (rank elements)
+	int *trueSize;		///< Size of array (excluding ghosts) (rank elements)
+	long int *sizeProd;	///< Cumulative product of size (rank+1 elements)
+	int *nGhostLayers;	///< Number of ghost layers in grid (2*rank elements)
 
-	double *sendSlice;			///< Slice buffer of the grid sent to other
-	double *recvSlice;			///< Slice buffer of the grid sent to other
-	double *bndSlice;			///< Slices used by Dirichlet and Neumann boundaries
-	hid_t h5;					///< HDF5 file handler
-	hid_t h5MemSpace;			///< HDF5 memory space description
-	hid_t h5FileSpace;			///< HDF5 file space description
+	double *sendSlice;	///< Slice buffer of the grid sent to other
+	double *recvSlice;	///< Slice buffer of the grid sent to other
+	double *bndSlice;	///< Slices used by Dirichlet and Neumann boundaries
+	hid_t h5;			///< HDF5 file handler
+	hid_t h5MemSpace;	///< HDF5 memory space description
+	hid_t h5FileSpace;	///< HDF5 file space description
 
-	bndType *bnd;				///< Array storing boundary conditions
+	bndType *bnd;		///< Array storing boundary conditions
 } Grid;
 
+/**
+ * @brief Contains characteristic scales to be used for normalization and
+ * denormalization in PINC.
+ *
+ * This datatype contains characteristic scales, in physical units (normally
+ * SI), that can be used to normalize or denormalize all quantities in PINC. To
+ * normalize a quantity, it is enough to make sure it is dimensionless. E.g. to
+ * normalize the thermal velocity [m/s], it is simply divided by units->velocity
+ * [m/s] such that it becomes of dimension [1]. It might as well have been
+ * divided by units->length/units->time [m/s]. The scales are consistent in such
+ * a manner that this gives the same result, although the shorter version is
+ * preferred for clarity. Anyhow, as long as it is dimensionless, it is
+ * guaranteed to be correctly normalized. Likewise, to denormalize a quantity in
+ * dimensionless simulation units, it is sufficient to make sure it has the
+ * right dimension. E.g. an electric potential in dimensionless units would be
+ * brought to SI units [V] by multiplying with units->potential.
+ *
+ * The convention when it comes to normalization is that _all_ quantities in the
+ * input file is normalized _before_ any computation _or_ initialization takes
+ * place that use quantities whith physical units:
+ *
+ * @code
+ * 	Units *units = uAlloc(ini);
+ * 	uNormalize(ini, units);
+ *
+ * 	Grid *rho = gAlloc(ini, SCALAR);
+ * 	Population *pop = pAlloc(ini); // Reads pre-normalized charge and mass
+ *
+ * 	// computations
+ *
+ * 	pOpenH5(ini, pop, units, "pop");
+ * 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+ *
+ * 	uFree(units);
+ * @endcode
+ *
+ * The quantities are normalized and written back to the ini variable by the
+ * uNormalize() function (but it is not written back to the ini-file on disk).
+ * The normalization scheme is consistent in such a way that all equations look
+ * the same in both physical and normalized units, except that the vacuum
+ * permittivity \f$\varepsilon_0\f$ and vacuum permeability \f$\mu_0\f$ becomes
+ * one. Moreover, the normalization is such that the spatial and temporal
+ * stepsizes also becomes one, \f$\Delta x=\Delta t=1\f$. Therefore, the
+ * implementors of computing functions need not worry about normalization. They
+ * can use the equations as they are formulated in SI units, discretize them if
+ * necessary, and omit the constants \f$\varepsilon_0, \mu_0, \Delta x, \Delta
+ * t\f$.
+ *
+ * Grid and Population quantities are not denormalized before being written to
+ * disk. This is because it is cheaper to just change the axis in a plot during
+ * post processing, than it would be to denormalize the quantity before writing
+ * it to disk and then normalizing it again before continuing to the next
+ * time-step. Instead the HDF5 files are provided with denormalization factors
+ * having the right physical units such that when the result is multiplied by
+ * these factors the result is in physical units. This allows post-processing
+ * scripts to infer the right units from the output file alone. For Grid
+ * quantities, the right denormalization factor for that quantity must be
+ * provided as shown in the above example. The physical units stored in this
+ * datatype should basically only be accessed during input and output.
+ *
+ * uNormalize() normalizes all parts of the ini-file that is part of the core
+ * functionality of PINC. Other modules may have separate subsections in the
+ * ini-file, and since the core should not depend on the submodules,
+ * uNormalize() should _not_ normalize these quantities. Instead, these modules
+ * can implement their own normalization functions (e.g. mccNormalize()) which
+ * are run directly after uNormalize(). uNormalize() can act as a prototype for
+ * these functions.
+ *
+ * Notice also the distinction between e.g. a hypervolume and a "normal" volume.
+ * A volume is normally defined to be of three dimensions (length^3) whereas a
+ * hypervolume is of nDims dimensions. For generality this is usually what you
+ * want. When you talk about domain volume, or cell volume, you usually mean
+ * area if it's 2D, length if it's 1D and (length^4) if its 4D. Likewise, a
+ * hyperarea is length^(nDims-1). This is what you get when you take a cross
+ * section in nDims dimensions.
+ *
+ * Although not relevant for most users, several normalization schemes can
+ * actually be implemented in PINC, but they must all fulfill these criteria:
+ * - \f$\Delta x=\Delta t=1\f$ after normalization. Hence the characteristic
+ *   length \f$X\f$ and time \f$T\f$ must be the spatial and temporal stepsizes,
+ *   respectively. In particular the interpolation schemes benefit from this,
+ *   which is one of PINC's main strengths.
+ * - There must only be three base units. Plasma physics (or more generally
+ *   electromagnetics) has four base units in the SI system (MKSA -- meter,
+ *   kilogram, second and Ampére). However, one is actually unnecessary. Current
+ *   can be defined from the first three (MKS). Defining more base units than
+ *   necessary leads to inconvenient constants, such as the vacuum permittivity
+ *   and permeability in the SI system. To get rid of these constants one must
+ *   only specify three base units. An excellent example of such a system is the
+ *   Heaviside-Lorentz Units (HLU) where the base units are centimeter, gram and
+ *   second (CGS) and in which all constants disappears from Maxwell's equations
+ *   (the Gaussian units differ by having additional factors of \f$4\pi\f$).
+ *   Likewise for a PIC code, to have as simple equations to work with as
+ *   possible, with no constants, one can only define three characteristic
+ *   scales, and derive the rest from those. In PINC this will typically be
+ *   length, mass and charge (or alternatively mass). The characteristic mass
+ *   \f$M\f$ must be related to the other scales as follows:
+ *   \f[
+ *		M = \frac{T^2Q^2}{\varepsilon_0X^D}
+ *   \f]
+ *   where \f$D\f$ is the number of spatial dimensions (nDims) and
+ *   \f$\varepsilon_0\f$ is the vacuum permittivity in the system of units which
+ *   is used in the input file (e.g. 1 for HLU and \f$8.85\cdot 10^{-12}\f$ for
+ *   SI). If using SI, \f$X, T, Q\f$ and \f$M\f$ all have they normal units, and
+ *   other characteristic scales can be derive from them through dimensional
+ *   analysis. This makes sure that the normalization is consistent both in the
+ *   sense that the equations are the same after normalization as in SI units
+ *   (or actually in HLU units since the vacuum permittivity and permeability
+ *   becomes one), and in the sense that if a quantity is dimensionless it is
+ *   correctly normalized, and if it has the proper physical dimension then it
+ *   is correctly denormalized.
+ *
+ */
+typedef struct{
+
+	int nDims;			///< Number of spatial dimensions
+	int nSpecies;		///< Number of species
+	double *weights;	///< Number of physical particle per simulation particle
+
+	// Characteristic SI base units (with charge instead of current)
+	double charge;			///< Charge
+	double mass;			///< Mass
+	double length;			///< Length
+	double time;			///< Time
+	
+	// Derived units
+	double hyperArea;		///< Length^(nDims-1)
+	double hyperVolume;		///< Length^(nDims)
+	double frequency;		///< Frequency
+	double velocity;		///< Velocity
+	double acceleration;	///< Acceleration
+	double density;			///< Density
+	double chargeDensity;	///< Electric charge density
+	double potential;		///< Electric potential
+	double eField;			///< Electric field
+	double bField;			///< Magnetic flux density
+	double energy;			///< Energy
+
+} Units;
 /**
  * @brief	Timer struct for simple profiling
  * @see allocTimer(), freeTimer(), tMsg()
@@ -348,5 +472,6 @@ typedef void (*funPtr)();
 #include "grid.h"
 #include "io.h"
 #include "aux.h"
+#include "units.h"
 
 #endif // CORE_H
