@@ -345,10 +345,12 @@ void pVelAssertMax(const Population *pop, double max){
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
-	double *velDrift = iniGetDoubleArr(ini,"population:drift",nSpecies);
+	int nDims = pop->nDims;
+	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 
-	int nDims = pop->nDims;
+	msg(STATUS,"velDrift = %f,%f,%f%f,%f,%f",velDrift[0],velDrift[1],velDrift[2],velDrift[3],velDrift[4],velDrift[5]);
+
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -361,7 +363,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
-				vel[d] = velDrift[s] + gsl_ran_gaussian_ziggurat(rng,velTh);
+				vel[d] = velDrift[s*d] + gsl_ran_gaussian_ziggurat(rng,velTh);
 			}
 		}
 	}
@@ -432,12 +434,15 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 	int nDims = pop->nDims;
 	long int pLast = (pop->iStop[s]-1)*nDims;
 
+	//msg(STATUS,"cut particle: %li, pos: %f,%f,%f",p,pos[p]
+	//	,pos[p+1],pos[p+2]);
 	for(int d=0;d<nDims;d++){
 		pos[d] = pop->pos[p+d];
 		vel[d] = pop->vel[p+d];
 		pop->pos[p+d] = pop->pos[pLast+d];
 		pop->vel[p+d] = pop->vel[pLast+d];
 	}
+
 
 	pop->iStop[s]--;
 

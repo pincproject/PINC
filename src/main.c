@@ -201,7 +201,7 @@ void regular(dictionary *ini){
 		puMigrate(pop, mpiInfo, rho);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
-		//pPosAssertInLocalFrame(pop, rho);
+		pPosAssertInLocalFrame(pop, rho);
 
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
