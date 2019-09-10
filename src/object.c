@@ -424,6 +424,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     double *val = rhoObj->val;
     long int *sizeProd = rhoObj->sizeProd;
+    long int nDims = pop->nDims;
 
     int nSpecies = pop->nSpecies;
     double *charge = pop->charge;
@@ -446,11 +447,10 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         long int iStart = pop->iStart[s];
         long int iStop = pop->iStop[s];
 
+        for(long int i=iStart;i<iStop;i++){
 
-        for(int i=iStart;i<iStop;i++){
-
-            double *pos = &pop->pos[3*i];
-            double *vel = &pop->vel[3*i];
+            double *pos = &pop->pos[i*nDims];
+            double *vel = &pop->vel[i*nDims];
 
             // Integer parts of position
             int j = (int) pos[0];
@@ -458,15 +458,20 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
             int l = (int) pos[2];
 
             long int p = j + k*sizeProd[2] + l*sizeProd[3];
-
-
-            // Check wether p is one of the object nodes and collect the charge if so.
+            long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
+            //msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
+            // Check whether p is one of the object nodes and collect the charge if so.
             for (long int a=0; a<obj->nObjects; a++) {
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
-                        pCut(pop, s, p, pos, vel);
-                        msg(STATUS,"cut particle: %i, with pos %f,%f,%f",p,pos[0],pos[1],pos[2]);
+                        //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
+                        //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
+                        //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
+                        pCut(pop, s, pIndex, pop->pos, vel);
+                        //msg(STATUS,"iStop = %li",iStop);
+                        iStop--;
+
                     }
                 }
             }
