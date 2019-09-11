@@ -91,7 +91,7 @@ void regular(dictionary *ini){
     Grid *rhoObj = gAlloc(ini, SCALAR);     // for capMatrix - objects
 	Grid *phi = gAlloc(ini, SCALAR);
 	void *solver = solverAlloc(ini, rho, phi);
-	
+
     Object *obj = oAlloc(ini);              // for capMatrix - objects
 //TODO: look intomultigrid E,rho,rhoObj
 
@@ -109,23 +109,17 @@ void regular(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
-
-	//int rank = phi->rank;
-/* 	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d=1; d < rank; d++) denorm[d-1] = 1.;
-	for(int d=1; d < rank; d++) dimen[d-1] = 1.; */
-	double denorm = 1.;
-
 	pOpenH5(ini, pop, units, "pop");
-	gOpenH5(ini, rho, mpiInfo, units, denorm, "rho");
-    gOpenH5(ini, rhoObj, mpiInfo, units, denorm, "rhoObj");        // for capMatrix - objects
-	gOpenH5(ini, phi, mpiInfo, units, denorm, "phi");
-	gOpenH5(ini, E,   mpiInfo, units, denorm, "E");
-    oOpenH5(ini, obj, mpiInfo, units, denorm, "test");          // for capMatrix - objects
-    oReadH5(obj, mpiInfo);                                      // for capMatrix - objects
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+  // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
+  // oReadH5(obj, mpiInfo);
 
+
+		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
+		oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
+		oReadH5(obj, mpiInfo);
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
@@ -137,15 +131,14 @@ void regular(dictionary *ini){
 	 * INITIAL CONDITIONS
 	 */
 
-    //Compute capacitance matrix 
+    //Compute capacitance matrix
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
-    
+
 	// Initalize particles
-	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
-	
-	// pVelMaxwell(ini, pop, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
+	//pVelZero(pop);
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
@@ -165,7 +158,7 @@ void regular(dictionary *ini){
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
     gZero(rhoObj);                                          // for capMatrix - objects
 
-    
+
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -220,7 +213,7 @@ void regular(dictionary *ini){
 
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
-        
+
 		// Compute charge density
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -231,16 +224,16 @@ void regular(dictionary *ini){
         gAddTo(rho, rhoObj);
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 		//gAssertNeutralGrid(rho, mpiInfo);
-        
+
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
-        
+
         // Second run with solver to account for charges
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
 
 		solve(solver, rho, phi, mpiInfo);
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
-        
+
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -267,9 +260,9 @@ void regular(dictionary *ini){
 
 		//Write h5 files
     	gWriteH5(E, mpiInfo, (double) n);
-		gWriteH5(rho, mpiInfo, (double) n);
+
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 	}
 

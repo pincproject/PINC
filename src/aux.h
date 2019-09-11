@@ -161,6 +161,8 @@ void adAdd(const double *a, const double *b, double *res, long int n);
 void aiAdd(const int *a, const int *b, int *res, long int n);
 ///@brief Adds two arrays
 void alAdd(const long int *a, const long int *b, long int *res, long int n);
+///@brief Does what? TODO: specify
+void adSub(const double *a, const double *b, double *res, long int n);
 ///@brief Multiplies two arrays element-wise (Hadamard)
 void adMul(const double *a, const double *b, double *res, long int n);
 ///@brief Multiplies two arrays element-wise (Hadamard)
@@ -226,7 +228,7 @@ long int aiProd(const int *a, long int n);
 ///@brief Returns product of all elements
 long int alProd(const int *a, long int n);
 ///@brief Returns cross product of two eucledian 3D vectors
-void adCrossProd(const double *a, const double *b, double *res); 
+void adCrossProd(const double *a, const double *b, double *res);
 
 ///@brief Returns dot product of vectors
 int adDotProd(const double *a, const double *b, long int n);

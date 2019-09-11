@@ -102,13 +102,13 @@ void puMove(Population *pop, Object *obj){
 
 			bool collided = false;
 			//code for particle/object collision, pos[p] += vel[p] if no intersection
-			for(long int n; n<nColl; n++){
-				if(p == coll[n]){
-					
-					oParticleCollision(pop, obj);
-					collided = true;
-				}
-			}
+			//for(long int n; n<nColl; n++){
+				//if(p == coll[n]){ // I think this one has p as particle position? sse comment in oFindParticleCollisions
+
+					//oParticleCollision(pop, obj);
+					//collided = true;
+				//}
+			//}
 
 			if(!collided){
 				pos[p] += vel[p];

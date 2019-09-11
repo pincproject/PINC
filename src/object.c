@@ -168,16 +168,19 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     long int *lookupSurfOff = obj->lookupSurfaceOffset;
 
     // Allocate and initialise the structures to run the potential solver.
-    //funPtr mgAlgo = getMgAlgo(ini);
-    //Grid *res = gAlloc(ini, SCALAR);
-    //Multigrid *mgRes = mgAlloc(ini, res);
-    //Grid *rho = gAlloc(ini, SCALAR);
-    //Grid *phi = gAlloc(ini, SCALAR);
-    Grid *mgPhi = gAlloc(ini, SCALAR); //mgAllocSolver converts mgPhi to Multigrid
-    Grid *mgRho = gAlloc(ini, SCALAR);
-    MultigridSolver *solver = mgAllocSolver(ini, mgRho, mgPhi);
+    void (*solverInterface)() = select(ini, "methods:poisson", mgSolver_set, sSolver_set);
+    void (*solve)() = NULL;
+    void *(*solverAlloc)() = NULL;
+    void (*solverFree)() = NULL;
+    solverInterface(&solve, &solverAlloc, &solverFree);
 
-    gZero(mgRho);
+    Grid *rho = gAlloc(ini, SCALAR);
+    Grid *phi = gAlloc(ini, SCALAR);
+
+    void *solver = solverAlloc(ini, rho, phi);
+
+    // Set Rho to zero.
+    gZero(rho);
 
     // Find the number of surface nodes for each object.
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
@@ -235,19 +238,19 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
             // Set the surface node to 1 charge.
             if (rank==j) {
-                mgRho->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
+                rho->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
             }
 
             // Solve for the potential.
-            mgSolve(solver, mgRho, mgPhi, mpiInfo);
+            solve(solver, rho, phi, mpiInfo);
 
             // Set the surface node back to zero.
             if (rank==j) {
-                mgRho->val[lookupSurf[inode]] = 0;
+                rho->val[lookupSurf[inode]] = 0;
             }
             // Fill column i of the capacitance matrix.
             for (int k=beginIndex; k<endIndex; k++) {
-                capMatrix[totSNGlob*k + i] = mgPhi->val[lookupSurf[lookupSurfOff[a] + k-beginIndex]];
+                capMatrix[totSNGlob*k + i] = phi->val[lookupSurf[lookupSurfOff[a] + k-beginIndex]];
             }
 
             // Increase the counters. If you looped over all nodes on this core, increase the rank and reset inode.
@@ -522,13 +525,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     }
 }
 
-bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
 
-    //find nearest nodes
-    double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
-
-    //
-}
 
 //stores index of particles that are close to an object at the current timestep
 void oVicinityParticles(Population *pop, Object *obj){
@@ -607,7 +604,7 @@ void oFindParticleCollisions(Population *pop, Object *obj){
         for (long int a=0; a<obj->nObjects; a++) {
             for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                 if ((obj->lookupInterior[b])==p) {
-                    pop->collisions[counter] = p;
+                    pop->collisions[counter] = p; // CHECK THIS: p is particle position, not index. The index is 3*i, or nDims*i
                     counter++;
                 }
             }
@@ -622,7 +619,7 @@ void oParticleCollision(Population *pop, Object *obj, long int i){
 
     pFindCollisionType(pop, obj, i, collisionType);
 
-    collisionType();
+    //collisionType();
 }
 
 
@@ -638,6 +635,15 @@ double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *o
 
     return pos;
 
+}
+
+bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
+
+    //find nearest nodes
+    double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
+
+    nearest += 0;
+    return false;
 }
 
 //pos_new = pos_old + vel*delta_t
@@ -667,10 +673,10 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
         intersect[0]=Psi[0], intersect[1]=Psi[1], intersect[1]=Psi[1];
 }
 
-void oParticleCollision(Population *pop, Object *obj, long int n){
+//void oParticleCollision(Population *pop, Object *obj, long int i){
 
-    msg(WARNING, "Collision types not yet implemented!");
-}
+    //msg(WARNING, "Collision types not yet implemented!");
+//}
 
 /*****************************************************************************
  *  ALLOC/DESTRUCTORS
