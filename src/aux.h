@@ -181,6 +181,10 @@ void aiScale(int *a, long int n, int value);
 void alScale(long int *a, long int n, int value);
 ///@brief Returns maximum value in an array
 double adMax(const double *a, long int n);
+///@brief Returns unit normal vector. Assumes 3D eucledian vector
+void adNormal(const double *a, const double *b, double *res, long int n);
+///@brief Returns vector reflected by an arbitrary plane
+void adReflect(const double *ray, const double *a, const double *b, double *res);
 ///@brief Returns maximum value in an array
 int aiMax(const int *a, long int n);
 ///@brief Returns maximum value in an array
@@ -221,6 +225,9 @@ double adProd(const double *a, long int n);
 long int aiProd(const int *a, long int n);
 ///@brief Returns product of all elements
 long int alProd(const int *a, long int n);
+///@brief Returns cross product of two eucledian 3D vectors
+void adCrossProd(const double *a, const double *b, double *res); 
+
 ///@brief Returns dot product of vectors
 int adDotProd(const double *a, const double *b, long int n);
 ///@brief Returns dot product of vectors

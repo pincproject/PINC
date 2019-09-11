@@ -112,7 +112,7 @@ char **strArrExpand(char **strArr, int nElements);
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-funPtr selectInner(dictionary *ini, const char *key, const char *list,...){
+funPtr selectInner(const dictionary *ini, const char *key, const char *list,...){
 
 	va_list args;
 	va_start(args,list);

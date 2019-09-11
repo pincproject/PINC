@@ -22,7 +22,7 @@ from math import *
 import numpy as np
 import time as time
 import vtk as vtk
-#from matplotlib.pylab import * # only needed for testing purposes
+from matplotlib.pylab import * # only needed for testing purposes
 import src.GridTools as gg # import all tools to generate the grid
 content = [1, (0,0,0),1]*100 # initialise default
 transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
@@ -34,15 +34,14 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 ####################
 
 # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-gridpar = [0,0.2*64,0,0.2*64,0,0.2*64,64,64,64]
-#gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
+gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
 # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
-infile = ["sphere"]
-#infile = ["box", "box"]
+#infile = ["sphere.vtk", "box.vtk", "box.vtk", "arrow.vtk"]
+infile = ["box"]
 # Outputfiles and comment.
-outfile = ["sphere.grid.h5", "test sphere"]
-boundaryFile = ["bound.grid.h5", "bounding box"]
+outfile = ["testbox.vtk", "testbox.h5","gridfile for PINC"]
+
 # Object file contents. Provide one entry for each file in "infile".
 # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
 # identifier (one per file, assume all objects in file have the same floating potential) {-> Sigvald, we could use a predefined
@@ -54,9 +53,9 @@ content[0] = [1, (0,0,0),1]
 
 # Define the transformation. Provide one entry for each file in "infile".
 # Translate x,y,z; Rotate x,y,z (in degrees); Scale x,y,z
-transfo[0] = [6,6,6,0,0,0,1,1,1]
+transfo[0] = [0.5,0.5,0.5,0,0,0,1,1,1]
 #transfo[1] = [-1.5,-1.5,-1.5,45,45,45,0.5,0.5,0.5]
-#transfo[1] = [2.6,2.6,2.6,0,0,0,1,1,1]
+#transfo[0] = [3.5,3,3,0,0,0,3.14,3.14,3.14]
 #transfo[3] = [0.75,0.75,-0.75,45,-45,-45,2,5,5]
 
 ####################
@@ -72,8 +71,7 @@ print "\n Welcome to ConstructGrid for PINC!\n"
 start = time.time()
 
 # Partial sanity check (currently only checks whether you are overwriting input files).
-#No sanity checks here, Trym is insane 170619
-#gg.checkSanity(infile,outfile)
+gg.checkSanity(infile,outfile)
 
 # Initialise the grid.
 grid = np.zeros((gridpar[6],gridpar[7],gridpar[8]))
@@ -98,9 +96,6 @@ for i in range(len(infile)):
     content[i] = gg.transformSeeds(content[i], transfo[i])
     # Now use floodfill.
     grid = gg.floodFill(grid,gridpar,content[i])
-    # Compute bounding box of object
-    box = gg.boundingBox(grid)
-    print box
     # Time info.
     ostop = time.time()
     print " Compute time:", ostop-ostart, "sec.\n"
@@ -109,7 +104,6 @@ for i in range(len(infile)):
 wstart = time.time()
 print " 4. Write output:"
 gg.writeOutput(grid, gridpar, outfile)
-gg.writeOutput(box, gridpar, boundaryFile)
 wstop = time.time()
 print " Compute time:", wstop-wstart, "sec.\n"
 

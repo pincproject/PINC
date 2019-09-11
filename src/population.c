@@ -17,6 +17,24 @@
 #include <hdf5.h>
 #include "iniparser.h"
 
+
+/******************************************************************************
+ * DECLARING LOCAL FUNCTIONS
+ *****************************************************************************/
+
+/**
+ * @brief	Sets normalization parameters in Population
+ * @param	ini				Dictionary to input file
+ * @param	pop[in,out]		Population
+ *
+ * Normalizes charge and mass and sets specie-specific renormalization
+ * parameters in Population.
+ *
+ */
+static void pSetNormParams(const dictionary *ini, Population *pop);
+
+
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
@@ -52,9 +70,6 @@ Population *pAlloc(const dictionary *ini){
 	for(int s=1;s<nSpecies+1;s++) iStart[s]=iStart[s-1]+nAlloc[s-1];
 	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]; // No particles yet
 
-	free(nAlloc);
-	free(nAllocTotal);
-
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
@@ -62,10 +77,15 @@ Population *pAlloc(const dictionary *ini){
 	pop->nDims = nDims;
 	pop->iStart = iStart;
 	pop->iStop = iStop;
+	pop->objVicinity = malloc(iStart[nSpecies]*sizeof(long int));
+	pop->collisions = malloc(iStart[nSpecies]*sizeof(long int)); //malloc(sizeof pop->collisions)
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+
+	free(nAlloc);
+	free(nAllocTotal);
 
 	return pop;
 
@@ -79,6 +99,8 @@ void pFree(Population *pop){
 	free(pop->potEnergy);
 	free(pop->iStart);
 	free(pop->iStop);
+	free(pop->objVicinity);
+	free(pop->collisions);
 	free(pop->charge);
 	free(pop->mass);
 	free(pop);
@@ -443,6 +465,35 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
+void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *)){
+
+	msg(WARNING, "Function to determine collision type not yet implemented!");
+
+	
+
+	return collisionType;
+}
+
+void pBackscatter(Population *pop){
+
+	msg(WARNING, "backscatter function not yet implemented!");
+}
+
+void pSecondaryElectron(Population *pop){
+
+	msg(WARNING, "backscatter function not yet implemented!");
+}
+
+void pReflect(Population *pop){
+
+	msg(WARNING, "backscatter function not yet implemented!");
+}
+
+void pAdhere(Population *pop){
+
+	msg(WARNING, "Adhesion function not yet implemented!");
+}
+
 void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	   			const char *fName){
 
@@ -667,6 +718,7 @@ void pSumPotEnergy(Population *pop){
 	}
 
 }
+
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS

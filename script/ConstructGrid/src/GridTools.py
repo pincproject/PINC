@@ -10,14 +10,42 @@
 */
 """
 
+import sys as sys
+import os.path
 import numpy as np
-from vtk import vtkUnstructuredGridReader
+import vtk as vtk
+import h5py as h5py
 from math import *
 
+# Check the sanity of the input (to be extended as needed)
+def checkSanity(infile,outfile):
+
+    # Check whether we are not overwriting an input VTK file
+    for i in range(0,len(infile)):
+        if (infile[i]==outfile[0] or infile[i]==outfile[1]):
+            print " The output file will overwrite one of the input vtk files. Aborting.\n"
+            sys.exit()
+        #else:
+        #    
+
+    # Check if output file already exists
+    for i in range(0,len(outfile)-1):
+        if outfile[i].endswith('.vtk') and os.path.isfile(outfile[i]):
+            print " Output VTK file already exists. Aborting.\n"
+            sys.exit()
+        if outfile[i].endswith('.h5') and os.path.isfile(outfile[i]):
+            print " Output H5 file already exists. Aborting.\n"
+            sys.exit()
+
+    # Continue happily
+    print " Your input seems sane, continuing... (Honestly, didn't really check, to be implemented.)\n"
+
+    return
+            
 # Read an unstructured grid VTK file
 def readUnstructuredVTK(infile):
-    reader = vtkUnstructuredGridReader()
-    reader.SetFileName(infile)
+    reader = vtk.vtkUnstructuredGridReader()
+    reader.SetFileName(infile+".vtk")
     reader.ReadAllVectorsOn()
     reader.ReadAllScalarsOn()
     reader.Update()
@@ -169,8 +197,18 @@ def floodFill(grid, gridpar, content):
         
     return grid
 
+# Write the requested output files
+def writeOutput(grid, gridpar, outfile):
+    for i in range(0,len(outfile)-1):
+        if outfile[i].endswith('.vtk'):
+            print "     ", outfile[i]
+            writeLegacyVTK(grid, gridpar, outfile[i], outfile[-1])
+        elif outfile[i].endswith('.h5'):
+            print "     ", outfile[i]
+            writeH5(grid, gridpar, outfile[i], outfile[-1])
+
 # Write a legacy VTK (version 1.0)
-def writeLegacyVTK(grid, gridpar, outfile):
+def writeLegacyVTK(grid, gridpar, outfile, comment):
     nnx = gridpar[6]
     nny = gridpar[7]
     nnz = gridpar[8]
@@ -183,9 +221,9 @@ def writeLegacyVTK(grid, gridpar, outfile):
                 grid1D[k*nnx*nny+j*nnx+i] = grid[i][j][k]
 
     # Write the file in ASCII
-    file = open(outfile[0],'w')
+    file = open(outfile,'w')
     file.write("# vtk DataFile Version 1.0\n")
-    file.write(outfile[1] + "\n")
+    file.write(comment + "\n")
     file.write("ASCII\n")
     file.write("DATASET STRUCTURED_POINTS\n")
     file.write("DIMENSIONS " + str(nnx) + " " + str(gridpar[7]) + " " + str(gridpar[8]) + "\n")
@@ -200,13 +238,22 @@ def writeLegacyVTK(grid, gridpar, outfile):
 
     return
 
+# Write a H5
+def writeH5(grid, gridpar, outfile,comment):
+    grid4D = np.expand_dims(grid, axis=3)
+    fileObj = h5py.File(outfile,'x')
+    dset = fileObj.create_dataset("Object",(gridpar[6],gridpar[7],gridpar[8],1),dtype='i1', data=grid4D)
+    fileObj.close()
+
+    return
+    
 # Algorithm to find all voxels with the circumference of the object/geometry using a predefined stack to avoid deep recursion issues
 def floodfill3Dstack(stack, grid,nnn,ident):
-    if grid[stack[nnn,0],stack[nnn,1],stack[nnn,2]]==ident:
+    if grid[int(stack[nnn,0]),int(stack[nnn,1]),int(stack[nnn,2])]==ident:
         nnn -=1
         return stack,nnn
     else:
-        grid[stack[nnn,0],stack[nnn,1],stack[nnn,2]]=ident
+        grid[int(stack[nnn,0]),int(stack[nnn,1]),int(stack[nnn,2])]=ident
         #down
         stack[nnn+1,0] = stack[nnn,0]-1
         stack[nnn+1,1] = stack[nnn,1]
@@ -235,6 +282,22 @@ def floodfill3Dstack(stack, grid,nnn,ident):
         nnn +=5
         
         return stack,nnn
+
+#Finds the bounding box for the grid, works for one object currently
+def boundingBox(grid):
+
+    out = np.zeros(grid.shape)
+    x = np.any(grid, axis=(1, 2))
+    y = np.any(grid, axis=(0, 2))
+    z = np.any(grid, axis=(0, 1))
+
+    xmin, xmax = np.where(x)[0][[0, -1]]
+    ymin, ymax = np.where(y)[0][[0, -1]]
+    zmin, zmax = np.where(z)[0][[0, -1]]
+
+    out[xmin-1:xmax+1,ymin-1:ymax+1,zmin-1:zmax+1] = 2
+
+    return out
 
 # Algorithm to find the circumfering voxels of the object/geometry.
 def pointTriangleDistance(TRI, P):

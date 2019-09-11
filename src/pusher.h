@@ -21,7 +21,7 @@
  * conditions or transfer them to other sub-domains as appropriate. Otherwise
  * PINC may fail ungracefully.
  */
-void puMove(Population *pop);
+void puMove(Population *pop, Object *obj);
 
 void puPeriodic(Population *pop, Grid *grid);
 
