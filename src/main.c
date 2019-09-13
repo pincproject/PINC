@@ -162,12 +162,12 @@ void regular(dictionary *ini){
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-    gWriteH5(rho, mpiInfo, (double) 0);
+    //gWriteH5(rho, mpiInfo, (double) 0);
 
 	// Get initial E-field
 
 	solve(solver, rho, phi, mpiInfo); //sSolve, not MGSOLVE! 05/09/19
-    gWriteH5(phi, mpiInfo, (double) 0);
+    //gWriteH5(phi, mpiInfo, (double) 0);
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -218,8 +218,7 @@ void regular(dictionary *ini){
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
         // Keep writing Rho here.
-    	gWriteH5(rho, mpiInfo, (double) n);
-        gWriteH5(rhoObj, mpiInfo, (double) n);
+        //gWriteH5(rhoObj, mpiInfo, (double) n);
         // Add object charge to rho.
         gAddTo(rho, rhoObj);
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -258,11 +257,14 @@ void regular(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
+		if(n>=1195){
 		//Write h5 files
-    	gWriteH5(E, mpiInfo, (double) n);
+    	//gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(rho, mpiInfo, (double) n);
 
-		gWriteH5(phi, mpiInfo, (double) n);
+			gWriteH5(phi, mpiInfo, (double) n);
 		//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		}
 		pWriteEnergy(history,pop,(double)n);
 	}
 

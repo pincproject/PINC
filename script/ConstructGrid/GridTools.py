@@ -95,7 +95,7 @@ def transformSeeds(content, transfo):
 
 # Find the circumfering voxels for each object
 def findCircVoxels(grid, gridpar, obj_trans, ident):
-    print "  3.1 Circumference."
+    print ("  3.1 Circumference.")
     xmin = gridpar[0]
     ymin = gridpar[2]
     zmin = gridpar[4]
@@ -144,7 +144,7 @@ def findCircVoxels(grid, gridpar, obj_trans, ident):
 
 # 3D Floodfill to find all voxels within the circumference 
 def floodFill(grid, gridpar, content):
-    print "  3.2 Internal volume."
+    print ("  3.2 Internal volume.")
     xmin = gridpar[0]
     ymin = gridpar[2]
     zmin = gridpar[4]

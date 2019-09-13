@@ -23,7 +23,7 @@ def checkSanity(infile,outfile):
     # Check whether we are not overwriting an input VTK file
     for i in range(0,len(infile)):
         if (infile[i]==outfile[0] or infile[i]==outfile[1]):
-            print " The output file will overwrite one of the input vtk files. Aborting.\n"
+            print (" The output file will overwrite one of the input vtk files. Aborting.\n")
             sys.exit()
         #else:
         #    
@@ -31,14 +31,14 @@ def checkSanity(infile,outfile):
     # Check if output file already exists
     for i in range(0,len(outfile)-1):
         if outfile[i].endswith('.vtk') and os.path.isfile(outfile[i]):
-            print " Output VTK file already exists. Aborting.\n"
+            print (" Output VTK file already exists. Aborting.\n")
             sys.exit()
         if outfile[i].endswith('.h5') and os.path.isfile(outfile[i]):
-            print " Output H5 file already exists. Aborting.\n"
+            print (" Output H5 file already exists. Aborting.\n")
             sys.exit()
 
     # Continue happily
-    print " Your input seems sane, continuing... (Honestly, didn't really check, to be implemented.)\n"
+    print (" Your input seems sane, continuing... (Honestly, didn't really check, to be implemented.)\n")
 
     return
             
@@ -123,7 +123,7 @@ def transformSeeds(content, transfo):
 
 # Find the circumfering voxels for each object
 def findCircVoxels(grid, gridpar, obj_trans, ident):
-    print "  3.1 Circumference."
+    print ("  3.1 Circumference.")
     xmin = gridpar[0]
     ymin = gridpar[2]
     zmin = gridpar[4]
@@ -172,7 +172,7 @@ def findCircVoxels(grid, gridpar, obj_trans, ident):
 
 # 3D Floodfill to find all voxels within the circumference 
 def floodFill(grid, gridpar, content):
-    print "  3.2 Internal volume."
+    print ("  3.2 Internal volume.")
     xmin = gridpar[0]
     ymin = gridpar[2]
     zmin = gridpar[4]
@@ -201,10 +201,10 @@ def floodFill(grid, gridpar, content):
 def writeOutput(grid, gridpar, outfile):
     for i in range(0,len(outfile)-1):
         if outfile[i].endswith('.vtk'):
-            print "     ", outfile[i]
+            print ("     ", outfile[i])
             writeLegacyVTK(grid, gridpar, outfile[i], outfile[-1])
         elif outfile[i].endswith('.h5'):
-            print "     ", outfile[i]
+            print ("     ", outfile[i])
             writeH5(grid, gridpar, outfile[i], outfile[-1])
 
 # Write a legacy VTK (version 1.0)
