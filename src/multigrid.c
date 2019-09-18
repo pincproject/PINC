@@ -1496,7 +1496,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  void inline static mgVRecursiveInner(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
   									Multigrid *mgRes, const MpiInfo *mpiInfo){
 
-    
+
  	//Solve and return at coarsest level
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, TOHALO);

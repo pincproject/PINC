@@ -23,6 +23,23 @@ typedef struct{
 	int nObjects;					///< Number of objects
 } Object;
 
+
+/**
+ * @brief Object-plasma mode
+ * @param 	ini
+ *
+ * Object-plasma mode uses the Capacitance matrix method to simulate an Object
+ * imersed in plasma. The object is defined on a grid with same size as global
+ * domain ......... TODO: fill in.
+ *
+ *
+ *
+ *
+ *
+ */
+void oMode(dictionary *ini);
+funPtr oMode_set(dictionary *ini);
+
 /**
  * @brief Allocates an Object object
  * @param	ini			Input file

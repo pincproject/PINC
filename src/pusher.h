@@ -21,7 +21,7 @@
  * conditions or transfer them to other sub-domains as appropriate. Otherwise
  * PINC may fail ungracefully.
  */
-void puMove(Population *pop, Object *obj);
+void puMove(Population *pop);
 
 void puPeriodic(Population *pop, Grid *grid);
 
@@ -180,6 +180,9 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo);
 void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo);
 funPtr puExtractEmigrantsND_set(const dictionary *ini);
 funPtr puExtractEmigrants3D_set(const dictionary *ini);
+
+void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo);
+funPtr puExtractEmigrants3DOpen_set(const dictionary *ini);
 
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid);
 

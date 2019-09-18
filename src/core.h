@@ -118,6 +118,8 @@ typedef struct{
 	int *nSubdomainsProd;		///< Cumulative product of nSubdomains (nDims+1 elements)
 	int *offset;				///< Offset from global reference frame (nDims elements)
 	double *posToSubdomain;		///< Factor for converting position to subdomain (nDims elements)
+	int *trueSize;		/// Size of subdomain (nDims elements)
+
 
 	int nSpecies;				///< Number of species
 	int nNeighbors;				///< Number of neighbors (3^nDims-1) TBD: Omit if it's faster to recompute each time
@@ -400,7 +402,7 @@ typedef struct{
 	double mass;			///< Mass
 	double length;			///< Length
 	double time;			///< Time
-	
+
 	// Derived units
 	double hyperArea;		///< Length^(nDims-1)
 	double hyperVolume;		///< Length^(nDims)

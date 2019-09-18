@@ -83,11 +83,9 @@ static void puSanity(dictionary *ini, const char* name, int dim, int order);
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
 
-void puMove(Population *pop, Object *obj){
+void puMove(Population *pop){
 
 	int nSpecies = pop->nSpecies;
-	long int *coll = pop->collisions;
-	int nColl = sizeof(pop->collisions) / sizeof(long int);
 
 	int nDims = pop->nDims;
 	double *pos = pop->pos;
@@ -99,21 +97,7 @@ void puMove(Population *pop, Object *obj){
 		long int pStop = pop->iStop[s]*nDims;
 
 		for(long int p=pStart;p<pStop;p++){
-
-			bool collided = false;
-			//code for particle/object collision, pos[p] += vel[p] if no intersection
-			//for(long int n; n<nColl; n++){
-				//if(p == coll[n]){ // I think this one has p as particle position? sse comment in oFindParticleCollisions
-
-					//oParticleCollision(pop, obj);
-					//collided = true;
-				//}
-			//}
-
-			if(!collided){
 				pos[p] += vel[p];
-			}
-
 		}
 	}
 }
@@ -772,6 +756,199 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 	}
 }
 
+// TODO: Add fault-handling in case of too small "emigrants" buffer
+funPtr puExtractEmigrants3DOpen_set(const dictionary *ini){
+	int nDims = iniGetInt(ini, "grid:nDims");
+	if(nDims!=3) msg(ERROR, "puExtractEmigrants3D requires grid:nDims=3");
+	return puExtractEmigrants3DOpen;
+}
+void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
+
+	//TODO: Needs more testing
+	int nSpecies = pop->nSpecies;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+	double *thresholds = mpiInfo->thresholds;
+	const int neighborhoodCenter = 13;
+	long int *nEmigrants = mpiInfo->nEmigrants;
+	int nNeighbors = mpiInfo->nNeighbors;
+	int *trueSize = mpiInfo->trueSize;
+	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
+	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
+
+	double dummyPos[3];
+
+	int *offset = mpiInfo->offset;
+	//int nDims = pop->nDims;
+
+
+	nSubdomains[0] = nSubdomainsProd[1];
+	nSubdomains[1] = nSubdomainsProd[2]/nSubdomainsProd[1];
+	nSubdomains[2] = (nSubdomainsProd[3]/nSubdomainsProd[2]);
+
+	//msg(STATUS, "sssss %i, %i, %i", nSubdomains[0], nSubdomains[1], nSubdomains[2]);
+	//exit(0);
+
+	//msg(STATUS,"neighbours = %i",mpiInfo->nNeighbors);
+
+	// By using the dummy to hold data we won't lose track of the beginning of
+	// the arrays when incrementing the pointer
+	double **emigrants = mpiInfo->emigrantsDummy;
+	for(int ne=0;ne<nNeighbors;ne++){
+		emigrants[ne] = mpiInfo->emigrants[ne];
+	}
+	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+
+	double lx = thresholds[0];
+	double ly = thresholds[1];
+	double lz = thresholds[2];
+	double ux = thresholds[3];
+	double uy = thresholds[4];
+	double uz = thresholds[5];
+
+	//adPrint(thresholds,6);
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int pStart = pop->iStart[s]*3;
+		long int pStop = pop->iStop[s]*3;
+		long int removed = 0;
+		long int exhanged = 0;
+		for(long int p=pStart;p<pStop;p+=3){
+
+			for(int d=0;d<3;d++) {
+				//Why is offset size -1 ? ... -1 ?
+				//printf("%i \n",offset[d]);
+				dummyPos[d] = pop->pos[p+d] + offset[d]+1;
+			}
+
+
+			// not offset but GLOBAL Size!
+			//MpiInfo->subdomain;				///< MPI node (nDims elements)
+			//MpiInfo->nSubdomains;
+
+
+			if (dummyPos[0] > ux+trueSize[1]*(nSubdomains[0]-1)
+				|| dummyPos[1] > uy+trueSize[2]*(nSubdomains[1]-1)
+				|| dummyPos[2] > uz+trueSize[3]*(nSubdomains[2]-1)   ){
+
+					// if (s==1){
+					// 	printf("removed upper \n");
+					// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+					// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+					// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+					// }
+				//printf("too large \n");
+				//msg(STATUS,"%i, %i, %i \n",trueSize[0],trueSize[1],trueSize[2]);
+				//printf("global: %f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
+				//printf("Local: %f, %f, %f \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
+				//printf("Boundary %f, %f, %f \n \n",ux+trueSize[0]*(nSubdomains[0]-1),uy+trueSize[1]*(nSubdomains[1]-1),uz+trueSize[2]*(nSubdomains[2]-1) );
+				//msg(STATUS, " removing ");
+				// Remove particle out of bounds particle
+
+				//msg(STATUS,"dummyPos[0] = %f, thresholds[0]+pos = %f",dummyPos[0],thresholds[0]+pop->pos[p*3*+d]);
+				//msg(STATUS,"dummyPos[1] = %f, thresholds[1]+pos = %f",dummyPos[1],thresholds[1]+pop->pos[p*3*+d]);
+				//msg(STATUS,"dummyPos[2] = %f, thresholds[2]+pos = %f",dummyPos[2],thresholds[2]+pop->pos[p*3*+d]);
+				//printf(" \n");
+				removed += 1;
+				pos[p]   = pos[pStop-3];
+				pos[p+1] = pos[pStop-2];
+				pos[p+2] = pos[pStop-1];
+				vel[p]   = vel[pStop-3];
+				vel[p+1] = vel[pStop-2];
+				vel[p+2] = vel[pStop-1];
+
+				pStop -= 3;
+				p -= 3;
+				pop->iStop[s]--;
+
+			}
+			else if (dummyPos[0] < lx || dummyPos[1] < ly
+				|| dummyPos[2] < lz){
+				//printf("%f\n",dummyPos[0]);
+				//msg(STATUS, " removing ");
+				// Remove particle out of bounds particle
+
+				// if (s==1){
+				// 	printf("removed lower \n");
+				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+				// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+				// }
+				//printf("too small \n");
+				//printf("%f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
+				//printf("%f, %f, %f \n \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
+
+				removed += 1;
+				pos[p]   = pos[pStop-3];
+				pos[p+1] = pos[pStop-2];
+				pos[p+2] = pos[pStop-1];
+				vel[p]   = vel[pStop-3];
+				vel[p+1] = vel[pStop-2];
+				vel[p+2] = vel[pStop-1];
+
+				pStop -= 3;
+				p -= 3;
+				pop->iStop[s]--;
+
+			} else {
+			//msg(STATUS, "exchanged");
+			double x = pos[p];
+			double y = pos[p+1];
+			double z = pos[p+2];
+			int nx = - (x<lx) + (x>=ux);
+			int ny = - (y<ly) + (y>=uy);
+			int nz = - (z<lz) + (z>=uz);
+			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
+
+			// if (s==1){
+			// 	if (x<lx) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// 	if (y<ly) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// 	if (z<lz) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// }
+			// if(p==371*3)
+			// 	msg(STATUS,"x1: %f",x);
+
+			if(ne!=neighborhoodCenter){
+				//msg(STATUS,"ne = %i",ne);
+				// if (s==1){
+				// 	printf("exhcanged \n" );
+				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+				// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+				// }
+
+				exhanged += 1;
+				*(emigrants[ne]++) = x;
+				*(emigrants[ne]++) = y;
+				*(emigrants[ne]++) = z;
+				*(emigrants[ne]++) = vel[p];
+				*(emigrants[ne]++) = vel[p+1];
+				*(emigrants[ne]++) = vel[p+2];
+				nEmigrants[ne*nSpecies+s]++;
+
+				pos[p]   = pos[pStop-3];
+				pos[p+1] = pos[pStop-2];
+				pos[p+2] = pos[pStop-1];
+				vel[p]   = vel[pStop-3];
+				vel[p+1] = vel[pStop-2];
+				vel[p+2] = vel[pStop-1];
+
+				// if(p==371*3)
+				// 	msg(STATUS,"x2: %f",pos[p]);
+
+				pStop -= 3;
+				p -= 3;
+				pop->iStop[s]--;
+
+				}
+
+			}
+		}//printf("removed = %li, exhanged = %li s = %i \n", removed,exhanged,s);
+		// msg(STATUS,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
+	}
+}
+
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
 funPtr puExtractEmigrants3D_set(const dictionary *ini){
@@ -789,6 +966,8 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	long int *nEmigrants = mpiInfo->nEmigrants;
 	int nNeighbors = mpiInfo->nNeighbors;
 
+	//msg(STATUS,"neighbours = %i",mpiInfo->nNeighbors);
+
 	// By using the dummy to hold data we won't lose track of the beginning of
 	// the arrays when incrementing the pointer
 	double **emigrants = mpiInfo->emigrantsDummy;
@@ -804,7 +983,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	double uy = thresholds[4];
 	double uz = thresholds[5];
 
-	// adPrint(thresholds,6);
+	//adPrint(thresholds,6);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -821,10 +1000,12 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 			int nz = - (z<lz) + (z>=uz);
 			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
+
 			// if(p==371*3)
 			// 	msg(STATUS,"x1: %f",x);
 
 			if(ne!=neighborhoodCenter){
+				//msg(STATUS,"ne = %i",ne);
 				*(emigrants[ne]++) = x;
 				*(emigrants[ne]++) = y;
 				*(emigrants[ne]++) = z;
@@ -925,6 +1106,7 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
 			int reciprocal = puNeighborToReciprocal(ne,mpiInfo->nDims);
+			//msg(STATUS,"ne =%i, rank = %i, reciprocal = %i",ne,rank,reciprocal);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
 			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
