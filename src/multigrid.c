@@ -175,6 +175,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 		double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 		double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+		double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
 
 		//Ghost layer vector
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
@@ -196,6 +197,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		grid->sendSlice = sendSlice;
 		grid->recvSlice = recvSlice;
 		grid->bndSlice = bndSlice;
+		grid->bndSolution = bndSolution;
 		grid->h5 = 0;
 		grid->bnd = subBnd;
 
@@ -830,6 +832,7 @@ void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
  		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,	g);
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+
 	}
 
 

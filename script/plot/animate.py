@@ -5,13 +5,13 @@ import numpy as np
 import pylab as plt
 
 
-h5 = h5py.File('../../data/rho.grid.h5','r')
+h5 = h5py.File('../../data/phi.grid.h5','r')
 
 start = 1
 for i in range(start,200000,1):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
-	data = data[:,:,17]#np.average(data,axis=0)
+	data = data[8,:,:]#np.average(data,axis=0)
 	if i==start:
 		p = plt.imshow(data)
 		fig = plt.gcf()
@@ -22,4 +22,4 @@ for i in range(start,200000,1):
 		p.set_data(data)
 		plt.title("Charge density, t=%i"%i);
 
-	plt.pause(1)
+	plt.pause(0.1)

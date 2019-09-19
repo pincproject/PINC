@@ -1277,7 +1277,8 @@ void oMode(dictionary *ini){
 
 	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
 												puExtractEmigrants3D_set,
-												puExtractEmigrantsND_set);
+												puExtractEmigrantsND_set,
+                        puExtractEmigrants3DOpen_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set,
@@ -1360,8 +1361,8 @@ void oMode(dictionary *ini){
 
 
 	// Initalize particles
-	//pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
@@ -1391,9 +1392,10 @@ void oMode(dictionary *ini){
 
 	// Get initial E-field
 
-
-	solve(solver, rho, phi, mpiInfo); //sSolve, not MGSOLVE! 05/09/19
+  //gBnd(phi, mpiInfo);
+	solve(solver, rho, phi, mpiInfo);
     //gWriteH5(phi, mpiInfo, (double) 0);
+
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -1451,14 +1453,16 @@ void oMode(dictionary *ini){
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 		//gAssertNeutralGrid(rho, mpiInfo);
 
+        //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 
         // Second run with solver to account for charges
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
 
+    //gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
 
-		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
+		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
@@ -1484,7 +1488,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=0){
+		if(n>=1000){
 		//Write h5 files
     	//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

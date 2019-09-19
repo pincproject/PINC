@@ -459,13 +459,14 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 		}
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
-	msg(STATUS,"nSliceMax = %li",nSliceMax);
+	//msg(STATUS,"nSliceMax = %li",nSliceMax);
 
 	// Memory for values and a slice
 	double *val = malloc(sizeProd[rank]*sizeof(*val));
 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+	double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
 	// Maybe seek a different solution where it is only stored where needed
 
 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
@@ -495,6 +496,7 @@ Grid *gAlloc(const dictionary *ini, int nValues){
 	grid->sendSlice = sendSlice;
 	grid->recvSlice = recvSlice;
 	grid->bndSlice = bndSlice;
+	grid->bndSolution = bndSolution;
 	grid->bnd = bnd;
 
 	return grid;
@@ -620,6 +622,7 @@ void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
 	int *size = grid->size;
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
+	double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 
@@ -633,8 +636,9 @@ void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 
+	//TODO: read from .ini. can implement function
 	double constant1 = 1.;
-	double constant2 = 2.;
+	double constant2 = 0.; // solution to bnd cond = 0.
 
 	//Lower edge
 	for(int d = 1; d < rank; d++){
@@ -642,10 +646,16 @@ void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
 			if(bnd[d] == DIRICHLET)
 				for(int s = 0; s < nSliceMax; s++){
 					bndSlice[s + (nSliceMax * d)] = constant1;
+					//for Dirichlet bndSlice and bndSolution is the same
 				}
 			if(bnd[d] == NEUMANN)
 				for(int s = 0; s < nSliceMax; s++){
-					bndSlice[s + (nSliceMax * d)] = constant2;
+
+					// initialize. This one is used in Multigrid ...?
+					bndSlice[s + (nSliceMax * d)] = 0.;
+
+					//Solution to equation. constant for now
+					bndSolution[s + (nSliceMax * d)] = constant2; //Solution to equation. constant for now
 				}
 		}
 	}
@@ -660,7 +670,8 @@ void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo){
 				}
 			if(bnd[d] == NEUMANN)
 				for(int s = 0; s < nSliceMax; s++){
-					bndSlice[s + (nSliceMax * d)] = constant2;
+					bndSlice[s + (nSliceMax * d)] = 0.;
+					bndSolution[s + (nSliceMax * d)] = constant2;
 				}
 		}
 	}
@@ -968,7 +979,7 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 
-	//adPrint(&bndSlice[(boundary)*nSliceMax], size[d]);
+	adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
 
 	return;
 
@@ -982,17 +993,18 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	//Load data
 	int rank = grid->rank;
 	int *size = grid->size;
-	double *bndSlice = grid->bndSlice;
+	double *bndSlice = grid->bndSlice; // two slices in each dim
 	double *slice = grid->sendSlice;
+	double *bndSolution = grid->bndSolution; // two slices in each dim
 
 	//Compute dimensions and slicesize
 	int d = boundary%rank;
 	int offset = 1;//(boundary>rank)*(size[d]-1);
-	if (boundary<rank){
+	//if (boundary<rank){
 		//offset = (boundary>rank)*(size[d]-2);
 		//msg(STATUS,"(boundary<rank) boundary = %i, offset = %i", boundary,offset);
-	}
-	if (boundary>rank){
+	//}
+	if (boundary>rank){ // first and last true grid node.
 		offset = (boundary>rank)*(size[d]-2);
 		//msg(STATUS,"(boundary>rank) boundary = %i, offset = %i", boundary,offset);
 	}
@@ -1002,7 +1014,7 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	//if (boundary<rank) offset = (boundary>rank)*(size[d]-1);
 
 	//Number of elements in slice
-	long int nSliceMax = 0;
+	long int nSliceMax = 0; //TODO: this should be stored.
 	for(int d=1;d<rank;d++){
 		long int nSlice = 1;
 		for(int dd=0;dd<rank;dd++){
@@ -1015,26 +1027,52 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
 	if (boundary>rank){ //Upper
 		getSlice(slice, grid, d, offset - 1);
-		getSlice(bndSlice, grid, d, offset);
+		//setSlice(slice, grid, d, offset + 1);
+		//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 	}
 	if (boundary<rank) { //Lower
 		getSlice(slice, grid, d, offset + 1);
-		getSlice(bndSlice, grid, d, offset);
+		//setSlice(slice, grid, d, offset - 1);
+		//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 	}
+	//adPrint(bndSolution,2*4*nSliceMax);
 
-	for(int s = 0; s < nSliceMax; s++){
-		slice[s] -= 2*bndSlice[s];
-		//msg(STATUS,"bndSlice[s+boundary*nSliceMax] = %f", bndSlice[s]);
+	if (boundary>rank){
+		for(int s = 0; s < nSliceMax; s++){
+			slice[s] -= 2.*bndSolution[s+2*d*nSliceMax]; //bndSlice[s];
+			//bndSlice[s + d*nSliceMax] = slice[s];
+			//msg(STATUS,"slice[s] = %f",slice[s]);
+		}
+		setSlice(slice, grid, d, offset + 1);
+		for(int s = 0; s < nSliceMax; s++){
+	 	bndSlice[s + 2*d*nSliceMax] = slice[s];
+	 	}
 	}
-
-	if (boundary>rank) setSlice(slice, grid, d, offset + 1);
-	if (boundary<rank) setSlice(slice, grid, d, offset - 1);
-
+	if (boundary<rank){
+		for(int s = 0; s < nSliceMax; s++){
+			slice[s] -= 2.*bndSolution[s+d*nSliceMax]; //bndSlice[s];
+			//bndSlice[s + d*nSliceMax] = slice[s];
+			//msg(STATUS,"slice[s] = %f",slice[s]);
+		}
+		setSlice(slice, grid, d, offset - 1);
+		for(int s = 0; s < nSliceMax; s++){
+		bndSlice[s + d*nSliceMax] = slice[s];
+	 }
+	}
+	//adPrint(bndSlice,2*4*nSliceMax);
+	//msg(STATUS,"done");
 	return;
 }
 
 
+
+
 void gBnd(Grid *grid, const MpiInfo *mpiInfo){
+
+
+	//msg(STATUS, "before boundary cond");
+	//msg(STATUS,"phi size = %i",grid->sizeProd[4]);
+	//adPrint(grid->val,grid->sizeProd[4] );
 
 	//adPrint(grid->val,grid->sizeProd[4] );
 	int rank = grid->rank;
@@ -1077,6 +1115,7 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 		}
 	}
 	//msg(STATUS, "after boundary cond");
+	//msg(STATUS,"phi size = %i",grid->sizeProd[4]);
 	//adPrint(grid->val,grid->sizeProd[4] );
 	//exit(1);
 	return;

@@ -132,7 +132,7 @@ void regular(dictionary *ini){
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
-	pPosPerturb(ini, pop, mpiInfo);
+	//pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
@@ -149,9 +149,11 @@ void regular(dictionary *ini){
 
 	// Get initial E-field
 	msg(STATUS, "solving");
+	//gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
 
 	msg(STATUS, "finding E");
+
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -199,12 +201,12 @@ void regular(dictionary *ini){
 
 		solve(solver, rho, phi, mpiInfo);
 
-		//msg(STATUS,"phi size = %i",phi->sizeProd[4]);
+		msg(STATUS,"phi size = %i",phi->sizeProd[4]);
 		//for (long int q = 0; q<phi->rank;q++){
 			//adPrint(phi->val,phi->sizeProd[4] );
 			//}
-
-		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
+		//exit(0);
+		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
