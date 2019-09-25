@@ -88,9 +88,9 @@ typedef struct {
  *  the coarsest grid.
  */
 
-Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
+Multigrid *mgAlloc(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo);
 
-MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi);
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi,const MpiInfo *mpiInfo);
 void mgFreeSolver(MultigridSolver *solver);
 void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
 funPtr mgSolver_set(const dictionary *ini);

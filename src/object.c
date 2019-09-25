@@ -175,15 +175,17 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     void (*solverFree)() = NULL;
     solverInterface(&solve, &solverAlloc, &solverFree);
 
-    Grid *rhoCap = gAlloc(ini, SCALAR);
-    Grid *phiCap = gAlloc(ini, SCALAR);
+    Grid *rhoCap = gAlloc(ini, SCALAR,mpiInfo);
+    Grid *phiCap = gAlloc(ini, SCALAR,mpiInfo);
 
-    void *solver = solverAlloc(ini, rhoCap, phiCap);
-
+    void *solver = solverAlloc(ini, rhoCap, phiCap, mpiInfo);
+    //msg(STATUS,"in oComputeCapacitanceMatrix");
+    //exit(0);
     for(int r=0; r<2*phiCap->rank; r++){
       rhoCap->bnd[r] = PERIODIC;
       phiCap->bnd[r] = PERIODIC;
     }
+    aiPrint(phiCap->bnd,2*phiCap->rank);
 
     // Set Rho to zero.
     gZero(rhoCap);
@@ -426,7 +428,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     }
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
 
-    msg(STATUS,"lookupSurfaceOffset[a+1] = %li",lookupSurfaceOffset[0+1]);
+    //msg(STATUS,"lookupSurfaceOffset[a+1] = %li",lookupSurfaceOffset[0+1]);
     // Initialise and compute the lookup table.
     long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects]+1)*sizeof(*lookupSurface));
     alSetAll(lookupSurface,lookupSurfaceOffset[obj->nObjects]+1,0);
@@ -467,17 +469,17 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 if ( val[myNB[1]]>(a+0.5) && d<8.5 && d>0) {
                     lookupSurface[index[a]] = myNB[1];
                     index[a]++;
-                    msg(STATUS,"index[a] = %li",index[a]);
+                    //msg(STATUS,"index[a] = %li",index[a]);
                 }
             }
         }
     }
 
     // Add to object.
-    alPrint(lookupSurface,1);
+    //alPrint(lookupSurface,1);
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
-    msg(STATUS,"EXITING surface lookup");
+    //msg(STATUS,"EXITING surface lookup");
     //free(index);
     //free(myNB);
 }
@@ -706,9 +708,9 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
  *  ALLOC/DESTRUCTORS
  ****************************************************************************/
 
-Object *oAlloc(const dictionary *ini){
+Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo){
 
-    Grid *domain = gAlloc(ini, SCALAR);
+    Grid *domain = gAlloc(ini, SCALAR,mpiInfo);
 
     long int *lookupInterior = NULL;
     long int *lookupInteriorOffset = NULL;
@@ -1297,14 +1299,14 @@ void oMode(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-    Grid *rhoObj = gAlloc(ini, SCALAR);     // for capMatrix - objects
-	Grid *phi = gAlloc(ini, SCALAR);
-	void *solver = solverAlloc(ini, rho, phi);
+	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+    Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
-    Object *obj = oAlloc(ini);              // for capMatrix - objects
-//TODO: look intomultigrid E,rho,rhoObj
+    Object *obj = oAlloc(ini,mpiInfo);              // for capMatrix - objects
+//TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -1355,6 +1357,7 @@ void oMode(dictionary *ini){
 	 */
 
     //Compute capacitance matrix
+    msg(STATUS, "com cap matrix");
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 
@@ -1488,7 +1491,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=1000){
+		if(n>=150){
 		//Write h5 files
     	//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

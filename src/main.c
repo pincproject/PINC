@@ -88,10 +88,10 @@ void regular(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
-	void *solver = solverAlloc(ini, rho, phi);
+	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -108,6 +108,7 @@ void regular(dictionary *ini){
 	/*
 	 * PREPARE FILES FOR WRITING
 	 */
+
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
@@ -143,17 +144,29 @@ void regular(dictionary *ini){
 	 * INITIALIZATION (E.g. half-step)
 	 */
 
+
 	// Get initial charge density
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	// Get initial E-field
-	msg(STATUS, "solving");
+
+	//gNeutralizeGrid(phi, mpiInfo);
+	//gNeutralizeGrid(rho, mpiInfo);
+	//gNeutralizeGrid
 	//gBnd(phi, mpiInfo);
+	//gBnd(phi, mpiInfo);
+	//gBnd(rho, mpiInfo);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	msg(STATUS, "solving");
 	solve(solver, rho, phi, mpiInfo);
+	//gBnd(phi, mpiInfo);
 
 	msg(STATUS, "finding E");
-
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
@@ -196,12 +209,21 @@ void regular(dictionary *ini){
 		pPosAssertInLocalFrame(pop, rho);
 
 		// Compute charge density
+
+		/// TMEPORARY NOTE: charsh in distr, because of NAN valuesintroduced in MG
+		//MPI_Barrier(MPI_COMM_WORLD);
+		//exit(0);
+		//MPI_Barrier(MPI_COMM_WORLD);
+
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
+		//gBnd(phi, mpiInfo);
+		//gBnd(rho, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
+		gBnd(phi, mpiInfo);
 
-		msg(STATUS,"phi size = %i",phi->sizeProd[4]);
+		//msg(STATUS,"phi size = %i",phi->sizeProd[4]);
 		//for (long int q = 0; q<phi->rank;q++){
 			//adPrint(phi->val,phi->sizeProd[4] );
 			//}

@@ -11,7 +11,7 @@ start = 1
 for i in range(start,200000,1):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
-	data = data[8,:,:]#np.average(data,axis=0)
+	data = data[2,:,:]#np.average(data,axis=0)
 	if i==start:
 		p = plt.imshow(data)
 		fig = plt.gcf()

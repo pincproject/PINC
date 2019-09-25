@@ -126,9 +126,10 @@ funPtr sMode_set(dictionary *ini){
 }
 void sMode(dictionary *ini){
 
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *rho = gAlloc(ini, SCALAR);
+
 	MpiInfo *mpiInfo = gAllocMpi(ini);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
 
 	SpectralSolver *solver = sAlloc(ini, rho, phi);
 

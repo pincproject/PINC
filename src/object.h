@@ -49,7 +49,7 @@ funPtr oMode_set(dictionary *ini);
  *
  * NB! Assumes 1 ghost point on all edges for now.
  */
-Object *oAlloc(const dictionary *ini);
+Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo);
 
 /**
  * @brief Frees allocated object

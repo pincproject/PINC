@@ -175,7 +175,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 		double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 		double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
-		double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
 
 		//Ghost layer vector
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
@@ -197,7 +196,6 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		grid->sendSlice = sendSlice;
 		grid->recvSlice = recvSlice;
 		grid->bndSlice = bndSlice;
-		grid->bndSolution = bndSolution;
 		grid->h5 = 0;
 		grid->bnd = subBnd;
 
@@ -296,7 +294,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
  ************************************************/
 
 
-Multigrid *mgAlloc(const dictionary *ini, Grid *grid){
+Multigrid *mgAlloc(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo){
 
 	//Multigrid
 	int nLevels = iniGetInt(ini, "multigrid:mgLevels");
@@ -363,14 +361,14 @@ void mgFree(Multigrid *multigrid){
 	return;
 }
 
-MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi){
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi, const MpiInfo *mpiInfo){
 
 	MultigridSolver *solver = (MultigridSolver *)malloc(sizeof(*solver));
 
-	Grid *res = gAlloc(ini, SCALAR);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
-	Multigrid *mgPhi = mgAlloc(ini, phi);
+	Grid *res = gAlloc(ini, SCALAR,mpiInfo);
+	Multigrid *mgRho = mgAlloc(ini, rho,mpiInfo);
+	Multigrid *mgRes = mgAlloc(ini, res,mpiInfo);
+	Multigrid *mgPhi = mgAlloc(ini, phi,mpiInfo);
 
 	funPtr mgAlgo = getMgAlgo(ini);
 
@@ -715,6 +713,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 					phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 										phiVal[g+gk] + phiVal[g-gk] +
 										phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
+					//printf("g=%li, phiVal[g] = %f \n",g,phiVal[g]);
 					g	+=2;
 				}
 
@@ -732,6 +731,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		}
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+		//gNeutralize()
 		gBnd(phi, mpiInfo);
 
 		/*********************
@@ -744,6 +744,7 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 		 			phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
 		 								phiVal[g+gk] + phiVal[g-gk] +
 		 								phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
+					//printf("g=%li, phiVal[g] = %f \n",g,phiVal[g]);
 
 		 			g	+=2;
 		 		}
@@ -759,10 +760,11 @@ void mgGS3D(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 				if(l%2) g+=1; else g-=1;
 			// g -= -1 + 2*(l%2);
 		 }
-
+		 //exit(0);
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
 	}
+
 
 
 	return;
@@ -832,7 +834,6 @@ void mgGS3DNew(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
  		loopRedBlack3D(rhoVal, phiVal, sizeProd, trueSize, kEdgeInc, lEdgeInc,	g);
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
-
 	}
 
 
@@ -1385,25 +1386,67 @@ void mgRestrictBnd(Multigrid *mgGrid){
  *			VARIOUS COMPUTATIONS (RESIDUAL)
  ******************************************************/
 
-void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){
+ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){
 
-	//Load
-	long int *sizeProd = res->sizeProd;
-	int rank = res->rank;
-	double *resVal = res->val;
-	double *rhoVal = rho->val;
+ 	//Load
+ 	long int *sizeProd = res->sizeProd;
+ 	int rank = res->rank;
+ 	double *resVal = res->val;
+ 	double *rhoVal = rho->val;
 
-	//Should consider changing to function pointers
-	if(rank == 4){
-		gFinDiff2nd3D(res, phi);
-	} else {
-		gFinDiff2ndND(res,phi);
-	}
+ 	//Should consider changing to function pointers
 
-	for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] += rhoVal[g];
 
-	return;
-}
+ 	if(rank == 4){
+ 		gFinDiff2nd3D(res, phi);
+ 	} else {
+ 		gFinDiff2ndND(res,phi);
+ 	}
+ 	//adPrint(res->val,res->sizeProd[4]);
+ 	//adPrint(phi->val,phi->sizeProd[4]);
+
+
+
+ 	//for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] += rhoVal[g];
+
+ 	int *size = phi->size;
+ 	//long int *sizeProd = phi->sizeProd;
+ 	int *trueSize = phi->trueSize;
+ 	int *nGhostLayers = phi->nGhostLayers;
+
+ 	long int g;
+ 	int gj = sizeProd[1];
+ 	int gk = sizeProd[2];
+ 	int gl = sizeProd[3];
+
+ 	//g = sizeProd[3]*nGhostLayers[3];
+ 	for(int l = nGhostLayers[3]; l < trueSize[3]+nGhostLayers[3];l++){
+ 		for(int k = nGhostLayers[2]; k < trueSize[2]+nGhostLayers[2]; k++){
+ 			for(int j = nGhostLayers[1]; j < trueSize[1]+nGhostLayers[1]; j++){
+ 				//printf("i = %i, j = %i, k = %i \n",j,k,l);
+ 				g = j + k*sizeProd[2] + l*sizeProd[3];
+
+ 				resVal[g] += rhoVal[g];
+ 				//printf("g = %li, rhoVal[g] = %f, resVal[g] = %f \n",g,rhoVal[g],resVal[g]);
+
+ 				//phiVal[g] = coeff*(	phiVal[g+gj] + phiVal[g-gj] +
+ 				//					phiVal[g+gk] + phiVal[g-gk] +
+ 				//					phiVal[g+gl] + phiVal[g-gl] + rhoVal[g]);
+ 			}
+ 		}
+ 	}
+
+
+ 	//This fails for boundarycond other than periodic
+ 	// for (long int g = 0; g < sizeProd[rank]; g++){
+ 	// 	printf("rhoVal[g] = %f, resVal[g] = %f \n",rhoVal[g],resVal[g]);
+ 	// 	resVal[g] += rhoVal[g];
+ 	//
+ 	// }
+ 	//adPrint(res->val,res->sizeProd[4]);
+ 	//adPrint(phi->val,phi->sizeProd[4]);
+ 	return;
+ }
 
 
 double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
@@ -1519,6 +1562,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	Grid *phi = mgPhi->grids[level];
  	Grid *rho = mgRho->grids[level];
  	Grid *res = mgRes->grids[level];
+
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
  	gNeutralizeGrid(rho,mpiInfo);
@@ -1697,15 +1741,22 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	// gZero(mgPhi->grids[0]);
 	double tol = 1.E-10;
 	double barRes = 2.;
+
 	if(nLevels >1){
-		while(barRes > tol){
+		//while(barRes > tol){
+		for(int c = 0; c < nMGCycles; c++){
+			//gBnd(mgRes->grids[0],mpiInfo);
+			//gBnd(mgRho->grids[0],mpiInfo);
+			//gBnd(mgPhi->grids[0],mpiInfo);
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
+
 			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
 			barRes = mgSumTrueSquared(mgRes->grids[0],mpiInfo);
 			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
 			barRes = sqrt(barRes);
-			//msg(STATUS, "barRes = %f", barRes);
+			msg(STATUS, "barRes = %f", barRes);
+			//exit(0);
 		}
 		// for(int c = 0; c < nMGCycles; c++){
 		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
@@ -1743,21 +1794,21 @@ void mgModeErrorScaling(dictionary *ini){
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 
 	//Grids
-	Grid *phi 	= gAlloc(ini, SCALAR);
-	Grid *rho 	= gAlloc(ini, SCALAR);
-	Grid *res 	= gAlloc(ini, SCALAR);
-	Grid *E		= gAlloc(ini, VECTOR);
+	Grid *phi 	= gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rho 	= gAlloc(ini, SCALAR,mpiInfo);
+	Grid *res 	= gAlloc(ini, SCALAR,mpiInfo);
+	Grid *E		= gAlloc(ini, VECTOR,mpiInfo);
 
 	//Multigrids
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi,mpiInfo);
+	Multigrid *mgRho = mgAlloc(ini, rho,mpiInfo);
+	Multigrid *mgRes = mgAlloc(ini, res,mpiInfo);
 
 	//Error and solutions
-	Grid *error = gAlloc(ini, SCALAR);
-	Grid *errorE= gAlloc(ini, VECTOR);
-	Grid *sol 	= gAlloc(ini, SCALAR);
-	Grid *solE	= gAlloc(ini, VECTOR);
+	Grid *error = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *errorE= gAlloc(ini, VECTOR,mpiInfo);
+	Grid *sol 	= gAlloc(ini, SCALAR,mpiInfo);
+	Grid *solE	= gAlloc(ini, VECTOR,mpiInfo);
 
 
 	//Compute stuff
@@ -1867,17 +1918,17 @@ void mgMode(dictionary *ini){
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
 
 	//Grids
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *res= gAlloc(ini, SCALAR);
-	Grid *sol = gAlloc(ini, SCALAR);
-	Grid *E = gAlloc(ini, VECTOR);
-	Grid *error =gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *res= gAlloc(ini, SCALAR,mpiInfo);
+	Grid *sol = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *E = gAlloc(ini, VECTOR,mpiInfo);
+	Grid *error =gAlloc(ini, SCALAR,mpiInfo);
 
 	//Multilevel grids
-	Multigrid *mgPhi = mgAlloc(ini, phi);
-	Multigrid *mgRho = mgAlloc(ini, rho);
-	Multigrid *mgRes = mgAlloc(ini, res);
+	Multigrid *mgPhi = mgAlloc(ini, phi,mpiInfo);
+	Multigrid *mgRho = mgAlloc(ini, rho,mpiInfo);
+	Multigrid *mgRes = mgAlloc(ini, res,mpiInfo);
 
 	funPtr mgAlgo = getMgAlgo(ini);
 

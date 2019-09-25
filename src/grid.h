@@ -39,7 +39,7 @@ typedef enum{
  * NB! Assumes 1 ghost point on all edges for now.
  */
 
-Grid *gAlloc(const dictionary *ini, int nValues);
+Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo);
 
 /**
  * @brief Frees allocated grid
@@ -63,7 +63,7 @@ void gFree(Grid *grid);
  *
  */
 
-void gSetBndSlices(Grid *grid,MpiInfo *mpiInfo);
+void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo);
 
 /**
  * @brief Allocates the memory for an MpiInfo struct according to input file
@@ -154,6 +154,40 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  * @see gHaloOpDim
  */
 void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
+
+
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param sliceOp			Slicing operation
+ * @param *Grid	Grid struct
+ * @param *mpiInfo		MpiInfo struct
+ * @param d				Along which dimension it should exhange ghost cells
+ * @param int boundary  Decidec upper = 1 or lower = 0
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see gHaloOp
+ */
+void gHaloOpDimOpen(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir,int boundary);
+
+
+/**
+ * @brief Send and recieves the overlapping layers of the subdomains
+ * @param sliceOp			Slicing operation
+ * @param *grid				Grid struct
+ * @param *mpiInfo			MpiInfo struct
+ *
+ * A wrapper to the gHaloOpDim function, that is used when the user wants the
+ * interaction in all the dimensions.
+ *
+ * NB! Only works with 1 ghost layer.
+ * @see gExchangeSlice
+ * @see gHaloOpDim
+ */
+void gHaloOpOpen(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir);
+
+
+
 
 /**
  * @brief Extracts a (dim-1) dimensional slice of grid values.
