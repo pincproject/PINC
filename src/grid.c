@@ -1264,9 +1264,17 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//If periodic neutralize phi
 
 	bool periodic =  true;
-	for(int d = 1; d < 2*rank; d++){
+	for(int d = 1; d < rank; d++){
+		//msg(STATUS,"d = %i",d);
 		if(bnd[d] != PERIODIC){
-			//msg(STATUS,"bnd[d] = PERIODIC, d = %i",d);
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+			periodic = false;
+			}
+	}
+	for(int d = rank+1; d < 2*rank; d++){
+		//msg(STATUS,"d = %i",d);
+		if(bnd[d] != PERIODIC){
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
 			periodic = false;
 			}
 	}

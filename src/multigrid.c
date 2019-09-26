@@ -35,7 +35,7 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
 	if(!strcmp(preSmoothName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->preSmooth = &mgGS2D;
-		else if(nDims == 3) multigrid->preSmooth = &mgGS3D;
+		else if(nDims == 3) multigrid->preSmooth = &mgGS3DNew;
     } else if (!strcmp(preSmoothName, "jacobian")){
 		if(nDims == 3) multigrid->preSmooth = &mgJacob3D;
 		else multigrid->preSmooth = &mgJacobND;
@@ -49,7 +49,7 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
     if(!strcmp(postSmoothName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->postSmooth = &mgGS2D;
-		else if(nDims == 3) multigrid->postSmooth = &mgGS3D;
+		else if(nDims == 3) multigrid->postSmooth = &mgGS3DNew;
 		else msg(ERROR, "No postsmoothing algorithm set for dimensions %d", nDims);
 	} else if (!strcmp(postSmoothName, "jacobian")){
 		if(nDims == 3) multigrid->postSmooth = &mgJacob3D;
@@ -64,7 +64,7 @@ void mgSetSolver(const dictionary *ini, Multigrid *multigrid){
 
     if(!strcmp(coarseSolverName,"gaussSeidelRB")){
 		if(nDims == 2)	multigrid->coarseSolv = &mgGS2D;
-		else if(nDims == 3) multigrid->coarseSolv = &mgGS3D;
+		else if(nDims == 3) multigrid->coarseSolv = &mgGS3DNew;
 		else msg(ERROR, "No coarsesolver algorithm set for dimensions %d", nDims);
 	} else if (!strcmp(coarseSolverName, "jacobian")){
 		if(nDims == 3) multigrid->coarseSolv = &mgJacob3D;
@@ -1435,6 +1435,7 @@ void mgRestrictBnd(Multigrid *mgGrid){
  			}
  		}
  	}
+	gBnd(res,mpiInfo);
 
 
  	//This fails for boundarycond other than periodic
@@ -1738,7 +1739,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	int bottom = mgRho->nLevels-1;
 	int nLevels = mgRho->nLevels;
 
-	// gZero(mgPhi->grids[0]);
+	gZero(mgPhi->grids[0]);
 	double tol = 1.E-10;
 	double barRes = 2.;
 
