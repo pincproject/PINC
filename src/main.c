@@ -167,7 +167,9 @@ void regular(dictionary *ini){
 	//gBnd(phi, mpiInfo);
 
 	msg(STATUS, "finding E");
+
 	gFinDiff1st(phi, E);
+
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
 
@@ -210,10 +212,6 @@ void regular(dictionary *ini){
 
 		// Compute charge density
 
-		/// TMEPORARY NOTE: charsh in distr, because of NAN valuesintroduced in MG
-		//MPI_Barrier(MPI_COMM_WORLD);
-		//exit(0);
-		//MPI_Barrier(MPI_COMM_WORLD);
 
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -222,6 +220,7 @@ void regular(dictionary *ini){
 		//gBnd(rho, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
 		gBnd(phi, mpiInfo);
+		//gZero(phi);
 
 		//msg(STATUS,"phi size = %i",phi->sizeProd[4]);
 		//for (long int q = 0; q<phi->rank;q++){
@@ -232,6 +231,8 @@ void regular(dictionary *ini){
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
+		//adPrint(E->val,E->sizeProd[4] );
+		//exit(0);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 

@@ -944,8 +944,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				}
 
 			}
-		}//printf("removed = %li, exhanged = %li s = %i \n", removed,exhanged,s);
-		// msg(STATUS,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
+		}printf("removed = %li, exhanged = %li s = %i \n", removed,exhanged,s);
+		msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
 }
 
