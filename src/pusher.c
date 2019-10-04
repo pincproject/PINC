@@ -550,7 +550,8 @@ void puDistr3D1(const Population *pop, Grid *rho){
 		}
 
 		gMul(rho, pop->charge[s]);
-
+		//adPrint(rho->val,rho->sizeProd[4]);
+		//exit(0);
 	}
 
 }
@@ -775,6 +776,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
+	bndType *bnd = pop->bnd;
 
 	double dummyPos[3];
 
@@ -812,14 +814,16 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 
 		long int pStart = pop->iStart[s]*3;
 		long int pStop = pop->iStop[s]*3;
-		long int removed = 0;
-		long int exhanged = 0;
+		long int removedupp = 0; //debug
+		long int removedlow = 0; //debug
+		long int exhanged = 0; //debug
 		for(long int p=pStart;p<pStop;p+=3){
 
 			for(int d=0;d<3;d++) {
 				//Why is offset size -1 ? ... -1 ?
 				//printf("%i \n",offset[d]);
-				dummyPos[d] = pop->pos[p+d] + offset[d]+1;
+				dummyPos[d] = pop->pos[p+d] + offset[d];
+				//if(pop->pos[p+d]<1) printf("\n \n pop->pos[p+d] = %f \n \n ",pop->pos[p+d]);
 			}
 
 
@@ -828,15 +832,17 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 			//MpiInfo->nSubdomains;
 
 
-			if (dummyPos[0] > ux+trueSize[1]*(nSubdomains[0]-1)
-				|| dummyPos[1] > uy+trueSize[2]*(nSubdomains[1]-1)
-				|| dummyPos[2] > uz+trueSize[3]*(nSubdomains[2]-1)   ){
+			if ( (dummyPos[0] > trueSize[0]*(nSubdomains[0])+1 && bnd[5]!=PERIODIC)
+				|| ( dummyPos[1] > trueSize[1]*(nSubdomains[1])+1 && bnd[6]!=PERIODIC)
+				|| (  dummyPos[2] > trueSize[2]*(nSubdomains[2])+1 && bnd[7]!=PERIODIC)   ){
 
-					// if (s==1){
+					// if (s==0){
 					// 	printf("removed upper \n");
+					// 	printf("trueSize[1]*(nSubdomains[0]) = %i \n",trueSize[0]*(nSubdomains[0]));
+					// 	printf("bnd[5] = %d,bnd[6] = %d,bnd[7] = %d \n",bnd[5],bnd[6],bnd[7]);
 					// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
 					// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
-					// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+					// 	printf("ofsett: %i, %i, %i \n \n", offset[0], offset[1], offset[2]);
 					// }
 				//printf("too large \n");
 				//msg(STATUS,"%i, %i, %i \n",trueSize[0],trueSize[1],trueSize[2]);
@@ -850,7 +856,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				//msg(STATUS,"dummyPos[1] = %f, thresholds[1]+pos = %f",dummyPos[1],thresholds[1]+pop->pos[p*3*+d]);
 				//msg(STATUS,"dummyPos[2] = %f, thresholds[2]+pos = %f",dummyPos[2],thresholds[2]+pop->pos[p*3*+d]);
 				//printf(" \n");
-				removed += 1;
+				removedupp += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -863,23 +869,25 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				pop->iStop[s]--;
 
 			}
-			else if (dummyPos[0] < lx || dummyPos[1] < ly
-				|| dummyPos[2] < lz){
+			else if ( (dummyPos[0] < -1. && bnd[1]!=PERIODIC)
+				|| ( dummyPos[1] < -1. && bnd[2]!=PERIODIC)
+				|| ( dummyPos[2] < -1. && bnd[3]!=PERIODIC) ){
 				//printf("%f\n",dummyPos[0]);
 				//msg(STATUS, " removing ");
 				// Remove particle out of bounds particle
 
-				// if (s==1){
+				// if (s==0){
 				// 	printf("removed lower \n");
+				// 	printf("bnd[1] = %d,bnd[2] = %d,bnd[3] = %d \n",bnd[1],bnd[2],bnd[3]);
 				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
 				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
-				// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+				// 	printf("ofsett: %i, %i, %i \n \n", offset[0], offset[1], offset[2]);
 				// }
 				//printf("too small \n");
 				//printf("%f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
 				//printf("%f, %f, %f \n \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
 
-				removed += 1;
+				removedlow += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -891,8 +899,13 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
-			} else {
-			//msg(STATUS, "exchanged");
+			} else if ( (dummyPos[0] > ux+trueSize[0]*(nSubdomains[0]-1)-1 && bnd[5]==PERIODIC)
+				|| ( dummyPos[1] > uy+trueSize[1]*(nSubdomains[1]-1)-1 && bnd[6]==PERIODIC)
+				|| (  dummyPos[2] > uz+trueSize[2]*(nSubdomains[2]-1)-1 && bnd[7]==PERIODIC)
+				|| (dummyPos[0] < lx && bnd[1]==PERIODIC)
+				|| ( dummyPos[1] < ly && bnd[2]==PERIODIC)
+				|| ( dummyPos[2] < lz && bnd[3]==PERIODIC) ){
+
 			double x = pos[p];
 			double y = pos[p+1];
 			double z = pos[p+2];
@@ -910,6 +923,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 			// 	msg(STATUS,"x1: %f",x);
 
 			if(ne!=neighborhoodCenter){
+				//msg(STATUS, "exchanged");
 				//msg(STATUS,"ne = %i",ne);
 				// if (s==1){
 				// 	printf("exhcanged \n" );
@@ -944,8 +958,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				}
 
 			}
-		}//printf("removed = %li, exhanged = %li s = %i \n", removed,exhanged,s);
-		// msg(STATUS,"pRange: %li-%li, iStop: %li",pStart,pStop,pop->iStop[s]);
+		}printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i \n", removedupp,removedlow,exhanged,s);
+		msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
 }
 

@@ -251,13 +251,17 @@ static void gExpandInner(	const double **in, double **out,
 		f = start*fieldSizeProd[1] + (d-1);
 
 
+
 		for(int g = start; g < end; g++){
 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
 			sNext++;
 			sPrev++;
 			f += fNext;
+			//printf("node: %li, using %li, and %li \n",f,sNext,sPrev);
 		}
 	}
+
+	return;
 }
 
 
@@ -415,7 +419,6 @@ void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++){
 		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir); //lower
-		//gHaloOpDimOpen(sliceOp, grid, mpiInfo, d, dir,1); //upper
 		//printf("EXCHANGING \n");
 	}
 
@@ -806,7 +809,7 @@ void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo){
 	}
 
 	//TODO: read from .ini. can implement function
-	double constant1 = 10.;
+	double constant1 = 0.;
 	double constant2 = 0.; // solution to bnd cond = 0.
 
 	//Lower edge
@@ -1150,7 +1153,7 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
 
 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
@@ -1158,6 +1161,8 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 	return;
 
 }
+
+
 
 
 void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
@@ -1174,22 +1179,14 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
 	//Compute dimensions and slicesize
 	int d = boundary%rank;
-	int offset = 1;//(boundary>rank)*(size[d]-1);
-	//if (boundary<rank){
-		//offset = (boundary>rank)*(size[d]-2);
-		//msg(STATUS,"(boundary<rank) boundary = %i, offset = %i", boundary,offset);
-	//}
-	if (boundary>rank){ // first and last true grid node.
-		offset = (boundary>rank)*(size[d]-2);
-		//msg(STATUS,"(boundary>rank) boundary = %i, offset = %i", boundary,offset);
-	}
+	int offset = 1 + (boundary>rank)*(size[d]-3);
 
 	//int offset = 0;
 	//if (boundary>rank) offset = 1 + (boundary>rank)*(size[d]-1);
 	//if (boundary<rank) offset = (boundary>rank)*(size[d]-1);
 
 	//Number of elements in slice
-	long int nSliceMax = 0; //TODO: this should be stored.
+	long int nSliceMax = 0; //TODO: this can/should be stored.
 	for(int d=1;d<rank;d++){
 		long int nSlice = 1;
 		for(int dd=0;dd<rank;dd++){
@@ -1214,32 +1211,33 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
 	if (boundary>rank){
 		for(int s = 0; s < nSliceMax; s++){
-			slice[s] -= 2.*0.;//bndSolution[s+2*rank*nSliceMax]; //bndSlice[s];
+			slice[s] -= 2.*0;//bndSolution[s+2*rank*nSliceMax-nSliceMax]; //bndSlice[s];
 			//msg(STATUS,"2*rank*nSliceMax = %li",2*rank*nSliceMax);
-			//bndSlice[s + d*nSliceMax] = slice[s];
+			bndSlice[s + d*nSliceMax] = slice[s];
 			//msg(STATUS,"slice[s] = %f",slice[s]);
 		}
-		setSlice(slice, grid, d, offset + 1);
-		for(int s = 0; s < nSliceMax; s++){
-	 	bndSlice[s + 2*d*nSliceMax] = 0;//slice[s];
-	 	}
+		setSlice(slice, grid, d, offset + 1); //halo
+		//for(int s = 0; s < nSliceMax; s++){
+	 	//bndSlice[s + 2*d*nSliceMax] = 0;//slice[s];
+	 	//}
 		//adPrint(&bndSlice[2*d*nSliceMax],nSliceMax);
 	}
 	if (boundary<rank){
 		for(int s = 0; s < nSliceMax; s++){
-			slice[s] -= 2.*0.;//bndSolution[s+d*nSliceMax]; //bndSlice[s];
-			//bndSlice[s + d*nSliceMax] = slice[s];
+			slice[s] = -2.*0;//bndSolution[s+d*nSliceMax-nSliceMax]; //bndSlice[s];
+			bndSlice[s + d*nSliceMax] = slice[s];
 			//msg(STATUS,"slice[s] = %f",slice[s]);
 		}
-		setSlice(slice, grid, d, offset - 1);
-		for(int s = 0; s < nSliceMax; s++){
-		bndSlice[s + d*nSliceMax] = 0;//slice[s];
+		setSlice(slice, grid, d, offset - 1); //halo
+		//for(int s = 0; s < nSliceMax; s++){
+		//bndSlice[s + d*nSliceMax] = 0;//slice[s];
 
-	 }
+	// }
 	 //adPrint(&bndSlice[d*nSliceMax],nSliceMax);
 	}
+	//gNeutralizeGrid(grid, mpiInfo);
 	//adPrint(bndSlice,2*4*nSliceMax);
-	//adPrint(grid->val,size[3]*size[1]*size[2]);
+	//adPrint(grid->val,grid->sizeProd[4]);
 	//msg(STATUS,"done");
 	//exit(0);
 	return;
@@ -1264,9 +1262,17 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//If periodic neutralize phi
 
 	bool periodic =  true;
-	for(int d = 1; d < 2*rank; d++){
+	for(int d = 1; d < rank; d++){
+		//msg(STATUS,"d = %i",d);
 		if(bnd[d] != PERIODIC){
-			//msg(STATUS,"bnd[d] = PERIODIC, d = %i",d);
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+			periodic = false;
+			}
+	}
+	for(int d = rank+1; d < 2*rank; d++){
+		//msg(STATUS,"d = %i",d);
+		if(bnd[d] != PERIODIC){
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
 			periodic = false;
 			}
 	}

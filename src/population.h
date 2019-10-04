@@ -18,7 +18,7 @@
  *
  * Remember to call pFree() to free memory.
  */
-Population *pAlloc(const dictionary *ini);
+Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo);
 
 /**
  * @brief					Frees memory for Population
@@ -96,6 +96,22 @@ void pSumKinEnergy(Population *pop);
  * velocities.
  */
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
+
+
+/**
+ * @brief	Add new particles on boundary edge according to drift.
+ * @param			ini		Dictionary to input file
+ * @param[in,out]	pop		Population of particles
+ * @param			rng		Random number generator
+ * @param			mpiInfo MpiInfo
+ * @return			void
+ *
+ * TODO:
+ */
+void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+void pPurgeGhost(Population *pop, const Grid *grid);
+void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+
 
 /**
  * @brief	Add new particle to population

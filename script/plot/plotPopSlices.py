@@ -42,7 +42,7 @@ filePopX = h5py.File('../../data/pop.pop.h5', 'r')
 #subprocess.call("rm *.h5",shell=True)
 
 
-rhoX = fileRhoX['/n=102.0']
+rhoX = fileRhoX['/n=1.0']
 rhoX = np.transpose(rhoX,(3,2,1,0))
 rhoX = np.squeeze(rhoX)
 
@@ -50,7 +50,7 @@ rhoX = np.squeeze(rhoX)
 #rhoY = np.transpose(rhoY,(0,2,1))
 #rhoY = np.squeeze(rhoY)
 
-popX = filePopX['/pos/specie 0/n=102.0']
+popX = filePopX['/pos/specie 0/n=1.0']
 pop = popX
 
 #popTemp = []
@@ -64,7 +64,7 @@ pop = popX
 popTemp = []
 
 for i in range(pop.shape[0]):
-	if pop[i,2] < 15 and  pop[i,2] >11: # slice 11 to 15
+	if pop[i,2] < 15 and  pop[i,2] >11: # slice 2 to 6
 		popTemp.append(pop[i,:])
 
 pop = np.array(popTemp)
@@ -78,7 +78,7 @@ plt.hist2d(x, y, bins=200)
 plt.colorbar()
 
 
-simplePlot(rhoX[:,:,13]) # slice 13
+#simplePlot(rhoX[:,:,4]) # slice 4
 #simplePlot(rhoY)
 
 
