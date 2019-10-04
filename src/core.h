@@ -25,6 +25,19 @@
 /******************************************************************************
  * DEFINING CORE DATATYPES (used by several modules)
  *****************************************************************************/
+
+ /**
+  * @brief Defines different types of boundary conditons
+  * @see gAlloc
+  * @see gBnd
+  */
+ typedef enum{
+ 	PERIODIC = 0x01,		///< Periodic boundary conditions.
+ 	DIRICHLET = 0x02,		///< Dirichlet boundary condtions.
+ 	NEUMANN = 0x03,			///< Neumann boundary conditons.
+ 	NONE = 0x10				///< For nValues
+ } bndType;
+ 
 /**
  * @brief Contains a population of particles.
  *
@@ -82,6 +95,7 @@ typedef struct{
 	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
+	bndType *bnd;		/// type of boundaries for particles, 2*nDims
 	hid_t h5;			///< HDF5 file handler
 } Population;
 
@@ -139,17 +153,7 @@ typedef struct{
 	MPI_Request *recv;
 } MpiInfo;
 
-/**
- * @brief Defines different types of boundary conditons
- * @see gAlloc
- * @see gBnd
- */
-typedef enum{
-	PERIODIC = 0x01,		///< Periodic boundary conditions.
-	DIRICHLET = 0x02,		///< Dirichlet boundary condtions.
-	NEUMANN = 0x03,			///< Neumann boundary conditons.
-	NONE = 0x10				///< For nValues
-} bndType;
+
 
 
 /**

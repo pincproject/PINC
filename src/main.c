@@ -87,7 +87,7 @@ void regular(dictionary *ini){
 	uNormalize(ini, units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini);
+	Population *pop = pAlloc(ini,mpiInfo);
 	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
 	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
@@ -126,11 +126,13 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniform(ini, pop, mpiInfo, rng);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
+
+
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -138,7 +140,12 @@ void regular(dictionary *ini){
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
 
+	//exit(0);
 	puMigrate(pop, mpiInfo, rho);
+
+	//add influx of new particles on boundary
+	//pInfluxDrift(ini,pop,rng,mpiInfo);
+
 
 	/*
 	 * INITIALIZATION (E.g. half-step)
@@ -173,6 +180,7 @@ void regular(dictionary *ini){
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
 
+
 	// Advance velocities half a step
 	gMul(E, 0.5);
 	acc(pop, E);
@@ -200,17 +208,26 @@ void regular(dictionary *ini){
 
 		tStart(t);
 
+
 		// Move particles
 		puMove(pop);
+
+
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
+		//add influx of new particles on boundary
+		//pInfluxDrift(ini,pop,rng,mpiInfo);
+
 		// Check that no particle resides out-of-bounds (just for debugging)
-		pPosAssertInLocalFrame(pop, rho);
+		//pPosAssertInLocalFrame(pop, rho);
+		pPurgeGhost(pop, rho);
+		pFillGhost(ini,pop,rng,mpiInfo);
 
 		// Compute charge density
+
 
 
 		distr(pop, rho);
@@ -240,8 +257,14 @@ void regular(dictionary *ini){
 		// Apply external E
 		// gAddTo(Ext);
 
+
+
 		// Accelerate particle and compute kinetic energy for step n
 		acc(pop, E);
+
+
+
+
 
 		tStop(t);
 
