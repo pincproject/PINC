@@ -79,9 +79,9 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@$(CC) $^ -o $@ $(LFLAGS)
 	@echo "PINC is built"
 
-$(EXEC).debug: $(ODIR)/main.o $(OBJ) $(LIBOBJ)
+$(EXEC).debug: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
 	@echo "Linking PINC"
-	@$(CC) $^ -o $@ $(DFLAGS)
+	@$(CC) $^ -o $(EXEC) $(DFLAGS)
 	@echo "PINC debug version is built"
 
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
