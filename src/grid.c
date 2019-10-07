@@ -653,7 +653,7 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 		//}
 	}
 	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
-	//printf("rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
+	//printf("in Grid rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("rank = %i,EXITING \n",mpiRank);
 	/* Store in Grid */
 	Grid *grid = malloc(sizeof(*grid));
