@@ -23,4 +23,4 @@ for i in range(start,200000,1):
 		p.set_data(data)
 		plt.title("Charge density, t=%i"%i);
 
-	plt.pause(0.1)
+	plt.pause(1)

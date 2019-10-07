@@ -306,7 +306,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
     long int *capMatrixAllOffsets = nodCorGlob;
 
-    adPrint(capMatrixAll,capMatrixAllSize*capMatrixAllSize);
+    //adPrint(capMatrixAll,capMatrixAllSize*capMatrixAllSize);
     // Add to object
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = capMatrixAllOffsets;
@@ -315,6 +315,10 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     gFree(rhoCap);
     gFree(phiCap);
     solverFree(solver);
+
+    free(nodCorLoc);
+    free(nodCorGlob);
+
 }
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
@@ -380,7 +384,13 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         for (long int j=beginIndex; j<endIndex; j++) {
             rho->val[lookupSurf[lookupSurfOff[a] + j-beginIndex]] += rhoCorr[j];
         }
+
+        //memleak needs checking
+        free(deltaPhi);
+        free(rhoCorr);
     }
+
+
 }
 
 //Find all the object nodes which are part of the object surface.
@@ -474,6 +484,9 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     // Add to object.
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
+
+    free(myNB);
+    free(index);
 }
 // //Find all the object nodes which are part of the object surface.
 // void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
@@ -1665,13 +1678,15 @@ void oMode(dictionary *ini){
   	//oCloseH5(obj);          // for capMatrix - objects
 	xyCloseH5(history);
 
+  MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 	// Free memory
 	gFree(rho);
   	gFree(rhoObj);          // for capMatrix - objects
 	gFree(phi);
 	gFree(E);
-	pFree(pop);
     oFree(obj);             // for capMatrix - objects
+	pFree(pop);
+
 
 
 	gsl_rng_free(rngSync);
