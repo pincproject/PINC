@@ -306,6 +306,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
     long int *capMatrixAllOffsets = nodCorGlob;
 
+    adPrint(capMatrixAll,capMatrixAllSize*capMatrixAllSize);
     // Add to object
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = capMatrixAllOffsets;
@@ -424,6 +425,8 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 }
             }
         }
+        //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        //aiPrint(&lookupSurfaceOffset[a+1],1);
     }
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
 
@@ -578,6 +581,10 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
 // Collect the charge inside each object.
 void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
 
+
+    //int rank = mpiInfo->mpiRank;
+    int size = mpiInfo->mpiSize;
+
     double *val = rhoObj->val;
     long int *sizeProd = rhoObj->sizeProd;
     long int nDims = pop->nDims;
@@ -592,12 +599,43 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     double *chargeCounter = malloc(obj->nObjects*sizeof(*chargeCounter));
     adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
+
+
+
+
+
+    long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
+    long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
+
+    for (long int a=0; a<obj->nObjects; a++) {
+
+        long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
+
+        // Let every core know how many surface nodes everybody has.
+        MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
+
+        for(long int i=size-1;i>-1;i--) nodCorLoc[i+1]=nodCorLoc[i];
+        nodCorLoc[0] = 0;
+        alCumSum(nodCorLoc+1,nodCorLoc,size);
+
+        for (long int b=0; b<size+1; b++) nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
+    }
+    //printf("obj->nObjects*(size+1) = %li \n",obj->nObjects*(size+1));
+    //alPrint(nodCorGlob,obj->nObjects*(size+1));
+    //alPrint(nodCorLoc,(size+1));
+
+
+
+
+
     //double invNrSurfNod = 1.0/(obj->lookupSurfaceOffset[obj->nObjects]);
     double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
     for (long int a=0; a<obj->nObjects; a++) {
-        invNrSurfNod[a] = 1.0/(obj->lookupSurfaceOffset[a+1]);
+        invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
+        //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     }
 
+int cutNumber = 0;
     for(int s=0;s<nSpecies;s++) {
 
         long int iStart = pop->iStart[s];
@@ -625,6 +663,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
                         //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
                         //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
                         pCut(pop, s, pIndex, pop->pos, pop->vel);
+                        cutNumber += 1;
                         //msg(STATUS,"iStop = %li",iStop);
                         iStop--;
 
@@ -635,7 +674,10 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
         }
     }
-    //MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    msg(STATUS,"cutNumber = %i \n",cutNumber);
+    cutNumber = 0;
+    MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     //MPI_Allreduce(MPI_IN_PLACE, invNrSurfNod, obj->nObjects, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     // Add the collected charge to the surface nodes on rhoObject.
     for (long int a=0; a<obj->nObjects; a++) {
@@ -1602,7 +1644,7 @@ void oMode(dictionary *ini){
 			gWriteH5(rho, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
-		  pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		  //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
 		pWriteEnergy(history,pop,(double)n);
 	}

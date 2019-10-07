@@ -6,7 +6,7 @@ import pylab as plt
 
 
 
-h5 = h5py.File('../../data/rho.grid.h5','r')
+h5 = h5py.File('../../data/phi.grid.h5','r')
 
 start = 1
 for i in range(start,200000,1):
