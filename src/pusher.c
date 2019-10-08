@@ -776,8 +776,11 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
+	int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
+	//int rank = mpiInfo->mpiRank;
 
+	//printf("mpirank = %i, bnd[1] = %d,bnd[2] = %d,bnd[3] = %d, bnd[5] = %d,bnd[6] = %d,bnd[7] = %d \n",rank,bnd[1],bnd[2],bnd[3],bnd[5],bnd[6],bnd[7]);
 	double dummyPos[3];
 
 	int *offset = mpiInfo->offset;
@@ -832,9 +835,9 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 			//MpiInfo->nSubdomains;
 
 
-			if ( (dummyPos[0] > trueSize[0]*(nSubdomains[0])+1 && bnd[5]!=PERIODIC)
-				|| ( dummyPos[1] > trueSize[1]*(nSubdomains[1])+1 && bnd[6]!=PERIODIC)
-				|| (  dummyPos[2] > trueSize[2]*(nSubdomains[2])+1 && bnd[7]!=PERIODIC)   ){
+			if ( (dummyPos[0] > trueSize[0]*(nSubdomains[0]) && bnd[5]!=PERIODIC)
+				|| ( dummyPos[1] > trueSize[1]*(nSubdomains[1]) && bnd[6]!=PERIODIC)
+				|| (  dummyPos[2] > trueSize[2]*(nSubdomains[2]) && bnd[7]!=PERIODIC)   ){
 
 					// if (s==0){
 					// 	printf("removed upper \n");
@@ -899,12 +902,13 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
-			} else if ( (dummyPos[0] > ux+trueSize[0]*(nSubdomains[0]-1)-1 && bnd[5]==PERIODIC)
-				|| ( dummyPos[1] > uy+trueSize[1]*(nSubdomains[1]-1)-1 && bnd[6]==PERIODIC)
-				|| (  dummyPos[2] > uz+trueSize[2]*(nSubdomains[2]-1)-1 && bnd[7]==PERIODIC)
-				|| (dummyPos[0] < lx && bnd[1]==PERIODIC)
-				|| ( dummyPos[1] < ly && bnd[2]==PERIODIC)
-				|| ( dummyPos[2] < lz && bnd[3]==PERIODIC) ){
+			} else if ( (dummyPos[0] > ux+trueSize[0]*(subdomain[0])-1 && bnd[5]==PERIODIC)
+				|| ( dummyPos[1] > uy+trueSize[1]*(subdomain[1])-1 && bnd[6]==PERIODIC)
+				|| (  dummyPos[2] > uz+trueSize[2]*(subdomain[2])-1 && bnd[7]==PERIODIC)
+				|| (dummyPos[0] < lx+trueSize[0]*(subdomain[0])+1 && bnd[1]==PERIODIC)
+				|| ( dummyPos[1] < ly+trueSize[1]*(subdomain[1])+1 && bnd[2]==PERIODIC)
+				|| ( dummyPos[2] < lz+trueSize[2]*(subdomain[2])+1 && bnd[3]==PERIODIC) ){
+					//Should look for a better implementation ^
 
 			double x = pos[p];
 			double y = pos[p+1];
@@ -958,8 +962,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				}
 
 			}
-		}printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i \n", removedupp,removedlow,exhanged,s);
-		msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
+		}//printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i \n", removedupp,removedlow,exhanged,s);
+		//msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
 }
 

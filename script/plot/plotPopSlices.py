@@ -21,14 +21,14 @@ def simplePlot(rho):
 	cbar_rho = fig.add_axes([0.10, 0.05, 0.8, 0.10])
 	fig.colorbar(im, cax=cbar_rho, orientation = "horizontal")
 
-cmd = "../../mpinc.sh" + " " + "../../input/langmuir2D.ini"
+#cmd = "../../mpinc.sh" + " " + "../../input/langmuir2D.ini"
 
 #X perturb
 #perturb = " " + "population:perturbAmplitude=0.001,0,0,0"
 #perturb += " " + "population:perturbMode=1,0,0,0"
 #subprocess.call(cmd + perturb,shell=True)
 
-fileRhoX = h5py.File('../../data/rho.grid.h5','r')
+#fileRhoX = h5py.File('../../data/rho.grid.h5','r')
 filePopX = h5py.File('../../data/pop.pop.h5', 'r')
 #subprocess.call("rm *.h5",shell=True)
 
@@ -42,15 +42,15 @@ filePopX = h5py.File('../../data/pop.pop.h5', 'r')
 #subprocess.call("rm *.h5",shell=True)
 
 
-rhoX = fileRhoX['/n=1.0']
-rhoX = np.transpose(rhoX,(3,2,1,0))
-rhoX = np.squeeze(rhoX)
+#rhoX = fileRhoX['/n=4.0']
+#rhoX = np.transpose(rhoX,(3,2,1,0))
+#rhoX = np.squeeze(rhoX)
 
 #rhoY = fileRhoY['/n=0.0']
 #rhoY = np.transpose(rhoY,(0,2,1))
 #rhoY = np.squeeze(rhoY)
 
-popX = filePopX['/pos/specie 0/n=1.0']
+popX = filePopX['/pos/specie 0/n=4.0']
 pop = popX
 
 #popTemp = []

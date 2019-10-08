@@ -42,10 +42,11 @@ static void pSetNormParams(const dictionary *ini, Population *pop);
 Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 
 	// Get MPI info
-	int size, rank;
+	int size;//, rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&size);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
+	int mpiRank = mpiInfo->mpiRank;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
@@ -79,14 +80,14 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 
 
 
-	bndType *bnd = malloc(2*(nDims+1)*sizeof(*bnd));
-
+	bndType *bnd = malloc(2*mpiRank*sizeof(*bnd));
+	int rank = nDims+1;
 	int b = 0;
-	for (int d = 1; d<(nDims+1);d++){
+	for (int d = 1; d<rank;d++){
 		//msg(STATUS,"b=%i, d = %i, rank = %i",b,d,rank);
 		int dd = d - 1;
 		//msg(STATUS,"mpiRank = %i, subdomain[dd] = %i nSubdomainsProd[dd] = %i",mpiRank, subdomain[dd], nSubdomainsProd[dd]);
-		int firstElem = rank - subdomain[dd]*nSubdomainsProd[dd];
+		int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
 		// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
@@ -101,37 +102,38 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 		//for(int r=dd; r<dd+1; r++){
 		//printf("b = %i \n",b);
 		int r=dd+1;
-			if(r%(nDims+1)==0){
+			if(r%rank==0){
 				bnd[r] = NONE;
-			} else if(lowerSubdomain>=rank){
+			} else if(lowerSubdomain>=mpiRank){
 					if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
 					else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
 					else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
 					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
-			}else if (lowerSubdomain<rank){
-				//printf("YEPS! \n");
+			}else if (lowerSubdomain<mpiRank){
+				//printf("YEPS!");
 				bnd[r] = PERIODIC;
 			}
 		//}
 		//upper
 		//for(int r=rank+dd; r<rank+dd+1; r++){
-		r = (nDims+1)+dd+1;
+		r = rank+dd+1;
 		//printf("r = %i \n",r);
-			if(r%(nDims+1)==0){
+			if(r%rank==0){
 				bnd[r] = NONE;
-			} else if(upperSubdomain<=(nDims+1)){
-					if(		!strcmp(boundaries[b+(nDims+1)-1], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b+(nDims+1)-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b+(nDims+1)-1], "NEUMANN"))		bnd[r] = NEUMANN;
+			} else if(upperSubdomain<=mpiRank){
+					if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+					else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+					else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
 					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
-			}else if(upperSubdomain>(nDims+1)){
+			}else if(upperSubdomain>mpiRank){
 				bnd[r] = PERIODIC;
 			}
 			b++;
 		//}
 	}
+	//printf("in pop rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
