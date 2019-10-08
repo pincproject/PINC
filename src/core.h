@@ -37,7 +37,7 @@
  	NEUMANN = 0x03,			///< Neumann boundary conditons.
  	NONE = 0x10				///< For nValues
  } bndType;
- 
+
 /**
  * @brief Contains a population of particles.
  *
@@ -275,7 +275,7 @@ typedef struct{
 	double *sendSlice;	///< Slice buffer of the grid sent to other
 	double *recvSlice;	///< Slice buffer of the grid sent to other
 	double *bndSlice;	///< Slices used by Dirichlet and Neumann boundaries
-	double *bndSolution;	///< Slices used by Dirichlet and Neumann boundaries
+	//double *bndSolution;	///< Slices used by Dirichlet and Neumann boundaries
 	hid_t h5;			///< HDF5 file handler
 	hid_t h5MemSpace;	///< HDF5 memory space description
 	hid_t h5FileSpace;	///< HDF5 file space description

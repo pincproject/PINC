@@ -169,6 +169,7 @@ void pFree(Population *pop){
 	free(pop->collisions);
 	free(pop->charge);
 	free(pop->mass);
+	free(pop->bnd);
 	free(pop);
 
 }
@@ -730,6 +731,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 	free(trueSize);
 	free(nParticles);
 	free(nGhostLayers);
+	free(L);
 
 	return;
 }
