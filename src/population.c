@@ -900,33 +900,50 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *)){
+funPtr pFindCollisionType(Population *pop, Object *obj, long int n){
 
 	msg(WARNING, "Function to determine collision type not yet implemented!");
 
-
-
-	return collisionType;
 }
 
-void pBackscatter(Population *pop){
+void pBackscatter(Population *pop, const Object *obj, long int n){
 
 	msg(WARNING, "backscatter function not yet implemented!");
+	msg(STATUS, "particle %i backscattered an electron \n", n);
+
 }
 
-void pSecondaryElectron(Population *pop){
+void pSecondaryElectron(Population *pop, const Object *obj, long int n){
 
-	msg(WARNING, "backscatter function not yet implemented!");
+	msg(WARNING, "Secondary Electron function not yet implemented!");
+	msg(STATUS, "particle %i created a secondary electron \n", n);
+
 }
 
-void pReflect(Population *pop){
+void pReflect(Population *pop, const Object *obj, long int n){
+	
+	double *newVel;
+	double *surfNodes;
+	double *norm;
+	double *intersect;
+	double *pos = &pop->pos[3*n];
+	double *vel = &pop->vel[3*n];
 
-	msg(WARNING, "backscatter function not yet implemented!");
+	surfNodes = oFindNearestSurfaceNodes(pop, obj, n);
+
+	adNormal(surfNodes, surfNodes + 3, norm, n);
+	oFindIntersectPoint(pop, n, norm, surfNodes, intersect);
+	adReflect(vel, surfNodes, surfNodes+1, newVel);
+
+	msg(WARNING, "Reflection function not yet implemented!");
+	msg(STATUS, "particle %i Reflected off an object \n", n);
+
 }
 
-void pAdhere(Population *pop){
+void pAdhere(Population *pop, const Object *obj, long int n){
 
 	msg(WARNING, "Adhesion function not yet implemented!");
+	msg(STATUS, "particle %i adhered to an object \n", n);
 }
 
 void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,

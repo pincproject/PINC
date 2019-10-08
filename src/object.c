@@ -735,11 +735,15 @@ void oFindParticleCollisions(Population *pop, Object *obj){
 }
 
 //Moves a particle according to the type of collision, also creates and removes new particles
-void oParticleCollision(Population *pop, Object *obj, long int i){
+void oParticleCollision(Population *pop, const Object *obj, long int n){
 
-    void (*collisionType)(Population *);
+    msg(WARNING, "Particle/Object collision not yet implemented!");
+    
+    funPtr collType;
 
-    pFindCollisionType(pop, obj, i, collisionType);
+    collType = pFindCollisionType(pop, obj, n);
+    collType(pop);
+
 
     //collisionType();
 }
@@ -747,9 +751,9 @@ void oParticleCollision(Population *pop, Object *obj, long int i){
 
 //Finds nearest 3 object surface nodes to a specific particle of index p
 //3 object surface nodes needed to compute normal from cross product of surface vectors
-double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *obj){
+double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId){
 
-    double *pos = NULL;
+    double *pos;
     for(int i=0; i<3; i++){
         pos[i] = pop->pos[3*particleId + i];
     }
@@ -774,10 +778,10 @@ bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
 void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
      double *surfPoint, double *intersect){
 
+        double *w;
         double epsilon = 1e-6;
         double *pos = &pop->pos[3*id];
         double *vel = &pop->vel[3*id];
-        double *w = NULL;
         double *Psi = vel;
         int ndotu = adDotProd(vel,surfNormal,3);
 
@@ -792,13 +796,8 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
         adAdd(w,Psi,Psi,3);
         adAdd(surfPoint,Psi,Psi,3);
 
-        intersect[0]=Psi[0], intersect[1]=Psi[1], intersect[1]=Psi[1];
+        for(int i=0; i<pop->nDims;i++) intersect[i]=Psi[i];
 }
-
-//void oParticleCollision(Population *pop, Object *obj, long int i){
-
-    //msg(WARNING, "Collision types not yet implemented!");
-//}
 
 /*****************************************************************************
  *  ALLOC/DESTRUCTORS

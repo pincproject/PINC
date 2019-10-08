@@ -267,15 +267,13 @@ void pVicinityParticles(Population *pop, const Object *obj);
 
 
 /*
-Interact code
+Find Collision type is called during puMove; returns
+pBackscatter/pSecondaryElectron/pReflect/pAdhere
 */
-void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *));
-void pBackscatter(Population *pop);
-void pSecondaryElectron(Population *pop);
-void pReflect(Population *pop);
-void pAdhere(Population *pop);
-
-
-void pInteractWithObject(Population *pop);
+funPtr pFindCollisionType(Population *pop, Object *obj, long int n);
+void pBackscatter(Population *pop, const Object *obj, long int n);
+void pSecondaryElectron(Population *pop, const Object *obj, long int n);
+void pReflect(Population *pop, const Object *obj, long int n);
+void pAdhere(Population *pop, const Object *obj, long int n);
 
 #endif // POPULATION_H

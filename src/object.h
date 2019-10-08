@@ -147,7 +147,7 @@ void oVicinityParticles(Population *pop, Object *obj);
 bool oParticleIntersection(Population *pop, long int particleId, Object *obj);
 
 //"collides" a single particle based on collision type
-void oParticleCollision(Population *pop, Object *obj, long int i);
+void oParticleCollision(Population *pop, const Object *obj, long int i);
 
 //determines collision type, then moves particle accordingly
 void oFindParticleCollisions(Population *pop, Object *obj);
@@ -164,4 +164,8 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  */
 void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
                         double *surfPoint, double *intersection);
+
+
+double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId);
+
 #endif // OBJECT_H
