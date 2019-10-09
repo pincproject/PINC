@@ -601,6 +601,10 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 
 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
 
+	bnd[0] = NONE; //initialize
+	bnd[rank] = NONE; //initialize
+
+
 	int b = 0;
 	for (int d = 1; d<rank;d++){
 		//msg(STATUS,"b=%i, d = %i, rank = %i",b,d,rank);
@@ -621,38 +625,40 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 		//for(int r=dd; r<dd+1; r++){
 		//printf("b = %i \n",b);
 		int r=dd+1;
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(lowerSubdomain>=mpiRank){
-					if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(lowerSubdomain>=mpiRank){
+				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if (lowerSubdomain<mpiRank){
 				//printf("YEPS!");
 				bnd[r] = PERIODIC;
-			}
-		//}
+			} else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
+
+		}
 		//upper
 		//for(int r=rank+dd; r<rank+dd+1; r++){
 		r = rank+dd+1;
 		//printf("r = %i \n",r);
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(upperSubdomain<=mpiRank){
-					if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(upperSubdomain<=mpiRank){
+				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if(upperSubdomain>mpiRank){
 				bnd[r] = PERIODIC;
+			}else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
 			}
 			b++;
 		//}
 	}
-	msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
+	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("in Grid rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("rank = %i,EXITING \n",mpiRank);
 	/* Store in Grid */

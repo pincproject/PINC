@@ -1638,8 +1638,8 @@ void oMode(dictionary *ini){
 		puMigrate(pop, mpiInfo, rho);
 
       //add influx of new particles on boundary
-      //pPurgeGhost(pop, rho);
-      //pFillGhost(ini,pop,rng,mpiInfo);
+      pPurgeGhost(pop, rho);
+      pFillGhost(ini,pop,rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
@@ -1719,9 +1719,11 @@ void oMode(dictionary *ini){
 	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
- 	gCloseH5(rhoObj);       // for capMatrix - objects
+
 	gCloseH5(phi);
 	gCloseH5(E);
+    gCloseH5(rhoObj);       // for capMatrix - objects
+    oCloseH5(obj);          // for capMatrix - objects
 
 	xyCloseH5(history);
 
@@ -1735,8 +1737,7 @@ void oMode(dictionary *ini){
   gFree(E);
   pFree(pop);
   uFree(units);
-  //oCloseH5(obj);          // for capMatrix - objects
-   //oFree(obj);             // for capMatrix - objects
+   oFree(obj);             // for capMatrix - objects
 
 
 	gsl_rng_free(rngSync);
