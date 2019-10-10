@@ -79,9 +79,12 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 
 
 
-
-	bndType *bnd = malloc(2*mpiRank*sizeof(*bnd));
 	int rank = nDims+1;
+	bndType *bnd = malloc(2*rank*sizeof(*bnd));
+
+	bnd[0] = NONE; //initialize
+	bnd[rank] = NONE; //initialize
+
 	int b = 0;
 	for (int d = 1; d<rank;d++){
 		//msg(STATUS,"b=%i, d = %i, rank = %i",b,d,rank);
@@ -102,37 +105,40 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 		//for(int r=dd; r<dd+1; r++){
 		//printf("b = %i \n",b);
 		int r=dd+1;
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(lowerSubdomain>=mpiRank){
-					if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(lowerSubdomain>=mpiRank){
+				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if (lowerSubdomain<mpiRank){
 				//printf("YEPS!");
 				bnd[r] = PERIODIC;
-			}
-		//}
+			} else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
+
+		}
 		//upper
 		//for(int r=rank+dd; r<rank+dd+1; r++){
 		r = rank+dd+1;
 		//printf("r = %i \n",r);
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(upperSubdomain<=mpiRank){
-					if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(upperSubdomain<=mpiRank){
+				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if(upperSubdomain>mpiRank){
 				bnd[r] = PERIODIC;
+			}else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
 			}
 			b++;
 		//}
 	}
+	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("in pop rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 
 	Population *pop = malloc(sizeof(Population));
@@ -169,6 +175,7 @@ void pFree(Population *pop){
 	free(pop->collisions);
 	free(pop->charge);
 	free(pop->mass);
+	free(pop->bnd);
 	free(pop);
 
 }
@@ -638,7 +645,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 	long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
-	int edge[nDims];
+	// int edge[nDims];
 
 	pToGlobalFrame(pop,mpiInfo);
 
@@ -653,10 +660,10 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 			index = (s*nDims)+d;
 
 			//compute edge
-			for (int dd=0;dd<nDims;dd++){
-				if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
-				else edge[dd] = 1;
-			}
+			// for (int dd=0;dd<nDims;dd++){
+			// 	if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
+			// 	else edge[dd] = 1;
+			// }
 
 			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
 
@@ -681,11 +688,15 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 					pos[d] = nGhostLayers[d]*(gsl_rng_uniform_pos(rng))-nGhostLayers[d]; //in lower ghost
 					//printf("nGhostLayers[d+1] = %i\n",nGhostLayers[d]);
 					int correctRange = 0;
-					for(int dd=0;dd<nDims;dd++)
+					for(int dd=0;dd<nDims;dd++){
+						//printf("posToSubdomain[dd] = %f, dd = %i \n",posToSubdomain[dd],dd);
 						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
-
+					}
 					// Add only if particle resides in this sub-domain.
 					if(correctRange==nDims){
+						if((mpiInfo->mpiRank)==4){
+							//printf("adding to pos: %f,%f,%f \n",pos[0],pos[1],pos[2]);
+						}
 						pNew(pop,s,pos,vel);
 					}
 				}
@@ -709,7 +720,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 
 					int correctRange = 0;
 					for(int dd=0;dd<nDims;dd++)
-						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd]-1)));
+						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd])));
 
 					// Add only if particle resides in this sub-domain.
 					if(correctRange==nDims){
@@ -730,6 +741,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 	free(trueSize);
 	free(nParticles);
 	free(nGhostLayers);
+	free(L);
 
 	return;
 }

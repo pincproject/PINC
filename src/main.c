@@ -223,8 +223,8 @@ void regular(dictionary *ini){
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho);
-		pPurgeGhost(pop, rho);
-		pFillGhost(ini,pop,rng,mpiInfo);
+		//pPurgeGhost(pop, rho);
+		//pFillGhost(ini,pop,rng,mpiInfo);
 
 		// Compute charge density
 
@@ -300,13 +300,19 @@ void regular(dictionary *ini){
 	gCloseH5(rho);
 	gCloseH5(phi);
 	gCloseH5(E);
+	// oCloseH5(obj);
 	xyCloseH5(history);
 
 	// Free memory
+	// sFree(solver);
+	// mgFreeSolver(solver);
+	solverFree(solver);
 	gFree(rho);
 	gFree(phi);
 	gFree(E);
 	pFree(pop);
+	uFree(units);
+	// oFree(obj);
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);

@@ -965,6 +965,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 		}//printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i \n", removedupp,removedlow,exhanged,s);
 		//msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
+	free(nSubdomains);
 }
 
 // Works

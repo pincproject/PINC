@@ -304,12 +304,12 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
     }
 
-    long int *capMatrixAllOffsets = nodCorGlob;
+    //long int *capMatrixAllOffsets = nodCorGlob;
 
     //adPrint(capMatrixAll,capMatrixAllSize*capMatrixAllSize);
     // Add to object
     obj->capMatrixAll = capMatrixAll;
-    obj->capMatrixAllOffsets = capMatrixAllOffsets;
+    obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
 
     gFree(rhoCap);
@@ -317,7 +317,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     solverFree(solver);
 
     free(nodCorLoc);
-    free(nodCorGlob);
+    //free(nodCorGlob);
 
 }
 
@@ -333,6 +333,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
     long int *capMatrixAllOffsets = obj->capMatrixAllOffsets;
     double *capMatrixSum = obj->capMatrixSum;
 
+
     // Loop over the objects
     for (long int a=0; a<obj->nObjects; a++) {
 
@@ -344,10 +345,12 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         long int beginIndex = capMatrixAllOffsets[a*(size+1)+rank];
         long int endIndex = capMatrixAllOffsets[a*(size+1)+rank+1];
 
+        MPI_Barrier(MPI_COMM_WORLD);
         double *deltaPhi = malloc(totSNGlob*sizeof(*deltaPhi));
         adSetAll(deltaPhi,totSNGlob,0);
         double *rhoCorr = malloc(totSNGlob*sizeof(*rhoCorr));
         adSetAll(rhoCorr,totSNGlob,0);
+
 
         // Compute eq. 7.
         for (long int i=0; i<totSNGlob; i++) {
@@ -367,6 +370,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
 
         for (long int j=beginIndex; j<endIndex; j++) {
             deltaPhi[j] = capMatrixPhiSum - phi->val[lookupSurf[lookupSurfOff[a] + j-beginIndex]];
+            //printf("adding correction to node %f \n",deltaPhi[j] );
         }
 
         MPI_Allreduce(MPI_IN_PLACE, deltaPhi, totSNGlob, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -383,6 +387,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         // Add the charge corrections.
         for (long int j=beginIndex; j<endIndex; j++) {
             rho->val[lookupSurf[lookupSurfOff[a] + j-beginIndex]] += rhoCorr[j];
+
         }
 
         //memleak needs checking
@@ -396,6 +401,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
 //Find all the object nodes which are part of the object surface.
 void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
 
+    printf("in oFindObjSurf \n");
     long int *sizeProd = obj->domain->sizeProd;
     double *val = obj->domain->val;
 
@@ -403,6 +409,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*sizeof(*lookupSurfaceOffset));
     alSetAll(lookupSurfaceOffset,obj->nObjects+1,0);
 
+    printf("finding offsets \n");
     // Find the 8 neighbour cells of each non-ghost node.
     long int *myNB = malloc(9*sizeof(*myNB));
     // Find the ofsetts first.
@@ -438,6 +445,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
         //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
         //aiPrint(&lookupSurfaceOffset[a+1],1);
     }
+    printf("offsets done");
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
 
     // Initialise and compute the lookup table.
@@ -480,7 +488,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
             }
         }
     }
-
+    printf("lookup surface done");
     // Add to object.
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
@@ -610,8 +618,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     // We might add this to the Object, although probably better  to store the rhoObj for restarts and insulators later on.
     double *chargeCounter = malloc(obj->nObjects*sizeof(*chargeCounter));
-    adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
+    adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
 
 
@@ -648,7 +656,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     }
 
-int cutNumber = 0;
+    int cutNumber = 0;
     for(int s=0;s<nSpecies;s++) {
 
         long int iStart = pop->iStart[s];
@@ -688,9 +696,12 @@ int cutNumber = 0;
         }
     }
     MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    msg(STATUS,"cutNumber = %i \n",cutNumber);
+    //printf("cutNumber = %i \n",cutNumber);
     cutNumber = 0;
+
     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+
     //MPI_Allreduce(MPI_IN_PLACE, invNrSurfNod, obj->nObjects, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     // Add the collected charge to the surface nodes on rhoObject.
     for (long int a=0; a<obj->nObjects; a++) {
@@ -700,6 +711,11 @@ int cutNumber = 0;
             val[obj->lookupSurface[b]] += chargeCounter[a]*invNrSurfNod[a];
         }
     }
+    free(invNrSurfNod);
+    free(chargeCounter);
+    free(nodCorLoc);
+    free(nodCorGlob);
+
 }
 
 
@@ -914,26 +930,48 @@ void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
     gOpenH5(ini, obj->domain,   mpiInfo, units, denorm, fName);
 }
 
-void oReadH5(Object *obj, const MpiInfo *mpiInfo){
+// void oReadH5(Object *obj, const MpiInfo *mpiInfo, const char name[64] ){
+//
+//     // Identical to gReadH5()
+//     hid_t fileSpace = obj->domain->h5FileSpace;
+//     hid_t memSpace = obj->domain->h5MemSpace;
+//     hid_t file = obj->domain->h5;
+//     double *val = obj->domain->val;
+//
+//     hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+//     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
+//
+//     //char name[64];
+//     //sprintf(name,"Object"); //Only line which is different from gReadH5().
+//
+//     hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+//     H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+//
+//     H5Dclose(dataset);
+//     H5Pclose(pList);
+//
+//
+// }
 
-    // Identical to gReadH5()
-    hid_t fileSpace = obj->domain->h5FileSpace;
-    hid_t memSpace = obj->domain->h5MemSpace;
-    hid_t file = obj->domain->h5;
-    double *val = obj->domain->val;
+void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]){
 
-    hid_t pList = H5Pcreate(H5P_DATASET_XFER);
+	hid_t fileSpace = grid->h5FileSpace;
+	hid_t memSpace = grid->h5MemSpace;
+	hid_t file = grid->h5;
+	double *val = grid->val;
+
+	// Enable collective datawriting
+	hid_t pList = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(pList, H5FD_MPIO_COLLECTIVE);
 
-    char name[64];
-    sprintf(name,"Object"); //Only line which is different from gReadH5().
+	//char name[64];
+	//sprintf(name,name);
 
-    hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
-    H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
+	hid_t dataset = H5Dopen(file,name,H5P_DEFAULT);
+	H5Dread(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, val);
 
-    H5Dclose(dataset);
-    H5Pclose(pList);
-
+	H5Dclose(dataset);
+	H5Pclose(pList);
 
 }
 
@@ -1480,10 +1518,11 @@ void oMode(dictionary *ini){
   // oReadH5(obj, mpiInfo);
 
     msg(STATUS,"opening obj file");
+    //TODO: add error handling/check if object grids size is not same as global grid size
 		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
 		oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-		oReadH5(obj, mpiInfo);
-    oCloseH5(obj);
+		oReadH5(obj->domain, mpiInfo, "Object");
+    //oCloseH5(obj);
 
     msg(STATUS,"done");
 		//Communicate the boundary nodes -> DON'T DO THIS HERE!
@@ -1544,6 +1583,7 @@ void oMode(dictionary *ini){
 
 
 	// Get initial charge density
+
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
     //gWriteH5(rho, mpiInfo, (double) 0);
@@ -1553,6 +1593,7 @@ void oMode(dictionary *ini){
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
     //gWriteH5(phi, mpiInfo, (double) 0);
+    pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
 
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
@@ -1605,9 +1646,12 @@ void oMode(dictionary *ini){
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
+
 		// Compute charge density
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
+
+
         // Keep writing Rho here.
         gWriteH5(rhoObj, mpiInfo, (double) n);
         // Add object charge to rho.
@@ -1618,8 +1662,10 @@ void oMode(dictionary *ini){
         //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 
+
         // Second run with solver to account for charges
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
+
 
     //gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
@@ -1668,27 +1714,37 @@ void oMode(dictionary *ini){
 	 */
 	gFreeMpi(mpiInfo);
 
+  MPI_Barrier(MPI_COMM_WORLD);
 	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
- 	gCloseH5(rhoObj);       // for capMatrix - objects
+
 	gCloseH5(phi);
 	gCloseH5(E);
-  	//oCloseH5(obj);          // for capMatrix - objects
+    gCloseH5(rhoObj);       // for capMatrix - objects
+    oCloseH5(obj);          // for capMatrix - objects
+
 	xyCloseH5(history);
 
-  MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-	// Free memory
-	gFree(rho);
-  	gFree(rhoObj);          // for capMatrix - objects
-	gFree(phi);
-	gFree(E);
-    oFree(obj);             // for capMatrix - objects
-	pFree(pop);
-
+  // Free memory
+  // sFree(solver);
+  // mgFreeSolver(solver);
+  solverFree(solver);
+  gFree(rho);
+  gFree(phi);
+    gFree(rhoObj);          // for capMatrix - objects
+  gFree(E);
+  pFree(pop);
+  uFree(units);
+   oFree(obj);             // for capMatrix - objects
 
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
+
+
+
+
+
 
 }

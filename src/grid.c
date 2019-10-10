@@ -587,7 +587,7 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
-	double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
+	//double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
 	//printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
 	// Maybe seek a different solution where it is only stored where needed
 
@@ -600,6 +600,10 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 	//int dd = d - 1;
 
 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
+
+	bnd[0] = NONE; //initialize
+	bnd[rank] = NONE; //initialize
+
 
 	int b = 0;
 	for (int d = 1; d<rank;d++){
@@ -621,33 +625,35 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 		//for(int r=dd; r<dd+1; r++){
 		//printf("b = %i \n",b);
 		int r=dd+1;
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(lowerSubdomain>=mpiRank){
-					if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(lowerSubdomain>=mpiRank){
+				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if (lowerSubdomain<mpiRank){
 				//printf("YEPS!");
 				bnd[r] = PERIODIC;
-			}
-		//}
+			} else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
+
+		}
 		//upper
 		//for(int r=rank+dd; r<rank+dd+1; r++){
 		r = rank+dd+1;
 		//printf("r = %i \n",r);
-			if(r%rank==0){
-				bnd[r] = NONE;
-			} else if(upperSubdomain<=mpiRank){
-					if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
-					else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-					else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
-					else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+		if(upperSubdomain<=mpiRank){
+				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
+				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
 			}else if(upperSubdomain>mpiRank){
 				bnd[r] = PERIODIC;
+			}else {
+				bnd[r] = NONE; //initialize
+				//printf("bnd[%i] = NONE",r);
 			}
 			b++;
 		//}
@@ -667,7 +673,7 @@ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 	grid->sendSlice = sendSlice;
 	grid->recvSlice = recvSlice;
 	grid->bndSlice = bndSlice;
-	grid->bndSolution = bndSolution;
+	//grid->bndSolution = bndSolution;
 	grid->bnd = bnd;
 
 	return grid;
@@ -742,6 +748,7 @@ void gFree(Grid *grid){
 	free(grid->sendSlice);
 	free(grid->recvSlice);
 	free(grid->bnd);
+	//free(grid->bndSolution);
 	free(grid);
 
 }
@@ -794,7 +801,7 @@ void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo){
 	int *size = grid->size;
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
-	double *bndSolution = grid->bndSolution;
+	//double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
 
@@ -827,7 +834,7 @@ void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo){
 					bndSlice[s + (nSliceMax * d)] = constant2;
 
 					//Solution to equation. constant for now
-					bndSolution[s + (nSliceMax * d)] = constant2; //Solution to equation. constant for now
+					//bndSolution[s + (nSliceMax * d)] = constant2; //Solution to equation. constant for now
 				}
 		}
 	}
@@ -843,7 +850,7 @@ void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo){
 			if(bnd[d] == NEUMANN)
 				for(int s = 0; s < nSliceMax; s++){
 					bndSlice[s + (nSliceMax * d)] = constant2;
-					bndSolution[s + (nSliceMax * d)] = constant2;
+					//bndSolution[s + (nSliceMax * d)] = constant2;
 				}
 		}
 	}
@@ -1134,14 +1141,8 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 	double *bndSlice = grid->bndSlice;
 
 	//Compute dimensions and size of slice
-	//msg(STATUS,"boundary (rank given to funct) = %i, rank (rank in funct) = %i",boundary,rank);
 	int d = boundary%rank;
 	int offset = 1 + (boundary>rank)*(size[d]-3);
-	//if (boundary<rank){
-		//offset = (boundary>rank)*(size[d]-2);
-		//msg(STATUS,"(boundary>rank) boundary = %i", boundary);
-		//}
-	//msg(STATUS,"offset = %i, boundary = %i, rank = %i, d = %i",offset,boundary,rank,d);
 
 	//Number of elements in slice
 	long int nSliceMax = 0;
@@ -1174,7 +1175,7 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	int *size = grid->size;
 	double *bndSlice = grid->bndSlice; // two slices in each dim
 	double *slice = grid->sendSlice;
-	double *bndSolution = grid->bndSolution; // two slices in each dim
+	//double *bndSolution = grid->bndSolution; // two slices in each dim
 
 
 	//Compute dimensions and slicesize
