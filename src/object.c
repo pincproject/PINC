@@ -160,6 +160,38 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
 
 }
 
+
+long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo){
+
+
+  int size = mpiInfo->mpiSize;
+
+  for (long int a=0; a<obj->nObjects; a++) {
+
+      long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
+
+      // Let every core know how many surface nodes everybody has.
+      MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
+
+      for(long int i=size-1;i>-1;i--) nodCorLoc[i+1]=nodCorLoc[i];
+      nodCorLoc[0] = 0;
+      alCumSum(nodCorLoc+1,nodCorLoc,size);
+
+      for (long int b=0; b<size+1; b++) {
+        nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
+
+      }
+  }
+
+  // Find the size and initialise the array holding the capacitance matrices for all objects.
+  long int capMatrixAllSize = 0;
+  for (long int a=0; a<obj->nObjects; a++) {
+      capMatrixAllSize +=nodCorGlob[a*(size+1)+size];
+  }
+  return capMatrixAllSize;
+}
+
+
 // Compute the capacitance matrix for each object.
 void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
 
@@ -167,6 +199,10 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     int size = mpiInfo->mpiSize;
     long int *lookupSurf = obj->lookupSurface;
     long int *lookupSurfOff = obj->lookupSurfaceOffset;
+
+    double *capMatrixAll = obj->capMatrixAll;
+    long int *nodCorGlob = obj->capMatrixAllOffsets;
+    double *capMatrixSum = obj->capMatrixSum;
 
     // Allocate and initialise the structures to run the potential solver.
     void (*solverInterface)() = select(ini, "methods:poisson", mgSolver_set, sSolver_set);
@@ -191,32 +227,9 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     gZero(rhoCap);
 
     // Find the number of surface nodes for each object.
-    long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
-    long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
-    double *capMatrixSum = malloc(obj->nObjects*sizeof(*capMatrixSum));
 
-    for (long int a=0; a<obj->nObjects; a++) {
 
-        long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
-
-        // Let every core know how many surface nodes everybody has.
-        MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
-
-        for(long int i=size-1;i>-1;i--) nodCorLoc[i+1]=nodCorLoc[i];
-        nodCorLoc[0] = 0;
-        alCumSum(nodCorLoc+1,nodCorLoc,size);
-
-        for (long int b=0; b<size+1; b++) nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
-    }
-
-    // Find the size and initialise the array holding the capacitance matrices for all objects.
-    long int capMatrixAllSize = 0;
-    for (long int a=0; a<obj->nObjects; a++) {
-        capMatrixAllSize +=nodCorGlob[a*(size+1)+size];
-    }
-    double *capMatrixAll = malloc(capMatrixAllSize*capMatrixAllSize*sizeof(*capMatrixAll));
-    //long int *capMatrixAllOffsets = malloc(obj->nObjects*(size+1)*sizeof(*capMatrixAllOffsets));
 
     // Compute the actual capacitance matrix for each object.
     for (long int a=0; a<obj->nObjects; a++) {
@@ -227,6 +240,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         long int totSNGlob = nodCorGlob[a*(size+1)+size];
         long int beginIndex = nodCorGlob[a*(size+1)+rank];
         long int endIndex = nodCorGlob[a*(size+1)+rank+1];
+
 
         // Initialise the matrix and its inverse.
         double *capMatrix = malloc( (totSNGlob*totSNGlob) * sizeof(*capMatrix));
@@ -247,6 +261,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
             // Set the surface node to 1 charge.
             if (rank==j) {
                 rhoCap->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
+                //printf("adding 1 rho to node %li \n",lookupSurf[lookupSurfOff[a] + inode]);
             }
 
             // Solve for the potential.
@@ -302,21 +317,25 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         // We need the inverse later on.
         capMatrixSum[a] = 1/capMatrixSum[a];
 
+
+        free(capMatrix),
+        free(invCapMatrix);
     }
 
     //long int *capMatrixAllOffsets = nodCorGlob;
 
     //adPrint(capMatrixAll,capMatrixAllSize*capMatrixAllSize);
     // Add to object
-    obj->capMatrixAll = capMatrixAll;
-    obj->capMatrixAllOffsets = nodCorGlob;
-    obj->capMatrixSum = capMatrixSum;
+    //obj->capMatrixAll = capMatrixAll;
+    //obj->capMatrixAllOffsets = nodCorGlob;
+    //obj->capMatrixSum = capMatrixSum;
 
     gFree(rhoCap);
     gFree(phiCap);
     solverFree(solver);
 
-    free(nodCorLoc);
+    //free(nodCorLoc);
+
     //free(nodCorGlob);
 
 }
@@ -875,32 +894,45 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
  *  ALLOC/DESTRUCTORS
  ****************************************************************************/
 
-Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo){
+Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
 
+    int size = mpiInfo->mpiSize;
     Grid *domain = gAlloc(ini, SCALAR,mpiInfo);
 
-    long int *lookupInterior = NULL;
-    long int *lookupInteriorOffset = NULL;
-    long int *lookupSurface = NULL;
-    long int *lookupSurfaceOffset = NULL;
-    int nObjects = 0;
-
-    double *capMatrixAll = NULL;
-    long int *capMatrixAllOffsets = NULL;
-    double *capMatrixSum = NULL;
+    gOpenH5(ini, domain, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
+		oReadH5(domain, mpiInfo, "Object");
 
     Object *obj = malloc(sizeof(*obj));
-
     obj->domain = domain;
-    obj->lookupInterior = lookupInterior;
-    obj->lookupInteriorOffset = lookupInteriorOffset;
-    obj->lookupSurface = lookupSurface;
-    obj->lookupSurfaceOffset = lookupSurfaceOffset;
-    obj->nObjects = nObjects;
+
+    //obj->nObjects
+    //obj->lookupInterior
+    //obj->lookupInteriorOffset
+    oFillLookupTables(obj,mpiInfo);
+
+    //obj->lookupSurface
+    //obj->lookupSurfaceOffset
+    oFindObjectSurfaceNodes(obj, mpiInfo);
+
+    long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
+    long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
+
+
+    double *capMatrixSum = malloc(obj->nObjects*sizeof(*capMatrixSum));
+    //long int *capMatrixAllOffsets = malloc(obj->nObjects*(size+1)*sizeof(*capMatrixAllOffsets));
+
+
+
+    long int capMatrixAllSize = oGatherSurfaceNodes(obj,nodCorLoc,nodCorGlob,obj->lookupSurfaceOffset,mpiInfo);
+
+
+    double *capMatrixAll = malloc(capMatrixAllSize*capMatrixAllSize*sizeof(*capMatrixAll));
 
     obj->capMatrixAll = capMatrixAll;
-    obj->capMatrixAllOffsets =capMatrixAllOffsets;
+    obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
+
+    free(nodCorLoc);
 
     return obj;
 }
@@ -1494,7 +1526,7 @@ void oMode(dictionary *ini){
 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
-    Object *obj = oAlloc(ini,mpiInfo);              // for capMatrix - objects
+    Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -1521,8 +1553,8 @@ void oMode(dictionary *ini){
     msg(STATUS,"opening obj file");
     //TODO: add error handling/check if object grids size is not same as global grid size
 		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
-		oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-		oReadH5(obj->domain, mpiInfo, "Object");
+		//oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
+		//oReadH5(obj->domain, mpiInfo, "Object");
     //oCloseH5(obj);
 
     msg(STATUS,"done");
@@ -1530,12 +1562,12 @@ void oMode(dictionary *ini){
 		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
 
 		//Count the number of objects and fill the lookup tables.
-    msg(STATUS,"filling lookup table");
-		oFillLookupTables(obj,mpiInfo);
+    //msg(STATUS,"filling lookup table");
+		//oFillLookupTables(obj,mpiInfo);
 
-    msg(STATUS,"finding surface nodes");
+    //msg(STATUS,"finding surface nodes");
 		// Find all the object nodes which are part of the object surface.
-		oFindObjectSurfaceNodes(obj, mpiInfo);
+		//oFindObjectSurfaceNodes(obj, mpiInfo);
 
 
 	hid_t history = xyOpenH5(ini,"history");

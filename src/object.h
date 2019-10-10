@@ -49,7 +49,7 @@ funPtr oMode_set(dictionary *ini);
  *
  * NB! Assumes 1 ghost point on all edges for now.
  */
-Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo);
+Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units);
 
 /**
  * @brief Frees allocated object
@@ -100,6 +100,17 @@ void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]);
  *
  * Compute the capacitance matrix.
  */
+
+
+
+ /**
+  * @brief   tba
+  * @param	obj		test
+  * TODO:
+  */
+ long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
+
+
 void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
                                const MpiInfo *mpiInfo);
 
