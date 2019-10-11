@@ -90,7 +90,7 @@ void oCloseH5(Object *obj);
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Grid *grid, const MpiInfo *mpiInfo, const char name[64]);
+void oReadH5(Object *obj, const MpiInfo *mpiInfo);
 
 /**
  * @brief   Compute the capacitance matrix. (one big matrix containing all objects)

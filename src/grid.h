@@ -500,7 +500,7 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
 
 /**
- * @brief	Read values from .grid.h5-fiel to Grid
+ * @brief	Read values from .grid.h5-file to Grid
  * @param	grid			Grid
  * @param	mpiInfo			MpiInfo
  * @param	n				Timestep to read from file
