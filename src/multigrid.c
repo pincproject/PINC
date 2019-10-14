@@ -1740,7 +1740,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 
 void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mgRes, const MpiInfo *mpiInfo){
 
-	printf("\n \n");
+	//printf("\n \n");
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
 	int nLevels = mgRho->nLevels;
