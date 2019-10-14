@@ -384,7 +384,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         capMatrixPhiSum = capMatrixPhiSum*capMatrixSum[a];
         MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        //msg(STATUS,"Potential-check for object %ld : %f",a,capMatrixPhiSum);
+        msg(STATUS,"Potential-check for object %ld : %f",a,capMatrixPhiSum);
         //capMatrixPhiSum=0.03;
 
         for (long int j=beginIndex; j<endIndex; j++) {
@@ -1744,13 +1744,12 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=100){
+		if(n>=400){
 		//Write h5 files
-    	//gWriteH5(E, mpiInfo, (double) n);
-			//gWriteH5(rho, mpiInfo, (double) n);
-
-			//gWriteH5(phi, mpiInfo, (double) n);
-		  //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+    	    gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(rho, mpiInfo, (double) n);
+			gWriteH5(phi, mpiInfo, (double) n);
+		    //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
 		pWriteEnergy(history,pop,(double)n);
 	}
