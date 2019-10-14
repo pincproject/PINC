@@ -216,7 +216,7 @@ void msg(msgKind kind, const char* restrict format,...){
 
 }
 
-void fMsg(dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
+void fMsg(const dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
 
 	// Get filename
 	char key[BUFFSIZE] = "msgfiles:";
@@ -657,10 +657,15 @@ void createH5Group(hid_t h5, const char *name){
 
 }
 
-
+// xyzProbe versions write an array instead of a point
 hid_t xyOpenH5(const dictionary *ini, const char *fName){
 
 	return openH5File(ini,fName,"xy");
+}
+
+hid_t arrOpenH5(const dictionary *ini, const char *fName){
+
+	return openH5File(ini,fName,"xyz");
 }
 
 void xyCreateDataset(hid_t h5, const char *name){
@@ -689,6 +694,53 @@ void xyCreateDataset(hid_t h5, const char *name){
 	H5Dclose(dataset);
 
 }
+
+void arrCreateDataset(hid_t h5, const char *name, const int arrSize){
+	// creates dataset of grid length not 3 (not x,y,z)
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	createH5Group(h5,name);	// Creates parent groups
+
+	//const int arrSize=64;
+
+	// Enable chunking of data in order to use extendible (unlimited) datasets
+	hsize_t chunkDims[] = {1,arrSize};
+	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(pList, 2, chunkDims);
+
+	// Create dataspace for file initially empty but extendable
+	hsize_t fileDims[] = {0,arrSize};
+	hsize_t fileDimsMax[] = {H5S_UNLIMITED,arrSize};
+	hid_t fileSpace = H5Screate_simple(2,fileDims,fileDimsMax);
+
+	// Create dataset in file using mentioned dataspace
+	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
+
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+
+}
+
+void xyzProbeCreateDatasets(hid_t xyz,Grid *grid,MpiInfo *mpiInfo){
+
+	char name[64];
+
+	int *size = grid->trueSize;
+	int *nSubdomains = mpiInfo->nSubdomains;
+
+	sprintf(name,"/X");
+	arrCreateDataset(xyz,name,size[1]*nSubdomains[0]);
+
+	sprintf(name,"/Y");
+	arrCreateDataset(xyz,name,size[2]*nSubdomains[1]);
+
+	sprintf(name,"/Z");
+	arrCreateDataset(xyz,name,size[3]*nSubdomains[2]);
+}
+
+
+
 void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 
 	int mpiRank;
@@ -733,8 +785,150 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 
 }
 
+void arrWrite(hid_t h5, const char* name, double timestep, Grid *grid,int dim,
+	MpiInfo *mpiInfo){
+
+		// writes line along edge of box. This should be adjustable, but is not
+		// per now
+
+	int mpiSize, mpiRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+
+	int *nSubdomains = mpiInfo->nSubdomains;
+	//long int *size = grid->size;
+	long int *sizeProd = grid->sizeProd;
+	int *trueSize = grid->trueSize;
+	double *val = grid->val;
+	//int nDims =  mpiInfo->nDims;
+	double *data = NULL;
+	double *data_line = NULL;
+	int arrSize = 0;
+	int i = 0;
+	int p = 0;
+	int q = 0;
+	int offset = 0; //offsett from poin 0 to probe
+
+	arrSize=trueSize[dim+1];
+	offset = sizeProd[dim+1];// ghost layer?
+	if(mpiRank == 0){
+		data = malloc(arrSize*mpiSize*sizeof(double));
+		data_line = malloc(arrSize*nSubdomains[dim]*sizeof(double));
+	}else{
+		data = malloc(arrSize*sizeof(double));
+		//data_line = malloc(arrSize*nSubdomains[dim]*sizeof(double));
+	}
+	while (i<arrSize) { // is it still true for grid arr index = [(x,y,z),(x,y,z)...]?
+		data[i] = val[p+offset]; // probe is not centered
+		p += sizeProd[dim+1];
+		i++;
+	}
+
+	// gather on proc 0 to Write
+
+	MPI_Gather(data,arrSize,MPI_DOUBLE,data,arrSize,MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+
+	// Load dataset
+	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
+
+	// Extend dataspace in file by one row (must be done on all MPI nodes)
+	hid_t fileSpace = H5Dget_space(dataset);
+	hsize_t fileDims[2];
+	H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
+	fileDims[0]++;
+	H5Dset_extent(dataset,fileDims);
+
+	// update fileSpace after change
+	H5Sclose(fileSpace);
+	fileSpace = H5Dget_space(dataset);
+
+	if(mpiRank==0){
+		//select data line in X,Y,Z
+		i=0;
+		q=0;
+		if(dim==0){
+			while (i<arrSize*nSubdomains[dim]){
+				data_line[q] = data[i];
+				i++;
+				q++;
+			}
+		}
+		if(dim==1){
+			p=0;
+			q=0;
+			while(p<nSubdomains[dim-1]){
+				i=0;
+				while (i<arrSize){
+					data_line[q] = data[i+arrSize*p*nSubdomains[dim-1]];
+					i++;
+					q++;
+				}
+				p++;
+			}
+		}
+		if(dim==2){
+			p=0;
+			q=0;
+			while(p<nSubdomains[dim-1]){
+				i=0;
+				while (i<arrSize){
+					data_line[q] = data[i+arrSize*p*nSubdomains[dim-1]*nSubdomains[dim-2]];
+					//msg(STATUS, "data =%f",data[i+arrSize*p*nSubdomains[dim-1]*nSubdomains[dim-2]]);
+					//msg(STATUS, "data_line =%f",data_line[q]);
+					i++;
+					q++;
+				}
+
+				p++;
+			}
+		}
+
+		// Select hyperslab to write to
+		hsize_t offset[] = {(fileDims[0]-1),0};
+		hsize_t count[] = {1,1};
+		hsize_t memDims[] = {1,nSubdomains[0]*arrSize};
+		H5Sselect_hyperslab(fileSpace,H5S_SELECT_SET,offset,NULL,count,memDims);
+
+		// Write to file
+		hid_t memSpace = H5Screate_simple(2,memDims,NULL);
+
+
+
+		//H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, pList, data);
+		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data_line);
+		H5Sclose(memSpace);
+		free(data_line);
+	}
+	H5Sclose(fileSpace);
+	H5Dclose(dataset);
+	//H5Pclose(pList);
+	free(data);
+
+}
+
+void xyzWriteProbe(hid_t xyz, Grid *grid,double timestep,MpiInfo *mpiInfo){
+
+	char name[64];
+
+	sprintf(name,"/X");
+	arrWrite(xyz,name,timestep,grid,0,mpiInfo);
+
+	sprintf(name,"/Y");
+	arrWrite(xyz,name,timestep,grid,1,mpiInfo);
+
+	sprintf(name,"/Z");
+	arrWrite(xyz,name,timestep,grid,2,mpiInfo);
+
+}
+
 void xyCloseH5(hid_t h5){
 
+	H5Fclose(h5);
+}
+
+void arrCloseH5(hid_t h5){
+	//ehhrr.. not really a necessary function
 	H5Fclose(h5);
 }
 

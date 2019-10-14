@@ -2,6 +2,7 @@
 ## @file		local makefile input
 ## @brief		local makefile input
 ## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+## @revised 		(03.2018) Steffen Brask <steffen.brask@fys.uio.no>
 ##
 ## Local adjustments to the makefile can be stored in a file local.mk for which
 ## this file (local.mk.tmp) is a template. Supported local adjustments are
@@ -34,17 +35,28 @@
 #			-lm						\
 #			-lgslcblas				\
 #			-lgsl					\
-#			-lhdf5
+#			-lhdf5		\
+#			-lfftw3
 
-CLOCAL =	-Ilib/iniparser/src									\
-			-I/usit/abel/u1/sigvaldm/hdf5-1.8.17/include		\
-			-L/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib			\
-			-I/cluster/software/VERSIONS/gsl-1.16/include/gsl	\
-			-L/cluster/software/VERSIONS/gsl-1.16/lib			\
-			-lm													\
-			-lgslcblas											\
-			-lgsl												\
-			-lhdf5												\
-			-lfftw3
+CLOCAL =	-Ilib/iniparser/src                            \
+		-I/usit/abel/u1/sigvaldm/hdf5-1.8.17/include    \
+		-L/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib        \
+		-I/cluster/software/VERSIONS/gsl-1.16/include/gsl                \
+		-L/cluster/software/VERSIONS/gsl-1.16/lib                    \
+		-lm                                \
+		-lgslcblas                            \
+		-lgsl                                \
+		-lhdf5			\
+		-lfftw3
 
-LLOCAL = $(CLOCAL)
+LLOCAL =	-Ilib/iniparser/src                            \
+		-I/usit/abel/u1/sigvaldm/hdf5-1.8.17/include    \
+		-L/usit/abel/u1/sigvaldm/hdf5-1.8.17/lib       \
+                -I/cluster/software/VERSIONS/gsl-1.16/include/gsl      \
+               	-L/cluster/software/VERSIONS/gsl-1.16/lib	\
+		-lm                                \
+		-lgslcblas                            \
+		-lgsl                                \
+		-lhdf5			\
+		-lfftw3
+

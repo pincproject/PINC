@@ -31,3 +31,5 @@ run_abel.sh
 .gdbinit
 .code-workspace.code-workspace
 /.vscode
+CollisionDump.txt
+FB-5/

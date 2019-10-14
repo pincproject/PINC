@@ -93,6 +93,10 @@ typedef struct{
 	double *mass;		///< Mass (nSpecies elements)
 	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
 	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
+	double *TemperatureX;/// Experimental
+	double *TemperatureY;
+	double *TemperatureZ;
+	double* TemperatureTot;
 	int nSpecies;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	bndType *bnd;		/// type of boundaries for particles, 2*nDims

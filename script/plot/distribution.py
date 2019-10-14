@@ -36,9 +36,10 @@ def timer(text):
 
 
 # Loading file
-file = h5py.File('../test_pop.pop.h5','r')
-pos = file['/pos/specie 0/n=0.0']
-vel = file['/vel/specie 0/n=0.5']
+file = h5py.File('../../data/pop.pop.h5','r')
+pos = file['/pos/specie 1/n=1000.0']
+vel = file['/vel/specie 1/n=1000.5']
+
 
 timer("loading H5 files")
 
@@ -67,7 +68,7 @@ timer("computing analytical distributions")
 
 # Plots
 plt.figure()
-plt.plot(v,maxwellian)
+#plt.plot(v,maxwellian)
 plt.hist(speed, bins=100, normed=True)
 plt.title("Speed Distribution")
 plt.xlabel("Normalized Speed")
@@ -78,7 +79,7 @@ plt.close()
 plt.figure()
 for d in range(Nd):
 	plt.subplot(Nd,1,d+1)
-	plt.plot(v2,gaussian)
+	#plt.plot(v2,gaussian)
 	plt.hist(vel[:,d], bins=100, normed=True)
 	plt.title("Velocity Distribution, component %i"%(d))
 	plt.ylabel("Probability Density")
@@ -97,3 +98,5 @@ plt.savefig("pos.png")
 plt.close()
 
 timer("plotting")
+
+

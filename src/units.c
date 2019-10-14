@@ -116,6 +116,7 @@ void uNormalize(dictionary *ini, const Units *units){
 	iniScaleDouble(ini, "population:perturbAmplitude", 1.0/units->length);
 	iniScaleDouble(ini, "fields:BExt", 1.0/units->bField);
 	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
+	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
 	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
 	msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
@@ -148,16 +149,24 @@ static void parseIndirectInput(dictionary *ini){
 
 	double V = (double)gGetGlobalVolume(ini);
 
+
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+
+
+	double localV = (double)aiProd(trueSize,nDims);
+
 	int *L = gGetGlobalSize(ini);
 	double *mul = malloc(nDims*sizeof(nDims));
 	for(int i=0;i<nDims;i++) mul[i] = 1.0/L[i];
 
 	iniApplySuffix(ini, "population:nParticles", "pc", &V, 1);
 	iniApplySuffix(ini, "population:nAlloc", "pc", &V, 1);
-	iniApplySuffix(ini, "grid:nEmigrantsAlloc", "pc", &V, 1);
+	iniApplySuffix(ini, "grid:nEmigrantsAlloc", "pc", &localV, 1);
 	iniApplySuffix(ini, "grid:stepSize", "tot", mul, nDims);
 
+	free(trueSize);
 	free(mul);
+	free(L);
 }
 static Units *uSemiSI(dictionary *ini){
 
@@ -221,6 +230,7 @@ static Units *uSI(const dictionary *ini){
 	free(density);
 	free(stepSize);
 	free(nParticles);
+
 
 	Units *units = malloc(sizeof(*units));
 	units->nDims = nDims;

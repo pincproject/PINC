@@ -177,12 +177,12 @@ void puAcc3D1KE(Population *pop, Grid *E){
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
-
 		kinEnergy[s]=0;
 
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3];
 			puInterp3D1(dv,&pos[p],val,sizeProd);
+
 			double velSquared=0;
 			for(int d=0;d<nDims;d++){
 				velSquared += vel[p+d]*(vel[p+d]+dv[d]);
@@ -374,7 +374,10 @@ void puAccND0(Population *pop, Grid *E){
 	free(dv);
 }
 
-
+funPtr puBoris3D1_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1",3,1);
+	return puBoris3D1;
+}
 void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 
 	int nSpecies = pop->nSpecies;
@@ -414,6 +417,11 @@ void puBoris3D1(Population *pop, Grid *E, const double *T, const double *S){
 	}
 }
 
+funPtr puBoris3D1KE_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1KE",3,1);
+	return puBoris3D1KE;
+}
+
 void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 
 	int nSpecies = pop->nSpecies;
@@ -439,16 +447,17 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3], vPrime[3];
 			puInterp3D1(dv,&pos[p],val,sizeProd);
+			//msg(STATUS,"p = %i",p);
 
 			// Add half the acceleration (becomes v minus in B&L notation)
 			for(int d=0;d<nDims;d++) vel[p+d] += 0.5*dv[d];
 
 			// Rotate
 			memcpy(vPrime,vel,3*sizeof(*vPrime));
-			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime
-			addCross(vPrime,&S[3*s],vel); // vel is now v plus (B&L)
+			addCross(vel,&T[3*s],vPrime); // vPrime is now v prime (Eq. 4-4 (10) in B&L)
+			addCross(vPrime,&S[3*s],vel); // vel is now v plus (Eq. 4-4 (12) in B&L)
 
-			// Compute energy
+			// Compute energy (at integer timestep)
 			double velSquared = 0;
 			for(int d=0;d<nDims;d++){
 				velSquared += pow(vel[p+d],2);
@@ -466,28 +475,119 @@ void puBoris3D1KE(Population *pop, Grid *E, const double *T, const double *S){
 
 }
 
-void puGet3DRotationParameters(dictionary *ini, double *T, double *S){
+funPtr puBoris3D1KETEST_set(dictionary *ini){
+	puSanity(ini,"puBoris3D1KE",3,1);
+	return puBoris3D1KETEST;
+}
+
+void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S){
+
+	// Temperature instead of Kinetic Energy, in X,Y,Z
+
+	int nSpecies = pop->nSpecies;
+	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+	double *kinEnergy = pop->kinEnergy;
+	double *TemperatureX = pop->TemperatureX;
+	double *TemperatureY = pop->TemperatureY;
+	double *TemperatureZ = pop->TemperatureZ;
+	double *TemperatureTot = pop->TemperatureTot;
+	double *mass = pop->mass;
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+
+	for(int s=0;s<nSpecies;s++){
+		gMul(E, pop->charge[s]/pop->mass[s]);
+		long int pStart = pop->iStart[s]*nDims;
+		long int pStop = pop->iStop[s]*nDims;
+		kinEnergy[s]=0;
+		TemperatureX[s] = 0;
+		TemperatureY[s] = 0;
+		TemperatureZ[s] = 0;
+		TemperatureTot[s] = 0;
+		for(long int p=pStart;p<pStop;p+=nDims){
+			double dv[3], w[3], vPlus[3], vMinus[3];
+			for(int d=0;d<nDims;d++){
+				// initializes memory
+				// this is for safety and can be removed/optimized in final ver.
+				vMinus[d] = 0.0;
+				vPlus[d] = 0.0;
+				w[d] = 0.0;
+				dv[d] = 0.0;
+			}
+			puInterp3D1(dv,&pos[p],val,sizeProd);
+
+			// Add half the acceleration (becomes vMinus in B&L notation)
+			for(int d=0;d<nDims;d++){ vMinus[d] = vel[p+d] + 0.5*dv[d]; }
+			//Compute omega, w (Trulsen)
+			addCross(vMinus,&T[3*s],w);
+			for(int d=0;d<nDims;d++){ w[d] += vMinus[d]; }
+			//Compute vPlus
+			addCross(w,&S[3*s],vPlus);
+			for(int d=0;d<nDims;d++){ vPlus[d] += vMinus[d]; }
+			// Add half the acceleration
+			for(int d=0;d<nDims;d++){ vel[p+d] = vPlus[d] + 0.5*dv[d]; }
+
+			// Compute energy
+			double velSquared = 0;
+			for(int d=0;d<nDims;d++){
+				velSquared += pow(vel[p+d],2);
+			}
+			kinEnergy[s]+=velSquared;
+			TemperatureTot[s]+=velSquared;
+			TemperatureX[s] += pow(vel[p],2);
+			TemperatureY[s] += pow(vel[p+1],2);
+			TemperatureZ[s] += pow(vel[p+2],2);
+
+
+
+		}
+
+		// Thechnically average Energy in X,Y,Z, needs renormalization from PINC
+		// and dividing by Boltzman constant
+		TemperatureTot[s]*=mass[s]/(pStop-pStart);
+		TemperatureX[s]*=mass[s]/(pStop-pStart);
+		TemperatureY[s]*=mass[s]/(pStop-pStart);
+		TemperatureZ[s]*=mass[s]/(pStop-pStart);
+
+		kinEnergy[s]*=0.5*mass[s];
+
+		gMul(E, pop->mass[s]/pop->charge[s]);
+		// Renorm B!?!? That is S, and T ?
+		// no, they have x,y,v, for both fields
+	}
+
+}
+
+void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
 
 	int nDims = iniGetInt(ini,"grid:nDims");
-	int nSpecies = iniGetInt(ini,"grid:nSpecies");
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
-
+	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
 	for(int s=0;s<nSpecies;s++){
-		double factor = 0.5*charge[s]/mass[s];
+
+		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
+		double tanThetaHalf = 0;
+		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm);
+		}else{tanThetaHalf = 0.0;}
 		double denom = 1;
 		for(int p=0;p<3;p++){
-			T[3*s+p] = factor*BExt[p];
+			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
 			denom += pow(T[3*s+p],2);
 		}
 		double mul = 2.0/denom;
 		for(int p=0;p<3;p++){
-			S[3*s+p] = mul*T[3*s+p];
+			S[3*s+p] = mul*T[3*s+p]; // Eq. 4-4 (13) in B&L
 		}
 	}
+    free(BExt);
+    free(mass);
+    free(charge);
 }
-
 
 funPtr puDistr3D1_set(dictionary *ini){
 	puSanity(ini,"puDistr3D1",3,1);
@@ -555,6 +655,218 @@ void puDistr3D1(const Population *pop, Grid *rho){
 	}
 
 }
+funPtr puDistr3D1split_set(dictionary *ini){
+	puSanity(ini,"puDistr3D1split",3,1);
+	return puDistr3D1split;
+}
+
+void puDistr3D1split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+	double *val = rho->val;
+	double *val_i = rho_i->val;
+	double *val_e = rho_e->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[3*i];
+
+			// Integer parts of position
+			int j = (int) (pos[0]);
+			int k = (int) (pos[1]);
+			int l = (int) (pos[2]);
+			//if(j==0 || k==0 || l==0){
+				//msg(STATUS, "j = %i, k = %i, l = %i", j,k,l);
+			//msg(STATUS, "pos0 = %f, pos1 = %f, pos2 = %f", pos[0],pos[1],pos[2]);
+			//}
+			// Decimal (cell-referenced) parts of position and their complement
+			double x = pos[0]-j;
+			double y = pos[1]-k;
+			double z = pos[2]-l;
+			//msg(STATUS, "x = %f, y = %f, z = %f", x,y,z);
+			double xcomp = 1-x;
+			double ycomp = 1-y;
+			double zcomp = 1-z;
+			//msg(STATUS, "xcomp = %f, ycomp = %f, zcomp = %f", xcomp,ycomp,zcomp);
+			// Index of neighbouring nodes
+			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + 1; //sizeProd[1];
+			long int pk 	= p + sizeProd[2];
+			long int pjk 	= pk + 1; //sizeProd[1];
+			long int pl 	= p + sizeProd[3];
+			long int pjl 	= pl + 1; //sizeProd[1];
+			long int pkl 	= pl + sizeProd[2];
+			long int pjkl 	= pkl + 1; //sizeProd[1];
+			//msg(STATUS, "p= %li, pk = %li",p,pk);
+			// if(pjkl>=sizeProd[4])
+			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
+
+			val[p] 		+= xcomp*ycomp*zcomp;
+			val[pj]		+= x    *ycomp*zcomp;
+			val[pk]		+= xcomp*y    *zcomp;
+			val[pjk]	+= x    *y    *zcomp;
+			val[pl]     += xcomp*ycomp*z    ;
+			val[pjl]	+= x    *ycomp*z    ;
+			val[pkl]	+= xcomp*y    *z    ;
+			val[pjkl]	+= x    *y    *z    ;
+			//msg(STATUS,"val[p] = %f val[p+1] = %f ",val[p], val[p+1] );
+			if(s==1){ // stupid way to split but but, it isnt only only
+				val_i[p] 		+= xcomp*ycomp*zcomp;
+				val_i[pj]		+= x    *ycomp*zcomp;
+				val_i[pk]		+= xcomp*y    *zcomp;
+				val_i[pjk]	+= x    *y    *zcomp;
+				val_i[pl]     += xcomp*ycomp*z    ;
+				val_i[pjl]	+= x    *ycomp*z    ;
+				val_i[pkl]	+= xcomp*y    *z    ;
+				val_i[pjkl]	+= x    *y    *z    ;
+			}
+			if(s==0){
+				val_e[p] 		+= xcomp*ycomp*zcomp;
+				val_e[pj]		+= x    *ycomp*zcomp;
+				val_e[pk]		+= xcomp*y    *zcomp;
+				val_e[pjk]	+= x    *y    *zcomp;
+				val_e[pl]     += xcomp*ycomp*z    ;
+				val_e[pjl]	+= x    *ycomp*z    ;
+				val_e[pkl]	+= xcomp*y    *z    ;
+				val_e[pjkl]	+= x    *y    *z    ;
+
+			}
+
+		}
+
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
+		//Assuming two species with 0'th as electrons
+		//an 1'st as Ions
+		//msg(STATUS,"in dist, s = %i",s);
+		if(s==0){
+
+			//val_i = *val;
+			//rho_i->val = rho->val;
+			//gMul(rho_e,pop->renormRho[s]);
+			//msg(STATUS,"if s= 0");
+		}
+		if(s==1){
+			//msg(STATUS,"if s= 1");
+			//gMul(rho_i,pop->renormRho[s]);
+		}
+		//int rank = rho_i->rank;
+		//long int nElements = rho_i->sizeProd[rank];
+		//for(long int p=0;p<nElements;p++){
+		//	msg(STATUS,"val[p]_e = %f n = %i",val_e[p],nElements);
+		//}
+
+	}
+
+}
+
+
+funPtr puDistrND1Split_set(dictionary *ini){
+	puSanity(ini,"puDistrND1",0,1);
+	return puDistrND1Split;
+}
+static void puDistrND1InnerSplit(int s,double *val,double *val_e,double *val_i,
+								long int p, const long int *mul,
+								long int lastMul, double *decimal,
+								double *complement, double factor){
+
+	if(*mul==lastMul){
+		val[p     ] += *complement*factor;
+		val[p+*mul] += *decimal*factor;
+		if(s==0){
+			//e is specie 0
+			val_e[p     ] += *complement*factor;
+			val_e[p+*mul] += *decimal*factor;
+		}
+		if(s==1){
+			//e is specie 0
+			val_i[p     ] += *complement*factor;
+			val_i[p+*mul] += *decimal*factor;
+		}
+	} else {
+		puDistrND1InnerSplit(s,val,val_e,val_i,p     ,mul-1,lastMul,decimal-1,complement-1,*complement*factor);
+		puDistrND1InnerSplit(s,val,val_e,val_i,p+*mul,mul-1,lastMul,decimal-1,complement-1,*decimal   *factor);
+	}
+
+}
+
+
+void puDistrND1Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+	// assumes two species s = e, i
+
+	// TESTED?
+
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	double *val_e = rho_e->val;
+	double *val_i = rho_i->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	int *integer = malloc(nDims*sizeof(*integer));
+	double *decimal = malloc(nDims*sizeof(*decimal));
+	double *complement = malloc(nDims*sizeof(*complement));
+
+	for(int s=0;s<nSpecies;s++){
+
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				integer[d] = (int) pos[d];
+				decimal[d] = pos[d] - integer[d];
+				complement[d] = 1 - decimal[d];
+
+				p += integer[d]*sizeProd[d+1];
+			}
+
+			puDistrND1InnerSplit(s,val,val_e,val_i,p,&sizeProd[nDims],sizeProd[1],&decimal[nDims-1],&complement[nDims-1],1);
+
+		}
+
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
+
+	}
+
+	free(integer);
+	free(decimal);
+	free(complement);
+}
+
+
+
 
 funPtr puDistrND1_set(dictionary *ini){
 	puSanity(ini,"puDistrND1",0,1);
@@ -658,6 +970,56 @@ void puDistrND0(const Population *pop, Grid *rho){
 		}
 
 		gMul(rho, pop->charge[s]);
+
+	}
+}
+funPtr puDistrND0Split_set(dictionary *ini){
+	puSanity(ini,"puDistrND0",0,0);
+	return puDistrND0Split;
+}
+void puDistrND0Split(const Population *pop, Grid *rho,Grid *rho_e,Grid *rho_i){
+
+	// TESTED?
+
+	gZero(rho);
+	gZero(rho_e);
+	gZero(rho_i);
+
+	int nDims = pop->nDims;
+	double *val = rho->val;
+	double *val_e = rho_e->val;
+	double *val_i = rho_i->val;
+	long int *sizeProd = rho->sizeProd;
+
+	int nSpecies = pop->nSpecies;
+
+	for(int s=0;s<nSpecies;s++){
+		gMul(rho, 1.0/pop->charge[s]);
+		gMul(rho_e, 1.0/pop->charge[s]);
+		gMul(rho_i, 1.0/pop->charge[s]);
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[nDims*i];
+
+			long int p = 0;
+
+			for(int d=0;d<nDims;d++){
+				int integer = (int)(pos[d]+0.5);
+				p += integer*sizeProd[d+1];
+			}
+			val[p]++;
+			if(s==0)val_e[p]++;
+			if(s==1)val_i[p]++;
+
+		}
+
+		gMul(rho, pop->charge[s]);
+		gMul(rho_e, pop->charge[s]);
+		gMul(rho_i, pop->charge[s]);
 
 	}
 }
@@ -1433,7 +1795,32 @@ int puRankToNeighbor(MpiInfo *mpiInfo, int rank){
 }
 
 static inline void addCross(const double *a, const double *b, double *res){
+	//msg(STATUS, "addCross b (S or T) is %f, %f, %f",b[0],b[1],b[2]);
 	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
 	res[1] += -(a[0]*b[2]-a[2]*b[0]);
 	res[2] +=  (a[0]*b[1]-a[1]*b[0]);
+}
+
+void puAddEext(dictionary *ini, Population *pop, Grid *E){
+	//double timeStep = iniGetDouble(ini,"time:timeStep");
+	//double stepSize = iniGetDouble(ini,"grid:stepSize");
+
+	int rank = E->rank;
+	int nDims = pop->nDims;
+	long int *sizeProd = E->sizeProd;
+	double *val = E->val;
+	double *Eext = iniGetDoubleArr(ini,"fields:EExt",nDims);
+	//msg(STATUS,"eext = (%f,%f,%f)",Eext[0],Eext[1],Eext[2]);
+
+	for(long int p=0;p<sizeProd[rank];p+=nDims){
+		for(int d=0;d<nDims;d++){
+			//msg(STATUS, "E1 = %f" , val[p+d] );
+			val[p+d] += Eext[d];
+
+			E->val[p+d] = val[p+d];
+			//msg(STATUS, "E2 = %f" , E->val[p+d] );
+			//msg(STATUS,"eext = (%f,%f,%f),stepsize = %.64f",Eext[0],Eext[1],Eext[2],timeStep);
+		}
+	}
+	free(Eext);
 }
