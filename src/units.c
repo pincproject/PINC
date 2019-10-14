@@ -117,6 +117,9 @@ void uNormalize(dictionary *ini, const Units *units){
 	iniScaleDouble(ini, "fields:BExt", 1.0/units->bField);
 	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
 
+	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+	msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
+
 }
 /*
 void uPrintSummary(const Units *units){
@@ -205,6 +208,7 @@ static Units *uSI(const dictionary *ini){
 	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
+		msg(STATUS,"weights[%i] = %f",s,weights[s]);
 	}
 
 	double X  = stepSize[0];
@@ -249,4 +253,6 @@ static void uAddDerivedUnits(Units *units){
 	units->eField        = length*mass/(pow(time,2)*charge);
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
+
+	msg(STATUS, "units->potential = %f",units->potential);
 }
