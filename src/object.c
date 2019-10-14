@@ -1512,7 +1512,7 @@ void oMode(dictionary *ini){
 												puAccND1KE_set,
 												puAccND0_set,
 												puAccND0KE_set,
-                        puBoris3D1KE_set);
+                        puBoris3D1KETEST_set);
 
 	void (*distr)() 			= select(ini,	"methods:distr",
 												puDistr3D1_set,
@@ -1651,21 +1651,21 @@ void oMode(dictionary *ini){
 	gMul(E, -1.);
 
 
-  //initialize Boris parameters
+  //Boris parameters
   int nSpecies = pop->nSpecies;
-	double *S = (double*)malloc((3)*(nSpecies)*sizeof(*S));
-	double *T = (double*)malloc((3)*(nSpecies)*sizeof(*T));
-  puGet3DRotationParameters(ini, T, S);
-
+	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
+	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
 
   // add External E
-	gZero(E);
-	//gAddTo(Ext);
+	//gZero(E); // for testing Boris
+	//gAddTo(Ext); //needs grid definition of Eext
+  puAddEext(ini, pop, E); // adds same value to whole grid
 
-	// Advance velocities half a step
-	gMul(E, 0.5);
-	acc(pop, E);
+  gMul(E, 0.5);
+	puGet3DRotationParameters(ini, T, S, 0.5);
+	acc(pop, E, T, S);
 	gMul(E, 2.0);
+	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	/*
 	 * TIME LOOP
@@ -1742,11 +1742,12 @@ void oMode(dictionary *ini){
 		//gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
     gZero(E);
-		// gAddTo(Ext);
-        // How about external B?
+    //gAddTo(Ext); //needs grid definition of Eext
+    //puAddEext(ini, pop, E); // adds same value to whole grid
 
 		// Accelerate particle and compute kinetic energy for step n
-		acc(pop, E);
+		//acc(pop, E);
+    acc(pop, E, T, S);
 
 		tStop(t);
 
@@ -1767,7 +1768,7 @@ void oMode(dictionary *ini){
 			//gWriteH5(phi, mpiInfo, (double) n);
 		  pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		pWriteEnergy(history,pop,(double)n);
+		pWriteEnergy(history,pop,(double)n,units);
 	}
 
 	if(mpiInfo->mpiRank==0) {

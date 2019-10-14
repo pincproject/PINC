@@ -293,7 +293,7 @@ void regular(dictionary *ini){
 			gWriteH5(phi, mpiInfo, (double) n);
 		  //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		pWriteEnergy(history,pop,(double)n);
+		pWriteEnergy(history,pop,(double)n,units);
 	}
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
@@ -378,11 +378,11 @@ void BorisTestMode(dictionary *ini){
 	uNormalize(ini, units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *res = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
+	Population *pop = pAlloc(ini,mpiInfo);
+	Grid *E   = gAlloc(ini, VECTOR, mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *res = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR, mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi);
 
 
@@ -583,7 +583,7 @@ void BorisTestMode(dictionary *ini){
 		//gWriteH5(E, mpiInfo, (double) n);
 		gWriteH5(rho, mpiInfo, (double) n);
 		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1.0);
+		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n,units);
 
 	}

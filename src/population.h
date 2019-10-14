@@ -187,8 +187,7 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
  * back to local reference frame after writing so pop should remain unchanged to
  * within machine precision.
  */
-void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN,
-double PopFraction);
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN);
 
 /**
  * @brief	Closes .pop.h5-file

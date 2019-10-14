@@ -523,160 +523,160 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  *		ALLOC/DESTRUCTORS
  ****************************************************************************/
 
-Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
+ Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 
-	// Get MPI info
-	int mpiRank = mpiInfo->mpiRank;
-	int mpiSize = mpiInfo->mpiSize;
-	int *subdomain = mpiInfo->subdomain;
-	int *nSubdomains = mpiInfo->nSubdomains;
-	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
+ 	// Get MPI info
+ 	int mpiRank = mpiInfo->mpiRank;
+ 	int mpiSize = mpiInfo->mpiSize;
+ 	int *subdomain = mpiInfo->subdomain;
+ 	int *nSubdomains = mpiInfo->nSubdomains;
+ 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 
-	//int mpiSize, mpiRank;
-	//MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
-	//MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+ 	//int mpiSize, mpiRank;
+ 	//MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+ 	//MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
-	// Load data from ini
-	int nDims = iniGetInt(ini, "grid:nDims");
-	int *trueSizeTemp = iniGetIntArr(ini, "grid:trueSize", nDims);
-	int *nGhostLayersTemp = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
-	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , 2*nDims);
+ 	// Load data from ini
+ 	int nDims = iniGetInt(ini, "grid:nDims");
+ 	int *trueSizeTemp = iniGetIntArr(ini, "grid:trueSize", nDims);
+ 	int *nGhostLayersTemp = iniGetIntArr(ini, "grid:nGhostLayers", 2*nDims);
+ 	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , 2*nDims);
 
-	//printf("boundaries =%s,%s,%s,%s,%s,%s, \n",boundaries[0],boundaries[1],boundaries[2],boundaries[3],boundaries[4],boundaries[5]);
-	// Calculate the number of grid points (True points + ghost points)
-	int rank = nDims+1;
-	int *size 			= malloc(rank*sizeof(*size));
-	int *trueSize 		= malloc(rank*sizeof(*trueSize));
-	int *nGhostLayers 	= malloc(2*rank*sizeof(*nGhostLayers));
+ 	//printf("boundaries =%s,%s,%s,%s,%s,%s, \n",boundaries[0],boundaries[1],boundaries[2],boundaries[3],boundaries[4],boundaries[5]);
+ 	// Calculate the number of grid points (True points + ghost points)
+ 	int rank = nDims+1;
+ 	int *size 			= malloc(rank*sizeof(*size));
+ 	int *trueSize 		= malloc(rank*sizeof(*trueSize));
+ 	int *nGhostLayers 	= malloc(2*rank*sizeof(*nGhostLayers));
 
-	if(nValues==VECTOR) nValues = nDims; // VECTOR equals -1
+ 	if(nValues==VECTOR) nValues = nDims; // VECTOR equals -1
 
-	size[0] = nValues;
-	trueSize[0] = nValues;
-	nGhostLayers[0] = 0;
-	nGhostLayers[rank] = 0;
+ 	size[0] = nValues;
+ 	trueSize[0] = nValues;
+ 	nGhostLayers[0] = 0;
+ 	nGhostLayers[rank] = 0;
 
-	for(int d = 1 ; d < rank; d++){
-		trueSize[d] = trueSizeTemp[d-1];
-		nGhostLayers[d] = nGhostLayersTemp[d-1];
-		nGhostLayers[d+rank] = nGhostLayersTemp[d+nDims-1];
+ 	for(int d = 1 ; d < rank; d++){
+ 		trueSize[d] = trueSizeTemp[d-1];
+ 		nGhostLayers[d] = nGhostLayersTemp[d-1];
+ 		nGhostLayers[d+rank] = nGhostLayersTemp[d+nDims-1];
 
-		size[d] = trueSize[d] + nGhostLayers[d] + nGhostLayers[d+rank];
-		//printf("size[d] =%i trueSize[d] =%i nGhostLayers[d] =%i nGhostLayers[d+rank] = %i \n",size[d],trueSize[d],nGhostLayers[d],nGhostLayers[d+rank]);
-	}
-	free(trueSizeTemp);
-	free(nGhostLayersTemp);
+ 		size[d] = trueSize[d] + nGhostLayers[d] + nGhostLayers[d+rank];
+ 		//printf("size[d] =%i trueSize[d] =%i nGhostLayers[d] =%i nGhostLayers[d+rank] = %i \n",size[d],trueSize[d],nGhostLayers[d],nGhostLayers[d+rank]);
+ 	}
+ 	free(trueSizeTemp);
+ 	free(nGhostLayersTemp);
 
-	//Cumulative products
-	long int *sizeProd = malloc((rank+1)*sizeof(*sizeProd));
-	ailCumProd(size,sizeProd,rank);
+ 	//Cumulative products
+ 	long int *sizeProd = malloc((rank+1)*sizeof(*sizeProd));
+ 	ailCumProd(size,sizeProd,rank);
 
-	//Number of elements in slice
-	long int nSliceMax = 0;
-	for(int d=1;d<rank;d++){
-		long int nSlice = 1;
-		for(int dd=0;dd<rank;dd++){
-			if(dd!=d) nSlice *= size[dd];
-		}
-		if(nSlice>nSliceMax) nSliceMax = nSlice;
-	}
-	//msg(STATUS,"nSliceMax = %li",nSliceMax);
+ 	//Number of elements in slice
+ 	long int nSliceMax = 0;
+ 	for(int d=1;d<rank;d++){
+ 		long int nSlice = 1;
+ 		for(int dd=0;dd<rank;dd++){
+ 			if(dd!=d) nSlice *= size[dd];
+ 		}
+ 		if(nSlice>nSliceMax) nSliceMax = nSlice;
+ 	}
+ 	//msg(STATUS,"nSliceMax = %li",nSliceMax);
 
-	// Memory for values and a slice
-	double *val = malloc(sizeProd[rank]*sizeof(*val));
-	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
-	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
-	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
-	//double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
-	//printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
-	// Maybe seek a different solution where it is only stored where needed
-
-
-	//Load
-	//int rank = grid->rank;
-	//long int *sizeProd = grid->sizeProd;
-
-	//Dimension used for subdomains, 1 less entry than grid dimensions
-	//int dd = d - 1;
-
-	bndType *bnd = malloc(2*rank*sizeof(*bnd));
-
-	bnd[0] = NONE; //initialize
-	bnd[rank] = NONE; //initialize
+ 	// Memory for values and a slice
+ 	double *val = malloc(sizeProd[rank]*sizeof(*val));
+ 	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
+ 	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
+ 	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+ 	//double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
+ 	//printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
+ 	// Maybe seek a different solution where it is only stored where needed
 
 
-	int b = 0;
-	for (int d = 1; d<rank;d++){
-		//msg(STATUS,"b=%i, d = %i, rank = %i",b,d,rank);
-		int dd = d - 1;
-		//msg(STATUS,"mpiRank = %i, subdomain[dd] = %i nSubdomainsProd[dd] = %i",mpiRank, subdomain[dd], nSubdomainsProd[dd]);
-		int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
+ 	//Load
+ 	//int rank = grid->rank;
+ 	//long int *sizeProd = grid->sizeProd;
 
-		// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
+ 	//Dimension used for subdomains, 1 less entry than grid dimensions
+ 	//int dd = d - 1;
 
-		int upperSubdomain = firstElem
-			+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
-		int lowerSubdomain = firstElem
-			+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
+ 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
 
-		//printf("rank: %i, lowerSubdomain: %i, upperSubdomain = %i \n",mpiRank,lowerSubdomain,upperSubdomain);
+ 	bnd[0] = NONE; //initialize
+ 	bnd[rank] = NONE; //initialize
 
-		//lower
-		//for(int r=dd; r<dd+1; r++){
-		//printf("b = %i \n",b);
-		int r=dd+1;
-		if(lowerSubdomain>=mpiRank){
-				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
-				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
-				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
-				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
-			}else if (lowerSubdomain<mpiRank){
-				//printf("YEPS!");
-				bnd[r] = PERIODIC;
-			} else {
-				bnd[r] = NONE; //initialize
-				//printf("bnd[%i] = NONE",r);
+ 	int b = 0;
+ 	for (int d = 1; d<rank;d++){
+ 		//msg(STATUS,"b=%i, d = %i, rank = %i",b,d,rank);
+ 		int dd = d - 1;
+ 		//msg(STATUS,"mpiRank = %i, subdomain[dd] = %i nSubdomainsProd[dd] = %i",mpiRank, subdomain[dd], nSubdomainsProd[dd]);
+ 		int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
 
-		}
-		//upper
-		//for(int r=rank+dd; r<rank+dd+1; r++){
-		r = rank+dd+1;
-		//printf("r = %i \n",r);
-		if(upperSubdomain<=mpiRank){
-				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
-				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
-				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+ 		// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
-			}else if(upperSubdomain>mpiRank){
-				bnd[r] = PERIODIC;
-			}else {
-				bnd[r] = NONE; //initialize
-				//printf("bnd[%i] = NONE",r);
-			}
-			b++;
-		//}
-	}
-	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
-	//printf("in Grid rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
-	//printf("rank = %i,EXITING \n",mpiRank);
-	/* Store in Grid */
-	Grid *grid = malloc(sizeof(*grid));
-	grid->rank = rank;
-	grid->size = size;
-	grid->trueSize = trueSize;
-	grid->sizeProd = sizeProd;
-	grid->nGhostLayers = nGhostLayers;
-	grid->val = val;
-	grid->h5 = 0;	// Must be activated separately
-	grid->sendSlice = sendSlice;
-	grid->recvSlice = recvSlice;
-	grid->bndSlice = bndSlice;
-	//grid->bndSolution = bndSolution;
-	grid->bnd = bnd;
+ 		int upperSubdomain = firstElem
+ 			+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
+ 		int lowerSubdomain = firstElem
+ 			+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-	return grid;
+ 		//printf("rank: %i, lowerSubdomain: %i, upperSubdomain = %i \n",mpiRank,lowerSubdomain,upperSubdomain);
+
+ 		//lower
+ 		//for(int r=dd; r<dd+1; r++){
+ 		//printf("b = %i \n",b);
+ 		int r=dd+1;
+ 		if(lowerSubdomain>=mpiRank){
+ 				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+ 				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+ 				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+ 				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+
+ 			}else if (lowerSubdomain<mpiRank){
+ 				//printf("YEPS!");
+ 				bnd[r] = PERIODIC;
+ 			} else {
+ 				bnd[r] = NONE; //initialize
+ 				//printf("bnd[%i] = NONE",r);
+
+ 		}
+ 		//upper
+ 		//for(int r=rank+dd; r<rank+dd+1; r++){
+ 		r = rank+dd+1;
+ 		//printf("r = %i \n",r);
+ 		if(upperSubdomain<=mpiRank){
+ 				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+ 				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+ 				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
+ 				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+
+ 			}else if(upperSubdomain>mpiRank){
+ 				bnd[r] = PERIODIC;
+ 			}else {
+ 				bnd[r] = NONE; //initialize
+ 				//printf("bnd[%i] = NONE",r);
+ 			}
+ 			b++;
+ 		//}
+ 	}
+ 	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
+ 	//printf("in Grid rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
+ 	//printf("rank = %i,EXITING \n",mpiRank);
+ 	/* Store in Grid */
+ 	Grid *grid = malloc(sizeof(*grid));
+ 	grid->rank = rank;
+ 	grid->size = size;
+ 	grid->trueSize = trueSize;
+ 	grid->sizeProd = sizeProd;
+ 	grid->nGhostLayers = nGhostLayers;
+ 	grid->val = val;
+ 	grid->h5 = 0;	// Must be activated separately
+ 	grid->sendSlice = sendSlice;
+ 	grid->recvSlice = recvSlice;
+ 	grid->bndSlice = bndSlice;
+ 	//grid->bndSolution = bndSolution;
+ 	grid->bnd = bnd;
+
+ 	return grid;
 }
 
 MpiInfo *gAllocMpi(const dictionary *ini){

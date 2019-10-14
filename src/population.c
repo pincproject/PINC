@@ -18,21 +18,6 @@
 #include "iniparser.h"
 
 
-/******************************************************************************
- * DECLARING LOCAL FUNCTIONS
- *****************************************************************************/
-
-/**
- * @brief	Sets normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- *
- * Normalizes charge and mass and sets specie-specific renormalization
- * parameters in Population.
- *
- */
-static void pSetNormParams(const dictionary *ini, Population *pop);
-
 
 
 /******************************************************************************
@@ -1028,10 +1013,7 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 
 }
 
-void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN,
-	double PopFraction){
-
-	// PopFraction is fraction of population to write. 1.0 is whole pop.
+void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN){
 
 	int mpiRank = mpiInfo->mpiRank;
 	int mpiSize = mpiInfo->mpiSize;
@@ -1055,7 +1037,7 @@ void pWriteH5(Population *pop, const MpiInfo *mpiInfo, double posN, double velN,
 
 	for(int s=0;s<nSpecies;s++){
 
-		long int nParticles = PopFraction*(pop->iStop[s] - pop->iStart[s]);
+		long int nParticles = pop->iStop[s] - pop->iStart[s];
 		MPI_Allgather(	&nParticles,
 						1,
 						MPI_LONG,

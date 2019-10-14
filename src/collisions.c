@@ -1397,12 +1397,12 @@ void mccMode(dictionary *ini){
 	mccNormalize(ini,units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *rho_e = gAlloc(ini, SCALAR);
-	Grid *rho_i = gAlloc(ini, SCALAR);
+	Population *pop = pAlloc(ini,mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *E   = gAlloc(ini, VECTOR, mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi);
 
 
@@ -1595,7 +1595,7 @@ void mccMode(dictionary *ini){
 			//gWriteH5(rho_e, mpiInfo, (double) n);
 			//gWriteH5(rho_i, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1);
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
 		// if( n%10000 == 0 && n<20000){
 		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1);
@@ -1611,7 +1611,7 @@ void mccMode(dictionary *ini){
 		// }
 
 		if(n == 80000){
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5,1); //0.0001
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5); //0.0001
 		}
 
 

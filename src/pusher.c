@@ -539,9 +539,6 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 			TemperatureX[s] += pow(vel[p],2);
 			TemperatureY[s] += pow(vel[p+1],2);
 			TemperatureZ[s] += pow(vel[p+2],2);
-
-
-
 		}
 
 		// Thechnically average Energy in X,Y,Z, needs renormalization from PINC
@@ -554,8 +551,7 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 		kinEnergy[s]*=0.5*mass[s];
 
 		gMul(E, pop->mass[s]/pop->charge[s]);
-		// Renorm B!?!? That is S, and T ?
-		// no, they have x,y,v, for both fields
+
 	}
 
 }
