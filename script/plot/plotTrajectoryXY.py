@@ -15,17 +15,17 @@ pos = file['/pos/specie 0']
 #    print item + ":", f.attrs[item]
 
 
-particleNum = 1005
+particleNum = 0
 
 Nt_start = 1 #1
-Nt_stop = 200 #pos.shape[1]
+Nt_stop = 100 #pos.shape[1]
 
 Np = pos['n=1.0'].shape[0]	# Number of particles
 Nd = pos['n=1.0'].shape[1]	# Number of dimensions
 
-print 'number of particles = %i' % Np
-print 'number of dimensions = %i' % Nd
-print 'picked particle number %i' % particleNum
+print('number of particles = %i' % Np)
+print('number of dimensions = %i' % Nd)
+print('picked particle number %i' % particleNum)
 
 
 x = []

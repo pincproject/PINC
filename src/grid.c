@@ -526,15 +526,15 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo){
 
  	// Get MPI info
- 	int mpiRank = mpiInfo->mpiRank;
- 	int mpiSize = mpiInfo->mpiSize;
+ 	//int mpiRank = mpiInfo->mpiRank;
+ 	//int mpiSize = mpiInfo->mpiSize;
  	int *subdomain = mpiInfo->subdomain;
  	int *nSubdomains = mpiInfo->nSubdomains;
  	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 
- 	//int mpiSize, mpiRank;
- 	//MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
- 	//MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+ 	int mpiSize, mpiRank;
+ 	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+ 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
  	// Load data from ini
  	int nDims = iniGetInt(ini, "grid:nDims");

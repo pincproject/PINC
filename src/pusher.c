@@ -558,18 +558,27 @@ void puBoris3D1KETEST(Population *pop, Grid *E, const double *T, const double *S
 
 void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
 
+	// Thetha correction version. This version gives corrections to the angle
+	// that in general gives a better precision on the order of ~e-5 - e-7.
+	// there are hovever special cases where it is much larger. eks, When
+	// plasma freq is roughly equal to electron gyro freq, and using a "large" dt.
+
 	int nDims = iniGetInt(ini,"grid:nDims");
 	int nSpecies = iniGetInt(ini,"population:nSpecies");
 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
 	double BNorm = sqrt(BExt[0]*BExt[0] + BExt[1]*BExt[1] + BExt[2]*BExt[2]);
+
 	for(int s=0;s<nSpecies;s++){
 
 		double factor = 0.5*(charge[s]/mass[s])*dtFactor;
 		double tanThetaHalf = 0;
 		if(BNorm != 0.0){ tanThetaHalf = tan(factor*BNorm);
-		}else{tanThetaHalf = 0.0;}
+		}else{
+			tanThetaHalf = 0.0;
+			BNorm = 1;
+		}
 		double denom = 1;
 		for(int p=0;p<3;p++){
 			T[3*s+p] = tanThetaHalf*BExt[p]/BNorm;
@@ -584,6 +593,28 @@ void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtF
     free(mass);
     free(charge);
 }
+
+// void puGet3DRotationParameters(dictionary *ini, double *T, double *S, double dtFactor){
+//
+// 	int nDims = iniGetInt(ini,"grid:nDims");
+// 	int nSpecies = iniGetInt(ini,"population:nSpecies");
+// 	double *BExt = iniGetDoubleArr(ini,"fields:BExt",nDims);
+// 	double *charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
+// 	double *mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+//
+// 	for(int s=0;s<nSpecies;s++){
+// 		double factor = 0.5*charge[s]/mass[s];
+// 		double denom = 1;
+// 		for(int p=0;p<3;p++){
+// 			T[3*s+p] = factor*BExt[p];
+// 			denom += pow(T[3*s+p],2);
+// 		}
+// 		double mul = 2.0/denom;
+// 		for(int p=0;p<3;p++){
+// 			S[3*s+p] = mul*T[3*s+p];
+// 		}
+// 	}
+// }
 
 funPtr puDistr3D1_set(dictionary *ini){
 	puSanity(ini,"puDistr3D1",3,1);
@@ -621,6 +652,7 @@ void puDistr3D1(const Population *pop, Grid *rho){
 			double ycomp = 1-y;
 			double zcomp = 1-z;
 
+			//printf("")
 			// Index of neighbouring nodes
 			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
 			long int pj 	= p + 1; //sizeProd[1];
@@ -1486,8 +1518,11 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 			//msg(STATUS,"ne =%i, rank = %i, reciprocal = %i",ne,rank,reciprocal);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
-			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
-			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne        ,MPI_COMM_WORLD,&recv[ne]);
+			// We get segfault on large simulation systems, as a safety measure we can
+			// try to use a different tag here than in exchangeMigrants()
+			// hence the "2*nNeighbors"
+			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal+2*nNeighbors,MPI_COMM_WORLD,&send[ne]);
+			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne+2*nNeighbors        ,MPI_COMM_WORLD,&recv[ne]);
 		}
 	}
 
@@ -1589,7 +1624,9 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 	exchangeNMigrants(mpiInfo);
-	exchangeMigrants(pop,mpiInfo,grid);
+  MPI_Barrier(MPI_COMM_WORLD); //debug
+  exchangeMigrants(pop,mpiInfo,grid);
+  MPI_Barrier(MPI_COMM_WORLD);
 
 }
 

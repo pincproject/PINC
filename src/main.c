@@ -230,7 +230,7 @@ void regular(dictionary *ini){
 		//pInfluxDrift(ini,pop,rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
-		//pPosAssertInLocalFrame(pop, rho);
+		pPosAssertInLocalFrame(pop, rho);
 		//pPurgeGhost(pop, rho);
 		//pFillGhost(ini,pop,rng,mpiInfo);
 
@@ -375,15 +375,14 @@ void BorisTestMode(dictionary *ini){
 	 */
 
 	Units *units=uAlloc(ini);
-	uNormalize(ini, units);
+ 	uNormalize(ini, units);
 
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR, mpiInfo);
-	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *res = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *phi = gAlloc(ini, SCALAR, mpiInfo);
-	void *solver = solverAlloc(ini, rho, phi);
+ 	MpiInfo *mpiInfo = gAllocMpi(ini);
+ 	Population *pop = pAlloc(ini,mpiInfo);
+ 	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
+ 	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+ 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+ 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 
 
@@ -446,7 +445,7 @@ void BorisTestMode(dictionary *ini){
 	//pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
-	//double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	//msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
 	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
 	//pVelMaxwell(ini, pop, rng);
@@ -454,11 +453,11 @@ void BorisTestMode(dictionary *ini){
 
 	// Manually initialize a single particle
 	if(mpiInfo->mpiRank==0){
-		double pos[3] = {4., 4., 4.};
-		double vel[3] = {0.123, 0., 0.};
+		double pos[3] = {31., 31., 31.};
+		double vel[3] = {velThermal[0], 0., 0.};
 		pNew(pop, 0, pos, vel);
-		double pos1[3] = {6., 4., 4.};
-		double vel1[3] = {0.1, 0., 0.1};
+		double pos1[3] = {31., 31., 31.};
+		double vel1[3] = { velThermal[1], 0., 0.};
 		pNew(pop, 1, pos1, vel1); //second particle
 	}
 
@@ -498,9 +497,9 @@ void BorisTestMode(dictionary *ini){
 	gMul(E, 2.0);
 	puGet3DRotationParameters(ini, T, S, 1.0);
 
-	double x_min = 20;
+	double x_min = 64;
 	double x_max = 0;
-	double y_min = 20;
+	double y_min = 64;
 	double y_max = 0;
 
 	/*
@@ -615,7 +614,7 @@ void BorisTestMode(dictionary *ini){
 	//mgFree(mgRes);
 	gFree(rho);
 	gFree(phi);
-	gFree(res);
+	//gFree(res);
 	gFree(E);
 	pFree(pop);
 	solverFree(solver);
