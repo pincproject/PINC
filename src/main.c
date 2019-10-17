@@ -105,7 +105,7 @@ void regular(dictionary *ini){
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
 	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
+	gSetBndSlices(ini, phi, mpiInfo);
 
 
 	// Random number seeds
@@ -161,10 +161,10 @@ void regular(dictionary *ini){
 
 
 	// Get initial charge density
+
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Get initial E-field
 
@@ -397,7 +397,7 @@ void BorisTestMode(dictionary *ini){
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
 	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
+	gSetBndSlices(ini, phi, mpiInfo);
 
 	//Set mgSolve
 	//MgAlgo mgAlgo = getMgAlgo(ini);

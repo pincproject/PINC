@@ -63,7 +63,7 @@ void gFree(Grid *grid);
  *
  */
 
-void gSetBndSlices(Grid *grid,const MpiInfo *mpiInfo);
+void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
 /**
  * @brief Allocates the memory for an MpiInfo struct according to input file

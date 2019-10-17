@@ -217,7 +217,6 @@ static Units *uSI(const dictionary *ini){
 	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
-		msg(STATUS,"weights[%i] = %f",s,weights[s]);
 	}
 
 	double X  = stepSize[0];

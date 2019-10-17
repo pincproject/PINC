@@ -663,9 +663,14 @@ void puDistr3D1(const Population *pop, Grid *rho){
 			long int pkl 	= pl + sizeProd[2];
 			long int pjkl 	= pkl + 1; //sizeProd[1];
 
-			// if(pjkl>=sizeProd[4])
-			// 	msg(STATUS,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
 
+			// if(p>=sizeProd[4]){
+			// 	msg(ERROR,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
+		 	// }
+			//12294
+			//printf("p = %li\n",sizeProd[4]);
+			//printf("val[p] = %f\n",val[p]);
+			//MPI_Barrier(MPI_COMM_WORLD);
 			val[p] 		+= xcomp*ycomp*zcomp;
 			val[pj]		+= x    *ycomp*zcomp;
 			val[pk]		+= xcomp*y    *zcomp;

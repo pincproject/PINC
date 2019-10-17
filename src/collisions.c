@@ -1421,7 +1421,7 @@ void mccMode(dictionary *ini){
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
 	// Setting Boundary slices
-	gSetBndSlices(phi, mpiInfo);
+	gSetBndSlices(ini, phi, mpiInfo);
 
 	//Set mgSolve
 	//MgAlgo mgAlgo = getMgAlgo(ini);
