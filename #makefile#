@@ -6,19 +6,17 @@
 
 CC		= mpicc
 COPT	= -O3
-DOPT 	= -O0
 
 CLOCAL = 	-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 -lfftw3
+			-lm -lgsl -lblas -lhdf5
 LLOCAL =	-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 -lfftw3
+			-lm -lgsl -lblas -lhdf5
 
 -include local.mk
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
 CFLAGS	= -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
-DFLAGS 	= $(DOPT) -fno-eliminate-unused-debug-symbols -std=c11 -Wall $(CLOCAL) $(CADD) #flags for debugging
 LFLAGS	= -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
 
 SDIR	= src
@@ -30,9 +28,8 @@ TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h collisions.h spectral.h units.h
-SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c collisions.c spectral.c units.c
-
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h collisions.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c collisions.c
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox
 
@@ -56,8 +53,6 @@ LIBHEAD = $(patsubst %,$(LDIR)/%,$(LIBHEAD_))
 
 all: version $(EXEC) cleantestdata doc
 
-debug: version $(EXEC).debug
-
 local: version $(EXEC).local cleantestdata doc
 
 test: version $(EXEC).test cleantestdata doc
@@ -80,11 +75,6 @@ $(EXEC): $(ODIR)/main.o $(OBJ) $(LIBOBJ)
 	@$(CC) $^ -o $@ $(LFLAGS)
 	@echo "PINC is built"
 
-$(EXEC).debug: $(ODIR)/main.local.o $(OBJ) $(LIBOBJ)
-	@echo "Linking PINC"
-	@$(CC) $^ -o $(EXEC) $(DFLAGS)
-	@echo "PINC debug version is built"
-
 $(ODIR)/%.o: $(SDIR)/%.c $(HEAD)
 	@echo "Compiling $<"
 	@echo $(HEAD) | xargs -n1 ./aux/check.sh
@@ -97,7 +87,7 @@ $(TODIR)/%.o: $(TSDIR)/%.c $(HEAD) $(TESTHEAD)
 	@echo $(TESTHEAD) | xargs -n1 ./aux/check.sh
 	@mkdir -p $(TODIR)
 	@./aux/check.sh $<
-	@$(CC) -c $< -o $@ -Isrc $(CFLAGS)
+	@$(CC) -c $< -o $@ -Isrc $(CFLAGS) 
 
 $(LDIR)/iniparser/libiniparser.a: $(LIBHEAD)
 	@echo "Building iniparser"
@@ -130,14 +120,10 @@ cleandoc:
 cleantestdata:
 	@echo "Cleaning test data"
 	@mv data/obj.grid.h5 data/temp 2> /dev/null || true
-	@rm -f data/*.h5 data/parsedump.txt CollisionDump.txt
+	@rm -f data/*.h5 data/parsedump.txt
 	@mv data/temp data/obj.grid.h5 2> /dev/null || true
 
 clean: cleandoc cleantestdata
-	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
-	@rm -f *~ $(TODIR)/*.o $(ODIR)/*.o $(SDIR)/*.o $(SDIR)/*~ gmon.out ut
-
-janclean:
 	@echo "Cleaning compilation files (run \"make veryclean\" to clean more)"
 	@rm -f *~ $(TODIR)/*.o $(ODIR)/*.o $(SDIR)/*.o $(SDIR)/*~ gmon.out ut
 

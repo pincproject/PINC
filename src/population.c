@@ -18,21 +18,6 @@
 #include "iniparser.h"
 
 
-/******************************************************************************
- * DECLARING LOCAL FUNCTIONS
- *****************************************************************************/
-
-/**
- * @brief	Sets normalization parameters in Population
- * @param	ini				Dictionary to input file
- * @param	pop[in,out]		Population
- *
- * Normalizes charge and mass and sets specie-specific renormalization
- * parameters in Population.
- *
- */
-static void pSetNormParams(const dictionary *ini, Population *pop);
-
 
 
 /******************************************************************************
@@ -151,6 +136,10 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	pop->objVicinity = malloc(iStart[nSpecies]*sizeof(long int));
 	pop->collisions = malloc(iStart[nSpecies]*sizeof(long int)); //malloc(sizeof pop->collisions)
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureX = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureY = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureZ = malloc((nSpecies+1)*sizeof(double));
+	pop->TemperatureTot = malloc((nSpecies+1)*sizeof(double));
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
@@ -169,6 +158,10 @@ void pFree(Population *pop){
 	free(pop->vel);
 	free(pop->kinEnergy);
 	free(pop->potEnergy);
+	free(pop->TemperatureX);
+	free(pop->TemperatureY);
+	free(pop->TemperatureZ);
+	free(pop->TemperatureTot);
 	free(pop->iStart);
 	free(pop->iStop);
 	free(pop->objVicinity);
@@ -454,6 +447,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
+		velTh = velTh;
 
 		for(long int i=iStart;i<iStop;i++){
 
@@ -875,6 +869,39 @@ void pVelZero(Population *pop){
 	}
 }
 
+void pVelConstant(const dictionary *ini, Population *pop, double constant1, double constant2){
+
+	//test function. takes only two species
+	int nDims = pop->nDims;
+	//int nSpecies = pop->nSpecies;
+	//double timeStep = iniGetDouble(ini,"time:timeStep");
+	//double stepSize = iniGetDouble(ini,"grid:stepSize");
+
+	long int iStart1 = pop->iStart[0];
+	long int iStop1 = pop->iStop[0];
+	long int iStart2 = pop->iStart[1];
+	long int iStop2 = pop->iStop[1];
+
+	for(long int i=iStart1;i<iStop1;i++){
+		//for(int d=0;d<nDims;d++){
+			//pop->vel[i*nDims] = constant1;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant1;
+			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
+		}
+		//}
+	}
+	for(long int i=iStart2;i<iStop2;i++){
+		//for(int d=0;d<nDims;d++){
+			//pop->vel[i*nDims] = constant2;
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = constant2;
+			//	msg(STATUS, "vel %i = %f", d, pop->vel[i*nDims+d]);
+		}
+
+	}
+}
+
 void pNew(Population *pop, int s, const double *pos, const double *vel){
 
 	int nDims = pop->nDims;
@@ -891,6 +918,8 @@ void pNew(Population *pop, int s, const double *pos, const double *vel){
 			pop->pos[p+d] = pos[d];
 			pop->vel[p+d] = vel[d];
 		}
+
+
 		iStop[s]++;
 
 	}
@@ -1141,24 +1170,81 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop){
 	}
 }
 
-void pWriteEnergy(hid_t xy, Population *pop, double x){
+void pCreateTemperatureDatasets(hid_t xy, Population *pop){
 
 	char name[64];
 	int nSpecies = pop->nSpecies;
 
+	for(int s=0;s<nSpecies;s++){
+		sprintf(name,"/energy/TemperatureTot/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureX/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureY/specie %i",s);
+		xyCreateDataset(xy,name);
+
+		sprintf(name,"/energy/TemperatureZ/specie %i",s);
+		xyCreateDataset(xy,name);
+	}
+}
+
+void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units){
+
+	char name[64];
+	int nSpecies = pop->nSpecies;
+
+	double denorm = units->energy;
+
 	sprintf(name,"/energy/potential/total");
-	xyWrite(xy,name,x,pop->potEnergy[nSpecies],MPI_SUM);
+	xyWrite(xy,name,x,denorm*pop->potEnergy[nSpecies],MPI_SUM);
 
 	sprintf(name,"/energy/kinetic/total");
-	xyWrite(xy,name,x,pop->kinEnergy[nSpecies],MPI_SUM);
+	xyWrite(xy,name,x,denorm*pop->kinEnergy[nSpecies],MPI_SUM);
 
 	for(int s=0; s<nSpecies; s++){
 
 		sprintf(name,"/energy/potential/specie %i",s);
-		xyWrite(xy,name,x,pop->potEnergy[s],MPI_SUM);
+		xyWrite(xy,name,x,denorm*pop->potEnergy[s],MPI_SUM);
 
 		sprintf(name,"/energy/kinetic/specie %i",s);
-		xyWrite(xy,name,x,pop->kinEnergy[s],MPI_SUM);
+		xyWrite(xy,name,x,denorm*pop->kinEnergy[s],MPI_SUM);
+	}
+
+}
+
+void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictionary *ini){
+
+	// Temperature instead of kinetic energy
+	double k_b = 1.38064852e-23;
+
+	char name[64];
+	int nSpecies = pop->nSpecies;
+	double denorm = units->energy;
+	int nDims = pop->nDims;
+	int *nSubdomains = iniGetIntArr(ini,"grid:nSubdomains",nDims);
+	int nProcs = nSubdomains[0]*nSubdomains[1]*nSubdomains[2];
+	//msg(STATUS,"nsudims = %i",nSubdomains[2]);
+	//long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+
+	for(int s=0; s<nSpecies; s++){
+		//msg(STATUS,"s = %i, Tx =%f, Tt = %f",s,pop->TemperatureX[s],pop->TemperatureTot[s]);
+		sprintf(name,"/energy/TemperatureTot/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureTot[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+		//msg(STATUS, " nprocs = %i temp = %f",nProcs,(denorm*pop->TemperatureX[s]/(nProcs*units->weights[s]*k_b)));
+		// sprintf(name,"/energy/kinetic/specie %i",s);
+		// xyWrite(xy,name,x,denorm*pop->kinEnergy[s]/(nParticles[s]*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureX/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureX[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureY/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureY[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
+		sprintf(name,"/energy/TemperatureZ/specie %i",s);
+		xyWrite(xy,name,x,denorm*pop->TemperatureZ[s]/(nProcs*units->weights[s]*k_b),MPI_SUM);
+
 	}
 
 }

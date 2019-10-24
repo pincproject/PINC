@@ -12,7 +12,7 @@ start = 400
 for i in range(start,200000,1):
 	dataset = h5["/n=%.1f"%i]
 	data = np.squeeze(dataset)
-	data = data[:,:,32]#np.average(data,axis=0)
+	data = data[32,:,:]#np.average(data,axis=0)
 	if i==start:
 		p = plt.imshow(data)
 		fig = plt.gcf()
@@ -23,4 +23,4 @@ for i in range(start,200000,1):
 		p.set_data(data)
 		plt.title("Charge density, t=%i"%i);
 
-	plt.pause(0.1)
+	plt.pause(100)

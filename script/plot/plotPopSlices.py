@@ -50,7 +50,7 @@ filePopX = h5py.File('../../data/pop.pop.h5', 'r')
 #rhoY = np.transpose(rhoY,(0,2,1))
 #rhoY = np.squeeze(rhoY)
 
-popX = filePopX['/pos/specie 0/n=4.0']
+popX = filePopX['/pos/specie 0/n=1.0']
 pop = popX
 
 #popTemp = []
@@ -64,13 +64,13 @@ pop = popX
 popTemp = []
 
 for i in range(pop.shape[0]):
-	if pop[i,2] < 15 and  pop[i,2] >11: # slice 2 to 6
+	if pop[i,0] < 15 and  pop[i,0] >11: # slice 2 to 6
 		popTemp.append(pop[i,:])
 
 pop = np.array(popTemp)
 
-x = pop[:,0]
-y = pop[:,1]
+x = pop[:,1]
+y = pop[:,2]
 
 fig = plt.figure()
 

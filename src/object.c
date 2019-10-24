@@ -122,15 +122,15 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     }
 
     for (long int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
-        if (obj->domain->val[i]>0.5 && !isGhostNode(obj->domain, i)){
+        if (obj->domain->val[i]>0.5 ){ //&& !isGhostNode(obj->domain, i)
             lookupInteriorOffset[(int)(obj->domain->val[i]+0.5)]++;
         }
     }
 
     alCumSum(lookupInteriorOffset+1,lookupInteriorOffset,nObjects);
     // Initialise and compute the lookup table.
-    long int *lookupInterior = malloc( (lookupInteriorOffset[nObjects]+1)*sizeof(*lookupInterior) );
-    alSetAll(lookupInterior,lookupInteriorOffset[nObjects+1],0);
+    long int *lookupInterior = malloc( (lookupInteriorOffset[nObjects])*sizeof(*lookupInterior) );
+    alSetAll(lookupInterior,lookupInteriorOffset[nObjects],0);
 
     long int *index = malloc((nObjects)*sizeof(*index));
     for (long int i=0; i<nObjects; i++) {
@@ -138,13 +138,12 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     }
 
     for (long int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
-        if (obj->domain->val[i]>0.5 && !isGhostNode(obj->domain, i)){
+        if (obj->domain->val[i]>0.5 ){ //&& !isGhostNode(obj->domain, i)
             lookupInterior[(index[(int)(obj->domain->val[i]+0.5)-1])] = i;
             (index[(int)(obj->domain->val[i]+0.5)-1])++;
-
         }
     }
-
+    //alPrint(lookupInterior,(lookupInteriorOffset[nObjects]) );
     // Add to the object.
     //obj->nObjects = nObjects;
     obj->lookupInterior = lookupInterior;
@@ -155,7 +154,8 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
 }
 
 
-long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo){
+long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc, \
+  long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo){
 
 
   int size = mpiInfo->mpiSize;
@@ -164,7 +164,7 @@ long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGl
 
       long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
 
-      //printf("nodesThisCore = %li \n",nodesThisCore);
+      printf("rank = %i nodesThisCore = %li \n",mpiInfo->mpiRank,nodesThisCore);
       // Let every core know how many surface nodes everybody has.
       MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
 
@@ -456,7 +456,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 if (val[myNB[8]]>(a+0.5) && val[myNB[8]]<(a+1.5)) d++;
 
                 // Check if on surface.
-                if (d<7.5 && d>0) {
+                if (d<7.5 && d>0) { //val[myNB[0]]>(a+0.5) &&
                     lookupSurfaceOffset[a+1]++;
 
                 }
@@ -469,8 +469,8 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
 
     // Initialise and compute the lookup table.
-    long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects]+1)*sizeof(*lookupSurface));
-    alSetAll(lookupSurface,lookupSurfaceOffset[obj->nObjects]+1,0);
+    long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*sizeof(*lookupSurface));
+    alSetAll(lookupSurface,lookupSurfaceOffset[obj->nObjects],0);
 
     long int *index = malloc((obj->nObjects)*sizeof(*index));
     for (long int i=0; i<obj->nObjects; i++) {
@@ -502,9 +502,10 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 if (val[myNB[8]]>(a+0.5) && val[myNB[8]]<(a+1.5)) d++;
 
                 // Check if on surface.
-                if (d<7.5 && d>0) {
+                if (d<7.5 && d>0) { //val[myNB[0]]>(a+0.5) &&
                     lookupSurface[index[a]] = myNB[0];
                     index[a]++;
+                    //printf("indexing %li, MAX: %li \n",index[a],lookupSurfaceOffset[obj->nObjects]+1);
                 }
 
 
@@ -513,6 +514,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     }
     //printf("lookup surface done \n");
     // Add to object.
+    //alPrint(lookupSurface,(lookupSurfaceOffset[obj->nObjects]+1));
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
 
@@ -667,10 +669,6 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     //printf("obj->nObjects*(size+1) = %li \n",obj->nObjects*(size+1));
     //alPrint(nodCorGlob,obj->nObjects*(size+1));
     //alPrint(nodCorLoc,(size+1));
-
-
-
-
 
     //double invNrSurfNod = 1.0/(obj->lookupSurfaceOffset[obj->nObjects]);
     double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
@@ -934,6 +932,10 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
 		oReadH5(obj, mpiInfo);
     //oCloseH5(obj);
+    //Communicate the boundary nodes
+		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+
+
     //obj->nObjects
     //obj->lookupInterior
     //obj->lookupInteriorOffset
@@ -1531,7 +1533,8 @@ void oMode(dictionary *ini){
 												puAccND1_set,
 												puAccND1KE_set,
 												puAccND0_set,
-												puAccND0KE_set);
+												puAccND0KE_set,
+                        puBoris3D1KETEST_set);
 
 	void (*distr)() 			= select(ini,	"methods:distr",
 												puDistr3D1_set,
@@ -1573,7 +1576,7 @@ void oMode(dictionary *ini){
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
   // Setting Boundary slices
-  gSetBndSlices(phi, mpiInfo);
+  gSetBndSlices(ini, phi, mpiInfo);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1596,8 +1599,7 @@ void oMode(dictionary *ini){
 		//oReadH5(obj->domain, mpiInfo, "Object");
 
     //msg(STATUS,"done");
-		//Communicate the boundary nodes -> DON'T DO THIS HERE!
-		//gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+
 
 		//Count the number of objects and fill the lookup tables.
     //msg(STATUS,"filling lookup table");
@@ -1671,10 +1673,21 @@ void oMode(dictionary *ini){
 	gMul(E, -1.);
 
 
-	// Advance velocities half a step
-	gMul(E, 0.5);
-	acc(pop, E);
+  //Boris parameters
+  int nSpecies = pop->nSpecies;
+	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
+	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
+
+  // add External E
+	//gZero(E); // for testing Boris
+	//gAddTo(Ext); //needs grid definition of Eext
+  puAddEext(ini, pop, E); // adds same value to whole grid
+
+  gMul(E, 0.5);
+	puGet3DRotationParameters(ini, T, S, 0.5);
+	acc(pop, E, T, S);
 	gMul(E, 2.0);
+	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	/*
 	 * TIME LOOP
@@ -1724,7 +1737,7 @@ void oMode(dictionary *ini){
 
 
         // Keep writing Rho here.
-        //gWriteH5(rhoObj, mpiInfo, (double) n);
+        gWriteH5(rhoObj, mpiInfo, (double) n);
         // Add object charge to rho.
         gAddTo(rho, rhoObj);
         gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
@@ -1750,11 +1763,13 @@ void oMode(dictionary *ini){
 
 		//gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
-		// gAddTo(Ext);
-        // How about external B?
+    //gZero(E);
+    //gAddTo(Ext); //needs grid definition of Eext
+    puAddEext(ini, pop, E); // adds same value to whole grid
 
 		// Accelerate particle and compute kinetic energy for step n
-		acc(pop, E);
+		//acc(pop, E);
+    acc(pop, E, T, S);
 
 		tStop(t);
 
@@ -1767,14 +1782,15 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=400){
+		if(n>=0){
 		//Write h5 files
-    	    gWriteH5(E, mpiInfo, (double) n);
+    	//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
+
 			gWriteH5(phi, mpiInfo, (double) n);
-		    //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		  //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
-		pWriteEnergy(history,pop,(double)n);
+		pWriteEnergy(history,pop,(double)n,units);
 	}
 
 	if(mpiInfo->mpiRank==0) {

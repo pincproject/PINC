@@ -76,6 +76,8 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 void pVelSet(Population *pop, const double *vel);
 
 void pVelZero(Population *pop);
+void pVelConstant(const dictionary *ini, Population *pop, double constant1, \
+   double constant2);
 
 void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
 void pVelAssertMax(const Population *pop, double max);
@@ -239,6 +241,8 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo);
  */
 void pCreateEnergyDatasets(hid_t xy, Population *pop);
 
+void pCreateTemperatureDatasets(hid_t xy, Population *pop);
+
 /**
  * @brief Writes energies to .xy.h5-file
  * @param	xy		.xy.h5-identifier
@@ -255,7 +259,12 @@ void pCreateEnergyDatasets(hid_t xy, Population *pop);
  * energy for all species. In the former case, the total energy can be obtained
  * simply by addition during post-processing.
  */
-void pWriteEnergy(hid_t xy, Population *pop, double x);
+void pWriteEnergy(hid_t xy, Population *pop, double x,Units *units);
+
+/**
+ * Same as pWriteEnergy except temperature instead of kinetic energy.
+ */
+void pWriteTemperature(hid_t xy, Population *pop, double x,Units *units,dictionary *ini);
 
 /*
 Finding particles in population close to object, discards
