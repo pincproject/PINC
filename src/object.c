@@ -707,6 +707,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
                         //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
                         //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
                         pCut(pop, s, pIndex, pop->pos, pop->vel);
+                        msg(STATUS, "Cut particle number %i during oCollectObjectCharge", pIndex);
                         cutNumber += 1;
                         //msg(STATUS,"iStop = %li",iStop);
                         iStop--;
@@ -833,9 +834,7 @@ void oParticleCollision(Population *pop, const Object *obj, long int n){
 
     msg(WARNING, "Particle/Object collision not yet implemented!");
     
-    funPtr collType;
-
-    collType = pFindCollisionType(pop, obj, n);
+    funPtr collType = pFindCollisionType(pop, obj, n);
     collType(pop);
 
 
@@ -847,29 +846,50 @@ void oParticleCollision(Population *pop, const Object *obj, long int n){
 //3 object surface nodes needed to compute normal from cross product of surface vectors
 double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId){
 
-    double *pos;
-    for(int i=0; i<3; i++){
-        pos[i] = pop->pos[3*particleId + i];
-    }
+    //initializations
+    double *nearest;
+
+    //particle position
+    double *pos = &pop->pos[3*particleId];
 
 
-    return pos;
+    return nearest;
 
 }
 
-bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
+double *oParticleIntersection(Population *pop, long int particleId, Object *obj, 
+                           const MpiInfo *mpiInfo){
+
+    //initialize
+    bool collide;
+    double *intersect = 0;
+    double *normal = 0;
+    double *node1to2; 
+    double *node1to3;
 
     //find nearest nodes
-    double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
+    pToGlobalFrame(pop, mpiInfo);
+    double *nearest = oFindNearestSurfaceNodes(pop, obj, particleId);
 
-    nearest += 0;
-    return false;
+    //vectors between the nearest object nodes
+    adSub(nearest, nearest+3, node1to2, 3);
+    adSub(nearest, nearest+6, node1to3, 3);
+
+    adNormal(nearest, nearest+3, normal, 3);
+    collide = oFindIntersectPoint(pop, particleId, normal, nearest, intersect);
+    
+    if(collide==true) {
+        msg(STATUS, "Particle %i will intersect at (%.2f,%.2f,%.2f) \n", particleId,
+            *intersect, *(intersect+1), *(intersect+2));
+    }
+
+    return intersect;
 }
 
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
 //implementation based on https://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
-void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
+bool oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
      double *surfPoint, double *intersect){
 
         double *w;
@@ -880,7 +900,8 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
         int ndotu = adDotProd(vel,surfNormal,3);
 
         if(ndotu < epsilon){
-            msg(ERROR, "Particle %i, will not collide with any object next timestep!", id);
+            msg(WARNING, "Particle %i, will not collide with any object next timestep!", id);
+            return false;
         }
         adSub(pos, surfPoint, w, 3);
 
@@ -891,6 +912,8 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
         adAdd(surfPoint,Psi,Psi,3);
 
         for(int i=0; i<pop->nDims;i++) intersect[i]=Psi[i];
+
+        return true;
 }
 
 /*****************************************************************************
