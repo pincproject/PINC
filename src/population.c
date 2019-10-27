@@ -983,6 +983,10 @@ void pReflect(Population *pop, const Object *obj, long int n){
 
 }
 
+void pPhotoElectron(Population *pop, const Object *obj, long int n){
+	msg(WARNING, "photoelectron function not yet implemented!");
+}
+
 void pAdhere(Population *pop, const Object *obj, long int n){
 
 	msg(WARNING, "Adhesion function not yet implemented!");

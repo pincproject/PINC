@@ -342,6 +342,14 @@ void gSquare(Grid *grid);
 long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo);
 
 /**
+ * @brief   Returns global location of a node in a 3D grid
+ * @param	grid		Grid
+ * @param   mpiInfo 	MpiInfo
+ * @param   p			long int
+ * @return	location	i,j,k values of node location
+ */
+double *gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p)
+/**
  * @brief Performs a central space finite difference on a grid
  * @param 	scalar 	Value to do the finite differencing on
  * @return	field	Field returned after derivating

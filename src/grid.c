@@ -1729,6 +1729,19 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 	}
 }
 
+//computes location of node p globally in a 3D grid
+double *gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p){
+	
+	double *location;
+	long *sizeprod = grid->sizeProd;
+	int k = (int)(p / sizeprod[3]);
+	int j = (int)(p/sizeprod[2] - k*sizeprod[3]/sizeprod[2]);
+	int i = (int)(p/sizeprod[1] - j*sizeprod[2]/sizeprod[1] - k*sizeprod[3]/sizeprod[1]);
+
+	location[0] = i; location[1] = j; location[2] = k;
+	return location;
+}
+
 /**************************************************************
 *			TEMP, to reading of h5 files are ready
 *************************************************************/
