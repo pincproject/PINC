@@ -944,7 +944,9 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     int nObjects = 0;
     for (int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
         if (obj->domain->val[i]>nObjects) {
-            nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
+            
+            nObjects = (int)(floor(obj->domain->val[i])); // .5 will be used for dielectric objects
+            //nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
                 //the number of objects, but rather the identifier of the object with the highest number.
                 //Feel free to implement something more fancy here...
         }
