@@ -378,6 +378,10 @@ void alCumSum(const long int *a, long int *res, long int n){
 	for(long int i=0;i<n;i++) res[i+1]=res[i]+a[i];
 }
 
+void bSetAll(bool *a, long int n, bool value){
+	for(long int i=0;i<n;i++) a[i] = value;
+}
+
 void adSetAll(double *a, long int n, double value){
 	for(long int i=0;i<n;i++) a[i] = value;
 }
@@ -427,6 +431,11 @@ void alSet(long int *a, long int n, ...){
 	}
 
 	va_end(args);
+}
+
+void adCopy(double *a, double *b, long int n){
+
+	for(long int i=0; i<n; i++) b[i] = a[i];
 }
 
 void adPrintInner(double *a, long int inc, long int end, char *varName){

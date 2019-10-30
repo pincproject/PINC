@@ -276,6 +276,8 @@ void ailCumSum(const int *a, long int *res, long int n);
 /// result is of lenght n+1 in this case.
 void alCumSum(const long int *a, long int *res, long int n);
 ///@brief Sets all elements in array to 'value'
+void bSetAll(bool *a, long int n, bool value);
+///@brief Sets all elements in array to 'value'
 void adSetAll(double *a, long int n, double value);
 ///@brief Sets all elements in array to 'value'
 void aiSetAll(int *a, long int n, int value);
@@ -287,6 +289,8 @@ void adSet(double *a, long int n, ...);
 void aiSet(int *a, long int n, ...);
 ///@brief Set n elements in array manually, e.g. adSet(a,5,1.,2.,3.,4.,5.);
 void alSet(long int *a, long int n, ...);
+///@brief copy array a into array b
+void adCopy(double *a, double *b, long int n);
 ///@brief See adPrint(). varName is the name to output for the variable.
 void adPrintInner(double *a, long int inc, long int end, char *varName);
 ///@brief See aiPrint(). varName is the name to output for the variable.

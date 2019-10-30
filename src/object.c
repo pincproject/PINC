@@ -742,13 +742,13 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
 
 
-//stores index of particles that are close to an object at the current timestep
+//sets true or false for pop->objVicinity[i] depending on whether particle i is close or not 
 void oVicinityParticles(Population *pop, Object *obj){
 
 	double *val = obj->domain->val;
 	int nSpecies = pop->nSpecies;
-	int counter = 0;
 	long int *sizeProd = obj->domain->sizeProd;
+    bSetAll(pop->objVicinity);
 
 	for(int s=0; s < nSpecies; s++) {
 
@@ -780,8 +780,7 @@ void oVicinityParticles(Population *pop, Object *obj){
 			int sum = val[p]+val[pj]+val[pk]+val[pjk]+val[pl]+val[pjl]+val[pkl]+val[pjkl];
 
 			if(sum < 16 && sum > 0){
-				pop->objVicinity[counter] = i;
-				counter++;
+				pop->objVicinity[3*i] = true;
 			}
 		}
 	}
@@ -797,8 +796,7 @@ void oFindParticleCollisions(Population *pop, Object *obj){
     oVicinityParticles(pop, obj);
     long int *vicinity = pop->objVicinity;
     long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
-    long int counter = 0;
-    alSetAll(pop->collisions, nCloseParticles, 0);
+    bSetAll(pop->collisions, nCloseParticles, false);
 
 
     for(int i=0;i<nCloseParticles;i++){
@@ -819,24 +817,43 @@ void oFindParticleCollisions(Population *pop, Object *obj){
         for (long int a=0; a<obj->nObjects; a++) {
             for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                 if ((obj->lookupInterior[b])==p) {
-                    pop->collisions[counter] = p; // CHECK THIS: p is particle position, not index. The index is 3*i, or nDims*i
-                    counter++;
+                    pop->collisions[3*i] = true;
                 }
             }
         }
     }
 }
 
-//Moves a particle according to the type of collision, also creates and removes new particles
-void oParticleCollision(Population *pop, const Object *obj, long int n){
+//moves all particles according to the type of collision, also creates and removes new particles
+void oParticleCollision(Population *pop, const Object *obj){
+
+    int nSpecies = pop->nSpecies;
+	int nDims = pop->nDims;
+	double *pos = pop->pos;
+	double *vel = pop->vel;
+    long int nCollisions = 0;
 
     msg(WARNING, "Particle/Object collision not yet implemented!");
-    
-    funPtr collType = pFindCollisionType(pop, obj, n);
-    collType(pop);
+    oVicinityParticles(pop, obj);
+    oFindParticleCollisions(pop, obj);
 
 
-    //collisionType();
+    for(int s=0; s<nSpecies; s++){
+
+        long int pStart = pop->iStart[s]*nDims;
+        long int pStop = pop->iStop[s]*nDims;
+
+        for(long int p=pStart;p<pStop;p++){
+
+            if(pop->collisions[p] == true){
+                funPtr collType = pFindCollisionType(pop, obj, p);
+                collType(pop);
+            }
+            else{
+                pos[p] += vel[p];
+            }  
+        }
+    }
 }
 
 
@@ -862,8 +879,8 @@ double *oParticleIntersection(Population *pop, long int particleId, Object *obj,
     bool collide;
     double *intersect = 0;
     double *normal = 0;
-    double *node1to2; 
-    double *node1to3;
+    double *node1to2; //surface node vector from 1,2
+    double *node1to3; //surface node vector from 1,2
 
     //find nearest nodes
     pToGlobalFrame(pop, mpiInfo);
@@ -1714,9 +1731,8 @@ void oMode(dictionary *ini){
 		tStart(t);
 
 		// Move particles
-		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
-		puMove(pop); //puMove(pop, obj); Do not change functions such that PINC does
-    // not work in other run modes!
+		puMove(pop);
+        oParticleCollision(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);

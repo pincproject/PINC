@@ -154,14 +154,14 @@ to the object
 */
 void oVicinityParticles(Population *pop, Object *obj);
 
-//determines if particle will collide
+
 double *oParticleIntersection(Population *pop, long int particleId, Object *obj, 
                           const MpiInfo *mpiInfo);
 
-//"collides" a single particle based on collision type
-void oParticleCollision(Population *pop, const Object *obj, long int i);
+//"collides" all particles based on collision type
+void oParticleCollision(Population *pop, const Object *obj);
 
-//determines collision type, then moves particle accordingly
+//Populates pop->collisions
 void oFindParticleCollisions(Population *pop, Object *obj);
 
 /**

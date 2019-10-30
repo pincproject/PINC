@@ -133,8 +133,8 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	pop->nDims = nDims;
 	pop->iStart = iStart;
 	pop->iStop = iStop;
-	pop->objVicinity = malloc(iStart[nSpecies]*sizeof(long int));
-	pop->collisions = malloc(iStart[nSpecies]*sizeof(long int)); //malloc(sizeof pop->collisions)
+	pop->objVicinity = malloc(iStart[nSpecies]*sizeof(bool));
+	pop->collisions = malloc(iStart[nSpecies]*sizeof(bool));
 	pop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->TemperatureX = malloc((nSpecies+1)*sizeof(double));
 	pop->TemperatureY = malloc((nSpecies+1)*sizeof(double));
@@ -983,7 +983,7 @@ void pReflect(Population *pop, const Object *obj, long int n){
 
 }
 
-void pPhotoElectron(Population *pop, const Object *obj, long int n){
+void pPhotoElectron(Population *pop, const Object *obj){
 	msg(WARNING, "photoelectron function not yet implemented!");
 }
 
