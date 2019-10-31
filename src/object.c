@@ -747,8 +747,9 @@ void oVicinityParticles(Population *pop, Object *obj){
 
 	double *val = obj->domain->val;
 	int nSpecies = pop->nSpecies;
+    long int nParticles = sizeof(pop->objVicinity)/sizeof(pop->objVicinity[0]);
 	long int *sizeProd = obj->domain->sizeProd;
-    bSetAll(pop->objVicinity);
+    bSetAll(pop->objVicinity,nParticles,false);
 
 	for(int s=0; s < nSpecies; s++) {
 
@@ -780,7 +781,7 @@ void oVicinityParticles(Population *pop, Object *obj){
 			int sum = val[p]+val[pj]+val[pk]+val[pjk]+val[pl]+val[pjl]+val[pkl]+val[pjkl];
 
 			if(sum < 16 && sum > 0){
-				pop->objVicinity[3*i] = true;
+				pop->objVicinity[i] = true;
 			}
 		}
 	}
@@ -792,40 +793,40 @@ void oFindParticleCollisions(Population *pop, Object *obj){
 
     long int *lookupIntOff = obj->lookupInteriorOffset;
     long int *sizeProd = obj->domain->sizeProd;
-
-    oVicinityParticles(pop, obj);
     long int *vicinity = pop->objVicinity;
-    long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
-    bSetAll(pop->collisions, nCloseParticles, false);
+    long int nParticles = sizeof(vicinity) / sizeof(vicinity[0]);
+    bSetAll(pop->collisions, nParticles, false);
 
 
-    for(int i=0;i<nCloseParticles;i++){
+    for(int i=0;i<nParticles;i++){
 
-        double *pos = &pop->pos[3*i];
-        double *vel = &pop->vel[3*i];
-        double *nextPos;
-        adAdd(pos,vel,nextPos,3);
+        if(vicinity[i] == true){          
+            double *pos = &pop->pos[3*i];
+            double *vel = &pop->vel[3*i];
+            double *nextPos;
+            adAdd(pos,vel,nextPos,3);
 
-        // Integer parts of position in next time step
-        int j = (int) nextPos[0];
-        int k = (int) nextPos[1];
-        int l = (int) nextPos[2];
+            // Integer parts of position in next time step
+            int j = (int) nextPos[0];
+            int k = (int) nextPos[1];
+            int l = (int) nextPos[2];
 
-        long int p = j + k*sizeProd[2] + l*sizeProd[3];
+            long int p = j + k*sizeProd[2] + l*sizeProd[3];
 
-        // Check whether p is one of the object nodes
-        for (long int a=0; a<obj->nObjects; a++) {
-            for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
-                if ((obj->lookupInterior[b])==p) {
-                    pop->collisions[3*i] = true;
+            // Check whether p is one of the object nodes
+            for (long int a=0; a<obj->nObjects; a++) {
+                for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+                    if ((obj->lookupInterior[b])==p || obj->lookupSurface[b] == p) {
+                        pop->collisions[3*i] = true;
+                    }
                 }
             }
         }
     }
 }
 
-//moves all particles according to the type of collision, also creates and removes new particles
-void oParticleCollision(Population *pop, const Object *obj){
+//moves all old and new particles according to the type of collision
+void oObjectParticleInteraction(Population *pop, const Object *obj){
 
     int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
@@ -833,8 +834,8 @@ void oParticleCollision(Population *pop, const Object *obj){
 	double *vel = pop->vel;
     long int nCollisions = 0;
 
-    msg(WARNING, "Particle/Object collision not yet implemented!");
     oVicinityParticles(pop, obj);
+    msg(STATUS, "Particle/Object collision not yet implemented!");
     oFindParticleCollisions(pop, obj);
 
 
@@ -872,63 +873,49 @@ double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int pa
 
 }
 
-double *oParticleIntersection(Population *pop, long int particleId, Object *obj, 
-                           const MpiInfo *mpiInfo){
-
-    //initialize
-    bool collide;
-    double *intersect = 0;
-    double *normal = 0;
-    double *node1to2; //surface node vector from 1,2
-    double *node1to3; //surface node vector from 1,2
-
-    //find nearest nodes
-    pToGlobalFrame(pop, mpiInfo);
-    double *nearest = oFindNearestSurfaceNodes(pop, obj, particleId);
-
-    //vectors between the nearest object nodes
-    adSub(nearest, nearest+3, node1to2, 3);
-    adSub(nearest, nearest+6, node1to3, 3);
-
-    adNormal(nearest, nearest+3, normal, 3);
-    collide = oFindIntersectPoint(pop, particleId, normal, nearest, intersect);
-    
-    if(collide==true) {
-        msg(STATUS, "Particle %i will intersect at (%.2f,%.2f,%.2f) \n", particleId,
-            *intersect, *(intersect+1), *(intersect+2));
-    }
-
-    return intersect;
-}
 
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
 //implementation based on https://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
-bool oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
-     double *surfPoint, double *intersect){
+double *oFindIntersectPoint(const Population *pop, long int id, Object *obj, 
+                           const MpiInfo *mpiInfo){
 
         double *w;
         double epsilon = 1e-6;
         double *pos = &pop->pos[3*id];
         double *vel = &pop->vel[3*id];
-        double *Psi = vel;
-        int ndotu = adDotProd(vel,surfNormal,3);
+        double *Psi = 0;
+        double *intersect = 0;
+        double *normal = 0;
+        double *node1to2; //surface node vector from 1,2
+        double *node1to3; //surface node vector from 1,2
+
+        //find nearest nodes
+        pToGlobalFrame(pop, mpiInfo);
+        double *nearest = oFindNearestSurfaceNodes(pop, obj, id);
+
+        //vectors between the nearest object nodes
+        adSub(nearest, nearest+3, node1to2, 3);
+        adSub(nearest, nearest+6, node1to3, 3);
+
+        adNormal(nearest, nearest+3, normal, 3);
+        int ndotu = adDotProd(vel,normal,3);
 
         if(ndotu < epsilon){
             msg(WARNING, "Particle %i, will not collide with any object next timestep!", id);
-            return false;
         }
-        adSub(pos, surfPoint, w, 3);
+        
+        adSub(pos, nearest, w, 3);
 
         //Compute intersection
-        double si = -1.*(double) adDotProd(surfNormal,w,3) / (double) ndotu;
+        double si = -1.*(double) adDotProd(normal,w,3) / (double) ndotu;
         adScale(Psi,3,si);
         adAdd(w,Psi,Psi,3);
-        adAdd(surfPoint,Psi,Psi,3);
+        adAdd(nearest,Psi,Psi,3);
 
         for(int i=0; i<pop->nDims;i++) intersect[i]=Psi[i];
 
-        return true;
+        return intersect;
 }
 
 /*****************************************************************************
@@ -1732,7 +1719,7 @@ void oMode(dictionary *ini){
 
 		// Move particles
 		puMove(pop);
-        oParticleCollision(pop, obj);
+        oObjectParticleInteraction(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);

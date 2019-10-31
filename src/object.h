@@ -154,10 +154,6 @@ to the object
 */
 void oVicinityParticles(Population *pop, Object *obj);
 
-
-double *oParticleIntersection(Population *pop, long int particleId, Object *obj, 
-                          const MpiInfo *mpiInfo);
-
 //"collides" all particles based on collision type
 void oParticleCollision(Population *pop, const Object *obj);
 
@@ -174,8 +170,8 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  *
  * Computes the local point a nearby particle with collide with an object
  */
-bool oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
-                        double *surfPoint, double *intersection);
+double *oFindIntersectPoint(const Population *pop, long int id, Object *obj, 
+                           const MpiInfo *mpiInfo);
 
 
 double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId);
