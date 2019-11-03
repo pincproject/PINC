@@ -277,7 +277,7 @@ void pVicinityParticles(Population *pop, const Object *obj);
 /*
 emits photoELectrons from object surface every timestep
 */
-void pPhotoElectron(Population *pop, const Object *obj);
+void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj, double *flux);
 
 /*
 Find Collision type is called during puMove; returns
@@ -285,7 +285,7 @@ pSecondaryElectron/pReflect/pAdhere
 */
 funPtr pFindCollisionType(Population *pop, Object *obj, long int n);
 void pSecondaryElectron(Population *pop, const Object *obj, long int n);
-void pReflect(Population *pop, const Object *obj, long int n);
+void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo *mpiInfo);
 void pAdhere(Population *pop, const Object *obj, long int n);
 
 #endif // POPULATION_H

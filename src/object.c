@@ -787,6 +787,31 @@ void oVicinityParticles(Population *pop, Object *obj){
 	}
 }
 
+long int *oSolFacingSurfaceNodes(Object *obj, const MpiInfo *mpiInfo){
+
+    msg(WARNING, "Function for finding Sun facing surface nodes not yet implemented");
+    long int *exposedNodes = malloc(sizeof(exposedNodes));
+    
+    int *rank = obj->domain->rank;
+    double *val = obj->domain->val;
+    double *size = obj->domain->size;
+    long int *sizeprod = obj->domain->sizeProd;
+
+    for(int i=0; i<size[0]; i++){
+        for(int j=0; j<size[1]; j++){
+            for(int k=0; k<size[2]; k++){
+
+                long int p = i*sizeprod[0] + j*sizeprod[1] + k*sizeprod[2];
+            }
+        }
+    }
+
+
+
+    obj->exposedNodes = exposedNodes;
+}
+
+
 //Relies on a courant number < 1 (otherwise particle might be inside object)
 //checks which particles in object vicinity will collide => overwrites pop->collisions
 void oFindParticleCollisions(Population *pop, Object *obj){
@@ -964,7 +989,7 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     oFillLookupTables(obj,mpiInfo);
 
     oFindObjectSurfaceNodes(obj, mpiInfo);
-
+    oSolFacingSurfaceNodes(obj, mpiInfo);
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
@@ -996,6 +1021,7 @@ void oFree(Object *obj){
     free(obj->capMatrixAll);
     free(obj->capMatrixAllOffsets);
     free(obj->capMatrixSum);
+
     free(obj);
 
 }

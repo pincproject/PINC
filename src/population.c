@@ -963,7 +963,7 @@ void pSecondaryElectron(Population *pop, const Object *obj, long int n){
 
 }
 
-void pReflect(Population *pop, const Object *obj, long int n){
+void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpiInfo){
 	
 	double *newVel;
 	double *surfNodes;
@@ -975,7 +975,7 @@ void pReflect(Population *pop, const Object *obj, long int n){
 	surfNodes = oFindNearestSurfaceNodes(pop, obj, n);
 
 	adNormal(surfNodes, surfNodes + 3, norm, n);
-	oFindIntersectPoint(pop, n, norm, surfNodes, intersect);
+	oFindIntersectPoint(pop, n, obj, mpiInfo);
 	adReflect(vel, surfNodes, surfNodes+1, newVel);
 
 	msg(WARNING, "Reflection function not yet implemented!");
@@ -983,7 +983,18 @@ void pReflect(Population *pop, const Object *obj, long int n){
 
 }
 
-void pPhotoElectron(Population *pop, const Object *obj){
+void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj,
+ 										double *flux){
+
+	double *val = rhoObj->val;
+	long int *exposedNodes = obj->exposedNodes;
+	long int numNodes = sizeof(exposedNodes)/sizeof(exposedNodes[0]);
+
+
+	for(int i=0; i < numNodes; i++){
+
+	}
+
 	msg(WARNING, "photoelectron function not yet implemented!");
 }
 

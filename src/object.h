@@ -20,7 +20,9 @@ typedef struct{
   double *capMatrixAll;              ///< Array holding the capacitance matrices for each object
   long int *capMatrixAllOffsets;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
   double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
-	int nObjects;					///< Number of objects
+	long int *exposedNodes; ///< metallic surface nodes of the object exposed to sunlight
+  long int *exposedNodesOffset; ///< Offset in the above per object (nObjects+1 elements)
+  int nObjects;					///< Number of objects
 } Object;
 
 
@@ -175,5 +177,9 @@ double *oFindIntersectPoint(const Population *pop, long int id, Object *obj,
 
 
 double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId);
+
+
+//find nodes on obj tagged as metal, that directly face sunlight (direction of drift)
+long int *oSolFacingSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
 
 #endif // OBJECT_H
