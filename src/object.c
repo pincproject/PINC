@@ -787,25 +787,27 @@ void oVicinityParticles(Population *pop, Object *obj){
 	}
 }
 
-long int *oSolFacingSurfaceNodes(Object *obj, const MpiInfo *mpiInfo){
+//finds nodes in direct sunlight, assuming normal direction to sun in opposite direction of drift
+long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
 
     msg(WARNING, "Function for finding Sun facing surface nodes not yet implemented");
     long int *exposedNodes = malloc(sizeof(exposedNodes));
-    
-    int *rank = obj->domain->rank;
+    long int *surf = obj->lookupSurface;
+    long int *surfOff = obj->lookupSurfaceOffset;
     double *val = obj->domain->val;
-    double *size = obj->domain->size;
     long int *sizeprod = obj->domain->sizeProd;
+    long int nSurfNodes = sizeof(surf)/sizof(surf[0]);
 
-    for(int i=0; i<size[0]; i++){
-        for(int j=0; j<size[1]; j++){
-            for(int k=0; k<size[2]; k++){
+    int counter = 0;
 
-                long int p = i*sizeprod[0] + j*sizeprod[1] + k*sizeprod[2];
-            }
+    for(int a=0; a<obj->nObjects;a++){
+        for(int i=0; i<nSurfNodes; i++){
+        
+           long int p = surf[i] - sizeprod[0]; //assume drift +x direction for now..
+           if(val[p] == 0)
+                exposedNodes = surf[surfOff[a] + i];
         }
     }
-
 
 
     obj->exposedNodes = exposedNodes;
@@ -838,7 +840,7 @@ void oFindParticleCollisions(Population *pop, Object *obj){
 
             long int p = j + k*sizeProd[2] + l*sizeProd[3];
 
-            // Check whether p is one of the object nodes
+            // Check whether p is one of the object interior, or surface, nodes
             for (long int a=0; a<obj->nObjects; a++) {
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p || obj->lookupSurface[b] == p) {

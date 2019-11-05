@@ -180,6 +180,6 @@ double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int pa
 
 
 //find nodes on obj tagged as metal, that directly face sunlight (direction of drift)
-long int *oSolFacingSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
+long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo);
 
 #endif // OBJECT_H
