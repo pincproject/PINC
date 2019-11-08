@@ -5,7 +5,7 @@
  *				Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  */
 
-#include "pinc.h"
+#include "core.h"
 #include "test.h"
 #include "iniparser.h"
 #include <math.h>

@@ -4,7 +4,7 @@
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
-#include "pinc.h"
+#include "core.h"
 #include "test.h"
 
 // All tests for io.c is contained in this function

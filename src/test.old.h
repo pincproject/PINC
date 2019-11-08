@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
-#include "pinc.h"
+#include "core.h"
 #include "iniparser.h"
 #include "multigrid.h"
 

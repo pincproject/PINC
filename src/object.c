@@ -805,7 +805,8 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
         
            long int p = surf[i] - sizeprod[0]; //assume drift +x direction for now..
            if(val[p] == 0)
-                exposedNodes = surf[surfOff[a] + i];
+                exposedNodes[counter] = surf[surfOff[a] + i];
+                counter++;
         }
     }
 
@@ -991,7 +992,7 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     oFillLookupTables(obj,mpiInfo);
 
     oFindObjectSurfaceNodes(obj, mpiInfo);
-    oSolFacingSurfaceNodes(obj, mpiInfo);
+    oSolFacingSurfaceNodes(ini, obj, mpiInfo);
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 

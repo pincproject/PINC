@@ -13,12 +13,13 @@ int main(int argc, char *argv[]){
 	MPI_Init(&argc,&argv);
 	iniSetDummy(argc,argv);
 
-	testAux();
+/* 	testAux();
 	testIo();
 	testGrid();
 	testPopulation();
 	testPusher();
-	testMultigrid();
+	testMultigrid(); */
+	testObject();
 	utSummary();
 
 	MPI_Finalize();

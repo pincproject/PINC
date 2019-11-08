@@ -9,7 +9,7 @@
 
 #include <stdarg.h>
 #include "iniparser.h"
-#include "pinc.h"
+#include "core.h"
 
 /**
  * @brief Tests an assertion.
@@ -143,4 +143,12 @@ void testPusher();
  */
 void testMultigrid();
 
+
+/**
+ * @brief	Performs all tests in object.test.c
+ * @return	void
+ *
+ * This prevents many small global test functions.
+ */
+void testObject();
 #endif // TEST_H

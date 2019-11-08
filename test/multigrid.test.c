@@ -4,7 +4,7 @@
  * @author		Gullik Vetvik Killie <gullikvk@student.matnat.uio.no>
  */
 
-#include "pinc.h"
+#include "core.h"
 #include "test.h"
 #include "multigrid.h"
 #include "iniparser.h"

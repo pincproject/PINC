@@ -5,7 +5,7 @@
  */
 
 #include "test.h"
-#include "pinc.h"
+#include "core.h"
 #include "pusher.h"
 #include <math.h>
 

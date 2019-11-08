@@ -4,7 +4,7 @@
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
-#include "pinc.h"
+#include "core.h"
 #include "test.h"
 
 static int testAiProd(){
