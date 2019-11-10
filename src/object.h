@@ -20,7 +20,7 @@ typedef struct{
   double *capMatrixAll;              ///< Array holding the capacitance matrices for each object
   long int *capMatrixAllOffsets;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
   double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
-	long int *exposedNodes; ///< metallic surface nodes of the object exposed to sunlight
+	long int *exposedNodes; ///< conducting surface nodes of the object exposed to sunlight
   long int *exposedNodesOffset; ///< Offset in the above per object (nObjects+1 elements)
   int nObjects;					///< Number of objects
 } Object;
@@ -172,11 +172,11 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  *
  * Computes the local point a nearby particle with collide with an object
  */
-double *oFindIntersectPoint(const Population *pop, long int id, Object *obj, 
+double *oFindIntersectPoint(Population *pop, long int id, Object *obj, 
                            const MpiInfo *mpiInfo);
 
 
-double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId);
+double *oFindNearestSurfaceNodes(Population *pop, Object *obj, long int particleId);
 
 
 //find nodes on obj tagged as metal, that directly face sunlight (direction of drift)

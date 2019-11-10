@@ -150,6 +150,8 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     obj->lookupInteriorOffset = lookupInteriorOffset;
 
     free(index);
+    free(lookupInterior);
+    free(lookupInteriorOffset);
 
 }
 
@@ -790,28 +792,59 @@ void oVicinityParticles(Population *pop, Object *obj){
 //finds nodes in direct sunlight, assuming normal direction to sun in opposite direction of drift
 long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
 
-    msg(WARNING, "Function for finding Sun facing surface nodes not yet implemented");
-    long int *exposedNodes = malloc(sizeof(exposedNodes));
+    msg(STATUS, "In oSolFacingSurfaceNodes function");
+    int nObjects = obj->nObjects;
+    long int *sizeProd = obj->domain->sizeProd;
+    double *val = obj->domain->val;
     long int *surf = obj->lookupSurface;
     long int *surfOff = obj->lookupSurfaceOffset;
-    double *val = obj->domain->val;
-    long int *sizeprod = obj->domain->sizeProd;
-    long int nSurfNodes = sizeof(surf)/sizof(surf[0]);
+    long int p = 0;
 
-    int counter = 0;
+    alPrint(surf,(surfOff[nObjects] + 1));
+    long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
+    alCopy(surfOff, exposedNodesOffset, nObjects + 1);
 
-    for(int a=0; a<obj->nObjects;a++){
-        for(int i=0; i<nSurfNodes; i++){
-        
-           long int p = surf[i] - sizeprod[0]; //assume drift +x direction for now..
-           if(val[p] == 0)
-                exposedNodes[counter] = surf[surfOff[a] + i];
-                counter++;
+    long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
+    msg(STATUS, "Setting exposedNodes to zero!");
+    alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
+    msg(STATUS, "Number of exposed nodes: %i", exposedNodesOffset[nObjects]);
+    long int nSurfNodes = 0;
+
+    for (long int a=0; a<obj->nObjects; a++) {
+
+        long int counter = 0;
+        long int i = 0;
+        int nSurfNodes = surfOff[a+1] - surfOff[a];
+        msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
+
+        for (long int i = 0; i<nSurfNodes; i++) {
+            
+            long int b = surf[surfOff[a] + i];
+            //msg(STATUS, "Checking node %li");
+            if(!isGhostNode(obj->domain, b)){
+                long int p = b - sizeProd[1];
+                msg(STATUS, "value at shifted node %li = %.2f", p, val[p]);
+                if(val[p] < (a + 0.5)){
+                    //msg(STATUS, "node %i is a exposed node", b);
+                    exposedNodes[surfOff[a] + counter] = b;
+                    counter++;
+                }
+            }
+            else{
+                msg(STATUS, "node %li is a ghost node");
+            }
         }
+
+        msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a);
     }
 
-
+    alPrint(exposedNodes, exposedNodesOffset[nObjects]);
     obj->exposedNodes = exposedNodes;
+    obj->exposedNodesOffset = exposedNodesOffset;
+
+    free(exposedNodes);
+    free(exposedNodesOffset);
+
 }
 
 
@@ -820,9 +853,10 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
 void oFindParticleCollisions(Population *pop, Object *obj){
 
     long int *lookupIntOff = obj->lookupInteriorOffset;
+    long int *lookupInt = obj->lookupInterior;
     long int *sizeProd = obj->domain->sizeProd;
     long int *vicinity = pop->objVicinity;
-    long int nParticles = sizeof(vicinity) / sizeof(vicinity[0]);
+    long int nParticles = sizeof(vicinity) / sizeof(*vicinity);
     bSetAll(pop->collisions, nParticles, false);
 
 
@@ -876,7 +910,7 @@ void oObjectParticleInteraction(Population *pop, const Object *obj){
 
             if(pop->collisions[p] == true){
                 funPtr collType = pFindCollisionType(pop, obj, p);
-                collType(pop);
+                //collType(pop);
             }
             else{
                 pos[p] += vel[p];
@@ -888,7 +922,7 @@ void oObjectParticleInteraction(Population *pop, const Object *obj){
 
 //Finds nearest 3 object surface nodes to a specific particle of index p
 //3 object surface nodes needed to compute normal from cross product of surface vectors
-double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int particleId){
+double *oFindNearestSurfaceNodes(Population *pop, Object *obj, long int particleId){
 
     //initializations
     double *nearest;
@@ -905,7 +939,7 @@ double *oFindNearestSurfaceNodes(Population *pop, const Object *obj, long int pa
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
 //implementation based on https://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
-double *oFindIntersectPoint(const Population *pop, long int id, Object *obj, 
+double *oFindIntersectPoint(Population *pop, long int id, Object *obj, 
                            const MpiInfo *mpiInfo){
 
         double *w;
@@ -977,8 +1011,8 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     for (int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
         if (obj->domain->val[i]>nObjects) {
             
-            nObjects = (int)(floor(obj->domain->val[i])); // .5 will be used for dielectric objects
-            //nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
+            //nObjects = (int)(floor(obj->domain->val[i])); // .5 will be used for dielectric objects
+            nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
                 //the number of objects, but rather the identifier of the object with the highest number.
                 //Feel free to implement something more fancy here...
         }
@@ -1016,11 +1050,12 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
 void oFree(Object *obj){
 
     gFree(obj->domain);
-
     free(obj->lookupInterior);
     free(obj->lookupInteriorOffset);
     free(obj->lookupSurface);
     free(obj->lookupSurfaceOffset);
+    free(obj->exposedNodes);
+    free(obj->exposedNodesOffset);
     free(obj->capMatrixAll);
     free(obj->capMatrixAllOffsets);
     free(obj->capMatrixSum);
@@ -1606,7 +1641,8 @@ void oMode(dictionary *ini){
 
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
-
+    alPrint(obj->lookupSurface,obj->lookupSurfaceOffset[obj->nObjects]);
+    alPrint(obj->exposedNodes, (long)(sizeof(obj->exposedNodes)/sizeof(obj->exposedNodes[0])));
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -1748,7 +1784,7 @@ void oMode(dictionary *ini){
 
 		// Move particles
 		puMove(pop);
-        oObjectParticleInteraction(pop, obj);
+        //oObjectParticleInteraction(pop, obj);
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);

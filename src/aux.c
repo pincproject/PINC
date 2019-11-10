@@ -434,9 +434,13 @@ void alSet(long int *a, long int n, ...){
 }
 
 void adCopy(double *a, double *b, long int n){
-
 	for(long int i=0; i<n; i++) b[i] = a[i];
 }
+
+void alCopy(long int *a, long int *b, long int n){
+	for(long int i=0; i<n; i++) b[i] = a[i];
+}
+
 
 void adPrintInner(double *a, long int inc, long int end, char *varName){
 

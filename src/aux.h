@@ -291,6 +291,8 @@ void aiSet(int *a, long int n, ...);
 void alSet(long int *a, long int n, ...);
 ///@brief copy array a into array b
 void adCopy(double *a, double *b, long int n);
+///@brief copy array a into array b
+void alCopy(long int *a, long int *b, long int n);
 ///@brief See adPrint(). varName is the name to output for the variable.
 void adPrintInner(double *a, long int inc, long int end, char *varName);
 ///@brief See aiPrint(). varName is the name to output for the variable.
