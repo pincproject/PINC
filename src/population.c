@@ -486,11 +486,11 @@ void pPurgeGhost(Population *pop, const Grid *grid){
 			//msg(STATUS,"bnd[rank+0+1] = %d, bnd[rank+1+1] = %d, bnd[rank+2+1] = %d \n",bnd[rank+0+1],bnd[rank+1+1],bnd[rank+2+1]);
 			for(int d=0; d<nDims; d++){
 				//printf("nGhostLayers[d] %i \n",nGhostLayers[d+1]);
-				if( (pos[i*nDims+d]>size[d+1]-nGhostLayers[d+1]-1 && bnd[d+rank+1]==DIRICHLET) ){
+				if( (pos[i*nDims+d]>size[d+1]-nGhostLayers[d+1]-1 && (bnd[d+rank+1]==DIRICHLET || bnd[d+rank+1]==NEUMANN)) ){
 					//msg(STATUS,"CUT: pos[i*nDims+d] = %f, bnd[d+1]=%d \n",pos[i*nDims+d],bnd[d+1]);
 					cut = true;
 				}
-				if( (pos[i*nDims+d]<nGhostLayers[d+rank+1] && bnd[d+1]==DIRICHLET) ){
+				if( (pos[i*nDims+d]<nGhostLayers[d+rank+1] && (bnd[d+1]==DIRICHLET || bnd[d+1]==NEUMANN)) ){
 					//msg(STATUS,"CUT: pos[i*nDims+d] = %f, bnd[d+rank+1]=%d \n",pos[i*nDims+d],bnd[d+rank+1]);
 					cut = true;
 				}
@@ -668,7 +668,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 			//for(long int i=0;i<newParticles;i++){
 
 				//Lower ghost slice
-			if(bnd[d+1]==DIRICHLET){
+			if(bnd[d+1]==DIRICHLET || bnd[d+1]==NEUMANN){
 				for(long int i=0;i<newParticles;i++){
 					//generate velocity for particle
 					for(int d=0;d<nDims;d++){
@@ -697,7 +697,7 @@ void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, cons
 			}
 
 				//Upper ghost slice
-			if(bnd[d+rank+1]==DIRICHLET){
+			if(bnd[d+rank+1]==DIRICHLET || bnd[d+rank+1]==NEUMANN){
 				for(long int i=0;i<newParticles;i++){
 					//generate velocity for particle
 

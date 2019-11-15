@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 file = h5py.File('../../data/pop.pop.h5','r')
 
 pos = file['/pos/specie 0']
-#vel = file['/vel/specie 0']
+vel = file['/vel/specie 0']
 
 #for item in f.attrs.keys():
 #    print item + ":", f.attrs[item]
@@ -18,7 +18,7 @@ pos = file['/pos/specie 0']
 particleNum = 0
 
 Nt_start = 1 #1
-Nt_stop = 100 #pos.shape[1]
+Nt_stop = 200 #pos.shape[1]
 
 Np = pos['n=1.0'].shape[0]	# Number of particles
 Nd = pos['n=1.0'].shape[1]	# Number of dimensions
@@ -44,6 +44,8 @@ for i in range(Nt_start,Nt_stop):
 	#vx.append(velocOfParticle[:][0])
 	#vy.append(velocOfParticle[:][1])
 	#vz.append(velocOfParticle[:][2])
+
+print(vel['n=%i.5' % Nt_stop][particleNum][:][0],vel['n=%i.5' % Nt_stop][particleNum][:][1],vel['n=%i.5' % Nt_stop][particleNum][:][2])
 
 #print(vx, vy, vz)
 

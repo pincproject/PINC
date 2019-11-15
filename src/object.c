@@ -164,7 +164,7 @@ long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc, \
 
       long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
 
-      printf("rank = %i nodesThisCore = %li \n",mpiInfo->mpiRank,nodesThisCore);
+      //printf("rank = %i nodesThisCore = %li \n",mpiInfo->mpiRank,nodesThisCore);
       // Let every core know how many surface nodes everybody has.
       MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
 
@@ -430,7 +430,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
 
     //printf("finding offsets \n");
     // Find the 8 neighbour cells of each non-ghost node.
-    long int *myNB = malloc(9*sizeof(*myNB));
+    long int *myNB = malloc(10*sizeof(*myNB));
     // Find the ofsetts first.
     for (long int a=0; a<obj->nObjects; a++) {
         for (long int b=0; b<sizeProd[obj->domain->rank]; b++) {
@@ -444,6 +444,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 myNB[6] = myNB[0] - sizeProd[2] - sizeProd[3];      // cell i,j-1,k-1
                 myNB[7] = myNB[0] - sizeProd[2] - sizeProd[1];      // cell i-1,j-1,k
                 myNB[8] = myNB[0] - sizeProd[2] - sizeProd[1] - sizeProd[3];   // cell i-1,j-1,k-1
+                //myNB[9] = myNB[0] - sizeProd[1] - sizeProd[2];      // cell i-1,j-1,k
 
                 int d=0;
                 if (val[myNB[1]]>(a+0.5) && val[myNB[1]]<(a+1.5)) d++;
@@ -454,6 +455,15 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 if (val[myNB[6]]>(a+0.5) && val[myNB[6]]<(a+1.5)) d++;
                 if (val[myNB[7]]>(a+0.5) && val[myNB[7]]<(a+1.5)) d++;
                 if (val[myNB[8]]>(a+0.5) && val[myNB[8]]<(a+1.5)) d++;
+                //if (val[myNB[9]]>(a+0.5) && val[myNB[9]]<(a+1.5)) d++;
+
+                // double x = pos[p];
+          			// double y = pos[p+1];
+          			// double z = pos[p+2];
+          			// int nx = - (x<lx) + (x>=ux);
+          			// int ny = - (y<ly) + (y>=uy);
+          			// int nz = - (z<lz) + (z>=uz);
+          			// int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
                 // Check if on surface.
                 if (d<7.5 && d>0) { //val[myNB[0]]>(a+0.5) &&
@@ -463,7 +473,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
             }
         }
         //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-        //aiPrint(&lookupSurfaceOffset[a+1],1);
+        aiPrint(&lookupSurfaceOffset[a+1],1);
     }
     //printf("offsets done \n");
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
@@ -490,6 +500,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 myNB[6] = myNB[0] - sizeProd[2] - sizeProd[3];      // cell i,j-1,k-1
                 myNB[7] = myNB[0] - sizeProd[2] - sizeProd[1];                  // cell i-1,j-1,k;
                 myNB[8] = myNB[0] - sizeProd[2] - sizeProd[1] - sizeProd[3];    // cell i-1,j-1,k-1
+                //myNB[9] = myNB[0] - sizeProd[1] - sizeProd[2];      // cell i-1,j-1,k
 
                 int d=0;
                 if (val[myNB[1]]>(a+0.5) && val[myNB[1]]<(a+1.5)) d++;
@@ -500,6 +511,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
                 if (val[myNB[6]]>(a+0.5) && val[myNB[6]]<(a+1.5)) d++;
                 if (val[myNB[7]]>(a+0.5) && val[myNB[7]]<(a+1.5)) d++;
                 if (val[myNB[8]]>(a+0.5) && val[myNB[8]]<(a+1.5)) d++;
+                //if (val[myNB[9]]>(a+0.5) && val[myNB[9]]<(a+1.5)) d++;
 
                 // Check if on surface.
                 if (d<7.5 && d>0) { //val[myNB[0]]>(a+0.5) &&
@@ -1760,7 +1772,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=0){
+		if(n>=0){//50614
 		//Write h5 files
     	//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

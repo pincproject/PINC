@@ -1328,7 +1328,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				// 	printf("exhcanged \n" );
 				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
 				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
-				// 	printf("ofsett: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+				// 	printf("offset: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
 				// }
 
 				exhanged += 1;
