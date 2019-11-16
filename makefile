@@ -58,7 +58,7 @@ all: version $(EXEC) cleantestdata doc
 
 debug: version $(EXEC).debug
 
-local: version $(EXEC).local cleantestdata doc
+local: version $(EXEC).local
 
 test: version $(EXEC).test cleantestdata doc
 	@echo "Running Unit Tests"

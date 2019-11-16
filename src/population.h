@@ -275,6 +275,12 @@ to the object
 void pVicinityParticles(Population *pop, const Object *obj);
 
 /*
+Calculates number of electrons emitted by conducting surface
+per timestep
+*/
+long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj);
+
+/*
 emits photoELectrons from object surface every timestep
 */
 void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj, double *flux);

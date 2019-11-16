@@ -800,14 +800,12 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
     long int *surfOff = obj->lookupSurfaceOffset;
     long int p = 0;
 
-    alPrint(surf,(surfOff[nObjects] + 1));
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
     alCopy(surfOff, exposedNodesOffset, nObjects + 1);
 
     long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
     msg(STATUS, "Setting exposedNodes to zero!");
     alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
-    msg(STATUS, "Number of exposed nodes: %i", exposedNodesOffset[nObjects]);
     long int nSurfNodes = 0;
 
     for (long int a=0; a<obj->nObjects; a++) {
@@ -823,7 +821,6 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
             //msg(STATUS, "Checking node %li");
             if(!isGhostNode(obj->domain, b)){
                 long int p = b - sizeProd[1];
-                msg(STATUS, "value at shifted node %li = %.2f", p, val[p]);
                 if(val[p] < (a + 0.5)){
                     //msg(STATUS, "node %i is a exposed node", b);
                     exposedNodes[surfOff[a] + counter] = b;
@@ -832,6 +829,7 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
             }
             else{
                 msg(STATUS, "node %li is a ghost node");
+                continue;
             }
         }
 

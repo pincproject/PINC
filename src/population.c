@@ -983,12 +983,52 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
+long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
+	
+	//initialize variables
+	long int flux = 0;
+	double surfArea = 0; //surface area of conducting surface of s/c
+	long int nLines = 0; //number of unique pairs of close exposed nodes
+	long int *nodes = malloc(sizeof(long) * sizeof(*nodes));
+	long int *exposed = obj->exposedNodes;
+	long int *offset = obj->exposedNodesOffset;
+	long int nExposedNodes = (long)(sizeof(obj->exposedNodes)/sizeof(obj->exposedNodes[0]));
+	alCopy(obj->exposedNodes, nodes, nExposedNodes);
+	double photoElectronCurrent = iniGetDouble(ini, "object:photoElectronCurrent");
+	
+	int counter = 0;
+	for(int a=0; a<obj->nObjects; a++){
+
+		long int n = offset[a+1] - offset[a];
+
+		for(int i=offset[a]; i<n; i++){
+			if(exposed[i] != 0) nodes[i] = exposed[n + i];
+			counter++;   
+		}
+	}
+
+	alPrint(nodes, counter);
+
+
+	//calculate surface area
+
+
+	//calculate electron flux per timestep
+
+
+	//free memory and return
+	free(nodes);
+	return flux;
+
+}
+
+
 void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj,
  										double *flux){
 
 	double *val = rhoObj->val;
 	long int *exposedNodes = obj->exposedNodes;
-	long int numNodes = sizeof(exposedNodes)/sizeof(exposedNodes[0]);
+	long int numNodes = (long)(sizeof(exposedNodes)/sizeof(*exposedNodes));
 
 
 	for(int i=0; i < numNodes; i++){
