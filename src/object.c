@@ -768,14 +768,14 @@ void oVicinityParticles(Population *pop, Object *obj){
 			int l = (int) pos[2];
 
 			// Index of nodes surrounding particle i
-			long int p 		= j*3 + k*sizeProd[2] + l*sizeProd[3];
-			long int pj 	= p + 3; //sizeProd[1];
+			long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + 1; //sizeProd[1];
 			long int pk 	= p + sizeProd[2];
-			long int pjk 	= pk + 3; //sizeProd[1];
+			long int pjk 	= pk + 1; //sizeProd[1];
 			long int pl 	= p + sizeProd[3];
-			long int pjl 	= pl + 3; //sizeProd[1];
+			long int pjl 	= pl + 1; //sizeProd[1];
 			long int pkl 	= pl + sizeProd[2];
-			long int pjkl 	= pkl + 3; //sizeProd[1];
+			long int pjkl 	= pkl + 1; //sizeProd[1];
 
 			// All neighbours must be part of bounding box, value of obj->domain->val
 			// at a vicinity node is set to 2, obj->domain->val set to 1 for object itself.
@@ -787,6 +787,23 @@ void oVicinityParticles(Population *pop, Object *obj){
 			}
 		}
 	}
+}
+
+void oSolarSpectrum(dictionary *ini, Units *units, Object *obj, long int max){
+	
+	//initialize variables
+	double wavelength[max+1], radiance[max+1];
+    double jouleToEV = units->energy/6.24150913*pow(10,18);
+    long int *offset = obj->radianceOffset;
+
+	for(int i=0;i<max+1;i++){
+		wavelength[i] = (double)(i) / (double)(max);
+	}
+	
+	obj->radiance = radiance;
+
+
+	free(wavelength);
 }
 
 //finds nodes in direct sunlight, assuming normal direction to sun in opposite direction of drift

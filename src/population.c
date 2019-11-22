@@ -1009,9 +1009,7 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 
 	alPrint(nodes, counter);
 
-
-	//calculate surface area
-
+	//calculate solar irradiance
 
 	//calculate electron flux per timestep
 
