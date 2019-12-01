@@ -987,14 +987,14 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 	
 	//initialize variables
 	long int flux = 0;
-	double surfArea = 0; //surface area of conducting surface of s/c
+	double surfArea = iniGetDouble(ini, "objects:ConductingSurface"); //surface area of conducting surface of s/c
 	long int nLines = 0; //number of unique pairs of close exposed nodes
 	long int *nodes = malloc(sizeof(long) * sizeof(*nodes));
 	long int *exposed = obj->exposedNodes;
 	long int *offset = obj->exposedNodesOffset;
 	long int nExposedNodes = (long)(sizeof(obj->exposedNodes)/sizeof(obj->exposedNodes[0]));
 	alCopy(obj->exposedNodes, nodes, nExposedNodes);
-	double photoElectronCurrent = iniGetDouble(ini, "object:photoElectronCurrent");
+	double photoElectronCurrent = iniGetDouble(ini, "objects:photoElectronCurrent");
 	
 	int counter = 0;
 	for(int a=0; a<obj->nObjects; a++){
@@ -1008,9 +1008,6 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 	}
 
 	alPrint(nodes, counter);
-
-
-	//calculate surface area
 
 
 	//calculate electron flux per timestep

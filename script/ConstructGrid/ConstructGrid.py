@@ -37,12 +37,12 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 
 def main():
     # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-    gridpar = [-10, 10, -10, 10, -10, 10, 64, 64, 64] #0.3125
+    gridpar = [-8, 8, -8, 8, -8, 8, 128, 128, 128] #0.3125
     #gridpar = [0, 0.3125*64, 0, 0.3125*64, 0, 0.3125*64, 64, 64, 64] #0.3125
     #gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
     # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
-    infile = ["box"]
+    infile = ["mmo"]
     #infile = ["box", "box"]
     # Outputfiles and comment.
     outfile = ["object.grid.h5", "test satellite"]
