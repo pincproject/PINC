@@ -823,6 +823,8 @@ void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
 	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
 
+    //double B[3] = {1., 0., 0.};
+	//double veld[3] = {0., 1., 1.};
 	double veldCrossB[3] = {0., 0., 0.};
 	adCrossProd(veld, B, veldCrossB);
 
@@ -883,7 +885,7 @@ void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 					for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
 						// grid indices (i,j,k) are computed locally, so we need to
 						// cast them to global frame in the dot product
-						bndSlice[s + (nSliceMax * d)] += veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])+0.5-(2*subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
+						bndSlice[s + (nSliceMax * d)] += veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])-(2*subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
 						//																veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])+(!edge[dd])*(subdomain[dd]+(nSubdomains[dd]-1))+0.5-3*edge[dd]*subdomain[dd]) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
 						//printf("subdomain[%i] = %i, nSubdomains[%i] = %i \n",dd,subdomain[dd],dd,nSubdomains[dd]);
 						if(veldCrossB[dd]*indices[dd]*edge[dd]!=0){
@@ -931,7 +933,7 @@ void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 				for(long int q = 0;q<rank-1;q++){
 					//set dim perp to slice indice to fixed val
 					if(!edge[q]){
-						indices[q] = (size[q+1]-2*nGhostLayers[q]); //-nGhostLayers[q]
+						indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
 						//printf("nSubdomains = %i\n",nSubdomains[q]);
 					} else{
 						// start indices at minimum
@@ -942,13 +944,13 @@ void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 					for(long int q = 0;q<rank-1;q++){
 						//set dim perp to slice indice to fixed val
 						if(!edge[q]){
-							indices[q] = (size[q+1]-2*nGhostLayers[q]); //-nGhostLayers[q]
+							indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
 							//printf("nSubdomains = %i\n",nSubdomains[q]);
 						}
 					}
 					bndSlice[s + (nSliceMax * (d))] = 0;
 					for(int dd = 0;dd<rank-1;dd++){
-						bndSlice[s + (nSliceMax * (d))] +=  veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])-(subdomain[dd])+0.5-(subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
+						bndSlice[s + (nSliceMax * (d))] +=  veldCrossB[dd]*((indices[dd])+(subdomain[dd]*size[dd+1])-(subdomain[dd])-(subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
 																								//veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])+0.5-(subdomain[dd])) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
 					}
 					bool incremented = false;
@@ -977,7 +979,7 @@ void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 	//msg(STATUS,"nSliceMax = %li",nSliceMax);
 	//adPrint(&bndSlice[nSliceMax], nSliceMax*(rank));
 	free(velDrift);
-	free(B);
+	//free(B);
 	return;
 }
 
@@ -1276,6 +1278,7 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
 

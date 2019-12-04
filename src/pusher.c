@@ -1297,12 +1297,12 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
-			} else if ( (dummyPos[0] > ux+trueSize[0]*(subdomain[0])-1 && bnd[5]==PERIODIC)
-				|| ( dummyPos[1] > uy+trueSize[1]*(subdomain[1])-1 && bnd[6]==PERIODIC)
-				|| (  dummyPos[2] > uz+trueSize[2]*(subdomain[2])-1 && bnd[7]==PERIODIC)
-				|| (dummyPos[0] < lx+trueSize[0]*(subdomain[0])+1 && bnd[1]==PERIODIC)
-				|| ( dummyPos[1] < ly+trueSize[1]*(subdomain[1])+1 && bnd[2]==PERIODIC)
-				|| ( dummyPos[2] < lz+trueSize[2]*(subdomain[2])+1 && bnd[3]==PERIODIC) ){
+			} else if ( (pos[p] >= ux-1 && bnd[5]==PERIODIC)
+				|| ( pos[p+1] >= uy-1 && bnd[6]==PERIODIC)
+				|| (  pos[p+2] >= uz-1  && bnd[7]==PERIODIC)
+				|| (pos[p] < lx+1 && bnd[1]==PERIODIC)
+				|| ( pos[p+1] < ly+1 && bnd[2]==PERIODIC)
+				|| ( pos[p+2] < lz+1 && bnd[3]==PERIODIC) ){
 					//Should look for a better implementation ^
 
 			double x = pos[p];
@@ -1357,7 +1357,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				}
 
 			}
-		}//printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i \n", removedupp,removedlow,exhanged,s);
+		}//printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i, for rank = %i \n", removedupp,removedlow,exhanged,s,mpiInfo->mpiRank);
 		//msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
 	free(nSubdomains);
