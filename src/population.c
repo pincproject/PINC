@@ -14,10 +14,16 @@
 #include <mpi.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_blas.h>
 #include <hdf5.h>
 #include "iniparser.h"
 
-
+#define EVTOJCONVERSION 1.60218e-19
+#define BOLTZMANN 8.61733326e-5
+#define PLANCK 4.13566769e-15
+#define SPEED_OF_LIGHT 3.0e8
+#define PI 3.14159265
 
 
 /******************************************************************************
@@ -946,7 +952,7 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 funPtr pFindCollisionType(Population *pop, Object *obj, long int n){
 
 	msg(WARNING, "Function to determine collision type not yet implemented!");
-
+	return NULL;
 }
 
 void pBackscatter(Population *pop, const Object *obj, long int n){
@@ -986,37 +992,77 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 	
 	//initialize variables
-	long int flux = 0;
-	double surfArea = iniGetDouble(ini, "objects:ConductingSurface"); //surface area of conducting surface of s/c
-	long int nLines = 0; //number of unique pairs of close exposed nodes
-	long int *nodes = malloc(sizeof(long) * sizeof(*nodes));
-	long int *exposed = obj->exposedNodes;
-	long int *offset = obj->exposedNodesOffset;
-	long int nExposedNodes = (long)(sizeof(obj->exposedNodes)/sizeof(obj->exposedNodes[0]));
-	alCopy(obj->exposedNodes, nodes, nExposedNodes);
+	msg(STATUS, "In pPhotoElectronEmissionRate function");
+	double tstep = iniGetDouble(ini, "time:timeStep");
+	double *surfArea = iniGetDoubleArr(ini, "objects:ConductingSurface", 1);
+	long int *nodes = malloc(sizeof(obj->exposedNodes));
+	// long int *exposed = obj->exposedNodes;
+	// long int *offset = obj->exposedNodesOffset;
+	// long int nExposedNodes = obj->exposedNodesOffset[obj->nObjects + 1]; //TODO: for all objects
+	
+	// alCopy(obj->exposedNodes, nodes, nExposedNodes);
 	double photoElectronCurrent = iniGetDouble(ini, "objects:photoElectronCurrent");
 	
-	int counter = 0;
-	for(int a=0; a<obj->nObjects; a++){
+	// int counter = 0;
+	// for(int a=0; a<obj->nObjects; a++){
 
-		long int n = offset[a+1] - offset[a];
+	// 	long int n = offset[a+1] - offset[a];
 
-		for(int i=offset[a]; i<n; i++){
-			if(exposed[i] != 0) nodes[i] = exposed[n + i];
-			counter++;   
+	// 	for(int i=offset[a]; i<n; i++){
+	// 		if(exposed[i] != 0) nodes[i] = exposed[n + i];
+	// 		counter++;   
+	// 	}
+	// }
+
+	// alPrint(nodes, counter);
+
+	//calculate solar irradiance, planck's law for blackbody radiation
+	size_t nWaveLengths = (size_t)(iniGetInt(ini, "spectrum:nWavelengths"));
+	double *cutOffWavelength = iniGetDoubleArr(ini, "spectrum:waveLengthCutOffs", 2);
+	double blackBodyTemp = iniGetDouble(ini, "spectrum:blackBodyTemp");
+	double stride = (cutOffWavelength[1] * 1e-9) / nWaveLengths;
+	double *wavelength = malloc(sizeof(double) * (nWaveLengths + 1));
+	double *spectrum = malloc(sizeof wavelength);
+
+	for(size_t i=0; i < nWaveLengths + 1; i++){
+
+		if(0 == i){
+			wavelength[i] = 0.;
+		}
+		else{
+			wavelength[i] = wavelength[i - 1] + stride;
 		}
 	}
 
-	alPrint(nodes, counter);
+	//adPrint(wavelength, nWaveLengths + 1);
+	msg(STATUS, "Timestep is: %.10f seconds", tstep);
+	for(size_t i=0; i < nWaveLengths + 1; i++){
+		
+		if(0 == i){
+			spectrum[i] = 0.;
+		}
+		else{
+			//Find spectrum in eV/m^2/m
+			spectrum[i] = ((8.0 * PI * BOLTZMANN * pow(SPEED_OF_LIGHT, 2.0)) / pow(wavelength[i], 5.0))
+						* (1.0/(exp( (BOLTZMANN * SPEED_OF_LIGHT) / (wavelength[i] * PLANCK * blackBodyTemp) ) - 1.0));
+			msg(STATUS, "SPECTRUM: %.10f", spectrum[i]);
+			spectrum[i] *= EVTOJCONVERSION * wavelength[i] * surfArea[i] * tstep; //radiance per timestep in joule
+		}
 
-	//calculate solar irradiance
+	}
+	//adPrint(spectrum, nWaveLengths + 1);
+	//calculate the spectrum in terms of #photons/wavelength[i]
+	for(size_t i=0; i < nWaveLengths + 1; i++){
+		
+		double photonEnergy = (PLANCK * SPEED_OF_LIGHT) / wavelength[i];
+		spectrum[i] = spectrum[i] / photonEnergy;
+	}
 
-	//calculate electron flux per timestep
-
+	adPrint(spectrum, nWaveLengths + 1);
 
 	//free memory and return
 	free(nodes);
-	return flux;
+	return spectrum;
 
 }
 

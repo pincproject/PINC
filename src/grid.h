@@ -348,7 +348,7 @@ long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo);
  * @param   p			long int
  * @return	location	i,j,k values of node location
  */
-double *gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p);
+int *gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p);
 /**
  * @brief Performs a central space finite difference on a grid
  * @param 	scalar 	Value to do the finite differencing on

@@ -809,36 +809,40 @@ void oSolarSpectrum(dictionary *ini, Units *units, Object *obj, long int max){
 //finds nodes in direct sunlight, assuming normal direction to sun in opposite direction of drift
 long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
 
-    msg(STATUS, "In oSolFacingSurfaceNodes function");
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
     double *val = obj->domain->val;
     long int *surf = obj->lookupSurface;
     long int *surfOff = obj->lookupSurfaceOffset;
-    long int p = 0;
 
+    //alPrint(surf, surfOff[nObjects]);
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
     alCopy(surfOff, exposedNodesOffset, nObjects + 1);
 
     long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
-    msg(STATUS, "Setting exposedNodes to zero!");
     alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
-    long int nSurfNodes = 0;
 
-    for (long int a=0; a<obj->nObjects; a++) {
+    for(long int a=0; a<obj->nObjects; a++){
 
         long int counter = 0;
-        long int i = 0;
-        int nSurfNodes = surfOff[a+1] - surfOff[a];
+        long int nSurfNodes = surfOff[a+1] - surfOff[a];
         msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
-
-        for (long int i = 0; i<nSurfNodes; i++) {
+        alPrint(sizeProd, 5);
+        for(long int i = 0; i<nSurfNodes; i++){
             
+            long int p = 0;
             long int b = surf[surfOff[a] + i];
-            //msg(STATUS, "Checking node %li");
-            if(!isGhostNode(obj->domain, b)){
-                long int p = b - sizeProd[1];
-                if(val[p] < (a + 0.5)){
+            int *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+
+            if(!isGhostNode(obj->domain, b)){               
+                double sum = 0;
+                for(int j=loc[0]; j>0; j--){
+                    //sum the values along the x-axis, exposed node
+                    long int p = b - j*sizeProd[1];
+                    sum += val[p]; 
+                }
+                //msg(STATUS, "Sum is %f", sum);
+                if(sum < (1.0)){
                     //msg(STATUS, "node %i is a exposed node", b);
                     exposedNodes[surfOff[a] + counter] = b;
                     counter++;
@@ -848,12 +852,14 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
                 msg(STATUS, "node %li is a ghost node");
                 continue;
             }
+
+            free(loc);
         }
 
         msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a);
     }
 
-    alPrint(exposedNodes, exposedNodesOffset[nObjects]);
+    //alPrint(exposedNodes, exposedNodesOffset[nObjects]);
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
 
@@ -924,8 +930,7 @@ void oObjectParticleInteraction(Population *pop, const Object *obj){
         for(long int p=pStart;p<pStop;p++){
 
             if(pop->collisions[p] == true){
-                funPtr collType = pFindCollisionType(pop, obj, p);
-                //collType(pop);
+                break;//funPtr collType = pFindCollisionType(pop, obj, p);
             }
             else{
                 pos[p] += vel[p];
