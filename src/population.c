@@ -15,6 +15,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_blas.h>
 #include <hdf5.h>
 #include "iniparser.h"
@@ -1067,16 +1068,23 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 }
 
 
-void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj,
- 										double *flux){
+void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
+ 										double flux, const gsl_rng *rng){
 
-	double *val = rhoObj->val;
+	int nObj = obj->nObjects;
 	long int *exposedNodes = obj->exposedNodes;
+	long int *exposedOff = obj->exposedNodesOffset;
 	long int numNodes = (long)(sizeof(exposedNodes)/sizeof(*exposedNodes));
+	int electronsPerNode = flux/((double)numNodes);
+	double *workFunc = iniGetDoubleArr(ini,"objects:workFunction", nObj);
 
+	for(int a=0; a < nObj; a++){
+		
+		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
 
-	for(int i=0; i < numNodes; i++){
+		for(int i=exposedOff[a]; i < nodesThisCore; i++){
 
+		}
 	}
 
 	msg(WARNING, "photoelectron function not yet implemented!");

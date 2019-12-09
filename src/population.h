@@ -283,7 +283,8 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj);
 /*
 emits photoELectrons from object surface every timestep
 */
-void pPhotoElectrons(Population *pop, const Object *obj, Grid *rhoObj, double *flux);
+void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj, 
+                     double flux, const gsl_rng *rng);
 
 /*
 Find Collision type is called during puMove; returns
