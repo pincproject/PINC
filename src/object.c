@@ -817,17 +817,15 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
 
     //alPrint(surf, surfOff[nObjects]);
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
-    alCopy(surfOff, exposedNodesOffset, nObjects + 1);
+    alSetAll(exposedNodesOffset, obj->nObjects+1,0);
+    //alCopy(surfOff, exposedNodesOffset, nObjects + 1);
 
-    long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
-    alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
+    //alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
 
     for(long int a=0; a<obj->nObjects; a++){
 
-        long int counter = 0;
         long int nSurfNodes = surfOff[a+1] - surfOff[a];
         msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
-        alPrint(sizeProd, 5);
         for(long int i = 0; i<nSurfNodes; i++){
             
             long int p = 0;
@@ -836,7 +834,7 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
 
             if(!isGhostNode(obj->domain, b)){               
                 double sum = 0;
-                for(int j=loc[0]; j>0; j--){
+                for(int j=0; j<loc[0] + 1; j++){
                     //sum the values along the x-axis, exposed node
                     long int p = b - j*sizeProd[1];
                     sum += val[p]; 
@@ -844,7 +842,53 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
                 //msg(STATUS, "Sum is %f", sum);
                 if(sum < (1.0)){
                     //msg(STATUS, "node %i is a exposed node", b);
-                    exposedNodes[surfOff[a] + counter] = b;
+                    exposedNodesOffset[a+1]++;
+                }
+            }
+            else{
+                msg(STATUS, "node %li is a ghost node");
+                continue;
+            }
+
+            free(loc);
+        }
+
+    }
+
+    alCumSum(exposedNodesOffset+1, exposedNodesOffset, nObjects);
+
+    long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
+    alSetAll(exposedNodes,exposedNodesOffset[nObjects],0);
+
+    long int *index = malloc(nObjects*sizeof(*index));
+
+    for(long int i=0; i<nObjects; i++){
+        index[i] = exposedNodesOffset[i];
+    }
+
+    for(long int a=0; a<obj->nObjects; a++){
+
+        long int counter = 0;
+        long int nSurfNodes = surfOff[a+1] - surfOff[a];
+        msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
+        
+        for(long int i = 0; i<nSurfNodes; i++){
+            
+            long int p = 0;
+            long int b = surf[surfOff[a] + i];
+            int *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+
+            if(!isGhostNode(obj->domain, b)){               
+                double sum = 0;
+                for(int j=0; j<loc[0] + 1; j++){
+                    //sum the values along the x-axis, exposed node
+                    long int p = b - j*sizeProd[1];
+                    sum += val[p]; 
+                }
+                //msg(STATUS, "Sum is %f", sum);
+                if(sum < (1.0)){
+                    //msg(STATUS, "node %i is a exposed node", b);
+                    exposedNodes[exposedNodesOffset[a] + counter] = b;
                     counter++;
                 }
             }
@@ -856,16 +900,18 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
             free(loc);
         }
 
+        
+
         msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a);
     }
 
-    //alPrint(exposedNodes, exposedNodesOffset[nObjects]);
+    alPrint(exposedNodesOffset, nObjects+1);
+    alPrint(surf,surfOff[nObjects]);
+    alPrint(exposedNodes, exposedNodesOffset[nObjects]);
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
 
-    free(exposedNodes);
-    free(exposedNodesOffset);
-
+    free(index);
 }
 
 
