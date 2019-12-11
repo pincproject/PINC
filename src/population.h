@@ -281,6 +281,13 @@ per timestep
 long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj);
 
 /*
+Integral of radiance for specific wavenumber to infinity, finds
+number of photons that cause electrons to be emitted per timestep
+*/
+double pPlanckPhotonIntegral(double sigma, double temperature, const Units *units);
+
+
+/*
 emits photoELectrons from object surface every timestep
 */
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj, 

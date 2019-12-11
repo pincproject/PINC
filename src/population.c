@@ -1067,6 +1067,45 @@ long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
 
 }
 
+double pPlanckPhotonIntegral(double sigma, double temperature, const Units *units){
+	// integral of spectral photon radiance from sigma (cm-1) to infinity.
+	// result is photons/s/m2/sr.
+	// follows Widger and Woodall, Bulletin of the American Meteorological
+	// Society, Vol. 57, No. 10, pp. 1217
+	// converted from c++ to c from source code found here:
+	// https://www.spectralcalc.com/blackbody/CalculatingBlackbodyRadianceV2.pdf
+
+	//conversion factors
+	double mass = units->mass;
+	double time = units->time;
+	double length = units->length;
+
+	// constants
+	double Planck = 6.6260693e-34 / pow(length,2) / mass * time;
+	double Boltzmann = 1.380658e-23;
+	double Speed_of_light = 299792458.0 / length / time;
+
+	// compute powers of x, the dimensionless spectral coordinate
+	double c1 = Planck * Speed_of_light/Boltzmann;
+	double x = c1 * 100 * sigma/temperature;
+	double x2 = x * x;
+
+	// decide how many terms of sum are needed
+	double iterations = 2.0 + 20.0/x;
+	iterations = (iterations<512) ? iterations : 512;
+	int iter = (int)(iterations);
+
+	// add up terms of sum
+	double sum = 0;
+	for (int n=1; n<iter; n++) {
+		double dn = 1.0 / n;
+		sum += exp(-n*x) * (x2 + 2.0*(x + dn)*dn) * dn;
+	}
+	// return result, in units of photons/s/m2/sr
+	double kTohc = Boltzmann * temperature / (Planck*Speed_of_light);
+	double c2 = 2.0 * pow(kTohc,3) * Speed_of_light;
+	return c2 *sum / units->weights[0];
+}
 
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
  										double flux, const gsl_rng *rng){
