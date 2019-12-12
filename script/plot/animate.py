@@ -33,6 +33,7 @@ show_anim = True
 
 save_figs = True
 
+
 ## Needs ffmpeg codec
 save_anim = False ## Bool (if false anim is only shown on screen)
 ########################
@@ -81,9 +82,9 @@ for i in timesteps:
 	#print(data.shape)
 	DATA.append(data)
 DATA = np.array(DATA)
-
 print("max value = %f",np.amax(DATA))
 print("min value = %f",np.amin(DATA))
+
 
 vMin=restr_min*np.amin(DATA)
 vMax=restr_max*np.amax(DATA)
@@ -137,6 +138,7 @@ def animate(i):
 for i in range(len(DATA[:,0,0])):
     if (start==timesteps[i]):
         start_index=i
+
 DATA = DATA[start_index:,:,:]
 timesteps = timesteps[start_index:]
 ani = animation.FuncAnimation(fig,animate,len(DATA[:,0,0]),interval=interval*1e+3,blit=False)

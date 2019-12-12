@@ -2045,7 +2045,7 @@ void oCollMode(dictionary *ini){
   gFree(rho_i);
   gFree(phi);
   free(S);
-  free(T);
+  free(T)
 
   gFree(E);
   pFree(pop);
