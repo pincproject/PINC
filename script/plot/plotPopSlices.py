@@ -64,7 +64,7 @@ pop = popX
 popTemp = []
 
 for i in range(pop.shape[0]):
-	if pop[i,0] < 16 and  pop[i,0] >12: # slice 2 to 6
+	if pop[i,0] < 16 and  pop[i,0] >12: # slice 12 to 16
 		popTemp.append(pop[i,:])
 
 pop = np.array(popTemp)

@@ -217,6 +217,7 @@ static Units *uSI(const dictionary *ini){
 	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
+		//printf("weights[%i] = %f \n",s,weights[s]);
 	}
 
 	double X  = stepSize[0];
@@ -263,5 +264,5 @@ static void uAddDerivedUnits(Units *units){
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
 
-	msg(STATUS, "units->potential = %f",units->potential);
+	//msg(STATUS, "units->potential = %f",units->potential);
 }

@@ -41,7 +41,8 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												sMode_set,
-												oMode_set);
+												oMode_set,
+											    oCollMode_set);
 	run(ini);
 
 	/*
@@ -175,13 +176,8 @@ void regular(dictionary *ini){
 	//gBnd(phi, mpiInfo);
 	//gBnd(rho, mpiInfo);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	msg(STATUS, "solving");
 	solve(solver, rho, phi, mpiInfo);
 	//gBnd(phi, mpiInfo);
-
-	msg(STATUS, "finding E");
 
 	gFinDiff1st(phi, E);
 
