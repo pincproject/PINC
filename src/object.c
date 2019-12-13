@@ -1562,6 +1562,9 @@ void oMode(dictionary *ini){
 	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
     Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+
+
+
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
@@ -1591,6 +1594,7 @@ void oMode(dictionary *ini){
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
   // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
   // oReadH5(obj, mpiInfo);
+
 
     //msg(STATUS,"opening obj file");
 		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
@@ -1632,6 +1636,7 @@ void oMode(dictionary *ini){
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
+
 
 	//add influx of new particles on boundary
     pPurgeGhost(pop, rho);

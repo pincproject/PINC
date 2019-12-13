@@ -20,6 +20,7 @@
 #include "collisions.h"
 #include "multigrid.h"
 #include "pusher.h"
+#include "neutrals.h"
 
 static void mccSanity(dictionary *ini, const char* name, int nSpecies){
 	// check error, see vahedi + surendra p 181
@@ -39,7 +40,6 @@ static void mccNormalize(dictionary *ini,const Units *units){
 
 	//make shure *units is already normalized!
 
-
 	//collision frequency given in 1/s
 	double collFrqElectronElastic = iniGetDouble(ini,"collisions:collFrqElectronElastic");
 	double collFrqIonElastic = iniGetDouble(ini,"collisions:collFrqIonElastic");
@@ -53,14 +53,16 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	iniSetDouble(ini,"collisions:collFrqIonElastic",collFrqIonElastic);
 	iniSetDouble(ini,"collisions:collFrqCEX",collFrqCEX);
 
-	//numberdensityneutrals given as numberofparticles/m^3
-	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
-
-	nt /= units->density; // assumes same for elecron and ion
-	nt /= units->weights[1];
-
-	//we use computational particles that contain many real particles.
-	iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
+	// //numberdensityneutrals given as numberofparticles/m^3
+	// double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
+	//
+    // printf("nt = %e \n",nt);
+	// nt /= units->density; // assumes same for elecron and ion
+	// nt /= units->weights[0];
+	//
+    // printf("nt = %f \n",nt);
+	// //we use computational particles that contain many real particles.
+	// iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
 
 	// in m/s
 	double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
@@ -114,6 +116,42 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	iniSetDouble(ini,"collisions:ion_elastic_b",ion_elastic_b);
 	iniSetDouble(ini,"collisions:electron_a",electron_a);
 	iniSetDouble(ini,"collisions:electron_b",electron_b);
+
+
+	int nSpecies = iniGetInt(ini, "collisions:nSpeciesNeutral");
+	int nDims = iniGetInt(ini, "grid:nDims");
+	double *stepSize = iniGetDoubleArr(ini, "grid:stepSize", nDims);
+	long int *nParticles = iniGetLongIntArr(ini, "population:nParticles", nSpecies);
+	//double *weights = units->weights;
+	double *mass = iniGetDoubleArr(ini, "collisions:neutralMass", nSpecies);
+	double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
+
+	double V  = gGetGlobalVolume(ini)*pow(stepSize[0],nDims);
+
+	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
+	for(int s=0; s<nSpecies; s++){
+		weights[s] = density[s]*V/nParticles[s];
+		//printf("weights[%i] = %f \n",s,weights[s]);
+	}
+
+	iniScaleDouble(ini, "collisions:neutralDrift", 1.0/units->velocity);
+
+	// Simulation particle scaling
+	for(int s=0; s<nSpecies; s++){
+		mass[s]    *= weights[s];
+		density[s] /= weights[s];
+	}
+
+	// Normalization
+	adScale(mass,   nSpecies, 1.0/units->mass);
+	adScale(density, nSpecies, 1.0/units->density);
+
+	iniSetDoubleArr(ini, "collisions:neutralMass", mass, nSpecies);
+	iniSetDoubleArr(ini, "collisions:numberDensityNeutrals", density, nSpecies);
+
+	free(mass);
+	free(density);
+
 
 
 }
@@ -269,7 +307,7 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	// mccVars->mccSigmaElectronElastic = mccSigmaElectronElastic;
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	double *neutralDrift = iniGetDoubleArr(ini, "population:drift", 3*nSpecies);
+	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpecies);
 	electronMassRatio = mass[0]*units->mass/units->weights[0];
 	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
 	mccVars->neutralDrift = neutralDrift,
@@ -301,6 +339,10 @@ void mccFreeVars(MccVars *mccVars){
 	free(mccVars);
 
 }
+
+
+
+
 
 /*************************************************
 *		Max collision probability Functions
@@ -554,7 +596,7 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 
 
 	double *mass = pop->mass;
-	double *drift = mccVars->neutralDrift;
+	//double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -1761,14 +1803,25 @@ void oCollMode(dictionary *ini){
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 	MccVars *mccVars=mccAlloc(ini,units);
 
+	// For SPH neutral particles
+	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfo);
+	Grid *Pgrad   = gAlloc(ini, VECTOR,mpiInfo);
+	Grid *P   = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfo);
+
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
+    // for SPH neutrals
+	//gCreateNeighborhood(ini, mpiInfo, rhoNeutral);
+    // We assume same form on neutral density grid and charged density grid
 
   // Setting Boundary slices
   gSetBndSlices(ini, phi, mpiInfo);
+  // need for SPH neutrals a function
+  neSetBndSlices(ini, P, mpiInfo);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1782,12 +1835,16 @@ void oCollMode(dictionary *ini){
 	pOpenH5(ini, pop, units, "pop");
 	//double denorm = units->potential;
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
-	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
-	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
+	//gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
+	//gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
   // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
   // oReadH5(obj, mpiInfo);
+
+    // SPH neutrals
+    gOpenH5(ini, rhoNeutral, mpiInfo, units, 1, "rhoNeutral");
+    gOpenH5(ini, P,   mpiInfo, units, 1, "P");
 
     //msg(STATUS,"opening obj file");
 		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
@@ -1830,16 +1887,22 @@ void oCollMode(dictionary *ini){
 	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
+	// SPH neutrals
+	nePosUniform(ini, neutralPop, mpiInfo, rngSync);
+	neVelMaxwell(ini, neutralPop, rng);
+
 	//add influx of new particles on boundary
-    pPurgeGhost(pop, rho);
+	pPurgeGhost(pop, rho);
     pFillGhost(ini,pop,rng,mpiInfo);
+    // SPH neutrals
+	nePurgeGhost(neutralPop, rhoNeutral);
+	neFillGhost(ini,neutralPop,rng,mpiInfo);
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
-
 	puMigrate(pop, mpiInfo, rho);
 
 
@@ -1853,6 +1916,8 @@ void oCollMode(dictionary *ini){
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
     gZero(rhoObj);                                          // for capMatrix - objects
 
+    // SPH Neutrals
+    nuObjectpurge(neutralPop,rhoObj,obj,mpiInfo);
 
 	// Get initial charge density
 	distr(pop, rho,rho_e,rho_i);
@@ -1861,16 +1926,26 @@ void oCollMode(dictionary *ini){
 	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
     //gWriteH5(rho, mpiInfo, (double) 0);
 
+    NeutralDistr3D1(neutralPop, rhoNeutral);
+	gHaloOp(addSlice, rhoNeutral, mpiInfo, FROMHALO);
+    //gZero(P);
+
 	// Get initial E-field
 
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
+	nePressureSolve3D(rhoNeutral,P,neutralPop, mpiInfo );
     //gWriteH5(phi, mpiInfo, (double) 0);
     //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
 
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
+
+	// Compute pressure gradient SPH neutrals
+	gFinDiff1st(P, Pgrad);
+	gHaloOp(setSlice, Pgrad, mpiInfo, TOHALO);
+	gMul(Pgrad, -1.);
 
 
   //Boris parameters
@@ -1883,11 +1958,15 @@ void oCollMode(dictionary *ini){
 	//gAddTo(Ext); //needs grid definition of Eext
   puAddEext(ini, pop, E); // adds same value to whole grid
 
-  gMul(E, 0.5);
+    gMul(E, 0.5);
 	puGet3DRotationParameters(ini, T, S, 0.5);
 	acc(pop, E, T, S);
 	gMul(E, 2.0);
 	puGet3DRotationParameters(ini, T, S, 1.0);
+
+	gMul(Pgrad, 0.5);
+	neAcc3D1(neutralPop,Pgrad); // SPH neutrals
+	gMul(Pgrad, 2.0);
 
 	/*
 	 * TIME LOOP
@@ -1902,7 +1981,7 @@ void oCollMode(dictionary *ini){
 
 
 		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles %i: ",(pop->iStop[0]- pop->iStart[0]));
+        msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
@@ -1915,14 +1994,21 @@ void oCollMode(dictionary *ini){
 		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
 		puMove(pop); //puMove(pop, obj); Do not change functions such that PINC does
     // not work in other run modes!
+	    neMove(neutralPop); // SPH neutrals
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
+		// SPH neutrals
+		neExtractEmigrants3DOpen(neutralPop, mpiInfo);
+		neMigrate(neutralPop, mpiInfo, rhoNeutral);
 
-      //add influx of new particles on boundary
-      pPurgeGhost(pop, rho);
-      pFillGhost(ini,pop,rng,mpiInfo);
+        //add influx of new particles on boundary
+        pPurgeGhost(pop, rho);
+        pFillGhost(ini,pop,rng,mpiInfo);
+	    // SPH neutrals
+        nePurgeGhost(neutralPop, rhoNeutral);
+  	    neFillGhost(ini,neutralPop,rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
@@ -1930,6 +2016,8 @@ void oCollMode(dictionary *ini){
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
+        // SPH neutrals
+		nuObjectCollide(neutralPop,rhoObj,obj,mpiInfo);
 
 		/*
 		*   Collisions
@@ -1944,6 +2032,10 @@ void oCollMode(dictionary *ini){
 		gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
 		gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
 
+		// SPH neutrals
+		NeutralDistr3D1(neutralPop, rhoNeutral);
+		gHaloOp(addSlice, rhoNeutral, mpiInfo, FROMHALO);
+
 
         // Keep writing Rho here.
 
@@ -1956,7 +2048,7 @@ void oCollMode(dictionary *ini){
 
         //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
-
+        nePressureSolve3D(rhoNeutral,P,neutralPop, mpiInfo);
 
 
 
@@ -1974,6 +2066,11 @@ void oCollMode(dictionary *ini){
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 
+		// Compute pressure gradient SPH neutrals
+		gFinDiff1st(P, Pgrad);
+		gHaloOp(setSlice, Pgrad, mpiInfo, TOHALO);
+		gMul(Pgrad, -1.);
+
 		//gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
     //gZero(E);
@@ -1983,6 +2080,7 @@ void oCollMode(dictionary *ini){
 		// Accelerate particle and compute kinetic energy for step n
 		//acc(pop, E);
     acc(pop, E, T, S);
+	neAcc3D1(neutralPop,Pgrad); // SPH neutrals
 
 		tStop(t);
 
@@ -1995,16 +2093,19 @@ void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>29900){//50614
+		if(n%100 == 0 || n>100000){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(rho_e, mpiInfo, (double) n);
-			gWriteH5(rho_i, mpiInfo, (double) n);
+			//gWriteH5(rho_e, mpiInfo, (double) n);
+			//gWriteH5(rho_i, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			gWriteH5(rhoObj, mpiInfo, (double) n);
+			//gWriteH5(rhoObj, mpiInfo, (double) n);
+
+			gWriteH5(rhoNeutral, mpiInfo, (double) n);
+			gWriteH5(P, mpiInfo, (double) n);
 		}
 
 		pWriteEnergy(history,pop,(double)n,units);
@@ -2019,7 +2120,6 @@ void oCollMode(dictionary *ini){
 	 */
 	gFreeMpi(mpiInfo);
 
-
 	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
@@ -2030,8 +2130,10 @@ void oCollMode(dictionary *ini){
 	gCloseH5(E);
     gCloseH5(rhoObj);       // for capMatrix - objects
     oCloseH5(obj);          // for capMatrix - objects
-    // 11.10.19 segfault seems to link to oClose(), as calling this
-    // alters the segfault.
+
+    // SPH neutrals
+	gCloseH5(rhoNeutral);
+    gCloseH5(P);
 
 	xyCloseH5(history);
 
@@ -2041,14 +2143,18 @@ void oCollMode(dictionary *ini){
   solverFree(solver);
   mccFreeVars(mccVars);
   gFree(rho);
+  gFree(rhoNeutral);
   gFree(rho_e);
   gFree(rho_i);
   gFree(phi);
   free(S);
-  free(T)
+  free(T);
 
   gFree(E);
+  gFree(P);
+  gFree(Pgrad);
   pFree(pop);
+  pNeutralFree(neutralPop);
   uFree(units);
     gFree(rhoObj);          // for capMatrix - objects
     oFree(obj);             // for capMatrix - objects

@@ -119,7 +119,7 @@ void uNormalize(dictionary *ini, const Units *units){
 	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
 	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
-	msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
+	//msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
 
 }
 /*

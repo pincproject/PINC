@@ -143,6 +143,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	//printf("pop->mass = %f \n",pop->mass[1] );
 	pop->bnd = bnd;
 
 	free(nAlloc);

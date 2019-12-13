@@ -30,8 +30,8 @@ TSDIR	= test
 TODIR	= test/obj
 THDIR	= test
 
-HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h collisions.h spectral.h units.h
-SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c collisions.c spectral.c units.c
+HEAD_	= core.h io.h aux.h population.h grid.h pusher.h multigrid.h object.h collisions.h spectral.h units.h neutrals.h
+SRC_	= io.c aux.c population.c grid.c pusher.c multigrid.c object.c collisions.c spectral.c units.c neutrals.c
 
 OBJ_	= $(SRC_:.c=.o)
 DOC_	= main.dox

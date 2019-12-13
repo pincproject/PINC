@@ -39,6 +39,9 @@ typedef struct{
 
 } MccVars;
 
+
+
+
 void oCollMode(dictionary *ini);
 funPtr oCollMode_set(dictionary *ini);
 

@@ -488,5 +488,6 @@ typedef void (*funPtr)();
 #include "io.h"
 #include "aux.h"
 #include "units.h"
+#include "neutrals.h"
 
 #endif // CORE_H
