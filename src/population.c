@@ -990,136 +990,87 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
-long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj){
-	
-	//initialize variables
-	msg(STATUS, "In pPhotoElectronEmissionRate function");
-	double tstep = iniGetDouble(ini, "time:timeStep");
-	double *surfArea = iniGetDoubleArr(ini, "objects:ConductingSurface", 1);
-	long int *nodes = malloc(sizeof(obj->exposedNodes));
-	// long int *exposed = obj->exposedNodes;
-	// long int *offset = obj->exposedNodesOffset;
-	// long int nExposedNodes = obj->exposedNodesOffset[obj->nObjects + 1]; //TODO: for all objects
-	
-	// alCopy(obj->exposedNodes, nodes, nExposedNodes);
-	double photoElectronCurrent = iniGetDouble(ini, "objects:photoElectronCurrent");
-	
-	// int counter = 0;
-	// for(int a=0; a<obj->nObjects; a++){
-
-	// 	long int n = offset[a+1] - offset[a];
-
-	// 	for(int i=offset[a]; i<n; i++){
-	// 		if(exposed[i] != 0) nodes[i] = exposed[n + i];
-	// 		counter++;   
-	// 	}
-	// }
-
-	// alPrint(nodes, counter);
-
-	//calculate solar irradiance, planck's law for blackbody radiation
-	size_t nWaveLengths = (size_t)(iniGetInt(ini, "spectrum:nWavelengths"));
-	double *cutOffWavelength = iniGetDoubleArr(ini, "spectrum:waveLengthCutOffs", 2);
-	double blackBodyTemp = iniGetDouble(ini, "spectrum:blackBodyTemp");
-	double stride = (cutOffWavelength[1] * 1e-9) / nWaveLengths;
-	double *wavelength = malloc(sizeof(double) * (nWaveLengths + 1));
-	double *spectrum = malloc(sizeof wavelength);
-
-	for(size_t i=0; i < nWaveLengths + 1; i++){
-
-		if(0 == i){
-			wavelength[i] = 0.;
-		}
-		else{
-			wavelength[i] = wavelength[i - 1] + stride;
-		}
-	}
-
-	//adPrint(wavelength, nWaveLengths + 1);
-	msg(STATUS, "Timestep is: %.10f seconds", tstep);
-	for(size_t i=0; i < nWaveLengths + 1; i++){
-		
-		if(0 == i){
-			spectrum[i] = 0.;
-		}
-		else{
-			//Find spectrum in eV/m^2/m
-			spectrum[i] = ((8.0 * PI * BOLTZMANN * pow(SPEED_OF_LIGHT, 2.0)) / pow(wavelength[i], 5.0))
-						* (1.0/(exp( (BOLTZMANN * SPEED_OF_LIGHT) / (wavelength[i] * PLANCK * blackBodyTemp) ) - 1.0));
-			msg(STATUS, "SPECTRUM: %.10f", spectrum[i]);
-			spectrum[i] *= EVTOJCONVERSION * wavelength[i] * surfArea[i] * tstep; //radiance per timestep in joule
-		}
-
-	}
-	//adPrint(spectrum, nWaveLengths + 1);
-	//calculate the spectrum in terms of #photons/wavelength[i]
-	for(size_t i=0; i < nWaveLengths + 1; i++){
-		
-		double photonEnergy = (PLANCK * SPEED_OF_LIGHT) / wavelength[i];
-		spectrum[i] = spectrum[i] / photonEnergy;
-	}
-
-	adPrint(spectrum, nWaveLengths + 1);
-
-	//free memory and return
-	free(nodes);
-	return spectrum;
-
-}
-
-double pPlanckPhotonIntegral(double sigma, double temperature, const Units *units){
-	// integral of spectral photon radiance from sigma (cm-1) to infinity.
-	// result is photons/s/m2/sr.
+double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
+	// integral of spectral photon radiance from sigma (m-1) to infinity.
+	// result is photons/s/m2/sr, and returned as photons per timestep
 	// follows Widger and Woodall, Bulletin of the American Meteorological
 	// Society, Vol. 57, No. 10, pp. 1217
 	// converted from c++ to c from source code found here:
 	// https://www.spectralcalc.com/blackbody/CalculatingBlackbodyRadianceV2.pdf
 
 	//conversion factors
-	double mass = units->mass;
 	double time = units->time;
-	double length = units->length;
 
 	// constants
-	double Planck = 6.6260693e-34 / pow(length,2) / mass * time;
+	double Planck = 6.6260693e-34;
 	double Boltzmann = 1.380658e-23;
-	double Speed_of_light = 299792458.0 / length / time;
+	double speedOfLight = 299792458.0;
+	double temperature = iniGetDouble(ini, "spectrum:blackBodyTemp");
+	double sunSurfaceArea = 6.1e18;
+	
+	// object variables
+	int nObj = obj->nObjects;
+	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
+	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
+	double *c2 = malloc(nObj*sizeof(*c2));
+	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
+	adSetAll(c2, (long)nObj, 0.0);
 
 	// compute powers of x, the dimensionless spectral coordinate
-	double c1 = Planck * Speed_of_light/Boltzmann;
-	double x = c1 * 100 * sigma/temperature;
-	double x2 = x * x;
+	for(int a=0; a<nObj; a++){
+		sigma[a] = 	((double)sigma[a]) / (Planck * speedOfLight * 100.);//wavenumber in cm^-1
+		double c1 = Planck * speedOfLight / Boltzmann;
+		double x = c1 * 100. * (double)sigma[a]/temperature;
+		double x2 = x * x;
 
-	// decide how many terms of sum are needed
-	double iterations = 2.0 + 20.0/x;
-	iterations = (iterations<512) ? iterations : 512;
-	int iter = (int)(iterations);
-
-	// add up terms of sum
-	double sum = 0;
-	for (int n=1; n<iter; n++) {
-		double dn = 1.0 / n;
-		sum += exp(-n*x) * (x2 + 2.0*(x + dn)*dn) * dn;
+		// decide how many terms of sum are needed
+		double iterations = 2.0 + 20.0/x;
+		iterations = (iterations < 512.) ? iterations : 512;
+		int iter = (int)(iterations);
+		// add up terms of sum
+		double sum = 0.;
+		for (int n=1; n<iter; n++) {
+			double dn = 1.0 / n;
+			sum += exp(-n*x) * (x2 + 2.0*(x + dn)*dn) * dn;
+		}
+		// result, in units of photons/s/m2/sr, convert to photons/timestep
+		double kTohc = (Boltzmann * (double)temperature) / (Planck * speedOfLight);
+		c2[a] = 2.0 * pow(kTohc,3.) * speedOfLight;
+		c2[a] = c2[a] * sum;
+		
+		double solidAngle = (double)area[a] / pow(distFromSun,2.);
+		c2[a] *= solidAngle * sunSurfaceArea;
+		c2[a] *= time;
+		msg(STATUS, "Total number of real photoelectrons per timestep: %.10e",c2[a]);
 	}
-	// return result, in units of photons/s/m2/sr
-	double kTohc = Boltzmann * temperature / (Planck*Speed_of_light);
-	double c2 = 2.0 * pow(kTohc,3) * Speed_of_light;
-	return c2 *sum / units->weights[0];
+
+
+	return c2;
 }
 
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
- 										double flux, const gsl_rng *rng){
+ 										const Units *units, const gsl_rng *rng){
 
 	int nObj = obj->nObjects;
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
-	long int numNodes = (long)(sizeof(exposedNodes)/sizeof(*exposedNodes));
-	int electronsPerNode = flux/((double)numNodes);
+	double flux = iniGetDouble(ini, "spectrum:flux");
 	double *workFunc = iniGetDoubleArr(ini,"objects:workFunction", nObj);
+	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
+
+	//scale units
+	flux *= pow(units->length,2) * units->time;
+	
+	for(size_t i = 0; i<nObj; i++){
+		area[i] /= units->length * units->length;
+	}
+
+
 
 	for(int a=0; a < nObj; a++){
-		
+
 		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
+		long int electronsPerNode = flux/((double)nodesThisCore);
 
 		for(int i=exposedOff[a]; i < nodesThisCore; i++){
 

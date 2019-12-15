@@ -275,23 +275,16 @@ to the object
 void pVicinityParticles(Population *pop, const Object *obj);
 
 /*
-Calculates number of electrons emitted by conducting surface
-per timestep
-*/
-long int pPhotoElectronEmissionRate(dictionary *ini, const Object *obj);
-
-/*
 Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
-double pPlanckPhotonIntegral(double sigma, double temperature, const Units *units);
-
+double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
 
 /*
 emits photoELectrons from object surface every timestep
 */
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj, 
-                     double flux, const gsl_rng *rng);
+                     const Units *units, const gsl_rng *rng);
 
 /*
 Find Collision type is called during puMove; returns
