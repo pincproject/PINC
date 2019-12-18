@@ -42,7 +42,8 @@ int main(int argc, char *argv[]){
 												mgModeErrorScaling_set,
 												sMode_set,
 												oMode_set,
-											    oCollMode_set);
+											    oCollMode_set,
+												neutTest_set);
 	run(ini);
 
 	/*

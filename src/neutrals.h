@@ -34,12 +34,12 @@ typedef struct{
 	long int *iStart;	///< First index of specie s (nSpecies+1 elements)
 	long int *iStop;	///< First index not of specie s (nSpecies elements)
 	double *mass;		///< Mass (nSpecies elements)
-	double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
-	double *potEnergy;	///< Potential energy (nSpecies+1 elements)
+	//double *kinEnergy;	///< Kinetic energy (nSpecies+1 elements)
+	//double *potEnergy;	///< Potential energy (nSpecies+1 elements)
 	int nSpeciesNeutral;		///< Number of species
 	int nDims;			///< Number of dimensions (usually 3)
 	bndType *bnd;		/// type of boundaries for particles, 2*nDims
-	hid_t h5;			///< HDF5 file handler
+	//hid_t h5;			///< HDF5 file handler
 	double stiffnessConstant; //stiffnessConstant decides magnitude of pressure.
 	double rho0;
 } NeutralPopulation;
@@ -86,6 +86,7 @@ void neVelMaxwell(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *
 
 void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
 
+void neVelAssertMax(const NeutralPopulation *pop, double max);
 
 //#########################################
 // Mover/Accelerator
@@ -101,7 +102,7 @@ funPtr neAcc3D1_set(dictionary *ini);
 void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo);
 funPtr neExtractEmigrants3DOpen_set(const dictionary *ini);
 void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid);
-
+void nePosAssertInLocalFrame(const NeutralPopulation *pop, const Grid *grid);
 
 //#############################
 // Pressure solver

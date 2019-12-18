@@ -39,14 +39,14 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 		if(bnd[d] != PERIODIC){
 			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
 			periodic = false;
-			}
+		}
 	}
 	for(int d = rank+1; d < 2*rank; d++){
 		//msg(STATUS,"d = %i",d);
 		if(bnd[d] != PERIODIC){
 			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
 			periodic = false;
-			}
+		}
 	}
 	if(periodic == true){
 		//printf("PERIODIC cond, rank %i\n",mpiInfo->mpiRank);
@@ -79,7 +79,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
 	//msg(STATUS,"phi size = %i",grid->sizeProd[4]);
 	//if (mpiInfo->mpiRank == 7){
-		//adPrint(grid->val,grid->sizeProd[4] );
+	//adPrint(grid->val,grid->sizeProd[4] );
 	//}
 	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
@@ -89,82 +89,107 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 
 void neNewparticle(NeutralPopulation *pop, int s, const double *pos, const double *vel){
 
-int nDims = pop->nDims;
-long int *iStart = pop->iStart;
-long int *iStop = pop->iStop;	// New particle added here
+	int nDims = pop->nDims;
+	long int *iStart = pop->iStart;
+	long int *iStop = pop->iStop;	// New particle added here
 
-if(iStop[s]>=iStart[s+1])
+	if(iStop[s]>=iStart[s+1])
 	msg(WARNING,"Not enough allocated memory to add new particle to specie"
-	 			"%i. New particle ignored.",s);
-else {
+	"%i. New particle ignored.",s);
+	else {
 
-	long int p = iStop[s]*nDims;
-	for(int d=0;d<nDims;d++){
-		pop->pos[p+d] = pos[d];
-		pop->vel[p+d] = vel[d];
+		long int p = iStop[s]*nDims;
+		for(int d=0;d<nDims;d++){
+			pop->pos[p+d] = pos[d];
+			pop->vel[p+d] = vel[d];
+		}
+
+
+		iStop[s]++;
+
 	}
 
+}
 
-	iStop[s]++;
+
+
+void neScatterParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
+
+	int nDims = pop->nDims;
+	long int pLast = (pop->iStop[s]-1)*nDims;
+	double *newvel = &pop->vel[p];
+	//printf("Cutting particle p = %li \n",p);
+	for(int d=0;d<nDims;d++){
+		//pos[d] = -pop->pos[p+d];
+		//printf("vel[%i] = %f \n",d,newvel[d]);
+		newvel[d] = -pop->vel[p+d];
+		pos[d] += newvel[d]; // move back
+		//printf("vel[%i] = %f \n \n",d,newvel[d]);
+		//printf("pos[%i] = %f \n",d,pos[d]);
+		//pop->pos[p+d] = pop->pos[pLast+d];
+		//pop->vel[p+d] = pop->vel[pLast+d];
+	}
+
+	//pop->iStop[s]--;
 
 }
 
-}
+
 
 void neCutParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
 
-int nDims = pop->nDims;
-long int pLast = (pop->iStop[s]-1)*nDims;
-//printf("Cutting particle p = %li \n",p);
-for(int d=0;d<nDims;d++){
-	pos[d] = pop->pos[p+d];
-	vel[d] = pop->vel[p+d];
-	//printf("pos[%i] = %f \n",d,pos[d]);
-	pop->pos[p+d] = pop->pos[pLast+d];
-	pop->vel[p+d] = pop->vel[pLast+d];
-}
+	int nDims = pop->nDims;
+	long int pLast = (pop->iStop[s]-1)*nDims;
+	//printf("Cutting particle p = %li \n",p);
+	for(int d=0;d<nDims;d++){
+		pos[d] = pop->pos[p+d];
+		vel[d] = pop->vel[p+d];
+		//printf("pos[%i] = %f \n",d,pos[d]);
+		pop->pos[p+d] = pop->pos[pLast+d];
+		pop->vel[p+d] = pop->vel[pLast+d];
+	}
 
-pop->iStop[s]--;
+	pop->iStop[s]--;
 
 }
 
 
 void nePToLocalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
 
-int *offset = mpiInfo->offset;
-int nSpecies = pop->nSpeciesNeutral;
-int nDims = pop->nDims;
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
 
-for(int s=0;s<nSpecies;s++){
+	for(int s=0;s<nSpecies;s++){
 
-	long int iStart = pop->iStart[s];
-	long int iStop = pop->iStop[s];
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
 
-	for(long int i=iStart;i<iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
-		double *pos = &pop->pos[i*nDims];
-		for(int d=0;d<nDims;d++) pos[d] -= offset[d];
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
+		}
 	}
-}
 }
 
 void nePToGlobalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
 
-int *offset = mpiInfo->offset;
-int nSpecies = pop->nSpeciesNeutral;
-int nDims = pop->nDims;
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
 
-for(int s=0;s<nSpecies;s++){
+	for(int s=0;s<nSpecies;s++){
 
-	long int iStart = pop->iStart[s];
-	long int iStop = pop->iStop[s];
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
 
-	for(long int i=iStart;i<iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
-		double *pos = &pop->pos[i*nDims];
-		for(int d=0;d<nDims;d++) pos[d] += offset[d];
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] += offset[d];
+		}
 	}
-}
 }
 
 
@@ -198,9 +223,9 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	for(int s=0;s<nSpecies;s++){
 		nAlloc[s] = ceil((double)nAllocTotal[s]/size);
 		if(nAlloc[s]*size != nAllocTotal[s])
-			msg(WARNING,"increased number of allocated particles from %i to %i"
-			 			"to get integer per computing node",
-						nAllocTotal[s], nAlloc[s]*size);
+		msg(WARNING,"increased number of allocated particles from %i to %i"
+		"to get integer per computing node",
+		nAllocTotal[s], nAlloc[s]*size);
 	}
 
 	long int *iStart = malloc((nSpecies+1)*sizeof(long int));
@@ -226,9 +251,9 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 		// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
 
 		int upperSubdomain = firstElem
-			+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
+		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
 		int lowerSubdomain = firstElem
-			+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
+		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
 		//printf("rank: %i, lowerSubdomain: %i, upperSubdomain = %i \n",mpiRank,lowerSubdomain,upperSubdomain);
 
@@ -237,17 +262,17 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 		//printf("b = %i \n",b);
 		int r=dd+1;
 		if(lowerSubdomain>=mpiRank){
-				if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
-				else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
-				else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
-				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+			if(		!strcmp(boundaries[b], "PERIODIC"))		bnd[r] = PERIODIC;
+			else if(!strcmp(boundaries[b], "DIRICHLET"))	bnd[r] = DIRICHLET;
+			else if(!strcmp(boundaries[b], "NEUMANN"))		bnd[r] = NEUMANN;
+			else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
-			}else if (lowerSubdomain<mpiRank){
-				//printf("YEPS!");
-				bnd[r] = PERIODIC;
-			} else {
-				bnd[r] = NONE; //initialize
-				//printf("bnd[%i] = NONE",r);
+		}else if (lowerSubdomain<mpiRank){
+			//printf("YEPS!");
+			bnd[r] = PERIODIC;
+		} else {
+			bnd[r] = NONE; //initialize
+			//printf("bnd[%i] = NONE",r);
 
 		}
 		//upper
@@ -255,44 +280,52 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 		r = rank+dd+1;
 		//printf("r = %i \n",r);
 		if(upperSubdomain<=mpiRank){
-				if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
-				else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
-				else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
-				else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
+			if(		!strcmp(boundaries[b+rank-1], "PERIODIC"))		bnd[r] = PERIODIC;
+			else if(!strcmp(boundaries[b+rank-1], "DIRICHLET"))	bnd[r] = DIRICHLET;
+			else if(!strcmp(boundaries[b+rank-1], "NEUMANN"))		bnd[r] = NEUMANN;
+			else msg(ERROR,"%s invalid value for grid:boundaries",boundaries[b]);
 
-			}else if(upperSubdomain>mpiRank){
-				bnd[r] = PERIODIC;
-			}else {
-				bnd[r] = NONE; //initialize
-				//printf("bnd[%i] = NONE",r);
-			}
-			b++;
+		}else if(upperSubdomain>mpiRank){
+			bnd[r] = PERIODIC;
+		}else {
+			bnd[r] = NONE; //initialize
+			//printf("bnd[%i] = NONE",r);
+		}
+		b++;
 		//}
 	}
+
+
 	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("in pop rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
+	//printf(" alloc vals = %li \n",((long int)nDims*iStart[nSpecies]));
+	double *mass = iniGetDoubleArr(ini, "collisions:neutralMass", nSpecies);
+	double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
+	double rho0 = 2*density[0];//*mass[0];
 
-    double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
-	double rho0 = density[0];
-	NeutralPopulation *neutralPop = malloc(sizeof(Population));
+    double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
+	double stiffnessC =  ((7.)*(NvelThermal*NvelThermal))/rho0; // Monaghan (1994)
+	msg(STATUS,"mass[0]= %f, rho0 = %f, density  = %f, NvelThermal = %f, stiffnessC = %e \n",mass[0],rho0,density [0],NvelThermal,stiffnessC);
+	//exit(0);
+	NeutralPopulation *neutralPop = malloc(sizeof(*neutralPop));
 	neutralPop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	neutralPop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	neutralPop->nSpeciesNeutral = nSpecies;
 	neutralPop->nDims = nDims;
 	neutralPop->iStart = iStart;
 	neutralPop->iStop = iStop;
-	neutralPop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
-	neutralPop->potEnergy = malloc((nSpecies+1)*sizeof(double));
-	neutralPop->mass = iniGetDoubleArr(ini,"collisions:neutralMass",nSpecies);
+	//neutralPop->kinEnergy = malloc((nSpecies+1)*sizeof(double));
+	//neutralPop->potEnergy = malloc((nSpecies+1)*sizeof(double));
+	neutralPop->mass = mass;//iniGetDoubleArr(ini,"collisions:neutralMass",nSpecies);
 	neutralPop->bnd = bnd;
-	neutralPop->stiffnessConstant = 0.1;
+	neutralPop->stiffnessConstant = stiffnessC; //0.00001
 	neutralPop->rho0 = rho0;
 	//printf("neutralPop->mass = %f \n",neutralPop->mass[0] );
 
 	free(nAlloc);
 	free(nAllocTotal);
 	free(density);
-
+	free(boundaries);
 	return neutralPop;
 
 }
@@ -301,13 +334,14 @@ void pNeutralFree(NeutralPopulation *pop){
 
 	free(pop->pos);
 	free(pop->vel);
-	free(pop->kinEnergy);
-	free(pop->potEnergy);
+	//free(pop->kinEnergy);
+	//free(pop->potEnergy);
 	free(pop->iStart);
 	free(pop->iStop);
 	free(pop->mass);
 	free(pop->bnd);
 	free(pop);
+
 
 }
 
@@ -359,7 +393,7 @@ void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *
 			// the range of this node
 			int correctRange = 0;
 			for(int d=0;d<nDims;d++)
-				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+			correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
 
 			// Iterate only if particle resides in this sub-domain.
 			if(correctRange==nDims){
@@ -373,7 +407,7 @@ void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *
 			int allocated = pop->iStart[s+1]-iStart;
 			int generated = iStop-iStart;
 			msg(ERROR,	"allocated only %i particles of specie %i per node but"
-			 			"%i generated", allocated, s, generated);
+			"%i generated", allocated, s, generated);
 		}
 
 		pop->iStop[s]=iStop;
@@ -471,7 +505,7 @@ void neFillGhost(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *r
 	int nDims = pop->nDims;
 	bndType *bnd = pop->bnd;
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
-double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
@@ -514,13 +548,16 @@ double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies)
 			//for(long int i=iStart;i<iStop;i++){
 			//for(long int i=0;i<newParticles;i++){
 
-				//Lower ghost slice
+			//Lower ghost slice
 			if(bnd[d+1]==DIRICHLET || bnd[d+1]==NEUMANN){
 				for(long int i=0;i<newParticles;i++){
 					//generate velocity for particle
-					for(int d=0;d<nDims;d++){
-						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+					for(int dd=0;dd<nDims;dd++){
+						vel[dd] = velDrift[(s*nDims)+dd] + gsl_ran_gaussian_ziggurat(rng,velTh);
+						//printf("vel = %f, drift = %f \n",vel[dd],velDrift[(s*nDims)+dd] );
+
 					}
+					//printf(" \n");
 
 					// Generate position for particle
 					for(int dd=0;dd<nDims;dd++){
@@ -535,21 +572,18 @@ double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies)
 					}
 					// Add only if particle resides in this sub-domain.
 					if(correctRange==nDims){
-						if((mpiInfo->mpiRank)==4){
-							//printf("adding to pos: %f,%f,%f \n",pos[0],pos[1],pos[2]);
-						}
 						neNewparticle(pop,s,pos,vel);
 					}
 				}
 			}
 
-				//Upper ghost slice
+			//Upper ghost slice
 			if(bnd[d+rank+1]==DIRICHLET || bnd[d+rank+1]==NEUMANN){
 				for(long int i=0;i<newParticles;i++){
 					//generate velocity for particle
 
-					for(int d=0;d<nDims;d++){
-						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+					for(int dd=0;dd<nDims;dd++){
+						vel[dd] = velDrift[(s*nDims)+dd] + gsl_ran_gaussian_ziggurat(rng,velTh);
 					}
 
 					// Generate position for particle
@@ -561,7 +595,7 @@ double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies)
 
 					int correctRange = 0;
 					for(int dd=0;dd<nDims;dd++)
-						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd])));
+					correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd])));
 
 					// Add only if particle resides in this sub-domain.
 					if(correctRange==nDims){
@@ -604,7 +638,7 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 	gZero(rho);
 	double *val = rho->val;
 	long int *sizeProd = rho->sizeProd;
-//adPrint(val,rho->sizeProd[2]);
+	//adPrint(val,rho->sizeProd[2]);
 	int nSpecies = pop->nSpeciesNeutral;
 
 	for(int s=0;s<nSpecies;s++){
@@ -645,7 +679,7 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 
 			// if(p>=sizeProd[4]){
 			// 	msg(ERROR,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
-		 	// }
+			// }
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
@@ -658,11 +692,13 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 			val[pjl]	+= x    *ycomp*z    ;
 			val[pkl]	+= xcomp*y    *z    ;
 			val[pjkl]	+= x    *y    *z    ;
-
+			//if(val[p]>100. || val[pj]>100. || val[pk]>100. || val[pjk]>100. || val[pl]>100. || val[pjl]>100. || val[pkl]>100. || val[pjkl]>100.){
+            	//printf("val = %f, %f, %f, %f, %f, %f, %f, %f \n",val[p],val[pj],val[pk],val[pjk],val[pl],val[pjl],val[pkl],val[pjkl]);
+			//}
 		}
 
 		//gMul(rho, pop->mass[s]);
-	//adPrint(val,rho->sizeProd[4]);
+		//adPrint(val,rho->sizeProd[4]);
 		//adPrint(rho->val,rho->sizeProd[4]);
 		//exit(0);
 	}
@@ -674,37 +710,37 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 //#############################
 
 static inline void neInterp3D1(	double *result, const double *pos,
-								const double *val, const long int *sizeProd){
+	const double *val, const long int *sizeProd){
 
-	// Integer parts of position
-	int j = (int) pos[0];
-	int k = (int) pos[1];
-	int l = (int) pos[2];
+		// Integer parts of position
+		int j = (int) pos[0];
+		int k = (int) pos[1];
+		int l = (int) pos[2];
 
-	// Decimal (cell-referenced) parts of position and their complement
-	double x = pos[0]-j;
-	double y = pos[1]-k;
-	double z = pos[2]-l;
-	double xcomp = 1-x;
-	double ycomp = 1-y;
-	double zcomp = 1-z;
+		// Decimal (cell-referenced) parts of position and their complement
+		double x = pos[0]-j;
+		double y = pos[1]-k;
+		double z = pos[2]-l;
+		double xcomp = 1-x;
+		double ycomp = 1-y;
+		double zcomp = 1-z;
 
-	// Index of neighbouring nodes
-	long int p 		= j*3 + k*sizeProd[2] + l*sizeProd[3];
-	long int pj 	= p + 3; //sizeProd[1];
-	long int pk 	= p + sizeProd[2];
-	long int pjk 	= pk + 3; //sizeProd[1];
-	long int pl 	= p + sizeProd[3];
-	long int pjl 	= pl + 3; //sizeProd[1];
-	long int pkl 	= pl + sizeProd[2];
-	long int pjkl 	= pkl + 3; //sizeProd[1];
+		// Index of neighbouring nodes
+		long int p 		= j*3 + k*sizeProd[2] + l*sizeProd[3];
+		long int pj 	= p + 3; //sizeProd[1];
+		long int pk 	= p + sizeProd[2];
+		long int pjk 	= pk + 3; //sizeProd[1];
+		long int pl 	= p + sizeProd[3];
+		long int pjl 	= pl + 3; //sizeProd[1];
+		long int pkl 	= pl + sizeProd[2];
+		long int pjkl 	= pkl + 3; //sizeProd[1];
 
-	// Linear interpolation
-	for(int v=0;v<3;v++)
+		// Linear interpolation
+		for(int v=0;v<3;v++)
 		result[v] =	zcomp*(	 ycomp*(xcomp*val[p   +v]+x*val[pj  +v])
-							+y    *(xcomp*val[pk  +v]+x*val[pjk +v]) )
-					+z    *( ycomp*(xcomp*val[pl  +v]+x*val[pjl +v])
-							+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
+		+y    *(xcomp*val[pk  +v]+x*val[pjk +v]) )
+		+z    *( ycomp*(xcomp*val[pl  +v]+x*val[pjl +v])
+		+y    *(xcomp*val[pkl +v]+x*val[pjkl+v]) );
 
 }
 
@@ -759,7 +795,7 @@ void neMove(NeutralPopulation *pop){
 		long int pStop = pop->iStop[s]*nDims;
 
 		for(long int p=pStart;p<pStop;p++){
-				pos[p] += vel[p];
+			pos[p] += vel[p];
 		}
 	}
 }
@@ -773,7 +809,7 @@ void neMove(NeutralPopulation *pop){
 
 funPtr neExtractEmigrants3DOpen_set(const dictionary *ini){
 	int nDims = iniGetInt(ini, "grid:nDims");
-	if(nDims!=3) msg(ERROR, "puExtractEmigrants3D requires grid:nDims=3");
+	if(nDims!=3) msg(ERROR, "neExtractEmigrants3DOpen requires grid:nDims=3");
 	return neExtractEmigrants3DOpen;
 }
 void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
@@ -791,14 +827,23 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
 	int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
+	//int rank = mpiInfo->mpiRank;
 
-double dummyPos[3];
+	//printf("mpirank = %i, bnd[1] = %d,bnd[2] = %d,bnd[3] = %d, bnd[5] = %d,bnd[6] = %d,bnd[7] = %d \n",rank,bnd[1],bnd[2],bnd[3],bnd[5],bnd[6],bnd[7]);
+	double dummyPos[3];
 
 	int *offset = mpiInfo->offset;
+	//int nDims = pop->nDims;
+
 
 	nSubdomains[0] = nSubdomainsProd[1];
 	nSubdomains[1] = nSubdomainsProd[2]/nSubdomainsProd[1];
 	nSubdomains[2] = (nSubdomainsProd[3]/nSubdomainsProd[2]);
+
+	//msg(STATUS, "sssss %i, %i, %i", nSubdomains[0], nSubdomains[1], nSubdomains[2]);
+	//exit(0);
+
+	//msg(STATUS,"neighbours = %i",mpiInfo->nNeighbors);
 
 	// By using the dummy to hold data we won't lose track of the beginning of
 	// the arrays when incrementing the pointer
@@ -814,6 +859,8 @@ double dummyPos[3];
 	double ux = thresholds[3];
 	double uy = thresholds[4];
 	double uz = thresholds[5];
+
+	//adPrint(thresholds,6);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -831,10 +878,36 @@ double dummyPos[3];
 				//if(pop->pos[p+d]<1) printf("\n \n pop->pos[p+d] = %f \n \n ",pop->pos[p+d]);
 			}
 
+
+			// not offset but GLOBAL Size!
+			//MpiInfo->subdomain;				///< MPI node (nDims elements)
+			//MpiInfo->nSubdomains;
+
+
 			if ( (dummyPos[0] > trueSize[0]*(nSubdomains[0]) && bnd[5]!=PERIODIC)
 				|| ( dummyPos[1] > trueSize[1]*(nSubdomains[1]) && bnd[6]!=PERIODIC)
 				|| (  dummyPos[2] > trueSize[2]*(nSubdomains[2]) && bnd[7]!=PERIODIC)   ){
 
+					// if (s==0){
+					// 	printf("removed upper \n");
+					// 	printf("trueSize[1]*(nSubdomains[0]) = %i \n",trueSize[0]*(nSubdomains[0]));
+					// 	printf("bnd[5] = %d,bnd[6] = %d,bnd[7] = %d \n",bnd[5],bnd[6],bnd[7]);
+					// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+					// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+					// 	printf("ofsett: %i, %i, %i \n \n", offset[0], offset[1], offset[2]);
+					// }
+				//printf("too large \n");
+				//msg(STATUS,"%i, %i, %i \n",trueSize[0],trueSize[1],trueSize[2]);
+				//printf("global: %f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
+				//printf("Local: %f, %f, %f \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
+				//printf("Boundary %f, %f, %f \n \n",ux+trueSize[0]*(nSubdomains[0]-1),uy+trueSize[1]*(nSubdomains[1]-1),uz+trueSize[2]*(nSubdomains[2]-1) );
+				//msg(STATUS, " removing ");
+				// Remove particle out of bounds particle
+
+				//msg(STATUS,"dummyPos[0] = %f, thresholds[0]+pos = %f",dummyPos[0],thresholds[0]+pop->pos[p*3*+d]);
+				//msg(STATUS,"dummyPos[1] = %f, thresholds[1]+pos = %f",dummyPos[1],thresholds[1]+pop->pos[p*3*+d]);
+				//msg(STATUS,"dummyPos[2] = %f, thresholds[2]+pos = %f",dummyPos[2],thresholds[2]+pop->pos[p*3*+d]);
+				//printf(" \n");
 				removedupp += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
@@ -851,6 +924,20 @@ double dummyPos[3];
 			else if ( (dummyPos[0] < -1. && bnd[1]!=PERIODIC)
 				|| ( dummyPos[1] < -1. && bnd[2]!=PERIODIC)
 				|| ( dummyPos[2] < -1. && bnd[3]!=PERIODIC) ){
+				//printf("%f\n",dummyPos[0]);
+				//msg(STATUS, " removing ");
+				// Remove particle out of bounds particle
+
+				// if (s==0){
+				// 	printf("removed lower \n");
+				// 	printf("bnd[1] = %d,bnd[2] = %d,bnd[3] = %d \n",bnd[1],bnd[2],bnd[3]);
+				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+				// 	printf("ofsett: %i, %i, %i \n \n", offset[0], offset[1], offset[2]);
+				// }
+				//printf("too small \n");
+				//printf("%f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
+				//printf("%f, %f, %f \n \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
 
 				removedlow += 1; //debug
 				pos[p]   = pos[pStop-3];
@@ -880,7 +967,23 @@ double dummyPos[3];
 			int nz = - (z<lz) + (z>=uz);
 			int ne = neighborhoodCenter + nx + 3*ny + 9*nz;
 
+			// if (s==1){
+			// 	if (x<lx) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// 	if (y<ly) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// 	if (z<lz) msg(STATUS,"exhanged particle backward, s = %i \n",s);
+			// }
+			// if(p==371*3)
+			// 	msg(STATUS,"x1: %f",x);
+
 			if(ne!=neighborhoodCenter){
+				//msg(STATUS, "exchanged");
+				//msg(STATUS,"ne = %i",ne);
+				// if (s==1){
+				// 	printf("exhcanged \n" );
+				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
+				// 	printf("local: %f, %f, %f \n", pop->pos[p+0], pop->pos[p+1],  pop->pos[p+2]);
+				// 	printf("offset: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
+				// }
 
 				exhanged += 1;
 				*(emigrants[ne]++) = x;
@@ -897,6 +1000,9 @@ double dummyPos[3];
 				vel[p]   = vel[pStop-3];
 				vel[p+1] = vel[pStop-2];
 				vel[p+2] = vel[pStop-1];
+
+				// if(p==371*3)
+				// 	msg(STATUS,"x2: %f",pos[p]);
 
 				pStop -= 3;
 				p -= 3;
@@ -924,12 +1030,16 @@ static inline void neShiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 		ne /=3;
 
 		double shift = n*grid->trueSize[d+1];
+
 		for(int i=0;i<nImmigrantsTotal;i++){
+
 			immigrants[d+2*nDims*i] += shift;
 
-			// double pos = immigrants[d+2*nDims*i];
-			// if(pos>grid->trueSize[d+1])
-			// 	msg(ERROR,"particle %i skipped two domains");
+			//double pos = immigrants[d+2*nDims*i];
+			//msg(STATUS," ne = %i, n = %i ",ne,n);
+			//if(pos>grid->trueSize[d+1]+2)
+
+				//msg(ERROR,"particle %i skipped two domains, pos = %f",i,pos);
 
 		}
 
@@ -942,18 +1052,24 @@ static inline void neImportParticles(NeutralPopulation *pop, double *particles, 
 	int nDims = pop->nDims;
 	long int *iStop = pop->iStop;
 
-	for(int s=0;s<nSpecies;s++){
 
+	for(int s=0;s<nSpecies;s++){
+		//printf("nParticles[s] = %li \n",nParticles[s]);
 		double *pos = &pop->pos[nDims*iStop[s]];
 		double *vel = &pop->vel[nDims*iStop[s]];
 
 		for(int i=0;i<nParticles[s];i++){
 			for(int d=0;d<nDims;d++) *(pos++) = *(particles++);
-			for(int d=0;d<nDims;d++) *(vel++) = *(particles++);
+			for(int d=0;d<nDims;d++){
+				*(vel++) = *(particles++);
+				//printf("d = %i, pos = %f \n",d,particles[-1]);
+			}
+			//printf("\n");
 		}
 
 		iStop[s] += nParticles[s];
 	}
+
 
 }
 
@@ -968,12 +1084,16 @@ static inline void neExchangeMigrants(NeutralPopulation *pop, MpiInfo *mpiInfo, 
 	long int *nImmigrants = mpiInfo->nImmigrants;
 	MPI_Request *send = mpiInfo->send;
 
+	//printf("nImmigrantsAlloc = %li \n",nImmigrantsAlloc);
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
 			int reciprocal = puNeighborToReciprocal(ne,nDims);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int length = alSum(nEmigrants,nSpecies)*2*nDims;
+			//printf("length = %li \n",length);
+			//printf("nEmigrants = %i, nSpecies = %li \n",nEmigrants[0],nSpecies);
 			MPI_Isend(emigrants[ne],length,MPI_DOUBLE,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
 		}
 	}
@@ -995,7 +1115,7 @@ static inline void neExchangeMigrants(NeutralPopulation *pop, MpiInfo *mpiInfo, 
 	}
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
-
+	//exit(0);
 }
 
 // TODO: Add fault-handling in case of too small Population struct
@@ -1031,10 +1151,11 @@ static inline void neExchangeNMigrants(NeutralPopulation *pop, MpiInfo *mpiInfo)
 
 void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid){
 
-    neExchangeNMigrants(pop,mpiInfo);
-    MPI_Barrier(MPI_COMM_WORLD); //debug
-    neExchangeMigrants(pop,mpiInfo,grid);
-    MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	neExchangeNMigrants(pop,mpiInfo);
+	MPI_Barrier(MPI_COMM_WORLD); //debug
+	neExchangeMigrants(pop,mpiInfo,grid);
+	MPI_Barrier(MPI_COMM_WORLD);
 
 }
 
@@ -1046,6 +1167,11 @@ void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid){
 
 void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo){
 
+	gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
+	gZero(P);
+	//gZero(rhoNeutral);
+
+    int *nGhostLayers = rhoNeutral->nGhostLayers;
 	int *trueSize=rhoNeutral->trueSize;
 	long int *sizeProd =  rhoNeutral->sizeProd;
 	double stiffC = pop->stiffnessConstant;
@@ -1053,21 +1179,32 @@ void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const Mp
 	//Seperate values
 	double *PVal = P->val;
 	double *rhoVal = rhoNeutral->val;
+	double val = 0;
+
+    //aiPrint(nGhostLayers,8);
+	int index = 0;
 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
-	//for(int k=0;k<trueSize[3];k++){
-	//	for(int j=0;j<trueSize[2];j++){
-	//		for(int i=0;i<trueSize[1];i++){
-	//			index = i+j*sizeProd[2]+k*sizeProd[3];
-	//			printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
-	//		}
-	//
-	//	}
+	for(int k=0;k<trueSize[3]+nGhostLayers[7];k++){
+		for(int j=0;j<trueSize[2]+nGhostLayers[6];j++){
+			for(int i=0;i<trueSize[1]+nGhostLayers[5];i++){
+				index = i+j*sizeProd[2]+k*sizeProd[3];
+				val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
+				PVal[index] = val;
+				//if (val >1000){
+				//printf("PVal[index] = %f, rhoval = %f \n",PVal[index],rhoVal[index]);
+				//}
+				//printf(" %f \n",rhoVal[index]);
+				//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+			}
+
+		}
+	}
+	//for(int i=0;i<sizeProd[4];i++){
+	//	PVal[i] = stiffC*(pow( (rhoVal[i]/rho0),7) - 1);
+	//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+	//printf("PVal = %f \n",PVal[i] );
 	//}
-	for(int i=0;i<sizeProd[4];i++){
-		PVal[i] = stiffC*(pow( (rhoVal[i]/rho0),7) - 1);
-		//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
-		//printf("PVal = %f \n",PVal[i] );
-    }
+	gHaloOp(setSlice, P, mpiInfo, TOHALO);
 	nuGBnd(P, mpiInfo);
 }
 
@@ -1096,12 +1233,12 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 		for (int d = 0;d<nDims;d++){
 			//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
 			veld[d] += (1./nSpecies)*velDrift[d+s*nDims];
-			}
+		}
 	}
 
 	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
 
-    //double B[3] = {1., 0., 0.};
+	//double B[3] = {1., 0., 0.};
 	//double veld[3] = {0., 1., 1.};
 	double veldCrossB[3] = {0., 0., 0.};
 	adCrossProd(veld, B, veldCrossB);
@@ -1267,61 +1404,61 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
 
 
-    //int rank = mpiInfo->mpiRank;
-    int size = mpiInfo->mpiSize;
+	//int rank = mpiInfo->mpiRank;
+	int size = mpiInfo->mpiSize;
 
-    double *val = rhoObj->val;
-    long int *sizeProd = rhoObj->sizeProd;
-    long int nDims = pop->nDims;
+	double *val = rhoObj->val;
+	long int *sizeProd = rhoObj->sizeProd;
+	long int nDims = pop->nDims;
 
-    int nSpecies = pop->nSpeciesNeutral;
+	int nSpecies = pop->nSpeciesNeutral;
 
-    long int *lookupIntOff = obj->lookupInteriorOffset;
-    long int *lookupSurfOff = obj->lookupSurfaceOffset;
+	long int *lookupIntOff = obj->lookupInteriorOffset;
+	long int *lookupSurfOff = obj->lookupSurfaceOffset;
 
 
-    int cutNumber = 0;
-    for(int s=0;s<nSpecies;s++) {
+	int cutNumber = 0;
+	for(int s=0;s<nSpecies;s++) {
 
-        long int iStart = pop->iStart[s];
-        long int iStop = pop->iStop[s];
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
 
-        for(long int i=iStart;i<iStop;i++){
+		for(long int i=iStart;i<iStop;i++){
 
-            double *pos = &pop->pos[i*nDims];
-            double *vel = &pop->vel[i*nDims];
+			double *pos = &pop->pos[i*nDims];
+			double *vel = &pop->vel[i*nDims];
 
-            // Integer parts of position
-            int j = (int) pos[0];
-            int k = (int) pos[1];
-            int l = (int) pos[2];
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
 
-            long int p = j + k*sizeProd[2] + l*sizeProd[3];
-            long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
-            //msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
-            // Check whether p is one of the object nodes and collect the charge if so.
-            for (long int a=0; a<obj->nObjects; a++) {
-                for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
-                    if ((obj->lookupInterior[b])==p) {
-                        //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
-                        //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
-                        //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
-                        neCutParticle(pop, s, pIndex, pop->pos, pop->vel);
-                        cutNumber += 1;
-                        //msg(STATUS,"iStop = %li",iStop);
-                        iStop--;
+			long int p = j + k*sizeProd[2] + l*sizeProd[3];
+			long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
+			//msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
+			// Check whether p is one of the object nodes and collect the charge if so.
+			for (long int a=0; a<obj->nObjects; a++) {
+				for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+					if ((obj->lookupInterior[b])==p) {
+						//msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
+						//msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
+						//msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
+						neCutParticle(pop, s, pIndex, pop->pos, pop->vel);
+						cutNumber += 1;
+						//msg(STATUS,"iStop = %li",iStop);
+						iStop--;
 
-                    }
-                }
+					}
+				}
 
-            }
+			}
 
-        }
-    }
+		}
+	}
 
-    MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    printf("cutNumber = %i \n",cutNumber);
-    cutNumber = 0;
+	MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	//printf("cutNumber = %i \n",cutNumber);
+	cutNumber = 0;
 
 
 }
@@ -1330,61 +1467,116 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiI
 void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
 
 
-    //int rank = mpiInfo->mpiRank;
-    int size = mpiInfo->mpiSize;
+	//int rank = mpiInfo->mpiRank;
+	int size = mpiInfo->mpiSize;
 
-    double *val = rhoObj->val;
-    long int *sizeProd = rhoObj->sizeProd;
-    long int nDims = pop->nDims;
+	double *val = rhoObj->val;
+	long int *sizeProd = rhoObj->sizeProd;
+	long int nDims = pop->nDims;
 
-    int nSpecies = pop->nSpeciesNeutral;
+	int nSpecies = pop->nSpeciesNeutral;
 
-    long int *lookupIntOff = obj->lookupInteriorOffset;
-    long int *lookupSurfOff = obj->lookupSurfaceOffset;
-
-
-    int cutNumber = 0;
-    for(int s=0;s<nSpecies;s++) {
-
-        long int iStart = pop->iStart[s];
-        long int iStop = pop->iStop[s];
-
-        for(long int i=iStart;i<iStop;i++){
-
-            double *pos = &pop->pos[i*nDims];
-            double *vel = &pop->vel[i*nDims];
-
-            // Integer parts of position
-            int j = (int) pos[0];
-            int k = (int) pos[1];
-            int l = (int) pos[2];
-
-            long int p = j + k*sizeProd[2] + l*sizeProd[3];
-            long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
-            //msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
-            // Check whether p is one of the object nodes and collect the charge if so.
-            for (long int a=0; a<obj->nObjects; a++) {
-                for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
-                    if ((obj->lookupInterior[b])==p) {
-                        //msg(STATUS,"j,p, pIndex: %i, %li,%li, %li",j,p,(pIndex-iStart*nDims),(iStop-iStart));
-                        //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
-                        //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
-                        neCutParticle(pop, s, pIndex, pop->pos, pop->vel);
-                        cutNumber += 1;
-                        //msg(STATUS,"iStop = %li",iStop);
-                        iStop--;
-
-                    }
-                }
-
-            }
-
-        }
-    }
-
-    MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    printf("cutNumber = %i \n",cutNumber);
-    cutNumber = 0;
+	long int *lookupIntOff = obj->lookupInteriorOffset;
+	long int *lookupSurfOff = obj->lookupSurfaceOffset;
 
 
+	int cutNumber = 0;
+	for(int s=0;s<nSpecies;s++) {
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			double *vel = &pop->vel[i*nDims];
+
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
+
+			long int p = j + k*sizeProd[2] + l*sizeProd[3];
+			long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
+			//msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
+			// Check whether p is one of the object nodes and collect the charge if so.
+			for (long int a=0; a<obj->nObjects; a++) {
+				for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+					if ((obj->lookupInterior[b])==p) {
+						//msg(STATUS,"j,p, pIndex: %i, %li,%li, %li",j,p,(pIndex-iStart*nDims),(iStop-iStart));
+						//msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
+						//msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
+						neScatterParticle(pop, s, pIndex, pop->pos, pop->vel);
+						cutNumber += 1;
+						//msg(STATUS,"iStop = %li",iStop);
+						iStop--;
+
+					}
+				}
+
+			}
+
+		}
+	}
+
+	MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	printf("collided Number = %i \n",cutNumber);
+	cutNumber = 0;
+
+
+}
+
+
+void neVelAssertMax(const NeutralPopulation *pop, double max){
+
+	double *vel = pop->vel;
+
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart; i<iStop; i++){
+
+			for(int d=0;d<nDims;d++){
+
+				if(vel[i*nDims+d]>max){
+					msg(ERROR,	"Particle i=%li (of specie %i) travels too"
+					"fast in dimension %i: %f>%f",
+					i, s, d, vel[i*nDims+d], max);
+
+				}
+			}
+		}
+	}
+}
+
+void nePosAssertInLocalFrame(const NeutralPopulation *pop, const Grid *grid){
+
+	int *size = grid->size;
+	double *pos = pop->pos;
+
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+
+	for(int s=0; s<nSpecies; s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop  = pop->iStop[s];
+		for(int i=iStart; i<iStop; i++){
+
+			for(int d=0; d<nDims; d++){
+
+				if(pos[i*nDims+d]>size[d+1]+1 || pos[i*nDims+d]<-1){
+					printf("Particle i=%i (of neutral specie %i) is out of bounds"
+					"in dimension %i: %f>%i",
+					i, s, d, pos[i*nDims+d], size[d+1]-1);
+					exit(1);
+
+				}
+			}
+		}
+	}
 }

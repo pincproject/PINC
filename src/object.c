@@ -922,7 +922,7 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     obj->domain = domain;
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-		oReadH5(obj, mpiInfo);
+	oReadH5(obj, mpiInfo);
     //oCloseH5(obj);
     //Communicate the boundary nodes
 		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
@@ -1605,10 +1605,9 @@ void oMode(dictionary *ini){
 
 
 		//Count the number of objects and fill the lookup tables.
-    //msg(STATUS,"filling lookup table");
-		//oFillLookupTables(obj,mpiInfo);
+		// This is done in oAlloc now....
 
-    //msg(STATUS,"finding surface nodes");
+		//oFillLookupTables(obj,mpiInfo);
 		// Find all the object nodes which are part of the object surface.
 		//oFindObjectSurfaceNodes(obj, mpiInfo);
 

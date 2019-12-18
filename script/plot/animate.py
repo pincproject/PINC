@@ -15,7 +15,7 @@ file_name = "rhoNeutral"
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 100#4950#50713#45715 # Must exist in dataset
+start = 9000#4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -82,8 +82,8 @@ for i in timesteps:
 	#print(data[0,0])
 	DATA.append(data)
 DATA = np.array(DATA)
-print("max value = %f",np.amax(DATA))
-print("min value = %f",np.amin(DATA))
+print("max value = %f"%np.amax(DATA))
+print("min value = %f"%np.amin(DATA))
 
 
 vMin=restr_min*np.amin(DATA)

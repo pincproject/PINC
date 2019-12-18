@@ -69,7 +69,7 @@ static void gExpandInner(	const double **in, double **out,
  * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
 
-static double *getSliceInner(double *nextGhost, const double **valp, const long int *mul,
+static double *getSliceInner(double *nextGhost, double **valp, const long int *mul,
 											const int *points, const long int finalMul){
 
 	if(*mul==finalMul){
@@ -88,7 +88,7 @@ void getSlice(double *slice, const Grid *grid, int d, int offset){
 	int *size = grid->size;
 	long int *sizeProd = grid->sizeProd;
 
-	const double *val = grid->val;
+	double *val = grid->val;
 
 	val += offset*sizeProd[d];
 
@@ -478,7 +478,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
 
 	// Send and recieve upper (tag 1)
 	//printf("exchanging slices");
-	//printf("d = %i, bnd[rank+d] = %i, bnd[d] = %u \n",d,bnd[rank+d],bnd[d]);
+	//printf("d = %i, bnd[rank+d] = %u, bnd[d] = %u \n",d,bnd[rank+d],bnd[d]);
 	//printf("d = %i, bnd[d] = %u \n",d,bnd[d]);
 
 	if(bnd[rank+d] == PERIODIC){
@@ -543,6 +543,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  	char **boundaries = iniGetStrArr(ini, "grid:boundaries" , 2*nDims);
 
  	//printf("boundaries =%s,%s,%s,%s,%s,%s, \n",boundaries[0],boundaries[1],boundaries[2],boundaries[3],boundaries[4],boundaries[5]);
+	//printf("truesize =%i,%i,%i, \n",trueSizeTemp[0],trueSizeTemp[1],trueSizeTemp[2]);
  	// Calculate the number of grid points (True points + ghost points)
  	int rank = nDims+1;
  	int *size 			= malloc(rank*sizeof(*size));
@@ -588,7 +589,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
  	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
  	//double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
- 	//printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
+ 	printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
  	// Maybe seek a different solution where it is only stored where needed
 
 
@@ -675,6 +676,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  	grid->bndSlice = bndSlice;
  	//grid->bndSolution = bndSolution;
  	grid->bnd = bnd;
+
 
  	return grid;
 }
