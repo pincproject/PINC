@@ -24,6 +24,39 @@
 * DEFINING LOCAL FUNCTIONS
 *****************************************************************************/
 
+void gDirichletRho(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+
+	//msg(STATUS, "Hello from Dirichlet");
+
+	//Load data
+	int rank = grid->rank;
+	int *size = grid->size;
+	double *bndSlice = grid->bndSlice;
+
+	//Compute dimensions and size of slice
+	int d = boundary%rank;
+	int offset = 1 + (boundary>rank)*(size[d]-3);
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+
+	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
+
+	return;
+
+}
+
 void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
@@ -59,7 +92,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				gDirichlet(grid, d, mpiInfo);
+				gDirichletRho(grid, d, mpiInfo);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
@@ -72,7 +105,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichletRho(grid, d, mpiInfo);
 			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
@@ -111,26 +144,134 @@ void neNewparticle(NeutralPopulation *pop, int s, const double *pos, const doubl
 
 }
 
+void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *ini, NeutralPopulation *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
 
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+	bndType *bnd = pop->bnd;
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+	double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	//double timeStep = iniGetDouble(ini, "time:timeStep");
+	int *L = gGetGlobalSize(ini);
+	int rank = nDims+1;
+
+	// Read from mpiInfo
+	int *subdomain = mpiInfo->subdomain;
+	double *posToSubdomain = mpiInfo->posToSubdomain;
+
+	long int index = 0;
+	double pos[nDims];
+	double vel[nDims];
+	// int edge[nDims];
+
+	nePToGlobalFrame(pop,mpiInfo);
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		double velTh = velThermal[s];
+
+		int d=dim;
+
+		long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
+
+		long int sliceSize = (globalSizeProd/(L[d]));
+		long int newParticles = multiplyDens*( (sliceSize*nParticles[s])/globalSizeProd ); // slice * particles per cell
+		//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
+		//for(long int i=iStart;i<iStop;i++){
+		//for(long int i=0;i<newParticles;i++){
+
+
+		for(long int i=0;i<newParticles;i++){
+			//generate velocity for particle
+			for(int dd=0;dd<nDims;dd++){
+				vel[dd] = velDrift[(s*nDims)+dd] + gsl_ran_gaussian_ziggurat(rng,velTh);
+				//printf("vel = %f, drift = %f \n",vel[dd],velDrift[(s*nDims)+dd] );
+			}
+
+			// Generate position for particle
+			for(int dd=0;dd<nDims;dd++){
+				pos[dd] = (L[dd])*gsl_rng_uniform_pos(rng)-nGhostLayers[d];
+			}
+			pos[d] = slicePos+(gsl_rng_uniform_pos(rng)); //in lower ghost
+			//printf("nGhostLayers[d+1] = %i\n",nGhostLayers[d]);
+			int correctRange = 0;
+			for(int dd=0;dd<nDims;dd++){
+				//printf("posToSubdomain[dd] = %f, dd = %i \n",posToSubdomain[dd],dd);
+				correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
+			}
+			// Add only if particle resides in this sub-domain.
+			if(correctRange==nDims){
+				neNewparticle(pop,s,pos,vel);
+			}
+		}
+	}
+	nePToLocalFrame(pop,mpiInfo);
+
+	free(velDrift);
+	free(velThermal);
+	free(trueSize);
+	free(nParticles);
+	free(nGhostLayers);
+	free(L);
+
+	return;
+}
 
 void neScatterParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
 
+    // neutral object coll
 	int nDims = pop->nDims;
 	long int pLast = (pop->iStop[s]-1)*nDims;
-	double *newvel = &pop->vel[p];
+	double *newvel = vel;
 	//printf("Cutting particle p = %li \n",p);
+	//Decide in  whitch dimension we crossed boundary
+	double oldPos[nDims];
+	double oldVel[nDims];
+	int traversed[nDims];
+	double delta[nDims];
+
+
+
 	for(int d=0;d<nDims;d++){
-		//pos[d] = -pop->pos[p+d];
-		//printf("vel[%i] = %f \n",d,newvel[d]);
-		newvel[d] = -pop->vel[p+d];
-		pos[d] += newvel[d]; // move back
-		//printf("vel[%i] = %f \n \n",d,newvel[d]);
-		//printf("pos[%i] = %f \n",d,pos[d]);
-		//pop->pos[p+d] = pop->pos[pLast+d];
-		//pop->vel[p+d] = pop->vel[pLast+d];
+		oldVel[d] = vel[d]; // using oldVel temporarily.
+		oldPos[d] = pos[d]-oldVel[d];
+		//printf("\n");
+		//printf("pos[d] = %f, oldPos[d]=%f \n",pos[d],oldPos[d] );
+		//printf("traversed[d] = %i \n",((int)(pos[d])-(int)(oldPos[d])));
+		if( (int)(pos[d])-(int)(oldPos[d])!=0){
+			traversed[d]=(int)(pos[d])-(int)(oldPos[d]);
+			delta[d] = pos[d]-(int)pos[d];
+			//printf("delta[%i]= %f \n",d,delta[d]);
+			//printf("new pos will be = %f \n",((int)pos[d]-delta[d]) );
+			pos[d] = ((int)pos[d]-delta[d]);
+			vel[d] = - oldVel[d];
+			//printf("collided in dim %i \n",d);
+			if(traversed[d]==-1){ //hotfix
+				pos[d] += 2;
+			}
+		}
 	}
+	// for(int d=0;d<nDims;d++){
+	// 	//pos[d] = -pop->pos[p+d];
+	// 	//printf("vel[%i] = %f \n",d,newvel[d]);
+	// 	newvel[d] = -pop->vel[d];
+	// 	pos[d] += newvel[d]; // move back
+	// 	//printf("vel[%i] = %f \n \n",d,newvel[d]);
+	// 	//printf("pos[%i] = %f \n",d,pos[d]);
+	// 	//pop->pos[p+d] = pop->pos[pLast+d];
+	// 	//pop->vel[p+d] = pop->vel[pLast+d];
+	// }
+
 
 	//pop->iStop[s]--;
+	//exit(0);
+
 
 }
 
@@ -235,6 +376,7 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	for(int s=1;s<nSpecies+1;s++) iStart[s]=iStart[s-1]+nAlloc[s-1];
 	for(int s=0;s<nSpecies;s++) iStop[s]=iStart[s]; // No particles yet
 
+
 	int rank = nDims+1;
 	bndType *bnd = malloc(2*rank*sizeof(*bnd));
 
@@ -301,11 +443,11 @@ NeutralPopulation *pNeutralAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	//printf(" alloc vals = %li \n",((long int)nDims*iStart[nSpecies]));
 	double *mass = iniGetDoubleArr(ini, "collisions:neutralMass", nSpecies);
 	double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
-	double rho0 = 2*density[0];//*mass[0];
+	double rho0 = density[0];//*mass[0];
 
     double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	double stiffnessC =  ((7.)*(NvelThermal*NvelThermal))/rho0; // Monaghan (1994)
-	msg(STATUS,"mass[0]= %f, rho0 = %f, density  = %f, NvelThermal = %f, stiffnessC = %e \n",mass[0],rho0,density [0],NvelThermal,stiffnessC);
+	double stiffnessC =  (NvelThermal); //((7.)*(NvelThermal*NvelThermal))/(mass[0]*rho0); // Monaghan (1994)
+	//msg(STATUS,"mass[0]= %f, rho0 = %f, density  = %f, NvelThermal = %f, stiffnessC = %f \n",mass[0],rho0,density [0],NvelThermal,stiffnessC);
 	//exit(0);
 	NeutralPopulation *neutralPop = malloc(sizeof(*neutralPop));
 	neutralPop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
@@ -346,16 +488,77 @@ void pNeutralFree(NeutralPopulation *pop){
 }
 
 
+void nePosLattice(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo){
+
+	// Read from ini
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpeciesNeutral;
+	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
 
 
+	// Read from mpiInfo
+	int *subdomain = mpiInfo->subdomain;
+	double *posToSubdomain = mpiInfo->posToSubdomain;
+
+	// Compute normalized length of global reference frame
+	int *L = gGetGlobalSize(ini);
+	long int V = gGetGlobalVolume(ini);
+
+	for(int s=0;s<nSpecies;s++){
+
+		// Particle-particle distance in lattice
+		double l = pow(V/(double)nParticles[s],1.0/nDims);
+
+		// Start on first particle of this specie
+		long int iStart = pop->iStart[s];
+		long int iStop = iStart;
+		double *pos = &pop->pos[iStart*nDims];
+
+		// Iterate through all particles to be generated
+		// Generate particles on global frame on all nodes and discard the ones
+		// out of range. This is simpler as it resembles pPosUniform()
+		for(long int i=0;i<nParticles[s];i++){
+
+			double linearPos = l*i;
+			for(int d=0;d<nDims;d++){
+				pos[d] = fmod(linearPos,L[d]);
+				linearPos /= L[d];
+			}
+
+			// Count the number of dimensions where the particle resides in
+			// the range of this node
+			int correctRange = 0;
+			for(int d=0;d<nDims;d++)
+				correctRange += (subdomain[d] == (int)(posToSubdomain[d]*pos[d]));
+
+			// Iterate only if particle resides in this sub-domain.
+			if(correctRange==nDims){
+				pos += nDims;
+				iStop++;
+			}
+
+		}
 
 
+		if(iStop>pop->iStart[s+1]){
+			int allocated = pop->iStart[s+1]-iStart;
+			int generated = iStop-iStart;
+			msg(ERROR,	"allocated only %i particles of specie %i per node but"
+			 			"%i generated", allocated, s, generated);
+		}
 
+		pop->iStop[s]=iStop;
 
+	}
 
+	nePToLocalFrame(pop,mpiInfo);
 
+	free(L);
+	free(nParticles);
+	free(trueSize);
 
-
+}
 
 void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo, const gsl_rng *rng){
 
@@ -703,6 +906,7 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 		//exit(0);
 	}
 
+
 }
 
 //#############################
@@ -850,6 +1054,7 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 	double **emigrants = mpiInfo->emigrantsDummy;
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
+
 	}
 	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
 
@@ -978,6 +1183,10 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 			if(ne!=neighborhoodCenter){
 				//msg(STATUS, "exchanged");
 				//msg(STATUS,"ne = %i",ne);
+				//if(mpiInfo->mpiRank == 0){
+					//printf("pos = %f, %f, %f \n",x,y,z);
+					//printf("sending to %i\n \n",ne/3);
+				//}
 				// if (s==1){
 				// 	printf("exhcanged \n" );
 				// 	printf("global: %f, %f, %f \n", dummyPos[0], dummyPos[1], dummyPos[2]);
@@ -993,6 +1202,8 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 				*(emigrants[ne]++) = vel[p+1];
 				*(emigrants[ne]++) = vel[p+2];
 				nEmigrants[ne*nSpecies+s]++;
+				//if(mpiInfo->mpiRank == 2);
+				//printf("nEmigrants[ne*nSpecies+s] = %li\n",nEmigrants[ne*nSpecies+s]);
 
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
@@ -1012,16 +1223,17 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 
 			}
 		}//printf("removedupp = %li,removedlow = %li, exhanged = %li s = %i, for rank = %i \n", removedupp,removedlow,exhanged,s,mpiInfo->mpiRank);
+
 		//msg(STATUS,"pRange: %li, iStop: %li",pStart-pStop,pop->iStop[s]);
 	}
 	free(nSubdomains);
 }
 
 
-static inline void neShiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
+static inline void neShiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne,int nSpecies){
 
 	double *immigrants = mpiInfo->immigrants;
-	int nSpecies = mpiInfo->nSpecies;
+	//int nSpecies = 1;//mpiInfo->nSpecies;
 	long int nImmigrantsTotal = alSum(&mpiInfo->nImmigrants[ne*nSpecies],nSpecies);
 	int nDims = mpiInfo->nDims;
 
@@ -1033,17 +1245,22 @@ static inline void neShiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 
 		for(int i=0;i<nImmigrantsTotal;i++){
 
+			//msg(STATUS," immigrants[d+2*nDims*i] = %f ",immigrants[d+2*nDims*i]);
+
 			immigrants[d+2*nDims*i] += shift;
 
-			//double pos = immigrants[d+2*nDims*i];
+			double pos = immigrants[d+2*nDims*i];
 			//msg(STATUS," ne = %i, n = %i ",ne,n);
-			//if(pos>grid->trueSize[d+1]+2)
+			//msg(STATUS," shift = %f, pos = %f \n",shift,pos);
 
-				//msg(ERROR,"particle %i skipped two domains, pos = %f",i,pos);
+			if(pos>grid->trueSize[d+1]+2){
+			 msg(ERROR,"particle %i skipped two domains, pos = %f",i,pos);
+			}
 
 		}
 
 	}
+
 
 }
 
@@ -1108,14 +1325,13 @@ static inline void neExchangeMigrants(NeutralPopulation *pop, MpiInfo *mpiInfo, 
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
 		// adPrint(mpiInfo->immigrants,6);
-		neShiftImmigrants(mpiInfo,grid,ne);
+		neShiftImmigrants(mpiInfo,grid,ne,nSpecies);
 		// adPrint(mpiInfo->immigrants,6);
 		neImportParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies);
 
 	}
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
-	//exit(0);
 }
 
 // TODO: Add fault-handling in case of too small Population struct
@@ -1395,6 +1611,205 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 }
 
 
+void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	bndType *bnd = grid->bnd;
+	double *bndSlice = grid->bndSlice;
+	int *nGhostLayers = grid->nGhostLayers;
+	//double *bndSolution = grid->bndSolution;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int nDims = mpiInfo->nDims;
+
+	// using ini is slow, but setting boundary slices is likely only done once.
+
+
+
+
+	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
+	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+	double *B = iniGetDoubleArr(ini,"fields:BExt",nDims);
+
+	double veld[nDims];
+
+	double *nt = iniGetDoubleArr(ini,"collisions:numberDensityNeutrals",nSpecies);
+	double density =0;
+	//needed for neutral bnd
+	for (int s=0;s<nSpecies;s++){
+		density += 0;//nt[s]/(2*nSpecies);
+	}
+
+	printf("density = %f",density);
+
+	for (int s=0;s<nSpecies;s++){
+		for (int d = 0;d<nDims;d++){
+			//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
+			veld[d] += (1./nSpecies)*velDrift[d+s*nDims];
+		}
+	}
+
+	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
+
+	//double B[3] = {1., 0., 0.};
+	//double veld[3] = {0., 1., 1.};
+	double veldCrossB[3] = {0., 0., 0.};
+	adCrossProd(veld, B, veldCrossB);
+
+	//printf("B[0] = %f, B[1] = %f, B[2] = %f \n",B[0],B[1],B[2]);
+	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
+	//printf("veldCrossB = %f,%f,%f",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
+
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+
+	//double constant1 = 0.; //Dirichlet
+	double constant2 = 0.; // solution to bnd cond = 0.
+
+	// The dirichlet part in this function ended up realy ugly. I am sorry for
+	// that, but it works.
+
+	// indices are indices of slice perp to d
+	long int indices[rank];
+	long int edge[rank]; //tells us what dimensions are perp (slice)
+
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		for(long int q = 0;q<rank-1;q++){
+			//initiallize
+			//indices[q] = size[q+1]*subdomain[q];
+			edge[q] = (q!=(d-1));
+			//printf("q = %li, indices[q] = %li \n",q,indices[q]);
+		}
+		if(subdomain[d-1] == 0){
+			if(bnd[d] == DIRICHLET){
+				for(long int q = 0;q<rank-1;q++){
+					//set dim perp to slice indice to fixed val
+					if(!edge[q]){
+						indices[q] = nGhostLayers[q+1];
+					} else{
+						// start indices at minimum local indice
+						indices[q] = 0;//
+					}
+				}
+				for(int s = 0; s < nSliceMax; s++){
+
+					for(long int q = 0;q<rank-1;q++){
+						//set dim perp to slice indice to fixed val
+						if(!edge[q]){
+							indices[q] = nGhostLayers[q+1];
+						}
+					}
+
+					bndSlice[s + (nSliceMax * d)] = density;
+					for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
+						// grid indices (i,j,k) are computed locally, so we need to
+						// cast them to global frame in the dot product
+						bndSlice[s + (nSliceMax * d)] = density;
+
+					}
+					// counter to increment only in the slice dims, and not the
+					// dim perp to slice
+					bool incremented = false;
+					for(int dd = 0;dd<rank;dd++){
+						//runs up to 34-1 for 32x32x32 domain
+						if(indices[dd]<(size[dd+1])-1 && edge[dd]==1 && incremented == false){
+							indices[dd]++;
+							incremented = true;
+						}else if(incremented == false){
+							// reset
+							indices[dd] = 0;//nGhostLayers[dd+1];
+						}
+					}
+					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+				}
+			}
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+
+					// initialize.
+					bndSlice[s + (nSliceMax * d)] = density;
+
+					//Solution to equation. constant for now
+
+				}
+			}
+		}
+	}
+
+	//Upper edge
+	for(int d = rank+1; d < 2*rank; d++){
+		for(long int q = 0;q<rank-1;q++){
+			//initiallize
+			//indices[q] = size[q+1]*subdomain[q];
+			edge[q] = (q!=(d-rank-1));
+			//printf("d = %i, edge[q] = %li \n",d,edge[q]);
+		}
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET){
+				for(long int q = 0;q<rank-1;q++){
+					//set dim perp to slice indice to fixed val
+					if(!edge[q]){
+						indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
+						//printf("nSubdomains = %i\n",nSubdomains[q]);
+					} else{
+						// start indices at minimum
+						indices[q] = 0;
+					}
+				}
+				for(int s = 0; s < nSliceMax; s++){
+					for(long int q = 0;q<rank-1;q++){
+						//set dim perp to slice indice to fixed val
+						if(!edge[q]){
+							indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
+							//printf("nSubdomains = %i\n",nSubdomains[q]);
+						}
+					}
+					bndSlice[s + (nSliceMax * (d))] = density;
+					for(int dd = 0;dd<rank-1;dd++){
+						bndSlice[s + (nSliceMax * (d))] =  density;
+					}
+					bool incremented = false;
+					for(int dd = 0;dd<rank;dd++){
+						//runs up to 34-1 for 32x32x32 local domain
+						if(indices[dd]<(size[dd+1]-1) && edge[dd]==1 && incremented == false){
+							indices[dd]++;
+							incremented = true;
+						}else if(incremented == false){
+							// reset
+							indices[dd] = 0;//(size[dd+1]-nGhostLayers[dd]);
+						}
+					}
+					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+				}
+			}
+
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = density;
+				}
+			}
+		}
+	}
+
+	//msg(STATUS,"nSliceMax = %li",nSliceMax);
+	//adPrint(&bndSlice[nSliceMax], nSliceMax*(rank));
+	free(velDrift);
+	//free(B);
+	return;
+}
+
+
+
 
 //#########################################
 // Object functions
@@ -1506,11 +1921,40 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 						//msg(STATUS,"j,p, pIndex: %i, %li,%li, %li",j,p,(pIndex-iStart*nDims),(iStop-iStart));
 						//msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
 						//msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
-						neScatterParticle(pop, s, pIndex, pop->pos, pop->vel);
+
+						//printf("Before: pos = %f,%f,%f \n",pos[0],pos[1],pos[2]);
+						//printf("Before: vel = %f,%f,%f \n",vel[0],vel[1],vel[2]);
+
+						neScatterParticle(pop, s, pIndex, pos, vel);
+
+						//printf("After: pos = %f,%f,%f \n",pos[0],pos[1],pos[2]);
+						//printf("After: vel = %f,%f,%f \n",vel[0],vel[1],vel[2]);
+						//printf("\n");
+
 						cutNumber += 1;
 						//msg(STATUS,"iStop = %li",iStop);
 						iStop--;
 
+
+
+						// Unit testing
+
+						// Integer parts of position
+						int j = (int) pos[0];
+						int k = (int) pos[1];
+						int l = (int) pos[2];
+
+						long int p = j + k*sizeProd[2] + l*sizeProd[3];
+						for (long int a=0; a<obj->nObjects; a++) {
+							for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+								if ((obj->lookupInterior[b])==p) {
+									msg(WARNING,"Neutral particle-object did not collide correct");
+									printf("After: pos = %f,%f,%f \n",pos[0],pos[1],pos[2]);
+									printf("After: vel = %f,%f,%f \n",vel[0],vel[1],vel[2]);
+									printf("\n");
+								}
+							}
+						}// Unit testing
 					}
 				}
 
@@ -1520,7 +1964,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	printf("collided Number = %i \n",cutNumber);
+	msg(STATUS,"collided Number = %i \n",cutNumber);
 	cutNumber = 0;
 
 
@@ -1559,6 +2003,7 @@ void nePosAssertInLocalFrame(const NeutralPopulation *pop, const Grid *grid){
 	double *pos = pop->pos;
 
 	int nSpecies = pop->nSpeciesNeutral;
+
 	int nDims = pop->nDims;
 
 	for(int s=0; s<nSpecies; s++){

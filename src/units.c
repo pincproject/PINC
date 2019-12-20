@@ -99,6 +99,11 @@ void uNormalize(dictionary *ini, const Units *units){
 	adScale(mass,   nSpecies, 1.0/units->mass);
 	adScale(density, nSpecies, 1.0/units->density);
 
+	for(int s=0; s<nSpecies; s++){
+		printf("mass[s] = %f \n",mass[s]);
+		printf("weights[s] = %f \n",weights[s]);
+	}
+
 	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
 	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
 	iniSetDoubleArr(ini, "population:density", density, nSpecies);

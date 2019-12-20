@@ -84,10 +84,13 @@ void nePurgeGhost(NeutralPopulation *pop, const Grid *grid);
 
 void neVelMaxwell(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *rng);
 
+void nePosLattice(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo);
+
 void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);
 
 void neVelAssertMax(const NeutralPopulation *pop, double max);
 
+void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *ini, NeutralPopulation *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
 //#########################################
 // Mover/Accelerator
 // ########################################
@@ -112,6 +115,7 @@ void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const Mp
 
 void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
+void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
 
 //#############################

@@ -139,7 +139,7 @@ static void mccNormalize(dictionary *ini,const Units *units){
 
 	// Simulation particle scaling
 	for(int s=0; s<nSpecies; s++){
-		//mass[s]    *= weights[s];
+		mass[s]    *= weights[s];
 		density[s] /= weights[s];
 	}
 
@@ -166,7 +166,7 @@ double mccGetMaxDens(Grid *density){
 	int rank = density->rank;
 	double *val = density->val;
 	double newval = 0;
-	for (int i=0;i<sizeProd[rank+1];i++){
+	for (int i=0;i<sizeProd[rank];i++){
 		if (val[i]>newval){
 			 newval = val[i];
 		}
@@ -536,10 +536,10 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral
 
 	double NvelThermal = mccVars->NvelThermal;
 	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;
-	//printf("nt = %f \n",nt);
 	double StaticSigmaCEX = mccVars->mccSigmaCEX;
 	double StaticSigmaIonElastic = mccVars->mccSigmaIonElastic;
-	double max_v = mccGetMaxVelTran(pop,1,rng,NvelThermal);
+	double max_v = mccGetMaxVelTran(pop,0,rng,NvelThermal);
+	//printf("StaticSigmaCEX = %f \n",StaticSigmaCEX);
 	//double max_v = mccGetMaxVel(pop,1);
 	mccVars->maxFreqIon = (StaticSigmaCEX +StaticSigmaIonElastic)*max_v*nt;
 	mccVars->pMaxIon = 1-exp(-(mccVars->maxFreqIon));
@@ -878,6 +878,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 
 	mccGetPmaxIonStatic(ini,mccVars,rhoNeutral,pop,mpiInfo,rng);
 
+	printf("pmax = %f\n",mccVars->pMaxIon );
 	double nt = 0;//mccVars->nt;
 	double NvelThermal = mccVars->NvelThermal;
 	double mccSigmaCEX= mccVars->mccSigmaCEX;
@@ -888,6 +889,8 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	double *vel = pop->vel;
 	double *pos = pop->pos;
 	double Rp, Rq;
+
+	double *drift = mccVars->neutralDrift;
 
 	// pointers to pass to scatter function
 	double* vx;
@@ -917,9 +920,9 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 
 
 
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 		Rq = gsl_rng_uniform_pos(rng);
@@ -972,9 +975,9 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	Rq = gsl_rng_uniform_pos(rng);
 	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; //particle q collides
 
-	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
-	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
+	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
+	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
 
 	//transfer to neutral stationary frame
 	double vxTran = vel[q]-vxMW;
@@ -1305,6 +1308,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 	double collFrqIonCEX = mccVars->collFrqCex;
 
 	mccGetPmaxIonConstantFrq(ini,mccVars,pop,mpiInfo);
+
 	double Pmax = mccVars->pMaxIon;
 	int nDims = pop->nDims;
 	double *vel = pop->vel;
@@ -1341,9 +1345,9 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 
 	for(long int i=iStart;i<mccStop;i+=mccStepSize){
 
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[3];
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[4];
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[5];
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
 
 		//printf("vxMW = %f, %f, %f \n",vxMW,vyMW,vzMW );
 
@@ -1378,9 +1382,9 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 	Rq = gsl_rng_uniform_pos(rng);
 	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; //particle q collides
 
-	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[3];
-	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[4];
-	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[5];
+	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
+	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
+	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
 
 	if(Rp < MyCollFreq1/ maxfreqIon){
 		// elastic:
@@ -1928,6 +1932,7 @@ void oCollMode(dictionary *ini){
   gSetBndSlices(ini, phi, mpiInfo);
   // need for SPH neutrals a function
   neSetBndSlices(ini, P, mpiInfoNeut);
+  neSetBndSlicesRho(ini, rhoNeutral, mpiInfoNeut);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1998,12 +2003,7 @@ void oCollMode(dictionary *ini){
 	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
 	neVelMaxwell(ini, neutralPop, rng);
 
-	//add influx of new particles on boundary
-	pPurgeGhost(pop, rho);
-    pFillGhost(ini,pop,rng,mpiInfoNeut);
-    // SPH neutrals
-	nePurgeGhost(neutralPop, rhoNeutral);
-	neFillGhost(ini,neutralPop,rng,mpiInfoNeut);
+
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -2011,6 +2011,14 @@ void oCollMode(dictionary *ini){
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
+
+	//add influx of new particles on boundary
+	pPurgeGhost(pop, rho);
+	pFillGhost(ini,pop,rng,mpiInfoNeut);
+	// SPH neutrals
+	nePurgeGhost(neutralPop, rhoNeutral);
+	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+
 
 	MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
@@ -2040,6 +2048,7 @@ void oCollMode(dictionary *ini){
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+	nuGBnd(rhoNeutral, mpiInfo);
     //gZero(P);
 
 	// Get initial E-field
@@ -2126,7 +2135,7 @@ void oCollMode(dictionary *ini){
         pFillGhost(ini,pop,rng,mpiInfoNeut);
 	    // SPH neutrals
         nePurgeGhost(neutralPop, rhoNeutral);
-  	    neFillGhost(ini,neutralPop,rng,mpiInfoNeut);
+  	    neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
 
 		// Check that no particle resides out-of-bounds (just for debugging)
@@ -2138,11 +2147,7 @@ void oCollMode(dictionary *ini){
         // SPH neutrals
 		nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
-		/*
-		*   Collisions
-		*   Changes velocity component of some particles, not position.
-		*/
-		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
+
 
 
 		// Compute charge density
@@ -2154,8 +2159,18 @@ void oCollMode(dictionary *ini){
 		// SPH neutrals
 		NeutralDistr3D1(neutralPop, rhoNeutral);
 		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+		nuGBnd(rhoNeutral, mpiInfo);
+
+		//adPrint(rhoNeutral->val,rhoNeutral->sizeProd[4]);
 
         // Keep writing Rho here.
+
+
+		/*
+		*   Collisions
+		*   Changes velocity component of some particles, not position.
+		*/
+		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 
 
 
@@ -2212,7 +2227,7 @@ void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%300 == 0 || n>10000){//50614
+		if(n%1000 == 0 || n>29900){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2370,8 +2385,8 @@ void neutTest(dictionary *ini){
     // We assume same form on neutral density grid and charged density grid
 
 
-  // need for SPH neutrals a function
-  neSetBndSlices(ini, P, mpiInfoNeut);
+    // need for SPH neutrals a function
+    neSetBndSlices(ini, P, mpiInfoNeut);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -2400,15 +2415,24 @@ void neutTest(dictionary *ini){
 
 
 	// SPH neutrals
-	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
+	//nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
+	nePosLattice(ini, neutralPop, mpiInfoNeut);
 	neVelMaxwell(ini, neutralPop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
-    // SPH neutrals
-	nePurgeGhost(neutralPop, rhoNeutral);
-	neFillGhost(ini,neutralPop,rng,mpiInfoNeut);
 
-	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
+	////inject extra particles to produce sharp dens grad
+
+	// int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
+	// int multiplyDensBy = 2;
+	// int sliceDim = 0;
+	// neInjectParticles((int)(trueSize[0]/2)-1,sliceDim ,multiplyDensBy, ini, neutralPop,
+	// 	rngSync, mpiInfoNeut);
+	//
+	// neInjectParticles((int)(trueSize[0]/2),sliceDim ,multiplyDensBy, ini, neutralPop,
+	// 	rngSync, mpiInfoNeut);
+	//
+	// neInjectParticles((int)(trueSize[0]/2)+1,sliceDim ,multiplyDensBy, ini, neutralPop,
+	// 	rngSync, mpiInfoNeut);
 
 	MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
@@ -2416,6 +2440,9 @@ void neutTest(dictionary *ini){
 	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
 	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
 
+	// SPH neutrals
+	nePurgeGhost(neutralPop, rhoNeutral);
+	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
 	/*
 	 * INITIALIZATION (E.g. half-step)
@@ -2430,8 +2457,8 @@ void neutTest(dictionary *ini){
 
 	//gZero(P);
 	nePressureSolve3D(rhoNeutral,P,neutralPop, mpiInfoNeut );
-    //gWriteH5(phi, mpiInfo, (double) 0);
-    //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
+	gWriteH5(rhoNeutral, mpiInfoNeut, (double) 0);
+	gWriteH5(P, mpiInfoNeut, (double) 0);
 
 	// Compute pressure gradient SPH neutrals
 	gFinDiff1st(P, Pgrad);
@@ -2471,13 +2498,16 @@ void neutTest(dictionary *ini){
 
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
+
+		// SPH neutrals
+
+
 		// SPH neutrals
 		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
 		neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
 
-	    // SPH neutrals
-        nePurgeGhost(neutralPop, rhoNeutral);
-  	    neFillGhost(ini,neutralPop,rng,mpiInfoNeut);
+		nePurgeGhost(neutralPop, rhoNeutral);
+  	    neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
 
         nePosAssertInLocalFrame(neutralPop, rhoNeutral);
@@ -2512,7 +2542,7 @@ void neutTest(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%200 == 0 || n>10000){//50614
+		if(n%200 == 0 || n>29900){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

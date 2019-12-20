@@ -136,7 +136,7 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
