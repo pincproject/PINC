@@ -990,6 +990,63 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
+double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
+// integral of spectral radiance from sigma (cm-1) to infinity.
+	// result is W/m2/sr.
+	// follows Widger and Woodall, Bulletin of the American Meteorological
+	// Society, Vol. 57, No. 10, pp. 1217
+	
+	double time = units->time;
+	
+	// constants
+	double Planck = 6.6260693e-34;
+	double Boltzmann = 1.380658e-23;
+	double speedOfLight = 299792458.0;
+	double speedOfLight_sq = speedOfLight * speedOfLight;
+	double temperature = iniGetDouble(ini, "spectrum:BlackBodyTemp");
+	double sunSurfaceArea = 6.1e18; //m^2
+
+	//object variables
+	int nObj = obj->nObjects;
+	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
+	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
+	double *c2 = malloc(nObj*sizeof(*c2));
+	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
+	adSetAll(c2, (long)nObj, 0.0);	
+
+
+	// compute powers of x, the dimensionless spectral coordinate
+	for(int a=0; a<nObj; a++){
+		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);	//convert energy to photon wavenumber in cm^-1
+		double c1 = (Planck*speedOfLight/Boltzmann);
+		double x = c1 * 100 * sigma[a] / temperature;
+		double x2 = x * x;
+		double x3 = x * x2;
+		// decide how many terms of sum are needed
+		double iterations = 2.0 + 20.0/x;
+		iterations = (iterations<512) ? iterations : 512;
+		int iter = (int)(iterations);
+		// add up terms of sum
+		double sum = 0;
+
+		for (int n=1; n<iter; n++){
+			double dn = 1.0/n ;
+			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
+		}
+		// return result, in units of W/m2/sr
+		c2[a] = (2.0*Planck*speedOfLight_sq);
+		c2[a] = c2[a]*pow(temperature/c1,4)*sum;
+		double solidAngle = (double)area[a] / pow(distFromSun,2.);
+		c2[a] *= solidAngle * sunSurfaceArea;
+		c2[a] *= time;
+		msg(STATUS, "Total energy in band: %.10e", c2[a]);
+	}
+
+	
+	return c2;
+
+}
+
 double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
 	// integral of spectral photon radiance from sigma (m-1) to infinity.
 	// result is photons/s/m2/sr, and returned as photons per timestep
@@ -1018,7 +1075,7 @@ double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
 
 	// compute powers of x, the dimensionless spectral coordinate
 	for(int a=0; a<nObj; a++){
-		sigma[a] = 	((double)sigma[a]) / (Planck * speedOfLight * 100.);//wavenumber in cm^-1
+		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);//wavenumber in cm^-1
 		double c1 = Planck * speedOfLight / Boltzmann;
 		double x = c1 * 100. * (double)sigma[a]/temperature;
 		double x2 = x * x;
@@ -1049,20 +1106,51 @@ double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
 }
 
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
- 										const Units *units, const gsl_rng *rng){
-
+ 								const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
+	
+	//object variables
 	int nObj = obj->nObjects;
+	long int *nAlloc = iniGetLongIntArr(ini, "population:nAlloc", pop->nSpecies);
+	msg(STATUS, "Number of pinc electrons allocated memory for: %li", nAlloc[0]);
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
-	double flux = iniGetDouble(ini, "spectrum:flux");
+	double *flux = pPlanckPhotonIntegral(ini, units, obj);
+	double *bandEnergy = pPlanckEnergyIntegral(ini, units, obj);
 	double *workFunc = iniGetDoubleArr(ini,"objects:workFunction", nObj);
 	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
 
-	//scale units
-	flux *= pow(units->length,2) * units->time;
-	
-	for(size_t i = 0; i<nObj; i++){
-		area[i] /= units->length * units->length;
+	//mpi variables
+    int rank = mpiInfo->mpiRank;
+    int size = mpiInfo->mpiSize;
+
+	//average energy of emitted photoelectrons
+	double *avgEnergy = malloc(nObj * sizeof(double));
+	for(int a=0; a<nObj; a++){
+		avgEnergy[a] = bandEnergy[a] * 1. /flux[a];
+		avgEnergy[a] -= workFunc[a];
+		avgEnergy[a] /= units->energy;
+		msg(STATUS, "Average energy of emitted photoelectron: %.10e", avgEnergy[0]);
+	}
+
+
+	//scale flux to be per cell 
+	msg(STATUS, "total volume: %li", gGetGlobalVolume(ini));
+	for(size_t a = 0; a<nObj; a++){
+		
+		area[a] /= units->hyperArea;
+		double emissionVolume = area[a] * units->length;
+		msg(STATUS, "Volume emitted into: %f", emissionVolume);
+		msg(STATUS, "Volume of a cell: %f", units->hyperVolume);
+		long int numCells = (long)floor(emissionVolume / units->hyperVolume);
+		msg(STATUS, "number of cells photoelectrons are emitted into: %li", numCells); 
+		flux[a] /= emissionVolume;
+		flux[a] /= units->density;
+		flux[a] /= units->weights[0];
+		msg(STATUS, "total flux: %.10e", flux[a]*numCells);
+		//set flux to maximum of allocated memory should flux be higher than available memory 
+		//flux[a] = (flux[a]*numCells > (double)nAlloc[0]) ? nAlloc[a]/numCells : flux[a];
+		msg(STATUS, "flux in object %d, per cell: %f", a, flux[a]);
+		msg(STATUS, "new electrons as a fraction of allocated memory: %f", (numCells*flux[a])/nAlloc[a]);
 	}
 
 
@@ -1070,14 +1158,32 @@ void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
 	for(int a=0; a < nObj; a++){
 
 		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
-		long int electronsPerNode = flux/((double)nodesThisCore);
+		//long int electronsPerNode = flux[a]/((double)nodesThisCore);
+		int *pos = malloc(pop->nDims * sizeof(int));
+		double *vel = malloc(pop->nDims * sizeof(double));
+		aiSetAll(pos, pop->nDims, 0);
+		adSetAll(vel, pop->nDims, 0.0);
 
 		for(int i=exposedOff[a]; i < nodesThisCore; i++){
+
+			pos = gNodeToGrid3D(obj->domain, mpiInfo, i);
+			for(int j=0; j<flux[a]; j++){
+				
+				int specie = 0;
+				specie = (pop->charge[0] < 0.) ? 0 : 1;
+				double avgVel = -1 * sqrt(2*avgEnergy[a] / pop->mass[specie]);
+				vel[0] = avgVel + gsl_ran_gaussian_ziggurat(rng,0.5*avgVel);
+				if(j == 0) msg(STATUS, "x component of velocity, particle %d: %f", j, vel[0]);
+				pNew(pop, specie, pos, vel); //assumes species 0 is electrons
+			}
+
+				
 
 		}
 	}
 
-	msg(WARNING, "photoelectron function not yet implemented!");
+	free(bandEnergy);
+	free(flux);
 }
 
 void pAdhere(Population *pop, const Object *obj, long int n){

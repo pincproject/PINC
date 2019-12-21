@@ -276,6 +276,12 @@ void pVicinityParticles(Population *pop, const Object *obj);
 
 /*
 Integral of radiance for specific wavenumber to infinity, finds
+total energy in Joule in the band per timetep
+*/
+
+
+/*
+Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
 double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
@@ -284,7 +290,7 @@ double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
 emits photoELectrons from object surface every timestep
 */
 void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj, 
-                     const Units *units, const gsl_rng *rng);
+                     const Units *units, const gsl_rng *rng, const MpiInfo *MpiInfo);
 
 /*
 Find Collision type is called during puMove; returns
