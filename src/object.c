@@ -830,11 +830,11 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
             
             long int p = 0;
             long int b = surf[surfOff[a] + i];
-            int *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+            double *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
 
             if(!isGhostNode(obj->domain, b)){               
                 double sum = 0;
-                for(int j=0; j<loc[0] + 1; j++){
+                for(int j=0; j<(int)loc[0] + 1; j++){
                     //sum the values along the x-axis, exposed node
                     long int p = b - j*sizeProd[1];
                     sum += val[p]; 
@@ -876,11 +876,11 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
             
             long int p = 0;
             long int b = surf[surfOff[a] + i];
-            int *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+            double *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
 
             if(!isGhostNode(obj->domain, b)){               
                 double sum = 0;
-                for(int j=0; j<loc[0] + 1; j++){
+                for(int j=0; j<(int)loc[0] + 1; j++){
                     //sum the values along the x-axis, exposed node
                     long int p = b - j*sizeProd[1];
                     sum += val[p]; 
@@ -905,8 +905,6 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
         msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a);
     }
 
-    alPrint(exposedNodesOffset, nObjects+1);
-    alPrint(surf,surfOff[nObjects]);
     alPrint(exposedNodes, exposedNodesOffset[nObjects]);
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;

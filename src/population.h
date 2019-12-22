@@ -278,13 +278,13 @@ void pVicinityParticles(Population *pop, const Object *obj);
 Integral of radiance for specific wavenumber to infinity, finds
 total energy in Joule in the band per timetep
 */
-
+double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, const Object *obj);
 
 /*
 Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
-double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
+double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, const Object *obj);
 
 /*
 emits photoELectrons from object surface every timestep

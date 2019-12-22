@@ -20,11 +20,6 @@
 #include <hdf5.h>
 #include "iniparser.h"
 
-#define EVTOJCONVERSION 1.60218e-19
-#define BOLTZMANN 8.61733326e-5
-#define PLANCK 4.13566769e-15
-#define SPEED_OF_LIGHT 3.0e8
-#define PI 3.14159265
 
 
 /******************************************************************************
@@ -990,7 +985,7 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
-double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
+double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, const Object *obj){
 // integral of spectral radiance from sigma (cm-1) to infinity.
 	// result is W/m2/sr.
 	// follows Widger and Woodall, Bulletin of the American Meteorological
@@ -1033,7 +1028,7 @@ double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
 			double dn = 1.0/n ;
 			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
 		}
-		// return result, in units of W/m2/sr
+		
 		c2[a] = (2.0*Planck*speedOfLight_sq);
 		c2[a] = c2[a]*pow(temperature/c1,4)*sum;
 		double solidAngle = (double)area[a] / pow(distFromSun,2.);
@@ -1047,7 +1042,7 @@ double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
 
 }
 
-double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
+double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, const Object *obj){
 	// integral of spectral photon radiance from sigma (m-1) to infinity.
 	// result is photons/s/m2/sr, and returned as photons per timestep
 	// follows Widger and Woodall, Bulletin of the American Meteorological
@@ -1117,19 +1112,20 @@ void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
 	double *flux = pPlanckPhotonIntegral(ini, units, obj);
 	double *bandEnergy = pPlanckEnergyIntegral(ini, units, obj);
 	double *workFunc = iniGetDoubleArr(ini,"objects:workFunction", nObj);
+	msg(STATUS, "Work function in joule: %.10e", workFunc[0]);
 	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
 
 	//mpi variables
-    int rank = mpiInfo->mpiRank;
-    int size = mpiInfo->mpiSize;
+    //int rank = mpiInfo->mpiRank;
+    //int size = mpiInfo->mpiSize;
 
 	//average energy of emitted photoelectrons
 	double *avgEnergy = malloc(nObj * sizeof(double));
 	for(int a=0; a<nObj; a++){
 		avgEnergy[a] = bandEnergy[a] * 1. /flux[a];
 		avgEnergy[a] -= workFunc[a];
+		msg(STATUS, "Average energy of emitted photoelectron in Joules: %.10e", avgEnergy[0]);
 		avgEnergy[a] /= units->energy;
-		msg(STATUS, "Average energy of emitted photoelectron: %.10e", avgEnergy[0]);
 	}
 
 
@@ -1154,34 +1150,41 @@ void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
 	}
 
 
+	long int numHits = 0;
+	double *pos = malloc(pop->nDims * sizeof(double));
+	double *vel = malloc(pop->nDims * sizeof(double));
+	adSetAll(pos, pop->nDims, 0.0);
+	adSetAll(vel, pop->nDims, 0.0);
+	pToGlobalFrame(pop, mpiInfo);
 
 	for(int a=0; a < nObj; a++){
 
 		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
-		//long int electronsPerNode = flux[a]/((double)nodesThisCore);
-		int *pos = malloc(pop->nDims * sizeof(int));
-		double *vel = malloc(pop->nDims * sizeof(double));
-		aiSetAll(pos, pop->nDims, 0);
-		adSetAll(vel, pop->nDims, 0.0);
 
-		for(int i=exposedOff[a]; i < nodesThisCore; i++){
+		for(int i = 0; i < nodesThisCore; i++){
 
-			pos = gNodeToGrid3D(obj->domain, mpiInfo, i);
-			for(int j=0; j<flux[a]; j++){
+			long int node = exposedNodes[exposedOff[a] + i]; 
+			pos = gNodeToGrid3D(obj->domain, mpiInfo, node);
+
+			for(long int j=0; j<(long)flux[a]; j++){
 				
 				int specie = 0;
 				specie = (pop->charge[0] < 0.) ? 0 : 1;
 				double avgVel = -1 * sqrt(2*avgEnergy[a] / pop->mass[specie]);
 				vel[0] = avgVel + gsl_ran_gaussian_ziggurat(rng,0.5*avgVel);
-				if(j == 0) msg(STATUS, "x component of velocity, particle %d: %f", j, vel[0]);
-				pNew(pop, specie, pos, vel); //assumes species 0 is electrons
+				//if(j == 0) msg(STATUS, "x component of velocity, particle %d: %f", j, vel[0]);
+				msg(STATUS, "pNew call next..");
+				pNew(pop, specie, pos, vel);
+				numHits += 1;
 			}
 
-				
-
 		}
+
 	}
 
+	msg(STATUS, "Number of times pNew hit: %li", numHits);
+	free(pos);
+	free(vel);
 	free(bandEnergy);
 	free(flux);
 }
