@@ -64,17 +64,18 @@ pop = popX
 popTemp = []
 
 for i in range(pop.shape[0]):
-	if pop[i,0] < 15 and  pop[i,0] >11: # slice 2 to 6
+	if pop[i,0] < 16 and  pop[i,0] >12: # slice 2 to 6
 		popTemp.append(pop[i,:])
 
 pop = np.array(popTemp)
 
-x = pop[:,1]
-y = pop[:,2]
+x = pop[:,0]
+y = pop[:,1]
+z = pop[:,2]
 
 fig = plt.figure()
 
-plt.hist2d(x, y, bins=200)
+plt.hist2d(y, z, bins=200) # a slice in x needs to plot y-z.. etc
 plt.colorbar()
 
 

@@ -1746,7 +1746,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	int nLevels = mgRho->nLevels;
 
 	//gZero(mgPhi->grids[0]);
-	double tol = 1.E-10;
+	double tol = 1.E-10; //1.E-10;
 	double barRes = 2.;
 
 	//gBnd(mgPhi->grids[0], mpiInfo);

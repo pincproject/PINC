@@ -85,37 +85,39 @@ def main():
     # Initialise a list to hold all tetrahedra. One element per object file.
     np_pts = [None]*len(infile)
 
-    # Loop over all object files.
-    for i in range(len(infile)):
-        ostart = time.time()
-        print (" Object:", infile[i])
-        # Read input files.
-        print( " 1. Reading.")
-        np_pts[i] = gg.readUnstructuredVTK(infile[i])
-        #Rotate/translate/scale.
-        print (" 2. Transform.")
-        np_pts[i] = gg.transformObject(np_pts[i], transfo[i])
-        print (" 3. Asign voxels.")
-        grid = gg.findCircVoxels(grid,gridpar,np_pts[i],content[i][-1])
-        # Fill the object.
-        # First transform the seeds.
-        content[i] = gg.transformSeeds(content[i], transfo[i])
-        # Now use floodfill.
-        grid = gg.floodFill(grid,gridpar,content[i])
-        # Compute bounding box of object
-        box = gg.boundingBox(grid)
-        print(np.sum(box))
-        # Time info.
-        ostop = time.time()
-        print (" Compute time:", ostop-ostart, "sec.\n")
+# Loop over all object files.
+for i in range(len(infile)):
+    ostart = time.time()
+    print (" Object:", infile[i])
+    # Read input files.
+    print( " 1. Reading.")
+    np_pts[i] = gg.readUnstructuredVTK(infile[i])
+    #Rotate/translate/scale.
+    print (" 2. Transform.")
+    np_pts[i] = gg.transformObject(np_pts[i], transfo[i])
+    print (" 3. Asign voxels.")
+    grid = gg.findCircVoxels(grid,gridpar,np_pts[i],content[i][-1])
+    # Fill the object.
+    # First transform the seeds.
+    content[i] = gg.transformSeeds(content[i], transfo[i])
+    # Now use floodfill.
+    grid = gg.floodFill(grid,gridpar,content[i])
+    # Compute bounding box of object
+    box = gg.boundingBox(grid)
+    #print (box)
+    #print(np.sum(box))
+    # Time info.
+    ostop = time.time()
+    print (" Compute time:", ostop-ostart, "sec.\n")
 
-    # Write to file.
-    wstart = time.time()
-    print( " 4. Write output:")
-    gg.writeOutput(grid, gridpar, outfile)
-    gg.writeOutput(box, gridpar, boundaryFile)
-    wstop = time.time()
-    print (" Compute time:", wstop-wstart, "sec.\n")
+# Write to file.
+wstart = time.time()
+print( " 4. Write output:")
+grid = np.transpose(grid,(2, 0, 1))
+gg.writeOutput(grid, gridpar, outfile)
+gg.writeOutput(box, gridpar, boundaryFile)
+wstop = time.time()
+print (" Compute time:", wstop-wstart, "sec.\n")
 
     # Find total computing time.
     stop = time.time()
