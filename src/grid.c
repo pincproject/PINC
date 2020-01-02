@@ -1763,17 +1763,15 @@ void gValDebug(Grid *grid, const MpiInfo *mpiInfo){
 }
 
 //computes location of node p globally in a 3D grid
-double *gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p){
+void gNodeToGrid3D(Grid *grid, const MpiInfo *mpiInfo, long int p, double *pos){
 	
 	long *sizeprod = grid->sizeProd;
-	double *location = malloc(3 * sizeof(double));
 
 	int k = (int)(p / sizeprod[3]);
 	int j = (int)(p/sizeprod[2] - k*sizeprod[3]/sizeprod[2]);
 	int i = (int)(p/sizeprod[1] - j*sizeprod[2]/sizeprod[1] - k*sizeprod[3]/sizeprod[1]);
 
-	location[0] = (double)i; location[1] = (double)j; location[2] = (double)k;
-	return location;
+	pos[0] = (double)i; pos[1] = (double)j; pos[2] = (double)k;
 }
 
 /**************************************************************

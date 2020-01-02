@@ -14,8 +14,8 @@ import scipy.constants as c
     
 rad_dist = float(sys.argv[1]) #0.406821#0.607373#
 a1d = 0.7766; a2d = -1.934; a3d = 0.01823; a4d = -2.245
-a1v = 2.651; a2v = 0.0; a3v = -0.0239; a4v = -1.836;
-a1t = 4.848; a2t = -0.668; a3t = -4.69e-42; a4t = -40.91;
+a1v = 2.651; a2v = 0.0; a3v = -0.0239; a4v = -1.836
+a1t = 4.848; a2t = -0.668; a3t = -4.69e-42; a4t = -40.91
 
 X = m.log10(rad_dist)
 Yd = a1d + a2d * X + a3d * m.exp(a4d * X)

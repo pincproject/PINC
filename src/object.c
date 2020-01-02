@@ -192,6 +192,7 @@ long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc, \
 // Compute the capacitance matrix for each object.
 void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
 
+    msg(STATUS, "Computing capacitance matrix per object");
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
     long int *lookupSurf = obj->lookupSurface;
@@ -247,7 +248,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 
         // Loop over the nodes and fill the matrix
         for (long int i=0; i<totSNGlob; i++) {
-            msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
+            //msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
                 i+1,totSNGlob,a+1,obj->nObjects);
 
             // Don't loop over cores who do not have any surface nodes.
@@ -638,7 +639,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
 // }
 
 
-// Collect the charge inside each object.
+// Collect all charge on object.
 void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
 
 
@@ -715,11 +716,12 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
+                        msg(STATUS, "New charge counter value: %10.e", chargeCounter[a]);
                         //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
                         //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
                         //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
                         pCut(pop, s, pIndex, pop->pos, pop->vel);
-                        msg(STATUS, "Cut particle number %i during oCollectObjectCharge", pIndex);
+                        msg(STATUS, "Cut particle number %li during oCollectObjectCharge", pIndex);
                         cutNumber += 1;
                         //msg(STATUS,"iStop = %li",iStop);
                         iStop--;
@@ -731,6 +733,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
         }
     }
+
     MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     //printf("cutNumber = %i \n",cutNumber);
     cutNumber = 0;
@@ -754,7 +757,106 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
 }
 
+// void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
+//                                 const MpiInfo *mpiInfo, const Units *units){
+    
+//     //int rank = mpiInfo->mpiRank;
+//     int size = mpiInfo->mpiSize;
 
+//     double *val = rhoObj->val;
+//     long int *sizeProd = rhoObj->sizeProd;
+//     long int nDims = pop->nDims;
+//     double *charge = pop->charge;
+
+//     int nObj = obj->nObjects;
+// 	long int *exposedNodes = obj->exposedNodes;
+// 	long int *exposedOff = obj->exposedNodesOffset;
+//     double area[nObj];
+// 	double flux[nObj];
+
+// 	for(int a=0; a<nObj;a++){
+//         area[a] = obj->conductingSurface[a];
+// 		flux[a] = obj->radiance[a];
+// 	}
+
+
+//     //find electron
+// 	int nSpecie = 0; //negative charge specie
+//     int pSpecie = 0; //positive charge specie
+
+//     //find which specie has positive and negative charge. Assumes two species. TODO: make independent of number of species
+// 	nSpecie = (charge[0] < 0.) ? 0 : 1;
+//     pSpecie = (nSpecie == 0) ? 1 : 0;
+
+// 	//scale flux to be per cell 
+// 	for(size_t a = 0; a<nObj; a++){
+		
+// 		area[a] /= units->hyperArea;
+// 		double emissionVolume = area[a] * units->length;
+// 		flux[a] /= emissionVolume;
+// 		flux[a] /= units->density;
+// 		flux[a] /= units->weights[0];
+//         msg(STATUS, "units->weights[%d] = %f", a, units->weights[nSpecie]);
+// 	}
+
+
+//     double *chargeCounter = malloc(nObj*sizeof(*chargeCounter));
+//     adSetAll(chargeCounter,nObj,0);//sets charge counter=0 for all objects
+
+
+//     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
+//     long int *nodCorGlob = malloc(nObj*(size+1)*sizeof(*nodCorGlob));
+
+//     for (long int a=0; a<nObj; a++) {
+
+//         long int nodesThisCore = exposedOff[a+1] - exposedOff[a];
+
+//         // Let every core know how many exposed surface nodes everybody has.
+//         MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
+
+//         for(long int i=size-1;i>-1;i--) nodCorLoc[i+1]=nodCorLoc[i];
+//         nodCorLoc[0] = 0;
+//         alCumSum(nodCorLoc+1,nodCorLoc,size);
+
+//         for (long int b=0; b<size+1; b++) nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
+//     }
+//     //printf("obj->nObjects*(size+1) = %li \n",obj->nObjects*(size+1));
+//     //alPrint(nodCorGlob,obj->nObjects*(size+1));
+//     //alPrint(nodCorLoc,(size+1));
+
+//     //double invNrSurfNod = 1.0/(obj->lookupSurfaceOffset[obj->nObjects]);
+//     double *invNrExposNod = malloc(nObj*sizeof(*invNrExposNod));
+//     for (long int a=0; a<nObj; a++) {
+//         invNrExposNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
+//         //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
+//     }
+
+
+//     for (long int a=0; a<nObj; a++) {
+//         for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
+//             chargeCounter[a] += flux[a] * charge[pSpecie]; //electron leaving causes positive charge on object
+//         }
+//         msg(STATUS, "PE chargeCounter[%li] = %.10e", a, chargeCounter[a]);
+//     }
+
+
+//     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+//     // Add the collected charge to the exposed nodes on rhoObject.
+//     for (long int a=0; a<nObj; a++) {
+//       //printf("chargeCounter[a] = %f\n",chargeCounter[a]);
+//       //printf("invNrSurfNod[a] = %f\n",invNrSurfNod[a]);
+//         for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
+//             val[obj->exposedNodes[b]] += flux[a] * charge[pSpecie] *invNrExposNod[a];
+//         }
+//     }
+
+//     free(invNrExposNod);
+//     free(chargeCounter);
+//     free(nodCorLoc);
+//     free(nodCorGlob);
+
+// }
 
 //sets true or false for pop->objVicinity[i] depending on whether particle i is close or not 
 void oVicinityParticles(Population *pop, Object *obj){
@@ -801,25 +903,9 @@ void oVicinityParticles(Population *pop, Object *obj){
 	}
 }
 
-void oSolarSpectrum(dictionary *ini, Units *units, Object *obj, long int max){
-	
-	//initialize variables
-	double wavelength[max+1], radiance[max+1];
-    double jouleToEV = units->energy/6.24150913*pow(10,18);
-    long int *offset = obj->radianceOffset;
-
-	for(int i=0;i<max+1;i++){
-		wavelength[i] = (double)(i) / (double)(max);
-	}
-	
-	obj->radiance = radiance;
-
-
-	free(wavelength);
-}
 
 //finds nodes in direct sunlight, assuming normal direction to sun in opposite direction of drift
-long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
+void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
 
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
@@ -833,20 +919,22 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
     //alCopy(surfOff, exposedNodesOffset, nObjects + 1);
 
     //alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
+    
+    //node location
+    double *pos = malloc(3 * sizeof(double));
 
     for(long int a=0; a<obj->nObjects; a++){
 
         long int nSurfNodes = surfOff[a+1] - surfOff[a];
-        msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
         for(long int i = 0; i<nSurfNodes; i++){
             
             long int p = 0;
             long int b = surf[surfOff[a] + i];
-            double *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+            gNodeToGrid3D(obj->domain, mpiInfo, b, pos);
 
             if(!isGhostNode(obj->domain, b)){               
                 double sum = 0;
-                for(int j=0; j<(int)loc[0] + 1; j++){
+                for(int j=0; j<(int)pos[0] + 1; j++){
                     //sum the values along the x-axis, exposed node
                     long int p = b - j*sizeProd[1];
                     sum += val[p]; 
@@ -862,7 +950,6 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
                 continue;
             }
 
-            free(loc);
         }
 
     }
@@ -882,17 +969,16 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
 
         long int counter = 0;
         long int nSurfNodes = surfOff[a+1] - surfOff[a];
-        msg(STATUS, "number of surface nodes in object %i: %i", a, nSurfNodes);
         
         for(long int i = 0; i<nSurfNodes; i++){
             
             long int p = 0;
             long int b = surf[surfOff[a] + i];
-            double *loc = gNodeToGrid3D(obj->domain, mpiInfo, b);
+            gNodeToGrid3D(obj->domain, mpiInfo, b, pos);
 
             if(!isGhostNode(obj->domain, b)){               
                 double sum = 0;
-                for(int j=0; j<(int)loc[0] + 1; j++){
+                for(int j=0; j<(int)pos[0] + 1; j++){
                     //sum the values along the x-axis, exposed node
                     long int p = b - j*sizeProd[1];
                     sum += val[p]; 
@@ -909,19 +995,19 @@ long int *oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiIn
                 continue;
             }
 
-            free(loc);
+
         }
 
         
 
-        msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a);
+        msg(STATUS, "Number of exposed nodes is %li for object %i", counter, a); //mainly for debugging
     }
 
-    alPrint(exposedNodes, exposedNodesOffset[nObjects]);
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
 
     free(index);
+    free(pos);
 }
 
 
@@ -1072,15 +1158,11 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     obj->domain = domain;
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-		oReadH5(obj, mpiInfo);
+	oReadH5(obj, mpiInfo);
     //oCloseH5(obj);
     //Communicate the boundary nodes
-		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+    gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
 
-
-    //obj->nObjects
-    //obj->lookupInterior
-    //obj->lookupInteriorOffset
 
     // Find the number of objects in the input file
     int nObjects = 0;
@@ -1118,6 +1200,17 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
 
+    
+	obj->workFunction = iniGetDoubleArr(ini,"objects:workFunction", 1);
+
+    obj->conductingSurface = iniGetDoubleArr(ini, "objects:ConductingSurface", nObjects);
+
+    //pPlanckPhotonIntegral(ini, units, obj);
+    //msg(STATUS, "allocated obj->radiance[0] = %.10e", obj->radiance[0]);
+    //pPlanckEnergyIntegral(ini, units, obj);
+
+
+
     free(nodCorLoc);
 
     return obj;
@@ -1132,6 +1225,10 @@ void oFree(Object *obj){
     free(obj->lookupSurfaceOffset);
     free(obj->exposedNodes);
     free(obj->exposedNodesOffset);
+    free(obj->conductingSurface);
+    free(obj->workFunction);
+    //free(obj->radiance);
+    //free(obj->bandEnergy);
     free(obj->capMatrixAll);
     free(obj->capMatrixAllOffsets);
     free(obj->capMatrixSum);
@@ -1720,8 +1817,6 @@ void oMode(dictionary *ini){
 
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
-    alPrint(obj->lookupSurface,obj->lookupSurfaceOffset[obj->nObjects]);
-    alPrint(obj->exposedNodes, (long)(sizeof(obj->exposedNodes)/sizeof(obj->exposedNodes[0])));
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -1850,7 +1945,6 @@ void oMode(dictionary *ini){
 	/*
 	 * TIME LOOP
 	 */
-
 	Timer *t = tAlloc(mpiInfo->mpiRank);
 
 	// n should start at 1 since that's the timestep we have after the first
@@ -1945,7 +2039,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%100 == 0 || n>5000){//50614
+		if(n%10 == 0 || n>5000){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

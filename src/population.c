@@ -919,6 +919,7 @@ void pNew(Population *pop, int s, const double *pos, const double *vel){
 		for(int d=0;d<nDims;d++){
 			pop->pos[p+d] = pos[d];
 			pop->vel[p+d] = vel[d];
+			//msg(STATUS,"particle %li x velocity: %f", pop->vel[p+d]);
 		}
 
 
@@ -985,209 +986,209 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
-double *pPlanckEnergyIntegral(dictionary *ini, const Units *units, const Object *obj){
-// integral of spectral radiance from sigma (cm-1) to infinity.
-	// result is W/m2/sr.
-	// follows Widger and Woodall, Bulletin of the American Meteorological
-	// Society, Vol. 57, No. 10, pp. 1217
+// void pPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
+// // integral of spectral radiance from sigma (cm-1) to infinity.
+// 	// result is W/m2/sr.
+// 	// follows Widger and Woodall, Bulletin of the American Meteorological
+// 	// Society, Vol. 57, No. 10, pp. 1217
 	
-	double time = units->time;
+// 	double time = units->time;
 	
-	// constants
-	double Planck = 6.6260693e-34;
-	double Boltzmann = 1.380658e-23;
-	double speedOfLight = 299792458.0;
-	double speedOfLight_sq = speedOfLight * speedOfLight;
-	double temperature = iniGetDouble(ini, "spectrum:BlackBodyTemp");
-	double sunSurfaceArea = 6.1e18; //m^2
+// 	// constants
+// 	double Planck = 6.6260693e-34;
+// 	double Boltzmann = 1.380658e-23;
+// 	double speedOfLight = 299792458.0;
+// 	double speedOfLight_sq = speedOfLight * speedOfLight;
+// 	double temperature = iniGetDouble(ini, "spectrum:BlackBodyTemp");
+// 	double sunSurfaceArea = 6.1e18; //m^2
 
-	//object variables
-	int nObj = obj->nObjects;
-	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
-	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
-	double *c2 = malloc(nObj*sizeof(*c2));
-	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
-	adSetAll(c2, (long)nObj, 0.0);	
+// 	//object variables
+// 	int nObj = obj->nObjects;
+// 	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
+// 	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
+// 	double *bandEnergy = malloc(nObj*sizeof(*bandEnergy));
+// 	adSetAll(bandEnergy, (long)nObj, 0.0);	
+// 	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
 
 
-	// compute powers of x, the dimensionless spectral coordinate
-	for(int a=0; a<nObj; a++){
-		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);	//convert energy to photon wavenumber in cm^-1
-		double c1 = (Planck*speedOfLight/Boltzmann);
-		double x = c1 * 100 * sigma[a] / temperature;
-		double x2 = x * x;
-		double x3 = x * x2;
-		// decide how many terms of sum are needed
-		double iterations = 2.0 + 20.0/x;
-		iterations = (iterations<512) ? iterations : 512;
-		int iter = (int)(iterations);
-		// add up terms of sum
-		double sum = 0;
+// 	// compute powers of x, the dimensionless spectral coordinate
+// 	for(int a=0; a<nObj; a++){
+// 		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);	//convert energy to photon wavenumber in cm^-1
+// 		double c1 = (Planck*speedOfLight/Boltzmann);
+// 		double x = c1 * 100 * sigma[a] / temperature;
+// 		double x2 = x * x;
+// 		double x3 = x * x2;
+// 		// decide how many terms of sum are needed
+// 		double iterations = 2.0 + 20.0/x;
+// 		iterations = (iterations<512) ? iterations : 512;
+// 		int iter = (int)(iterations);
+// 		// add up terms of sum
+// 		double sum = 0;
 
-		for (int n=1; n<iter; n++){
-			double dn = 1.0/n ;
-			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
-		}
+// 		for (int n=1; n<iter; n++){
+// 			double dn = 1.0/n ;
+// 			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
+// 		}
 		
-		c2[a] = (2.0*Planck*speedOfLight_sq);
-		c2[a] = c2[a]*pow(temperature/c1,4)*sum;
-		double solidAngle = (double)area[a] / pow(distFromSun,2.);
-		c2[a] *= solidAngle * sunSurfaceArea;
-		c2[a] *= time;
-		msg(STATUS, "Total energy in band: %.10e", c2[a]);
-	}
+// 		bandEnergy[a] = (2.0*Planck*speedOfLight_sq);
+// 		bandEnergy[a] = bandEnergy[a]*pow(temperature/c1,4)*sum;
+// 		double solidAngle = (double)area[a] / pow(distFromSun,2.);
+// 		bandEnergy[a] *= solidAngle * sunSurfaceArea;
+// 		bandEnergy[a] *= time;
+// 		msg(STATUS, "Total energy in band: %.10e", bandEnergy[a]);
+// 	}
 
 	
-	return c2;
+// 	obj->bandEnergy = bandEnergy;
 
-}
+// 	free(area);
+// 	free(sigma);
 
-double *pPlanckPhotonIntegral(dictionary *ini, const Units *units, const Object *obj){
-	// integral of spectral photon radiance from sigma (m-1) to infinity.
-	// result is photons/s/m2/sr, and returned as photons per timestep
-	// follows Widger and Woodall, Bulletin of the American Meteorological
-	// Society, Vol. 57, No. 10, pp. 1217
-	// converted from c++ to c from source code found here:
-	// https://www.spectralcalc.com/blackbody/CalculatingBlackbodyRadianceV2.pdf
+// }
 
-	//conversion factors
-	double time = units->time;
+// void pPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
+// 	// integral of spectral photon radiance from sigma (m-1) to infinity.
+// 	// result is in photons per timestep.
+// 	// follows Widger and Woodall, Bulletin of the American Meteorological
+// 	// Society, Vol. 57, No. 10, pp. 1217
+// 	// converted from c++ to c from source code found here:
+// 	// https://www.spectralcalc.com/blackbody/CalculatingBlackbodyRadianceV2.pdf
 
-	// constants
-	double Planck = 6.6260693e-34;
-	double Boltzmann = 1.380658e-23;
-	double speedOfLight = 299792458.0;
-	double temperature = iniGetDouble(ini, "spectrum:blackBodyTemp");
-	double sunSurfaceArea = 6.1e18;
+// 	//conversion factors
+// 	double time = units->time;
+
+// 	// constants
+// 	double Planck = 6.6260693e-34;
+// 	double Boltzmann = 1.380658e-23;
+// 	double speedOfLight = 299792458.0;
+// 	double sunSurfaceArea = 6.1e18;
+// 	double temperature = iniGetDouble(ini, "spectrum:blackBodyTemp");
 	
-	// object variables
-	int nObj = obj->nObjects;
-	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
-	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
-	double *c2 = malloc(nObj*sizeof(*c2));
-	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
-	adSetAll(c2, (long)nObj, 0.0);
+// 	// object variables
+// 	int nObj = obj->nObjects;
+// 	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
+// 	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
+// 	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
+// 	double *radiance = malloc(nObj*sizeof(*radiance));
+// 	adSetAll(radiance, (long)nObj, 0.0);
 
-	// compute powers of x, the dimensionless spectral coordinate
-	for(int a=0; a<nObj; a++){
-		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);//wavenumber in cm^-1
-		double c1 = Planck * speedOfLight / Boltzmann;
-		double x = c1 * 100. * (double)sigma[a]/temperature;
-		double x2 = x * x;
+// 	// compute powers of x, the dimensionless spectral coordinate
+// 	for(int a=0; a<nObj; a++){
+// 		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);//wavenumber in cm^-1
+// 		double c1 = Planck * speedOfLight / Boltzmann;
+// 		double x = c1 * 100. * (double)sigma[a]/temperature;
+// 		double x2 = x * x;
 
-		// decide how many terms of sum are needed
-		double iterations = 2.0 + 20.0/x;
-		iterations = (iterations < 512.) ? iterations : 512;
-		int iter = (int)(iterations);
-		// add up terms of sum
-		double sum = 0.;
-		for (int n=1; n<iter; n++) {
-			double dn = 1.0 / n;
-			sum += exp(-n*x) * (x2 + 2.0*(x + dn)*dn) * dn;
-		}
-		// result, in units of photons/s/m2/sr, convert to photons/timestep
-		double kTohc = (Boltzmann * (double)temperature) / (Planck * speedOfLight);
-		c2[a] = 2.0 * pow(kTohc,3.) * speedOfLight;
-		c2[a] = c2[a] * sum;
+// 		// decide how many terms of sum are needed
+// 		double iterations = 2.0 + 20.0/x;
+// 		iterations = (iterations < 512.) ? iterations : 512;
+// 		int iter = (int)(iterations);
+// 		// add up terms of sum
+// 		double sum = 0.;
+// 		for (int n=1; n<iter; n++) {
+// 			double dn = 1.0 / n;
+// 			sum += exp(-n*x) * (x2 + 2.0*(x + dn)*dn) * dn;
+// 		}
+// 		// result, in units of photons/s/m2/sr, convert to photons/timestep
+// 		double kTohc = (Boltzmann * (double)temperature) / (Planck * speedOfLight);
+// 		double solidAngle = (double)area[a] / pow(distFromSun,2.);
+// 		radiance[a] = 2.0 * pow(kTohc,3.) * speedOfLight;
+// 		radiance[a] = radiance[a] * sum;
+// 		radiance[a] *= solidAngle * sunSurfaceArea;
+// 		radiance[a] *= time;
+// 		msg(STATUS, "Radiance during allocation: %.10e", radiance[a]);
+
+// 	}
+
+// 	free(area);
+// 	free(sigma);
+// 	obj->radiance = radiance;
+
+// }
+
+// void pPhotoElectrons(Population *pop, Object *obj, const Units *units, 
+// 					const gsl_rng *rng, const MpiInfo *mpiInfo){
+	
+// 	//object variables
+// 	int nObj = obj->nObjects;
+// 	long int *exposedNodes = obj->exposedNodes;
+// 	long int *exposedOff = obj->exposedNodesOffset;
+// 	double flux[nObj];
+// 	double bandEnergy[nObj];
+// 	double area[nObj];
+
+// 	for(int a=0; a<nObj;a++){
+// 		flux[a] = obj->radiance[a];
+// 		bandEnergy[a] = obj->bandEnergy[a];
+// 		area[a] = obj->conductingSurface[a];
+// 	}
+
+// 	double *workFunc = obj->workFunction;
+
+// 	//mpi variables
+//     //int rank = mpiInfo->mpiRank;
+//     //int size = mpiInfo->mpiSize;
+
+// 	//average energy and velocity of emitted photoelectrons
+// 	double avgEnergy[nObj];
+// 	double avgVel[nObj];
+
+
+// 	int specie = 0;
+// 	specie = (pop->charge[0] < 0.) ? 0 : 1;
+
+// 	for(int a=0; a<nObj; a++){
+// 		avgEnergy[a] = bandEnergy[a] / flux[a];
+// 		avgEnergy[a] -= workFunc[a];
+// 		avgEnergy[a] /= units->energy;
+// 		avgVel[a] = -1. * sqrt(2*avgEnergy[a] / pop->mass[specie]);
+// 	}
+
+
+// 	//scale flux to be per cell 
+// 	for(size_t a = 0; a<nObj; a++){
 		
-		double solidAngle = (double)area[a] / pow(distFromSun,2.);
-		c2[a] *= solidAngle * sunSurfaceArea;
-		c2[a] *= time;
-		msg(STATUS, "Total number of real photoelectrons per timestep: %.10e",c2[a]);
-	}
+// 		area[a] /= units->hyperArea;
+// 		double emissionVolume = area[a] * units->length;
+// 		flux[a] /= emissionVolume;
+// 		flux[a] /= units->density;
+// 		flux[a] /= units->weights[specie];
+// 	}
 
 
-	return c2;
-}
+// 	double *pos = malloc(pop->nDims * sizeof(double));
+// 	double *vel = malloc(pop->nDims * sizeof(double));
+// 	adSetAll(pos, pop->nDims, 0.0);
+// 	adSetAll(vel, pop->nDims, 0.0);
+// 	pToGlobalFrame(pop, mpiInfo);
 
-void pPhotoElectrons(dictionary *ini, Population *pop, const Object *obj,
- 								const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
-	
-	//object variables
-	int nObj = obj->nObjects;
-	long int *nAlloc = iniGetLongIntArr(ini, "population:nAlloc", pop->nSpecies);
-	msg(STATUS, "Number of pinc electrons allocated memory for: %li", nAlloc[0]);
-	long int *exposedNodes = obj->exposedNodes;
-	long int *exposedOff = obj->exposedNodesOffset;
-	double *flux = pPlanckPhotonIntegral(ini, units, obj);
-	double *bandEnergy = pPlanckEnergyIntegral(ini, units, obj);
-	double *workFunc = iniGetDoubleArr(ini,"objects:workFunction", nObj);
-	msg(STATUS, "Work function in joule: %.10e", workFunc[0]);
-	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
-
-	//mpi variables
-    //int rank = mpiInfo->mpiRank;
-    //int size = mpiInfo->mpiSize;
-
-	//average energy of emitted photoelectrons
-	double *avgEnergy = malloc(nObj * sizeof(double));
-	for(int a=0; a<nObj; a++){
-		avgEnergy[a] = bandEnergy[a] * 1. /flux[a];
-		avgEnergy[a] -= workFunc[a];
-		msg(STATUS, "Average energy of emitted photoelectron in Joules: %.10e", avgEnergy[0]);
-		avgEnergy[a] /= units->energy;
-	}
-
-
-	//scale flux to be per cell 
-	msg(STATUS, "total volume: %li", gGetGlobalVolume(ini));
-	for(size_t a = 0; a<nObj; a++){
+// 	for(int a=0; a < nObj; a++){
 		
-		area[a] /= units->hyperArea;
-		double emissionVolume = area[a] * units->length;
-		msg(STATUS, "Volume emitted into: %f", emissionVolume);
-		msg(STATUS, "Volume of a cell: %f", units->hyperVolume);
-		long int numCells = (long)floor(emissionVolume / units->hyperVolume);
-		msg(STATUS, "number of cells photoelectrons are emitted into: %li", numCells); 
-		flux[a] /= emissionVolume;
-		flux[a] /= units->density;
-		flux[a] /= units->weights[0];
-		msg(STATUS, "total flux: %.10e", flux[a]*numCells);
-		//set flux to maximum of allocated memory should flux be higher than available memory 
-		//flux[a] = (flux[a]*numCells > (double)nAlloc[0]) ? nAlloc[a]/numCells : flux[a];
-		msg(STATUS, "flux in object %d, per cell: %f", a, flux[a]);
-		msg(STATUS, "new electrons as a fraction of allocated memory: %f", (numCells*flux[a])/nAlloc[a]);
-	}
+// 		long int hit = 0;
+// 		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
 
+// 		for(int i = 0; i < nodesThisCore; i++){
 
-	long int numHits = 0;
-	double *pos = malloc(pop->nDims * sizeof(double));
-	double *vel = malloc(pop->nDims * sizeof(double));
-	adSetAll(pos, pop->nDims, 0.0);
-	adSetAll(vel, pop->nDims, 0.0);
-	pToGlobalFrame(pop, mpiInfo);
+// 			long int node = exposedNodes[exposedOff[a] + i]; 
+// 			gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
 
-	for(int a=0; a < nObj; a++){
-
-		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
-
-		for(int i = 0; i < nodesThisCore; i++){
-
-			long int node = exposedNodes[exposedOff[a] + i]; 
-			pos = gNodeToGrid3D(obj->domain, mpiInfo, node);
-
-			for(long int j=0; j<(long)flux[a]; j++){
+// 			for(long int j=0; j<(long)flux[a]; j++){
 				
-				int specie = 0;
-				specie = (pop->charge[0] < 0.) ? 0 : 1;
-				double avgVel = -1 * sqrt(2*avgEnergy[a] / pop->mass[specie]);
-				vel[0] = avgVel + gsl_ran_gaussian_ziggurat(rng,0.5*avgVel);
-				//if(j == 0) msg(STATUS, "x component of velocity, particle %d: %f", j, vel[0]);
-				msg(STATUS, "pNew call next..");
-				pNew(pop, specie, pos, vel);
-				numHits += 1;
-			}
+// 				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,0.25*avgVel[a]);
+// 				pos[0] += vel[0];
+// 				pNew(pop, specie, pos, vel);
+// 				hit += 1;
+// 			}
+// 		}
 
-		}
+// 		msg(STATUS, "Number of particles created in timestep: %li", hit);
 
-	}
+// 	}
 
-	msg(STATUS, "Number of times pNew hit: %li", numHits);
-	free(pos);
-	free(vel);
-	free(bandEnergy);
-	free(flux);
-}
+// 	pToLocalFrame(pop, mpiInfo);
+// 	free(pos);
+// 	free(vel);
+// }
 
 void pAdhere(Population *pop, const Object *obj, long int n){
 
