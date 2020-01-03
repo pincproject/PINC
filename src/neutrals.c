@@ -909,6 +909,94 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 
 }
 
+
+funPtr NeutralDistr3D1Vector_set(dictionary *ini){
+	//puSanity(ini,"puDistr3D1",3,1);
+	return NeutralDistr3D1Vector;
+}
+void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho){
+
+	gZero(rho);
+	double *val = rho->val;
+	long int *sizeProd = rho->sizeProd;
+	//adPrint(val,rho->sizeProd[2]);
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		//gMul(rho, 1.0/pop->mass[s]);
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		//gMul(rho, 1.0/(iStart-iStop));
+
+		for(int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[3*i];
+			double *vel = &pop->vel[3*i];
+
+			// Integer parts of position
+			int j = (int) pos[0];
+			int k = (int) pos[1];
+			int l = (int) pos[2];
+
+			// Decimal (cell-referenced) parts of position and their complement
+			double x = pos[0]-j;
+			double y = pos[1]-k;
+			double z = pos[2]-l;
+			double xcomp = 1-x;
+			double ycomp = 1-y;
+			double zcomp = 1-z;
+
+			//printf("sizeProd[1] = %i \n",sizeProd[1]);
+			// Index of neighbouring nodes
+			long int p 		= j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+			long int pj 	= p + sizeProd[1];
+			long int pk 	= p + sizeProd[2];
+			long int pjk 	= pk + sizeProd[1];
+			long int pl 	= p + sizeProd[3];
+			long int pjl 	= pl + sizeProd[1];
+			long int pkl 	= pl + sizeProd[2];
+			long int pjkl 	= pkl + sizeProd[1];
+
+
+			// if(p>=sizeProd[4]){
+			// 	msg(ERROR,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
+			// }
+			//12294
+			//printf("p = %li\n",sizeProd[4]);
+			//printf("val[p] = %f\n",val[p]);
+			//MPI_Barrier(MPI_COMM_WORLD);
+			for (int d=0;d<nDims;d++){
+				  double K = vel[d]/12.;
+    			val[p+d] 		+= K*xcomp*ycomp*zcomp;
+	    		val[pj+d]		+= K*x    *ycomp*zcomp;
+		    	val[pk+d]		+= K*xcomp*y    *zcomp;
+    			val[pjk+d]	+= K*x    *y    *zcomp;
+		    	val[pl+d]   += K*xcomp*ycomp*z    ;
+			    val[pjl+d]	+= K*x    *ycomp*z    ;
+			    val[pkl+d]	+= K*xcomp*y    *z    ;
+			    val[pjkl+d]	+= K*x    *y    *z    ;
+					//printf("val[%i] = %f \n",p+d,val[p+d]);
+			}
+			//if(val[p]>100. || val[pj]>100. || val[pk]>100. || val[pjk]>100. || val[pl]>100. || val[pjl]>100. || val[pkl]>100. || val[pjkl]>100.){
+            	//printf("val = %f, %f, %f, %f, %f, %f, %f, %f \n",val[p],val[pj],val[pk],val[pjk],val[pl],val[pjl],val[pkl],val[pjkl]);
+			//}
+		}
+
+		//gMul(rho, (iStart-iStop));
+		//gMul(rho, pop->mass[s]);
+		//adPrint(val,rho->sizeProd[4]);
+		//adPrint(rho->val,rho->sizeProd[4]);
+		//exit(0);
+	}
+
+
+}
+
+
 //#############################
 // accelerator
 //#############################
@@ -948,11 +1036,48 @@ static inline void neInterp3D1(	double *result, const double *pos,
 
 }
 
+static inline void neInterp3D1scalar(	double *result, const double *pos,
+	const double *val, const long int *sizeProd){
+
+		result[0] = 0;
+		// Integer parts of position
+		int j = (int) pos[0];
+		int k = (int) pos[1];
+		int l = (int) pos[2];
+
+		// Decimal (cell-referenced) parts of position and their complement
+		double x = pos[0]-j;
+		double y = pos[1]-k;
+		double z = pos[2]-l;
+		double xcomp = 1-x;
+		double ycomp = 1-y;
+		double zcomp = 1-z;
+
+		// Index of neighbouring nodes
+		long int p 		= j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+		long int pj 	= p + sizeProd[1]; //sizeProd[1];
+		long int pk 	= p + sizeProd[2];
+		long int pjk 	= pk + sizeProd[1]; //sizeProd[1];
+		long int pl 	= p + sizeProd[3];
+		long int pjl 	= pl + sizeProd[1]; //sizeProd[1];
+		long int pkl 	= pl + sizeProd[2];
+		long int pjkl 	= pkl + sizeProd[1]; //sizeProd[1];
+
+		// Linear interpolation
+		//for(int v=0;v<3;v++)
+		result[0] =	zcomp*(	 ycomp*(xcomp*val[p]+x*val[pj])
+		+y    *(xcomp*val[pk]+x*val[pjk]) )
+		+z    *( ycomp*(xcomp*val[pl]+x*val[pjl])
+		+y    *(xcomp*val[pkl]+x*val[pjkl]) );
+
+}
+
+
 funPtr neAcc3D1_set(dictionary *ini){
 	//puSanity(ini,"puAcc3D1",3,1);
 	return neAcc3D1;
 }
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad){
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
 
 	int nSpecies = pop->nSpeciesNeutral;
 	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
@@ -971,8 +1096,10 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad){
 
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3];
+			double divergence[1];
 			neInterp3D1(dv,&pos[p],val,sizeProd);
-			for(int d=0;d<nDims;d++) vel[p+d] += dv[d];
+			neInterp3D1scalar(divergence,&pos[p],val,sizeProd);
+			for(int d=0;d<nDims;d++) vel[p+d] += (dv[d]+vel[p+d]*divergence[0]);
 		}
 
 		gMul(Pgrad, pop->mass[s]);
@@ -1004,6 +1131,54 @@ void neMove(NeutralPopulation *pop){
 	}
 }
 
+
+/******************************************************************************
+ *	FINITE DIFFERENCE
+ *****************************************************************************/
+
+ void divFinDiff1st(const Grid *scalar, Grid *field){
+
+	// Performs first order centered finite difference on field and returns a scalar
+
+	gZero(scalar);
+	int rank = scalar->rank;
+	// int *size = scalar->size;
+	long int *sizeProd = scalar->sizeProd;
+	long int *fieldSizeProd = field->sizeProd;
+
+	double *scalarVal = scalar->val;
+	double *fieldVal = field->val;
+
+ 	// Scalar indices
+	long int fNext, fPrev;
+	long int s;
+	//int fNext = fieldSizeProd[1];
+
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+
+	// Centered Finite difference
+	for(int d = 1; d < rank; d++){
+		fNext = start*fieldSizeProd[1] + fieldSizeProd[d];
+		fPrev = start*fieldSizeProd[1] - fieldSizeProd[d];
+		s = start;
+
+
+
+		for(int g = start; g < end; g++){
+			scalarVal[s] += 0.5*(fieldVal[fNext] - fieldVal[fPrev]);
+			fNext+=rank-1;
+			fPrev+=rank-1;
+			s ++; // fNext;
+			//printf("node: %li, using %li, and %li \n",s,fNext,fPrev);
+			//printf("node: %li, using %li, and %li \n",s,fNext,fPrev);
+			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n",fieldSizeProd[4],sizeProd[4]);
+		}
+	}
+
+	return;
+}
 
 
 //#############################

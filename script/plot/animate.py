@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rhoNeutral"
+file_name = "bulkV"#"rhoNeutral"#"divBulkV"
 
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 200#4950#50713#45715 # Must exist in dataset
+start = 19000#4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:

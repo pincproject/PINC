@@ -73,6 +73,8 @@ void pNeutralFree(NeutralPopulation *pop);
 funPtr NeutralDistr3D1_set(dictionary *ini);
 void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho);
 
+funPtr NeutralDistr3D1Vector_set(dictionary *ini);
+void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho);
 
 
 //######################################
@@ -96,8 +98,15 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 // ########################################
 
 void neMove(NeutralPopulation *pop);
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad);
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV);
 funPtr neAcc3D1_set(dictionary *ini);
+
+//#########################################
+// Finite diff functions
+// ########################################
+
+void divFinDiff1st(const Grid *scalar, Grid *field);
+
 
 //#############################
 // Migration

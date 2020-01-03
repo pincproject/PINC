@@ -2087,7 +2087,7 @@ void oCollMode(dictionary *ini){
 	puGet3DRotationParameters(ini, T, S, 1.0);
 
 	gMul(Pgrad, 0.5);
-	neAcc3D1(neutralPop,Pgrad); // SPH neutrals
+	//neAcc3D1(neutralPop,Pgrad); // SPH neutrals
 	gMul(Pgrad, 2.0);
 
 	/*
@@ -2214,7 +2214,7 @@ void oCollMode(dictionary *ini){
 		// Accelerate particle and compute kinetic energy for step n
 		//acc(pop, E);
         acc(pop, E, T, S);
-	    neAcc3D1(neutralPop,Pgrad); // SPH neutrals
+	    //neAcc3D1(neutralPop,Pgrad); // SPH neutrals
 
 		tStop(t);
 
@@ -2369,7 +2369,9 @@ void neutTest(dictionary *ini){
 	// For SPH neutral particles
 	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
 	Grid *Pgrad   = gAlloc(ini, VECTOR,mpiInfoNeut);
+	Grid *bulkV   = gAlloc(ini, VECTOR,mpiInfoNeut);
 	Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	Grid *divBulkV   = gAlloc(ini, SCALAR,mpiInfoNeut);
 	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfoNeut);
 	Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfoNeut);     // for capMatrix - objects
 
@@ -2402,6 +2404,8 @@ void neutTest(dictionary *ini){
     gOpenH5(ini, rhoNeutral, mpiInfoNeut, units, 1, "rhoNeutral");
     gOpenH5(ini, P,   mpiInfoNeut, units, 1, "P");
 	gOpenH5(ini, Pgrad,   mpiInfoNeut, units, 1, "Pgrad");
+	gOpenH5(ini, bulkV,   mpiInfoNeut, units, units->velocity, "bulkV");
+	gOpenH5(ini, divBulkV,   mpiInfoNeut, units, units->velocity, "divBulkV");
 
 
 
@@ -2415,8 +2419,8 @@ void neutTest(dictionary *ini){
 
 
 	// SPH neutrals
-	//nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
-	nePosLattice(ini, neutralPop, mpiInfoNeut);
+	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
+	//nePosLattice(ini, neutralPop, mpiInfoNeut);
 	neVelMaxwell(ini, neutralPop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
@@ -2452,6 +2456,8 @@ void neutTest(dictionary *ini){
     nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
+		NeutralDistr3D1Vector(neutralPop,bulkV);
+		//exit(0);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
     //gZero(P);
 
@@ -2465,10 +2471,12 @@ void neutTest(dictionary *ini){
 	gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
 	gMul(Pgrad, -1.);
 
+	divFinDiff1st(divBulkV,bulkV);
+
 
 
 	gMul(Pgrad, 0.5);
-	neAcc3D1(neutralPop,Pgrad); // SPH neutrals
+	neAcc3D1(neutralPop,Pgrad,divBulkV); // SPH neutrals
 	gMul(Pgrad, 2.0);
 
 	/*
@@ -2518,7 +2526,9 @@ void neutTest(dictionary *ini){
 		// SPH neutrals
 
 		NeutralDistr3D1(neutralPop, rhoNeutral);
+		NeutralDistr3D1Vector(neutralPop,bulkV);
 		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+		gHaloOp(setSlice, bulkV, mpiInfoNeut, TOHALO);
 
 		//gZero(P);
         nePressureSolve3D(rhoNeutral,P,neutralPop, mpiInfoNeut);
@@ -2533,8 +2543,12 @@ void neutTest(dictionary *ini){
 		gMul(Pgrad, -1.);
 		//gZero(Pgrad);
 
+		divFinDiff1st(divBulkV,bulkV);
+		gHaloOp(setSlice, divBulkV, mpiInfoNeut, TOHALO);
+		gMul(divBulkV, -1.);
 
-	    neAcc3D1(neutralPop,Pgrad); // SPH neutrals
+
+	    neAcc3D1(neutralPop,Pgrad,divBulkV); // SPH neutrals
 
 		tStop(t);
 
@@ -2546,7 +2560,8 @@ void neutTest(dictionary *ini){
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
-
+			gWriteH5(bulkV, mpiInfoNeut, (double) n);
+			gWriteH5(divBulkV, mpiInfoNeut, (double) n);
 			gWriteH5(rhoNeutral, mpiInfoNeut, (double) n);
 			gWriteH5(P, mpiInfoNeut, (double) n);
 		}
@@ -2573,6 +2588,8 @@ void neutTest(dictionary *ini){
 	gCloseH5(rhoNeutral);
     gCloseH5(P);
 	gCloseH5(Pgrad);
+	gCloseH5(bulkV);
+	gCloseH5(divBulkV);
 
 	//xyCloseH5(history);
 
@@ -2587,6 +2604,8 @@ void neutTest(dictionary *ini){
   gFree(rhoNeutral);
   gFree(P);
   gFree(Pgrad);
+	gFree(bulkV);
+	gFree(divBulkV);
   pNeutralFree(neutralPop);
 
   uFree(units);
