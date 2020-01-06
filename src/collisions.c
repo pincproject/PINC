@@ -2426,17 +2426,17 @@ void neutTest(dictionary *ini){
 
 	////inject extra particles to produce sharp dens grad
 
-	// int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
-	// int multiplyDensBy = 2;
-	// int sliceDim = 0;
-	// neInjectParticles((int)(trueSize[0]/2)-1,sliceDim ,multiplyDensBy, ini, neutralPop,
-	// 	rngSync, mpiInfoNeut);
-	//
-	// neInjectParticles((int)(trueSize[0]/2),sliceDim ,multiplyDensBy, ini, neutralPop,
-	// 	rngSync, mpiInfoNeut);
-	//
-	// neInjectParticles((int)(trueSize[0]/2)+1,sliceDim ,multiplyDensBy, ini, neutralPop,
-	// 	rngSync, mpiInfoNeut);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
+	int multiplyDensBy = 2;
+	int sliceDim = 0;
+	neInjectParticles((int)(trueSize[0]/2)-1,sliceDim ,multiplyDensBy, ini, neutralPop,
+		rngSync, mpiInfoNeut);
+
+	neInjectParticles((int)(trueSize[0]/2),sliceDim ,multiplyDensBy, ini, neutralPop,
+		rngSync, mpiInfoNeut);
+
+	neInjectParticles((int)(trueSize[0]/2)+1,sliceDim ,multiplyDensBy, ini, neutralPop,
+		rngSync, mpiInfoNeut);
 
 	MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
@@ -2473,11 +2473,12 @@ void neutTest(dictionary *ini){
 
 	divFinDiff1st(divBulkV,bulkV);
 
+	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
 
 
-	gMul(Pgrad, 0.5);
+	//gMul(Pgrad, 0.5);
 	neAcc3D1(neutralPop,Pgrad,divBulkV); // SPH neutrals
-	gMul(Pgrad, 2.0);
+	//gMul(Pgrad, 2.0);
 
 	/*
 	 * TIME LOOP
@@ -2539,13 +2540,16 @@ void neutTest(dictionary *ini){
 		// Compute pressure gradient SPH neutrals
 		//gZero(P);
 		gFinDiff1st(P, Pgrad);
-		gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
+		//gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
 		gMul(Pgrad, -1.);
 		//gZero(Pgrad);
 
 		divFinDiff1st(divBulkV,bulkV);
-		gHaloOp(setSlice, divBulkV, mpiInfoNeut, TOHALO);
-		gMul(divBulkV, -1.);
+		//gHaloOp(addSlice, divBulkV, mpiInfoNeut, FROMHALO);
+		//gMul(divBulkV, -1.);
+		//gMul(divBulkV, 12.);
+
+		
 
 
 	    neAcc3D1(neutralPop,Pgrad,divBulkV); // SPH neutrals
@@ -2556,7 +2560,7 @@ void neutTest(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%200 == 0 || n>29900){//50614
+		if(n%20 == 0 || n>29900){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

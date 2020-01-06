@@ -1086,6 +1086,8 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
 
 	long int *sizeProd = Pgrad->sizeProd;
 	double *val = Pgrad->val;
+	long int *divSizeProd = divBulkV->sizeProd;
+	double *divVal = divBulkV->val;
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1098,7 +1100,7 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
 			double dv[3];
 			double divergence[1];
 			neInterp3D1(dv,&pos[p],val,sizeProd);
-			neInterp3D1scalar(divergence,&pos[p],val,sizeProd);
+			neInterp3D1scalar(divergence,&pos[p],divVal,divSizeProd);
 			for(int d=0;d<nDims;d++) vel[p+d] += (dv[d]+vel[p+d]*divergence[0]);
 		}
 
@@ -1157,11 +1159,13 @@ void neMove(NeutralPopulation *pop){
 	long int start = alSum(&sizeProd[1], rank-1 );
 	long int end = sizeProd[rank]-start;
 
+	printf("start = %li, end = %li \n",start,end);
+
 
 	// Centered Finite difference
 	for(int d = 1; d < rank; d++){
-		fNext = start*fieldSizeProd[1] + fieldSizeProd[d];
-		fPrev = start*fieldSizeProd[1] - fieldSizeProd[d];
+		fNext = start*fieldSizeProd[1] + fieldSizeProd[d]+(d-1);
+		fPrev = start*fieldSizeProd[1] - fieldSizeProd[d]+(d-1);
 		s = start;
 
 
@@ -1171,12 +1175,17 @@ void neMove(NeutralPopulation *pop){
 			fNext+=rank-1;
 			fPrev+=rank-1;
 			s ++; // fNext;
+			if(s>sizeProd[rank]){
+				msg(ERROR,"index out of bounds in divFinDiff1st");
+			}
+			if(fNext>fieldSizeProd[rank]){
+				msg(ERROR,"index out of bounds in divFinDiff1st, index: %li max: %li, scalar index: %li",fNext,fieldSizeProd[rank],s);
+			}
 			//printf("node: %li, using %li, and %li \n",s,fNext,fPrev);
-			//printf("node: %li, using %li, and %li \n",s,fNext,fPrev);
-			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n",fieldSizeProd[4],sizeProd[4]);
+			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n \n",fieldSizeProd[4],sizeProd[4]);
 		}
 	}
-
+	//exit(0);
 	return;
 }
 
