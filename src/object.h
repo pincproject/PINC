@@ -24,8 +24,8 @@ typedef struct{
   long int *exposedNodesOffset; ///< Offset in the above per object (nObjects+1 elements)
   double *conductingSurface; ///< the total area of conducting surface of each object exposed to the sun
   double *workFunction; ///< work function of the material of each object
-  //double *radiance; ///< Solar radiance in Photons/timestep
-  //double *bandEnergy;     ///< Energy in frequency band above work function energy of object
+  double *radiance; ///< Solar radiance in Photons/timestep
+  double *bandEnergy;     ///< Energy in frequency band above work function energy of object
   int nObjects;					///< Number of objects
 } Object;
 
@@ -147,8 +147,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
                           const MpiInfo *mpiInfo);
 
 
-// void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
-//                                 const MpiInfo *MpiInfo, const Units *units);
+void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
+                                const MpiInfo *MpiInfo, const Units *units);
 
 /**
  * TO IMPLEMENT!
@@ -187,7 +187,23 @@ double *oFindIntersectPoint(Population *pop, long int id, Object *obj,
 double *oFindNearestSurfaceNodes(Population *pop, Object *obj, long int particleId);
 
 
+void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo);
+
 //find nodes on obj tagged as metal, that directly face sunlight (direction of drift)
 void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo);
+
+
+/*
+Integral of radiance for specific wavenumber to infinity, finds
+number of photons that cause electrons to be emitted per timestep
+*/
+void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
+
+
+/*
+Integral of radiance for specific wavenumber to infinity, finds
+total energy in Joule in the band per timetep
+*/
+void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj);
 
 #endif // OBJECT_H
