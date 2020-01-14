@@ -74,7 +74,7 @@ funPtr NeutralDistr3D1_set(dictionary *ini);
 void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho);
 
 funPtr NeutralDistr3D1Vector_set(dictionary *ini);
-void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho);
+void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *bulkV, Grid *rho);
 
 
 //######################################
@@ -98,14 +98,14 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 // ########################################
 
 void neMove(NeutralPopulation *pop);
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV);
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV,Grid *rho);
 funPtr neAcc3D1_set(dictionary *ini);
 
 //#########################################
 // Finite diff functions
 // ########################################
 
-void divFinDiff1st(const Grid *scalar, Grid *field);
+void divFinDiff1st(const Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop);
 
 
 //#############################
@@ -120,7 +120,15 @@ void nePosAssertInLocalFrame(const NeutralPopulation *pop, const Grid *grid);
 // Pressure solver
 //#############################
 
-void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo);
+void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo);
+
+void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo);
+
+void neInternalEnergySolve(Grid *IE,Grid *P,Grid *bulkV,Grid *rho,Grid *gradBulkV,NeutralPopulation *pop);
+
+void neEnergyInitiate(Grid *IE,Grid *bulkV,Grid *rho,NeutralPopulation *pop,const dictionary *ini);
+
+void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop);
 
 void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
@@ -133,5 +141,6 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 
 
 void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+void nuObjectSetDens(Grid *rho, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 #endif // POPULATION_H

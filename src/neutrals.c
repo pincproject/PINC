@@ -86,10 +86,13 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 		//gPeriodic(grid, mpiInfo);
 
 	}
+
 	//gHaloOp(setSlice, grid,mpiInfo,TOHALO);
 	//Lower edge
 	for(int d = 1; d < rank; d++){
+		//printf("subdomain[d-1] 0 %i",subdomain[d-1]);
 		if(subdomain[d-1] == 0){
+			//printf("sdsfdf \n");
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
 				gDirichletRho(grid, d, mpiInfo);
@@ -106,6 +109,76 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET) gDirichletRho(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+		}
+	}
+	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
+	//msg(STATUS,"phi size = %i",grid->sizeProd[4]);
+	//if (mpiInfo->mpiRank == 7){
+	//adPrint(grid->val,grid->sizeProd[4] );
+	//}
+	//MPI_Barrier(MPI_COMM_WORLD);
+	//exit(1);
+	return;
+}
+
+
+void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
+
+	int rank = grid->rank;
+	bndType *bnd = grid->bnd;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+
+	//If periodic neutralize phi
+
+	bool periodic =  true;
+	for(int d = 1; d < rank; d++){
+		//msg(STATUS,"d = %i",d);
+		if(bnd[d] != PERIODIC){
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+			periodic = false;
+		}
+	}
+	for(int d = rank+1; d < 2*rank; d++){
+		//msg(STATUS,"d = %i",d);
+		if(bnd[d] != PERIODIC){
+			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+			periodic = false;
+		}
+	}
+	if(periodic == true){
+		//printf("PERIODIC cond, rank %i\n",mpiInfo->mpiRank);
+		//gPeriodic(grid, mpiInfo);
+
+	}
+
+	//gHaloOp(setSlice, grid,mpiInfo,TOHALO);
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		//printf("subdomain[d-1] 0 %i",subdomain[d-1]);
+		if(subdomain[d-1] == 0){
+			//printf("sdsfdf \n");
+			if(bnd[d] == DIRICHLET){
+				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
+				//gDirichletRho(grid, d, mpiInfo);
+				gNeumann(grid, d, mpiInfo);
+				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
+			}
+			else if(bnd[d] == NEUMANN){
+				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
+				gNeumann(grid, d, mpiInfo);
+			}
+		}
+	}
+
+	//Higher edge
+	for(int d = rank+1; d < 2*rank; d++){
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET) {
+				//gDirichletRho(grid, d, mpiInfo);
+				gNeumann(grid, d, mpiInfo);
+			}
 			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
@@ -914,11 +987,13 @@ funPtr NeutralDistr3D1Vector_set(dictionary *ini){
 	//puSanity(ini,"puDistr3D1",3,1);
 	return NeutralDistr3D1Vector;
 }
-void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho){
+void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *bulkV, Grid *rho){
 
-	gZero(rho);
-	double *val = rho->val;
-	long int *sizeProd = rho->sizeProd;
+	gZero(bulkV);
+	double *val = bulkV->val;
+	long int *sizeProd = bulkV->sizeProd;
+	long int *scalarSizeProd = rho->sizeProd;
+	double *rhoVal = rho->val;
 	//adPrint(val,rho->sizeProd[2]);
 	int nSpecies = pop->nSpeciesNeutral;
 	int nDims = pop->nDims;
@@ -942,6 +1017,15 @@ void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho){
 			int k = (int) pos[1];
 			int l = (int) pos[2];
 
+			long int scalarp = j+k*scalarSizeProd[2]+l*scalarSizeProd[3];
+			long int scalarpj 	= scalarp + scalarSizeProd[1];
+			long int scalarpk 	= scalarp + scalarSizeProd[2];
+			long int scalarpjk 	= scalarpk + scalarSizeProd[1];
+			long int scalarpl 	= scalarp + scalarSizeProd[3];
+			long int scalarpjl 	= scalarpl + scalarSizeProd[1];
+			long int scalarpkl 	= scalarpl + scalarSizeProd[2];
+			long int scalarpjkl 	= scalarpkl + scalarSizeProd[1];
+
 			// Decimal (cell-referenced) parts of position and their complement
 			double x = pos[0]-j;
 			double y = pos[1]-k;
@@ -962,25 +1046,33 @@ void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *rho){
 			long int pjkl 	= pkl + sizeProd[1];
 
 
-			// if(p>=sizeProd[4]){
-			// 	msg(ERROR,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
-			// }
+			if(p>=sizeProd[4]){
+				msg(ERROR,"Particle %i at (%f,%f,%f) out-of-bounds, tried to access node %li",i,pos[0],pos[1],pos[2],pjkl);
+			}
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
 			//MPI_Barrier(MPI_COMM_WORLD);
 			for (int d=0;d<nDims;d++){
-				  double K = vel[d]/12.;
-    			val[p+d] 		+= K*xcomp*ycomp*zcomp;
-	    		val[pj+d]		+= K*x    *ycomp*zcomp;
-		    	val[pk+d]		+= K*xcomp*y    *zcomp;
-    			val[pjk+d]	+= K*x    *y    *zcomp;
-		    	val[pl+d]   += K*xcomp*ycomp*z    ;
-			    val[pjl+d]	+= K*x    *ycomp*z    ;
-			    val[pkl+d]	+= K*xcomp*y    *z    ;
-			    val[pjkl+d]	+= K*x    *y    *z    ;
-					//printf("val[%i] = %f \n",p+d,val[p+d]);
+				//printf(" vel[d] = %f, rhoVal[scalarIndex] = %f \n", vel[d], rhoVal[scalarIndex]);
+				double K = vel[d];
+				//printf("K = %f, rhoVal[%i] = %f \n",K,scalarIndex,rhoVal[scalarIndex]);
+    			val[p+d] 		+= K*xcomp*ycomp*zcomp/rhoVal[scalarp];
+	    		val[pj+d]		+= K*x    *ycomp*zcomp/rhoVal[scalarpj];
+		    	val[pk+d]		+= K*xcomp*y    *zcomp/rhoVal[scalarpk];
+    			val[pjk+d]		+= K*x    *y    *zcomp/rhoVal[scalarpjk];
+		    	val[pl+d]   	+= K*xcomp*ycomp*z    /rhoVal[scalarpl];
+			    val[pjl+d]		+= K*x    *ycomp*z    /rhoVal[scalarpjl];
+			    val[pkl+d]		+= K*xcomp*y    *z    /rhoVal[scalarpkl];
+			    val[pjkl+d]		+= K*x    *y    *z    /rhoVal[scalarpjkl];
+				//printf("val[%i] = %f \n",p+d,val[p+d]);
+				//printf("pos = %i, %i, %i \n",j,k,l);
+				//printf("scalarIndex = %li , scalarSizeProd[4] = %li\n",scalarIndex,scalarSizeProd[4]);
+				//printf("using indexes %li, %li, %li, %li \n",p+d,pj+d,pk+d,pl+d);
+				//printf("using indexes %li, %li, %li, %li \n",pjk+d,pjl+d,pkl+d,pjkl+d);
+
 			}
+			//printf(" \n" );
 			//if(val[p]>100. || val[pj]>100. || val[pk]>100. || val[pjk]>100. || val[pl]>100. || val[pjl]>100. || val[pkl]>100. || val[pjkl]>100.){
             	//printf("val = %f, %f, %f, %f, %f, %f, %f, %f \n",val[p],val[pj],val[pk],val[pjk],val[pl],val[pjl],val[pkl],val[pjkl]);
 			//}
@@ -1077,7 +1169,7 @@ funPtr neAcc3D1_set(dictionary *ini){
 	//puSanity(ini,"puAcc3D1",3,1);
 	return neAcc3D1;
 }
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
 
 	int nSpecies = pop->nSpeciesNeutral;
 	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
@@ -1088,23 +1180,54 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
 	double *val = Pgrad->val;
 	long int *divSizeProd = divBulkV->sizeProd;
 	double *divVal = divBulkV->val;
+	double *rhoVal = rho->val;
+	double *scalarSizeProd = rho->sizeProd;
 
 	for(int s=0;s<nSpecies;s++){
 
-		gMul(Pgrad, 1./pop->mass[s]);
+		//gMul(Pgrad, 1./pop->mass[s]);
 
 		long int pStart = pop->iStart[s]*nDims;
 		long int pStop = pop->iStop[s]*nDims;
 
+
+
 		for(long int p=pStart;p<pStop;p+=nDims){
 			double dv[3];
-			double divergence[1];
+			double divergence[3];
 			neInterp3D1(dv,&pos[p],val,sizeProd);
-			neInterp3D1scalar(divergence,&pos[p],divVal,divSizeProd);
-			for(int d=0;d<nDims;d++) vel[p+d] += (dv[d]+vel[p+d]*divergence[0]);
-		}
+			neInterp3D1(divergence,&pos[p],divVal,divSizeProd); // grad not div
 
-		gMul(Pgrad, pop->mass[s]);
+
+			int j = (int) pos[p];
+			int k = (int) pos[p+1];
+			int l = (int) pos[p+2];
+
+			long int scalarIndex = j+k*scalarSizeProd[2]+l*scalarSizeProd[3];
+
+			//neInterp3D1(divergence,&pos[p],divVal,divSizeProd);
+			for(int d=0;d<nDims;d++){
+				 // (1./(rhoVal[scalarIndex]))*
+				 if(divergence[d]>1.){
+					 divergence[d] = 0;
+					 msg(WARNING, "Huge divergence encountered, correcting for safety, energy is not conserved");
+				 }
+				 if(divergence[d]>1e-61 || divergence[d]<1.){
+				 	vel[p+d] += (dv[d]+dv[d]*divergence[d]);//+vel[p+d]*divergence[d]);
+				} else{
+					vel[p+d] += dv[d];
+					//printf("dv[d] = %f, divergence[d] = %f \n",dv[d],divergence[d]);
+				}
+
+				 if(vel[p+d]>1.){
+				 	printf("vel[%li] = %f, rhoVal[%li], pos = %i, %i, %i \n",(p+d),vel[p+d],scalarIndex,rhoVal[scalarIndex],j,k,l);
+					vel[p+d] = 0.001;
+
+				}
+			}
+		}
+		//adPrint(val,sizeProd[4]);
+		//gMul(Pgrad, pop->mass[s]);
 	}
 }
 
@@ -1138,18 +1261,64 @@ void neMove(NeutralPopulation *pop){
  *	FINITE DIFFERENCE
  *****************************************************************************/
 
- void divFinDiff1st(const Grid *scalar, Grid *field){
+//
+//  void gFinDiff1st(const Grid *scalar, Grid *field){
+//
+// 	// Performs first order centered finite difference on scalar and returns a field
+//
+// 	int rank = scalar->rank;
+// 	// int *size = scalar->size;
+// 	long int *sizeProd = scalar->sizeProd;
+// 	long int *fieldSizeProd = field->sizeProd;
+//
+// 	double *scalarVal = scalar->val;
+// 	double *fieldVal = field->val;
+//
+//  	// Scalar indices
+// 	long int sNext, sPrev;
+// 	long int f;
+// 	int fNext = fieldSizeProd[1];
+//
+// 	long int start = alSum(&sizeProd[1], rank-1 );
+// 	long int end = sizeProd[rank]-start;
+//
+//
+// 	// Centered Finite difference
+// 	for(int d = 1; d < rank; d++){
+// 		sNext = start + sizeProd[d];
+// 		sPrev = start - sizeProd[d];
+// 		f = start*fieldSizeProd[1] + (d-1);
+//
+//
+//
+// 		for(int g = start; g < end; g++){
+// 			fieldVal[f] = 0.5*(scalarVal[sNext] - scalarVal[sPrev]);
+// 			sNext++;
+// 			sPrev++;
+// 			f += fNext;
+// 			//printf("node: %li, using %li, and %li \n",f,sNext,sPrev);
+// 		}
+// 	}
+//
+// 	return;
+// }
+
+ void divFinDiff1st(const Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop){
 
 	// Performs first order centered finite difference on field and returns a scalar
-
-	gZero(scalar);
-	int rank = scalar->rank;
+	// divFinDiff1st(gradBulkV,bulkV,rhoNeutral,neutralPop);
+	gZero(result);
+	int rank = result->rank;
 	// int *size = scalar->size;
-	long int *sizeProd = scalar->sizeProd;
+	long int *sizeProd = result->sizeProd;
 	long int *fieldSizeProd = field->sizeProd;
 
-	double *scalarVal = scalar->val;
+	double *resultVal = result->val;
 	double *fieldVal = field->val;
+	double *rhoVal = rho->val;
+
+	double *mass = pop->mass;
+
 
  	// Scalar indices
 	long int fNext, fPrev;
@@ -1159,32 +1328,47 @@ void neMove(NeutralPopulation *pop){
 	long int start = alSum(&sizeProd[1], rank-1 );
 	long int end = sizeProd[rank]-start;
 
-	printf("start = %li, end = %li \n",start,end);
+	long int scalarStart = alSum(&rho->sizeProd[1], rank-1 );
+	long int scalarEnd = rho->sizeProd[rank]- scalarStart ;
+
+
 
 
 	// Centered Finite difference
 	for(int d = 1; d < rank; d++){
-		fNext = start*fieldSizeProd[1] + fieldSizeProd[d]+(d-1);
-		fPrev = start*fieldSizeProd[1] - fieldSizeProd[d]+(d-1);
-		s = start;
+		fNext = start + fieldSizeProd[d]+(d-1); //*fieldSizeProd[1]
+		fPrev = start - fieldSizeProd[d]+(d-1);	//*fieldSizeProd[1]
+		s = scalarStart;
 
 
 
-		for(int g = start; g < end; g++){
-			scalarVal[s] += 0.5*(fieldVal[fNext] - fieldVal[fPrev]);
+		for(int g = start; g < end; g+=rank-1){
+			if(rhoVal[s] < 1e-62){
+				resultVal[g+d-1] += 0;
+				msg(WARNING,"Low density encountered %f, on node %li energy will not be conserved!",rhoVal[s],s);
+			}
+			if(rhoVal[s] >= 1e-12){
+			    resultVal[g+d-1] += (1./(2*rhoVal[s]))*(fieldVal[fNext] - fieldVal[fPrev]);
+			}
 			fNext+=rank-1;
 			fPrev+=rank-1;
 			s ++; // fNext;
-			if(s>sizeProd[rank]){
+
+			//printf("resultVal[g+d-1] = %f \n",resultVal[g+d-1]);
+
+			//printf("g = %i \n",g);
+			if(s>scalarEnd){
 				msg(ERROR,"index out of bounds in divFinDiff1st");
 			}
 			if(fNext>fieldSizeProd[rank]){
 				msg(ERROR,"index out of bounds in divFinDiff1st, index: %li max: %li, scalar index: %li",fNext,fieldSizeProd[rank],s);
 			}
-			//printf("node: %li, using %li, and %li \n",s,fNext,fPrev);
+			//printf("node: %li, using %li, and %li val = %f \n",s,fNext,fPrev,resultVal[g+d-1]);
+			//printf("rhoVal[s] =%f, fieldVal[fNext] =%f, fieldVal[fPrev] =%f \n",rhoVal[s],fieldVal[fNext],fieldVal[fPrev]);
 			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n \n",fieldSizeProd[4],sizeProd[4]);
 		}
 	}
+	//adPrint(rhoVal,rho->sizeProd[4]);
 	//exit(0);
 	return;
 }
@@ -1565,7 +1749,73 @@ void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid){
 // Pressure solver
 //#############################
 
-void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo){
+void neEnergyInitiate(Grid *IE,Grid *bulkV,Grid *rho,NeutralPopulation *pop,const dictionary *ini){
+
+
+	gZero(IE);
+	double *IEVal = IE->val;
+	double *bulkVVal = bulkV->val;
+	double *rhoVal = rho->val;
+
+	double *mass = pop->mass;
+
+	int rank = IE->rank;
+	long int *sizeProd =  IE->sizeProd;
+	long int *fieldSizeProd =  bulkV->sizeProd;
+	double rho0 = pop->rho0;
+
+	int nDims = rank-1;
+	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
+	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+
+	//int index = 0;
+	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
+	long int f;
+	long int s;
+	//int fNext = fieldSizeProd[1];
+
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+	long int fieldstart = alSum(&fieldSizeProd[1], rank-1 );
+	long int fieldend = fieldSizeProd[rank]-start;
+
+	//printf("start = %li, end = %li \n",start,end);
+
+
+	// Centered Finite difference
+	for(int d = 1; d < rank; d++){
+		f = fieldstart + (d-1);
+
+		s = start;
+
+		//printf("\n \n");
+		for(int g = start; g < end; g++){
+			//IEVal[g] += 0.5*((rhoVal[g])/(mass[0]))*sqrt(bulkVVal[f]*bulkVVal[f]);
+			IEVal[g] += 0.5*( mass[0]*(rhoVal[g]))*(bulkVVal[f]-velDrift[d])*(bulkVVal[f]-velDrift[d]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
+			//printf("bulkVVal[f] = %f \n",bulkVVal[f]);
+			//exit(0);
+			//printf("Using index s = %li, f = %li \n",s,f);
+			f+=rank-1;
+
+			s ++; // fNext;
+			//printf("IEVal[g] = %f, rhoVal[g] = %f \n",IEVal[g],rhoVal[g] );
+			//printf("%f, %f \n",PVal[sPrev], bulkVVal[fPrev]  );
+			if(g>sizeProd[rank]){
+				msg(ERROR,"index out of bounds in neInternalEnergySolve");
+			}
+			if(f>fieldSizeProd[rank]){
+				msg(ERROR,"index out of bounds in neInternalEnergySolve, index: %li max: %li, scalar index: %li",f,fieldSizeProd[rank],s);
+			}
+			//printf("node: %li, using %li, and %li \n",g,fNext,fPrev);
+			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n \n",fieldSizeProd[4],sizeProd[4]);
+		}
+	//printf("\n \n");
+	}
+	//exit(0);
+}
+
+void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo){
 
 	gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
 	gZero(P);
@@ -1604,11 +1854,183 @@ void nePressureSolve3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const Mp
 	//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
 	//printf("PVal = %f \n",PVal[i] );
 	//}
-	gHaloOp(setSlice, P, mpiInfo, TOHALO);
-	nuGBnd(P, mpiInfo);
+	//gHaloOp(setSlice, P, mpiInfo, TOHALO);
+	//nuGBnd(P, mpiInfo);
+}
+
+void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo){
+
+	//gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
+	gZero(P);
+	//gZero(rhoNeutral);
+
+	double *mass = pop->mass;
+    int *nGhostLayers = P->nGhostLayers;
+	int *trueSize=P->trueSize;
+	long int *sizeProd =  P->sizeProd;
+	double stiffC = pop->stiffnessConstant;
+	double rho0 = pop->rho0;
+	//Seperate values
+	double *PVal = P->val;
+	double *IEVal = IE->val;
+	double *rhoVal = rho->val;
+	//double val = 0;
+
+	double gamma = 5./3.; // Adiabatic index
+    //aiPrint(nGhostLayers,8);
+	int index = 0;
+	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
+	for(int k=0;k<trueSize[3]+nGhostLayers[7];k++){
+		for(int j=0;j<trueSize[2]+nGhostLayers[6];j++){
+			for(int i=0;i<trueSize[1]+nGhostLayers[5];i++){
+				index = i+j*sizeProd[2]+k*sizeProd[3];
+				//val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
+				//printf("rhoVal[index] = %f \n",rhoVal[index]);
+				if(rhoVal[index]==0){
+					msg(WARNING,"low density encountered, correcting pressure. Energy is not conserved.");
+					PVal[index] = 100*mass[0]*(gamma-1)*IEVal[index];
+				}
+				if(rhoVal[index]!=0){
+					PVal[index] = mass[0]*(gamma-1)*IEVal[index]; //should be multiplied by massss for several species
+				}
+				//if (val >1000){
+				//printf("PVal[%i] = %f, IEVal[%i] = %f \n",PVal[index],IEVal[index]);
+				//}
+				//printf(" %f \n",rhoVal[index]);
+				//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+			}
+
+		}
+	}
+	//for(int i=0;i<sizeProd[4];i++){
+	//	PVal[i] = stiffC*(pow( (rhoVal[i]/rho0),7) - 1);
+	//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+	//printf("PVal = %f \n",PVal[i] );
+	//}
+	//exit(0);
+	//gHaloOp(setSlice, P, mpiInfo, TOHALO);
+	//nuGBnd(P, mpiInfo);
 }
 
 
+void neInternalEnergySolve(Grid *IE,Grid *P,Grid *bulkV,Grid *rho,Grid *gradBulkV,NeutralPopulation *pop){
+
+	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
+	double *PVal = P->val;
+	double *IEVal = IE->val;
+	double *bulkVVal = bulkV->val;
+	double *rhoVal = rho->val;
+	double *gradBulkVVal = gradBulkV->val;
+	double *mass = pop->mass;
+
+	int rank = IE->rank;
+	long int *sizeProd =  IE->sizeProd;
+	long int *fieldSizeProd =  bulkV->sizeProd;
+	int *trueSize= IE->trueSize;
+	int *nGhostLayers = IE->nGhostLayers;
+
+	//int index = 0;
+	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
+	long int fNext, fPrev, sNext, sPrev;
+	long int s, f;
+	//int fNext = fieldSizeProd[1];
+
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+	long int fieldstart = alSum(&fieldSizeProd[1], rank-1 );
+	long int fieldend = fieldSizeProd[rank]-start;
+
+	//printf("start = %li, end = %li \n",start,end);
+
+
+	// Centered Finite difference
+	for(int d = 1; d < rank; d++){
+		fNext = fieldstart + fieldSizeProd[d]+(d-1);
+		fPrev = fieldstart - fieldSizeProd[d]+(d-1);
+
+		sNext = start + sizeProd[d];
+		sPrev = start - sizeProd[d];
+
+		s = start;
+		f = fieldstart;
+
+
+		// PVal[fPrev] is a scalar not field
+		//printf("\n \n");
+		for(int g = start; g < end; g++){
+			if(rhoVal[g]==0){
+
+				IEVal[g] += 0;//(1./(2.*12.))*(PVal[sPrev]*(bulkVVal[fPrev]-bulkVVal[g+(d-1)]) - PVal[sNext]*(bulkVVal[fNext]-bulkVVal[g+(d-1)]));
+			}
+			if(rhoVal[g]!=0){
+				IEVal[g] += (1./(2*mass[0]*rhoVal[g]))*(PVal[sPrev]*(bulkVVal[fPrev]-bulkVVal[f]) - PVal[sNext]*(bulkVVal[fNext]-bulkVVal[f]))
+							+0;//( rhoVal[g]*gradBulkVVal[f+d-1]*gradBulkVVal[f+d-1]);
+			}
+			//exit(0);
+			fNext+=rank-1;
+			fPrev+=rank-1;
+			s ++; // fNext;
+			f += (d-1);
+			//printf("IEVal[g] = %f, rhoVal[g] = %f \n",IEVal[g],rhoVal[g] );
+			//printf("%f, %f \n",PVal[sPrev], bulkVVal[fPrev]  );
+			if(g>sizeProd[rank]){
+				msg(ERROR,"index out of bounds in neInternalEnergySolve");
+			}
+			if(fNext>fieldSizeProd[rank]){
+				msg(ERROR,"index out of bounds in neInternalEnergySolve, index: %li max: %li, scalar index: %li",fNext,fieldSizeProd[rank],s);
+			}
+			//printf("node: %li, using %li, and %li \n",g,fNext,fPrev);
+			//printf("fieldSizeProd = %li, scalarsizeProd = %li \n \n",fieldSizeProd[4],sizeProd[4]);
+		}
+	}
+	//exit(0);
+}
+
+void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop ){
+
+	int rank = bulkV->rank;
+	long int *fieldSizeProd = bulkV->sizeProd;
+	long int *sizeProd = rho->sizeProd;
+	double *bulkVVal = bulkV->val;
+	double *PgradVal = Pgrad->val;
+	double *rhoVal = rho->val;
+
+	double *mass = pop->mass;
+
+ 	// indices
+	long int s;
+	long int f;
+	int fNext = fieldSizeProd[1];
+
+	long int start = alSum(&sizeProd[1], rank-1 );
+	long int end = sizeProd[rank]-start;
+
+	// Excluding edge values where Pgrad is not defined
+	for(int d = 1; d < rank; d++){
+		s = start;
+		//sPrev = start - sizeProd[d];
+		f = start*fieldSizeProd[1] + (d-1);
+
+
+
+		for(int g = start; g < end; g++){
+			bulkVVal[f] += (1./(2.*rhoVal[s]))*PgradVal[f];
+			s++;
+			//sPrev++;
+			f += fNext;
+			//printf("scalarIndex = %li sizeProd[4] = %li\n",s,sizeProd[4]);
+			//printf("node: %li, using %li, and %li \n",f,sNext,sPrev);
+		}
+		//printf(" \n \n");
+	}
+
+}
+
+
+/***********************************
+*	Boundary functions
+***********************************/
 
 void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
@@ -2153,6 +2575,42 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 
 
 }
+
+
+void nuObjectSetDens(Grid *rho, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
+
+
+	//int rank = mpiInfo->mpiRank;
+	int size = mpiInfo->mpiSize;
+
+	double *val = rhoObj->val;
+	double *rhoVal = rho->val;
+
+	long int *sizeProd = rhoObj->sizeProd;
+
+	long int *lookupIntOff = obj->lookupInteriorOffset;
+	long int *lookupSurfOff = obj->lookupSurfaceOffset;
+
+	//adPrint(rhoVal,rho->sizeProd[4]);
+	//msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
+	// Check whether p is one of the object nodes and collect the charge if so.
+	for (long int a=0; a<obj->nObjects; a++) {
+		for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+			rhoVal[obj->lookupInterior[b]] = 12.;
+			//printf("obj->lookupInterior[b]= %li \n",obj->lookupInterior[b]);
+		}
+	}
+	for (long int a=0; a<obj->nObjects; a++) {
+		for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+			rhoVal[obj->lookupSurface[b]] = 12.;
+			//printf("obj->lookupSurfOff[b]= %li \n",obj->lookupSurface[b]);
+		}
+	}
+	//adPrint(rhoVal,rho->sizeProd[4]);
+	//exit(0);
+
+}
+
 
 
 void neVelAssertMax(const NeutralPopulation *pop, double max){

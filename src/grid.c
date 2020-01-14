@@ -1115,6 +1115,27 @@ void gAddTo(Grid *result, Grid *addition){
 
 }
 
+void gMulTo(Grid *result, Grid *addition){
+
+	int rank = result->rank;
+	long int *sizeProd = result->sizeProd;
+	double *resultVal = result->val;
+	double *addVal = addition->val;
+	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] *= addVal[g];
+
+}
+
+void gDivTo(Grid *result, Grid *addition){
+
+	int rank = result->rank;
+	long int *sizeProd = result->sizeProd;
+	double *resultVal = result->val;
+	double *addVal = addition->val;
+	for(long int g = 0; g < sizeProd[rank]; g++)	resultVal[g] /= addVal[g];
+
+}
+
+
 void gSubFrom(Grid *result, const Grid *subtraction){
 
 	int rank = result->rank;
@@ -1293,7 +1314,7 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 
-	//msg(STATUS, "Hello from NEUMANN");
+	msg(STATUS, "Hello from NEUMANN");
 
 	//Load data
 	int rank = grid->rank;
@@ -1324,14 +1345,14 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	// constant *=-2;
 
 	if (boundary>rank){ //Upper
-		getSlice(slice, grid, d, offset - 1);
+		//getSlice(slice, grid, d, offset - 1);
 		//setSlice(slice, grid, d, offset + 1);
-		//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
+		getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 	}
 	if (boundary<rank) { //Lower
-		getSlice(slice, grid, d, offset + 1);
+		//getSlice(slice, grid, d, offset + 1);
 		//setSlice(slice, grid, d, offset - 1);
-		//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
+		getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 	}
 	//adPrint(bndSolution,2*4*nSliceMax);
 

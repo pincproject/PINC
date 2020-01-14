@@ -401,6 +401,26 @@ void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 void gAddTo(Grid *result, Grid *addition);
 
 /**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+* multiplies one grid to another item wise. result = result * addition
+*
+*/
+void gMulTo(Grid *result, Grid *addition);
+
+/**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+* Divides one grid to another item wise. result = result / addition
+*
+*/
+void gDivTo(Grid *result, Grid *addition);
+
+/**
 * @brief Subtracts a grid from another.
 * @param	result		Grid subtracted from
 * @param	subtraction	Grid that is subtracted from the other

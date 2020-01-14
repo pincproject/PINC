@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
-file_name = "bulkV"
+file_name = "bulkV"#"gradBulkV"
 
 xSize = 32
 ySize = 32
 
 plane = 'XY'
 
-timestep = 19000
+timestep = 0
 
 h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
@@ -39,7 +39,7 @@ DATA.append(data)
 DATA = np.array(DATA)
 
 vMin=np.amin(DATA)
-vMax=np.amax(DATA)
+vMax=0.1#np.amax(DATA)
 
 X, Y = np.meshgrid(np.arange(0, xSize, 1), np.arange(0, ySize, 1))
 
@@ -58,14 +58,14 @@ V = DATA[:,:,1]
 print(U.shape)
 
 fig, ax = plt.subplots()
-q = ax.quiver(X, Y, U, V, units='xy' ,scale=2, color='red')
+q = ax.quiver(X, Y, U, V, units='xy' ,scale=1, color='red')
 
 ax.set_aspect('equal')
 
 plt.xlim(0,xSize)
 plt.ylim(0,ySize)
 
-plt.title('How to plot a vector field using matplotlib ?',fontsize=10)
+plt.title(file_name,fontsize=10)
 
 #plt.savefig('how_to_plot_a_vector_field_in_matplotlib_fig1.png', bbox_inches='tight')
 plt.show()
