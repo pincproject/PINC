@@ -146,6 +146,7 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     //alPrint(lookupInterior,(lookupInteriorOffset[nObjects]) );
     // Add to the object.
     //obj->nObjects = nObjects;
+    msg(STATUS, "Number of interior points %li", lookupInteriorOffset[1]);
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
 
@@ -476,7 +477,6 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
             }
         }
         //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-        alPrint(&lookupSurfaceOffset[a+1],1);
     }
     //printf("offsets done \n");
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
@@ -529,7 +529,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     }
     //printf("lookup surface done \n");
     // Add to object.
-    //alPrint(lookupSurface,(lookupSurfaceOffset[obj->nObjects]+1));
+    alPrint(lookupSurfaceOffset, obj->nObjects + 1);
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
 
@@ -894,9 +894,10 @@ void oVicinityParticles(Population *pop, Object *obj){
 	}
 }
 
+
+//ugly as sin with all the loops, but works
 void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
     
-    msg(STATUS, "Hello from the new sol facing node function!");
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
     double *val = obj->domain->val;
@@ -907,23 +908,32 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
     //alPrint(surf, surfOff[nObjects]);
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
     alSetAll(exposedNodesOffset, obj->nObjects+1,0);
-    //alCopy(surfOff, exposedNodesOffset, nObjects + 1);
-    alPrint(sizeProd, obj->domain->rank+1);
-    aiPrint(trueSize,4);
 
     for(long int a = 0; a<nObjects; a++){
-        for(int i=0; i<trueSize[1]; i++){
-            for(int j=0; j<trueSize[2]; j++){  
-                for(int k=0; k<trueSize[3]; k++){
+        for(int k=0; k<trueSize[3]; k++){
+            for(int j=0; j<trueSize[2]; j++){ 
+                
+                //need flag to break out of i loop, otherwise all surface nodes selected
+                int flag = 0;
+                for(int i=0; i<trueSize[1]; i++){
                     
                     long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
-                    //msg(STATUS, "Node %li with value %f", p, val[p]);
+                    int surfNode = 0;
+
                     if(!isGhostNode(obj->domain, p)){
-                        if((int)val[p] == (a+1)){
-                            exposedNodesOffset[a+1]++;
-                            break;
+
+                        int numSurfNodes = surfOff[a+1] - surfOff[a];
+                        for(int b = 0; b<numSurfNodes; b++){
+                            surfNode = surf[b];
+                            if(p == surfNode){
+                                exposedNodesOffset[a+1]++;
+                                flag = 1;
+                                break;
+                            }
                         }
                     }
+
+                    if(flag) break;
                 }
             }
         }
@@ -933,35 +943,43 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
     long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
     alSetAll(exposedNodes,exposedNodesOffset[nObjects],0);
 
+    long int *index = malloc(sizeof(*exposedNodesOffset));
+    memcpy(index,exposedNodesOffset, sizeof(*exposedNodesOffset));
+
     for(long int a = 0; a<nObjects; a++){
         
         long int counter = 0;
-        
-        for(int i=0; i<trueSize[1]; i++){
-            for(int j=0; j<trueSize[2]; j++){  
-                for(int k=0; k<trueSize[3]; k++){
-                    
-                    long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
 
+        for(int k=0; k<trueSize[3]; k++){
+            for(int j=0; j<trueSize[2]; j++){ 
+
+                int flag = 0;
+                for(int i=0; i<trueSize[1]; i++){
+
+                    long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
                     if(!isGhostNode(obj->domain, p)){
-                        //if((int)val[p] == 1) msg(STATUS,"%d,%d,%d", i,j,k);
-                        if((int)val[p] == (a+1)){
-                            exposedNodes[exposedNodesOffset[a] + counter] = p;
-                            counter++;
-                            msg(STATUS,"Node %li is an exposed node", p);
-                            //msg(STATUS, "node %li is an exposed node", p);
-                            break;
+                        int surfNode = 0;
+                        int numSurfNodes = surfOff[a+1] - surfOff[a];
+                        for(int b = 0; b<numSurfNodes; b++){
+                            surfNode = surf[b];
+                            if(p == surfNode){
+                                exposedNodes[index[a]] = p;
+                                index[a]++;
+                                flag = 1;
+                                break;
+                            }
                         }
                     }
+                    if(flag) break;
                 }
             }
         }
     }
-    
+
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
 
-
+    free(index);
 
 }
 

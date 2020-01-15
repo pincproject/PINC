@@ -37,12 +37,12 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 
 def main():
     # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-    gridpar = [-4, 4, -4, 4, -4, 4, 32, 32, 32] #0.3125
+    gridpar = [-8, 8, -8, 8, -8, 8, 128, 128, 128] #0.3125
     #gridpar = [0, 0.3125*64, 0, 0.3125*64, 0, 0.3125*64, 64, 64, 64] #0.3125
     #gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
     # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
-    infile = ["box"]
+    infile = ["sphere"]
     #infile = ["box", "box"]
     # Outputfiles and comment.
     outfile = ["object.grid.h5", "test satellite"]
@@ -130,7 +130,17 @@ if __name__ == '__main__':
     grid_bool = np.array(grid, dtype=bool)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.voxels(grid_bool, edgecolor='k')
+    # ax.set_xlim3d(-128,128)
+    # ax.set_ylim3d(-128,128)
+    # ax.set_zlim3d(-128,128)
+    points = np.argwhere(grid > 0)
+    #print(points.shape)
+    #ax.voxels(grid_bool, edgecolor='k')
+    # points = np.loadtxt('points2.txt', delimiter=',')
+    ax.scatter(points[:,0],points[:,1],points[:,2])
+    ax.set_xlabel('x axis')
+    ax.set_ylabel('y axis')
+    ax.set_zlabel('z axis')
     plt.show()
 ######################################################################################################################################
 #matshow(grid[:,:,101])

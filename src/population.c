@@ -1016,12 +1016,13 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 
 
 
-	//compute average velocity of emitted PINC photoelectrons (units->weights)
+	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
 		avgEnergy[a] = bandEnergy[a] / (flux[a]/units->weights[specie]);
 		avgEnergy[a] -= workFunc[a];
 		avgEnergy[a] /= units->energy;
 		avgVel[a] = -1. * sqrt(2*avgEnergy[a] / pop->mass[specie]); //TODO: make direction independent
+		//avgVel[a] /= 10; //EXPERIMENT!
 		msg(STATUS, "Average photoelectron velocity: %f", avgVel[a]);
 	}
 
@@ -1047,15 +1048,17 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 		
 		long int hit = 0;
 		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
-		msg(STATUS, "Number of exposed nodes, pPhotoElectrons: %li", nodesThisCore);
 		for(int i = 0; i < nodesThisCore; i++){
 
 			long int node = exposedNodes[exposedOff[a] + i]; 
 			gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
+			//msg(STATUS, "Position of node %li pPhotoElectron", node);
+			//adPrint(pos, 3);
 
 			for(long int j=0; j<(long)flux[a]; j++){
-				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]/4); //three standard deviations
+				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])/3); //three standard deviations
 				pos[0] += vel[0];
+				//if(j < 3) adPrint(pos,3);
 				pNew(pop, specie, pos, vel);
 				hit += 1;
 			}
