@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
-file_name = "bulkV"#"gradBulkV"
+file_name = "V"#"gradBulkV"
 
 xSize = 32
 ySize = 32
 
 plane = 'XY'
 
-timestep = 0
+timestep = 1
 
 h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
@@ -27,7 +27,7 @@ data = np.squeeze(dataset)
 print(data.shape)
 data = np.transpose(data)
 if (plane == 'XY'):
-	data = np.transpose((data[:,:,int(len(data[0,0,:])/2),:])) #*denorm #int(len(data[0,0,:])/2)
+	data = np.transpose((data[:,:,int(len(data[0,0,:])/2)-3,:])) #*denorm #int(len(data[0,0,:])/2)
 if (plane == 'YZ'):
 	data = np.transpose((data[int(len(data[0,0,:])/2),:,:,:])) #*denorm #int(len(data[0,0,:])/2)
 if (plane == 'XZ'):
@@ -39,7 +39,7 @@ DATA.append(data)
 DATA = np.array(DATA)
 
 vMin=np.amin(DATA)
-vMax=0.1#np.amax(DATA)
+vMax=np.amax(DATA)
 
 X, Y = np.meshgrid(np.arange(0, xSize, 1), np.arange(0, ySize, 1))
 

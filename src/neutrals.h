@@ -93,11 +93,14 @@ void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *
 void neVelAssertMax(const NeutralPopulation *pop, double max);
 
 void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *ini, NeutralPopulation *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+
+void neMultiplySlice(Grid *target,int slicePos,int dim,double multiplyBy, NeutralPopulation *pop);
+
 //#########################################
 // Mover/Accelerator
 // ########################################
 
-void neMove(NeutralPopulation *pop);
+void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde);
 void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV,Grid *rho);
 funPtr neAcc3D1_set(dictionary *ini);
 
@@ -105,7 +108,7 @@ funPtr neAcc3D1_set(dictionary *ini);
 // Finite diff functions
 // ########################################
 
-void divFinDiff1st(const Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop);
+void divFinDiff1st(Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop);
 
 
 //#############################
@@ -115,18 +118,21 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo);
 funPtr neExtractEmigrants3DOpen_set(const dictionary *ini);
 void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid);
 void nePosAssertInLocalFrame(const NeutralPopulation *pop, const Grid *grid);
+void nePNew(NeutralPopulation *pop, int s, const double *pos, const double *vel);
 
 //#############################
 // Pressure solver
 //#############################
 
+void neSetI(Grid *IE,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *ini);
+
 void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo);
 
 void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo);
 
-void neInternalEnergySolve(Grid *IE,Grid *P,Grid *bulkV,Grid *rho,Grid *gradBulkV,NeutralPopulation *pop);
+void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop);
 
-void neEnergyInitiate(Grid *IE,Grid *bulkV,Grid *rho,NeutralPopulation *pop,const dictionary *ini);
+void neAdvectI(Grid *IE,Grid *Itilde,Grid *P,Grid *V,Grid *rho,NeutralPopulation *pop);
 
 void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop);
 
@@ -134,13 +140,19 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
 void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
+void neConvectKE(Grid *dKE,Grid *Vtilde,Grid *rhoNeutral,NeutralPopulation *pop );
+
+void neConvectV(Grid *V,Grid *Vtilde,Grid *rhoNeutral,NeutralPopulation *pop );
+
+void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulation *pop );
 
 //#############################
 // Object functions
 //#############################
 
-
+void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop);
+void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop);
 void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
-void nuObjectSetDens(Grid *rho, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const MpiInfo *mpiInfo);
 void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 #endif // POPULATION_H
