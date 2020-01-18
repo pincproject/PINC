@@ -788,11 +788,12 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
 	//scale flux to be per cell 
 	for(size_t a = 0; a<nObj; a++){
 		
-		area[a] /= units->hyperArea;
-		double emissionVolume = area[a] * units->length;
-		flux[a] /= emissionVolume;
-		flux[a] /= units->density;
+		//area[a] /= units->hyperArea;
+		//double emissionVolume = area[a] * units->length;
+		//flux[a] /= emissionVolume;
+		//flux[a] /= units->density;
 		flux[a] /= units->weights[nSpecie];
+        flux[a] /= exposedOff[a+1];
         flux[a] = floor(flux[a]);
 	}
 

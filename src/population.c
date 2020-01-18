@@ -1018,21 +1018,23 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
-		avgEnergy[a] = bandEnergy[a] / (flux[a]/units->weights[specie]);
+		avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
 		avgEnergy[a] -= workFunc[a];
-		avgEnergy[a] /= units->energy;
-		avgVel[a] = -1. * sqrt(2*avgEnergy[a] / pop->mass[specie]); //TODO: make direction independent
-		//avgVel[a] /= 10; //EXPERIMENT!
+		//avgEnergy[a] /= units->energy;
+		avgVel[a] = -1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//pop->mass[specie]); //TODO: make direction independent
+		avgVel[a] /= units->velocity;
+		//avgVel[a] *= 0.1; //EXPERIMENT!
 		msg(STATUS, "Average photoelectron velocity: %f", avgVel[a]);
 	}
 
 	//scale flux to be per in terms of weights 
 	for(size_t a = 0; a<nObj; a++){
-		area[a] /= units->hyperArea;
-		double emissionVolume = area[a] * units->length;
-		flux[a] /= emissionVolume;
-		flux[a] /= units->density;
+		//area[a] /= units->hyperArea;
+		//double emissionVolume = area[a] * units->length;
+		//flux[a] /= emissionVolume;
+		//flux[a] /= units->density;
 		flux[a] /= units->weights[specie];
+		flux[a] /= exposedOff[a+1];
 		flux[a] = floor(flux[a]);
 	}
 
@@ -1056,7 +1058,8 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 			//adPrint(pos, 3);
 
 			for(long int j=0; j<(long)flux[a]; j++){
-				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])/3); //three standard deviations
+				vel[0] = avgVel[a]; //+ gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])); //
+				//if(j ==0  && i==0) msg(STATUS, "first photoelectron velocity: %f", vel[0]);
 				pos[0] += vel[0];
 				//if(j < 3) adPrint(pos,3);
 				pNew(pop, specie, pos, vel);
