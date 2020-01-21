@@ -1934,7 +1934,7 @@ void oCollMode(dictionary *ini){
   gSetBndSlices(ini, phi, mpiInfo);
   // need for SPH neutrals a function
   neSetBndSlices(ini, P, mpiInfoNeut);
-  neSetBndSlicesRho(ini, rhoNeutral, mpiInfoNeut);
+  //neSetBndSlicesRho(ini, rhoNeutral, mpiInfoNeut);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -2398,8 +2398,8 @@ void neutTest(dictionary *ini){
 
     // need for SPH neutrals a function
 
-    //neSetBndSlices(ini, P, mpiInfoNeut);
-	//neSetBndSlices(ini, V, mpiInfoNeut);
+	neSetBndSlices(ini, IE, mpiInfoNeut);
+	neSetBndSlicesVel(ini, V, mpiInfoNeut);
 
 
 	// Random number seeds
@@ -2478,8 +2478,8 @@ void neutTest(dictionary *ini){
 	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
 
 	// SPH neutrals
-	//nePurgeGhost(neutralPop, rhoNeutral);
-	//neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+	nePurgeGhost(neutralPop, rhoNeutral);
+	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
 	/*
 	 * INITIALIZATION (E.g. half-step)
@@ -2489,8 +2489,8 @@ void neutTest(dictionary *ini){
 	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
-	//gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-	gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
+	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+	//gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
 	NeutralDistr3D1Vector(neutralPop,V,rhoNeutral);
 	//gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
 	gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
@@ -2588,7 +2588,7 @@ void neutTest(dictionary *ini){
 	 */
 
 
-	neApplyObjVel(obj,V,neutralPop);
+	//neApplyObjVel(obj,V,neutralPop);
 
 	Timer *t = tAlloc(mpiInfoNeut->mpiRank);
 
@@ -2614,6 +2614,8 @@ void neutTest(dictionary *ini){
 		tStart(t);
 
 		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
+		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
+		neApplyObjI(obj, P,neutralPop );
 		//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
 		//nuGBnd(P,mpiInfoNeut);
@@ -2636,7 +2638,7 @@ void neutTest(dictionary *ini){
 
 		//nuGBndVel(Itilde,mpiInfoNeut);
 
-		neApplyObjVel(obj,V,neutralPop);
+		//neApplyObjVel(obj,V,neutralPop);
 		neMove(neutralPop,V,Vtilde);
 		nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
@@ -2650,23 +2652,26 @@ void neutTest(dictionary *ini){
 
 		//gCopy(Vtilde,V);
 		neConvectV(V,Vtilde,rhoNeutral,neutralPop );
-		//nuGBndVel(V,mpiInfoNeut);
+		nuGBndVel(V,mpiInfoNeut);
 		gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
 
 
-		//nePurgeGhost(neutralPop, rhoNeutral);
-		//neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+		nePurgeGhost(neutralPop, rhoNeutral);
+		neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 		NeutralDistr3D1(neutralPop, rhoNeutral);
 		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
 		//gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
-		nuObjectSetVal(rhoNeutral,rhoObj,24.,obj,mpiInfoNeut);
+		//nuObjectSetVal(rhoNeutral,rhoObj,0.1,obj,mpiInfoNeut);
 
 
 
 
 		//gCopy(Itilde,IE);
 		neConvectI(IE,Itilde,dKE,rhoNeutral,neutralPop );
-		//nuGBndVel(IE,mpiInfoNeut);
+
+		neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
+		nuGBnd(IE,mpiInfoNeut);
+
 		//gHaloOp(addSlice, IE, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 		double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
@@ -2766,7 +2771,7 @@ void neutTest(dictionary *ini){
 	// 	// Example of writing another dataset to history.xy.h5
 	// 	// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1 == 0 || n>29900){//50614
+		if(n%100 == 0 || n>1500){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

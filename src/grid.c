@@ -587,7 +587,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  	double *val = malloc(sizeProd[rank]*sizeof(*val));
  	double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
  	double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
- 	double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+ 	double *bndSlice = malloc(2*rank*nSliceMax*sizeProd[1]*sizeof(*bndSlice));
  	//double *bndSolution = malloc(2*rank*nSliceMax*sizeof(*bndSolution));
  	printf("alloc sizeProd[rank] = %li\n",sizeProd[rank]);
  	// Maybe seek a different solution where it is only stored where needed

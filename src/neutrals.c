@@ -26,7 +26,41 @@
 * DEFINING LOCAL FUNCTIONS
 *****************************************************************************/
 
-void gDirichletRho(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+
+	//msg(STATUS, "Hello from Dirichlet");
+
+	//Load data
+	int rank = grid->rank;
+	int *size = grid->size;
+	double *bndSlice = grid->bndSlice;
+
+	//Compute dimensions and size of slice
+	int d = boundary%rank;
+	int offset = 1 + (boundary>rank)*(size[d]-3);
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+	nSliceMax=nSliceMax*(rank-1);
+	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+
+	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
+
+	return;
+
+}
+
+void gDirichletEnerg(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 	//msg(STATUS, "Hello from Dirichlet");
 
@@ -49,7 +83,7 @@ void gDirichletRho(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
@@ -97,7 +131,8 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 			//printf("sdsfdf \n");
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				gDirichletRho(grid, d, mpiInfo);
+				//gDirichlet(grid, d, mpiInfo);
+				gDirichletEnerg(grid, d, mpiInfo);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
@@ -110,7 +145,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gDirichletRho(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichletEnerg(grid, d, mpiInfo);//gDirichlet(grid, d, mpiInfo);
 			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
@@ -123,6 +158,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//exit(1);
 	return;
 }
+
 
 
 void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
@@ -163,8 +199,8 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 			//printf("sdsfdf \n");
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				//gDirichletRho(grid, d, mpiInfo);
-				gNeumann(grid, d, mpiInfo);
+				gDirichletVel(grid, d, mpiInfo);
+				//gNeumann(grid, d, mpiInfo);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
@@ -178,8 +214,8 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET) {
-				//gDirichletRho(grid, d, mpiInfo);
-				gNeumann(grid, d, mpiInfo);
+				gDirichletVel(grid, d, mpiInfo);
+				//gNeumann(grid, d, mpiInfo);
 			}
 			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
@@ -1301,18 +1337,18 @@ void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde){
 
 			double dv[3];
 			neInterp3D1(dv,&pos[p],val,sizeProd);
-			double velBef = sqrt(pow(vel[p],2)+pow(vel[p+1],2)+pow(vel[p+2],2) );
+			//double velBef = sqrt(pow(vel[p],2)+pow(vel[p+1],2)+pow(vel[p+2],2) );
 			for(int d=0;d<nDims;d++){
 				vel[p+d] = dv[d];//val[index+d];
 				pos[p+d] += dv[d];//val[index+d];
-				if(p+d == 0){
+				//if(p+d == 0){
 					//printf("vel[p+%i] = %f \n",vel[p+d],d);
-					double velaftr = sqrt(pow(vel[p],2)+pow(vel[p+1],2)+pow(vel[p+2],2) );
-					printf("vel before = %f, vel after = %f \n",velBef, velaftr);
-					printf("change = %f \n",(velaftr-velBef) );
-					printf("pos = %f, %f, %f \n",pos[p],pos[p+1],pos[p+2]);
+					//double velaftr = sqrt(pow(vel[p],2)+pow(vel[p+1],2)+pow(vel[p+2],2) );
+					//printf("vel before = %f, vel after = %f \n",velBef, velaftr);
+					//printf("change = %f \n",(velaftr-velBef) );
+					//printf("pos = %f, %f, %f \n",pos[p],pos[p+1],pos[p+2]);
 
-				}
+				//}
 			}
 		}
 	}
@@ -1877,7 +1913,7 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 		//printf("\n \n");
 		for(int g = start; g < end; g++){
 			//IEVal[g] += 0.5*((rhoVal[g])/(mass[0]))*sqrt(bulkVVal[f]*bulkVVal[f]);
-			IEVal[g] = 0.5*( 30*(rho0))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
+			IEVal[g] = 0.5*( 30*(rhoVal[g]/rho0))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
 
 			//exit(0);
 			//printf("Using index s = %li, f = %li \n",s,f);
@@ -1978,7 +2014,7 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
 					PVal[index] = 0;//(gamma-1)*rhoVal[index]*mass[0]*IEVal[index];
 				}
 				if(rhoVal[index]!=0){
-					PVal[index] = (gamma-1)*mass[0]*IEVal[index]; //should be multiplied by massss for several species
+					PVal[index] = (gamma-1)*(rhoVal[index]/rho0)*mass[0]*IEVal[index]; //should be multiplied by massss for several species
 				}
 				//if (val >1000){
 				//printf("PVal[%i] = %f, IEVal[%i] = %f \n",PVal[index],IEVal[index]);
@@ -2051,7 +2087,7 @@ void neAdvectI(Grid *IE,Grid *Itilde,Grid *P,Grid *V,Grid *rho,NeutralPopulation
 			if(rhoVal[g]==0.){
 				//printf("rhoVal[g] = %f \n",rhoVal[g]);
 				//msg(WARNING,"zero dens in IE calculation with index = %i, energy is not conserved.",g);
-				ItildeVal[g] += 0;//IEVal[g]/nDims + (1./(2.*mass[0]*12.))*(PVal[sPrev]*(bulkVVal[fPrev]-bulkVVal[f]) - PVal[sNext]*(bulkVVal[fNext]-bulkVVal[f]));
+				ItildeVal[g] = 0;//IEVal[g]/nDims + (1./(2.*mass[0]*12.))*(PVal[sPrev]*(bulkVVal[fPrev]-bulkVVal[f]) - PVal[sNext]*(bulkVVal[fNext]-bulkVVal[f]));
 			}
 			if(rhoVal[g]!=0.){
 				ItildeVal[g] += IEVal[g]/nDims + (1./(2*mass[0]*rhoVal[g]))*( PVal[sPrev]*(bulkVVal[fPrev]-bulkVVal[f]) - PVal[sNext]*(bulkVVal[fNext]-bulkVVal[f]) );
@@ -2140,6 +2176,10 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 				bulkVtildeVal[f+d-1] = bulkVVal[f+d-1] + (1./(2*mass[0]*rhoVal[g]))*(PVal[sPrev]-PVal[sNext]);
 							//( rhoVal[g]*gradBulkVVal[f+d-1]*gradBulkVVal[f+d-1]);
 							//printf("val = %f\n",(1./(2*rhoVal[g]))*(PVal[sPrev]-PVal[sNext]));
+				// if(bulkVtildeVal[f+d-1] > 1.){
+				// 	printf("Large velocity in dim %i, val = %f       , ",d,(bulkVtildeVal[f+d-1]));
+				//
+				// }
 			}
 			//exit(0);
 			fNext+=rank-1;
@@ -2322,14 +2362,21 @@ void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulati
 				//printf("CONVECTING I \n");
 				//for (int d = 0;d<nDims;d++){
 					IVal[index] = (rhoVal[index]*IVal[index]+ItildeVal[indexPrev])/(rhoVal[index]+1)
-							+ sqrt(pow(dKEVal[index],2))/((rhoVal[index]+1)*mass[0]);
+							+ 0;//sqrt(pow(dKEVal[index],2))/((rhoVal[index]+1)*mass[0]);
 					if(rhoVal[indexPrev]==0.0){
 						IVal[indexPrev] = rhoVal[indexPrev]*ItildeVal[indexPrev];
 					}
+					// if(sqrt(pow(dKEVal[index],2))/((rhoVal[index]+1)*mass[0]) > 1.){
+					// 	printf("Large dKE val = %f       , ",(sqrt(pow(dKEVal[index],2))/((rhoVal[index]+1)*mass[0])));
+					//
+					// }
 					//printf("IVal[index] = %f iTide = %f\n",IVal[index],ItildeVal[index]);
 				//}
 			}
 		}
+	}
+	for(int i=0;i<sizeProd[nDims+1];i++){
+		IVal[i] += sqrt(pow(dKEVal[i],2))/((rhoVal[i]+1)*mass[0]);
 	}
 
 }
@@ -2393,28 +2440,6 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
 	// using ini is slow, but setting boundary slices is likely only done once.
 	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
-	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
-	double *B = iniGetDoubleArr(ini,"fields:BExt",nDims);
-
-	double veld[nDims];
-
-	for (int s=0;s<nSpecies;s++){
-		for (int d = 0;d<nDims;d++){
-			//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
-			veld[d] += (1./nSpecies)*velDrift[d+s*nDims];
-		}
-	}
-
-	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
-
-	//double B[3] = {1., 0., 0.};
-	//double veld[3] = {0., 1., 1.};
-	double veldCrossB[3] = {0., 0., 0.};
-	adCrossProd(veld, B, veldCrossB);
-
-	//printf("B[0] = %f, B[1] = %f, B[2] = %f \n",B[0],B[1],B[2]);
-	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
-	//printf("veldCrossB = %f,%f,%f",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
 
 
 	//Number of elements in slice
@@ -2430,62 +2455,17 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 	//double constant1 = 0.; //Dirichlet
 	double constant2 = 0.; // solution to bnd cond = 0.
 
-	// The dirichlet part in this function ended up realy ugly. I am sorry for
-	// that, but it works.
-
-	// indices are indices of slice perp to d
-	long int indices[rank];
-	long int edge[rank]; //tells us what dimensions are perp (slice)
-
 	//Lower edge
 	for(int d = 1; d < rank; d++){
-		for(long int q = 0;q<rank-1;q++){
-			//initiallize
-			//indices[q] = size[q+1]*subdomain[q];
-			edge[q] = (q!=(d-1));
-			//printf("q = %li, indices[q] = %li \n",q,indices[q]);
-		}
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == DIRICHLET){
-				for(long int q = 0;q<rank-1;q++){
-					//set dim perp to slice indice to fixed val
-					if(!edge[q]){
-						indices[q] = nGhostLayers[q+1];
-					} else{
-						// start indices at minimum local indice
-						indices[q] = 0;//
-					}
-				}
 				for(int s = 0; s < nSliceMax; s++){
-
-					for(long int q = 0;q<rank-1;q++){
-						//set dim perp to slice indice to fixed val
-						if(!edge[q]){
-							indices[q] = nGhostLayers[q+1];
-						}
-					}
-
-					bndSlice[s + (nSliceMax * d)] = 0;
-					for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
+					//for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
 						// grid indices (i,j,k) are computed locally, so we need to
 						// cast them to global frame in the dot product
-						bndSlice[s + (nSliceMax * d)] += 0;
+						bndSlice[s + (nSliceMax * d)] = 0.;
 
-					}
-					// counter to increment only in the slice dims, and not the
-					// dim perp to slice
-					bool incremented = false;
-					for(int dd = 0;dd<rank;dd++){
-						//runs up to 34-1 for 32x32x32 domain
-						if(indices[dd]<(size[dd+1])-1 && edge[dd]==1 && incremented == false){
-							indices[dd]++;
-							incremented = true;
-						}else if(incremented == false){
-							// reset
-							indices[dd] = 0;//nGhostLayers[dd+1];
-						}
-					}
-					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+					//}
 				}
 			}
 			if(bnd[d] == NEUMANN){
@@ -2503,48 +2483,15 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
 	//Upper edge
 	for(int d = rank+1; d < 2*rank; d++){
-		for(long int q = 0;q<rank-1;q++){
-			//initiallize
-			//indices[q] = size[q+1]*subdomain[q];
-			edge[q] = (q!=(d-rank-1));
-			//printf("d = %i, edge[q] = %li \n",d,edge[q]);
-		}
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET){
-				for(long int q = 0;q<rank-1;q++){
-					//set dim perp to slice indice to fixed val
-					if(!edge[q]){
-						indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
-						//printf("nSubdomains = %i\n",nSubdomains[q]);
-					} else{
-						// start indices at minimum
-						indices[q] = 0;
-					}
-				}
+
 				for(int s = 0; s < nSliceMax; s++){
-					for(long int q = 0;q<rank-1;q++){
-						//set dim perp to slice indice to fixed val
-						if(!edge[q]){
-							indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
-							//printf("nSubdomains = %i\n",nSubdomains[q]);
-						}
-					}
+
 					bndSlice[s + (nSliceMax * (d))] = 0;
-					for(int dd = 0;dd<rank-1;dd++){
-						bndSlice[s + (nSliceMax * (d))] +=  0;
-					}
-					bool incremented = false;
-					for(int dd = 0;dd<rank;dd++){
-						//runs up to 34-1 for 32x32x32 local domain
-						if(indices[dd]<(size[dd+1]-1) && edge[dd]==1 && incremented == false){
-							indices[dd]++;
-							incremented = true;
-						}else if(incremented == false){
-							// reset
-							indices[dd] = 0;//(size[dd+1]-nGhostLayers[dd]);
-						}
-					}
-					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+					//for(int dd = 0;dd<rank-1;dd++){
+						bndSlice[s + (nSliceMax * (d))] =  0.;
+					//}
 				}
 			}
 
@@ -2558,13 +2505,115 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
 	//msg(STATUS,"nSliceMax = %li",nSliceMax);
 	//adPrint(&bndSlice[nSliceMax], nSliceMax*(rank));
-	free(velDrift);
-	//free(B);
+
+	return;
+}
+
+void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiInfo *mpiInfo){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	bndType *bnd = grid->bnd;
+	double *bndSlice = grid->bndSlice;
+	double *sendSlice = rho->sendSlice;
+	int *nGhostLayers = grid->nGhostLayers;
+	//double *bndSolution = grid->bndSolution;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int nDims = mpiInfo->nDims;
+
+	// using ini is slow, but setting boundary slices is likely only done once.
+	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
+	double *velTherm = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nDims*nSpecies);
+	double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
+	double rho0 = density[0];
+
+	double veld[nDims];
+
+	for (int s=0;s<nSpecies;s++){
+		for (int d = 0;d<nDims;d++){
+			//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
+			veld[d] += (1./nSpecies)*velTherm[d+s*nDims];
+		}
+	}
+
+	double Dspeed =0;
+	for (int d = 0;d<nDims;d++){
+		//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
+		Dspeed += sqrt(veld[d]*veld[d]);
+	}
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+
+	//double constant1 = 0.; //Dirichlet
+	double constant2 = 0.; // solution to bnd cond = 0.
+
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		if(subdomain[d-1] == 0){
+			if(bnd[d] == DIRICHLET){
+				getSlice(sendSlice, rho, d, 1);
+				for(int s = 0; s < nSliceMax; s++){
+					//for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
+
+						bndSlice[s + (nSliceMax * d)] = 0.5*30*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
+
+					//}
+				}
+			}
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+
+					// initialize.
+					bndSlice[s + (nSliceMax * d)] = constant2;
+
+					//Solution to equation. constant for now
+
+				}
+			}
+		}
+	}
+
+	//Upper edge
+	for(int d = rank+1; d < 2*rank; d++){
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET){
+				//printf(" \n size[d-rank]-1 = %i \n",(size[d-rank]-2) );
+
+				getSlice(sendSlice, rho, d-rank, size[d-rank]-2);
+				for(int s = 0; s < nSliceMax; s++){
+					//printf("  sendSlice[s] = %f \n",sendSlice[s] );
+					//bndSlice[s + (nSliceMax * (d))] = 0;
+					//for(int dd = 0;dd<rank-1;dd++){
+					bndSlice[s + (nSliceMax * (d))] =  0.5*30*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
+					//}
+				}
+			}
+
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+			}
+		}
+	}
+
+	//msg(STATUS,"nSliceMax = %li",nSliceMax);
+	//adPrint(&bndSlice[nSliceMax], nSliceMax*(rank));
+
 	return;
 }
 
 
-void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
+void neSetBndSlicesVel(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
 	int *size = grid->size;
@@ -2577,24 +2626,10 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 	int nDims = mpiInfo->nDims;
 
 	// using ini is slow, but setting boundary slices is likely only done once.
-
-
-
-
 	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
 	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
-	double *B = iniGetDoubleArr(ini,"fields:BExt",nDims);
 
 	double veld[nDims];
-
-	double *nt = iniGetDoubleArr(ini,"collisions:numberDensityNeutrals",nSpecies);
-	double density =0;
-	//needed for neutral bnd
-	for (int s=0;s<nSpecies;s++){
-		density += 0;//nt[s]/(2*nSpecies);
-	}
-
-	printf("density = %f",density);
 
 	for (int s=0;s<nSpecies;s++){
 		for (int d = 0;d<nDims;d++){
@@ -2602,17 +2637,6 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 			veld[d] += (1./nSpecies)*velDrift[d+s*nDims];
 		}
 	}
-
-	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
-
-	//double B[3] = {1., 0., 0.};
-	//double veld[3] = {0., 1., 1.};
-	double veldCrossB[3] = {0., 0., 0.};
-	adCrossProd(veld, B, veldCrossB);
-
-	//printf("B[0] = %f, B[1] = %f, B[2] = %f \n",B[0],B[1],B[2]);
-	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
-	//printf("veldCrossB = %f,%f,%f",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
 
 
 	//Number of elements in slice
@@ -2624,73 +2648,29 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 		}
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
+	nSliceMax = nSliceMax*nDims;
 
 	//double constant1 = 0.; //Dirichlet
 	double constant2 = 0.; // solution to bnd cond = 0.
 
-	// The dirichlet part in this function ended up realy ugly. I am sorry for
-	// that, but it works.
-
-	// indices are indices of slice perp to d
-	long int indices[rank];
-	long int edge[rank]; //tells us what dimensions are perp (slice)
-
 	//Lower edge
 	for(int d = 1; d < rank; d++){
-		for(long int q = 0;q<rank-1;q++){
-			//initiallize
-			//indices[q] = size[q+1]*subdomain[q];
-			edge[q] = (q!=(d-1));
-			//printf("q = %li, indices[q] = %li \n",q,indices[q]);
-		}
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == DIRICHLET){
-				for(long int q = 0;q<rank-1;q++){
-					//set dim perp to slice indice to fixed val
-					if(!edge[q]){
-						indices[q] = nGhostLayers[q+1];
-					} else{
-						// start indices at minimum local indice
-						indices[q] = 0;//
-					}
-				}
-				for(int s = 0; s < nSliceMax; s++){
-
-					for(long int q = 0;q<rank-1;q++){
-						//set dim perp to slice indice to fixed val
-						if(!edge[q]){
-							indices[q] = nGhostLayers[q+1];
-						}
-					}
-
-					bndSlice[s + (nSliceMax * d)] = density;
+				for(int s = 0; s < nSliceMax; s+=nDims){
 					for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
 						// grid indices (i,j,k) are computed locally, so we need to
 						// cast them to global frame in the dot product
-						bndSlice[s + (nSliceMax * d)] = density;
+						bndSlice[s+dd + (nSliceMax * d)] = veld[dd];
 
 					}
-					// counter to increment only in the slice dims, and not the
-					// dim perp to slice
-					bool incremented = false;
-					for(int dd = 0;dd<rank;dd++){
-						//runs up to 34-1 for 32x32x32 domain
-						if(indices[dd]<(size[dd+1])-1 && edge[dd]==1 && incremented == false){
-							indices[dd]++;
-							incremented = true;
-						}else if(incremented == false){
-							// reset
-							indices[dd] = 0;//nGhostLayers[dd+1];
-						}
-					}
-					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
 				}
 			}
 			if(bnd[d] == NEUMANN){
 				for(int s = 0; s < nSliceMax; s++){
 
 					// initialize.
-					bndSlice[s + (nSliceMax * d)] = density;
+					bndSlice[s + (nSliceMax * d)] = constant2;
 
 					//Solution to equation. constant for now
 
@@ -2701,54 +2681,21 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 
 	//Upper edge
 	for(int d = rank+1; d < 2*rank; d++){
-		for(long int q = 0;q<rank-1;q++){
-			//initiallize
-			//indices[q] = size[q+1]*subdomain[q];
-			edge[q] = (q!=(d-rank-1));
-			//printf("d = %i, edge[q] = %li \n",d,edge[q]);
-		}
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET){
-				for(long int q = 0;q<rank-1;q++){
-					//set dim perp to slice indice to fixed val
-					if(!edge[q]){
-						indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
-						//printf("nSubdomains = %i\n",nSubdomains[q]);
-					} else{
-						// start indices at minimum
-						indices[q] = 0;
-					}
-				}
-				for(int s = 0; s < nSliceMax; s++){
-					for(long int q = 0;q<rank-1;q++){
-						//set dim perp to slice indice to fixed val
-						if(!edge[q]){
-							indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
-							//printf("nSubdomains = %i\n",nSubdomains[q]);
-						}
-					}
-					bndSlice[s + (nSliceMax * (d))] = density;
+
+				for(int s = 0; s < nSliceMax; s+=nDims){
+
+					bndSlice[s + (nSliceMax * (d))] = 0;
 					for(int dd = 0;dd<rank-1;dd++){
-						bndSlice[s + (nSliceMax * (d))] =  density;
+						bndSlice[s+dd + (nSliceMax * d)] = veld[dd];
 					}
-					bool incremented = false;
-					for(int dd = 0;dd<rank;dd++){
-						//runs up to 34-1 for 32x32x32 local domain
-						if(indices[dd]<(size[dd+1]-1) && edge[dd]==1 && incremented == false){
-							indices[dd]++;
-							incremented = true;
-						}else if(incremented == false){
-							// reset
-							indices[dd] = 0;//(size[dd+1]-nGhostLayers[dd]);
-						}
-					}
-					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
 				}
 			}
 
 			if(bnd[d] == NEUMANN){
 				for(int s = 0; s < nSliceMax; s++){
-					bndSlice[s + (nSliceMax * d)] = density;
+					bndSlice[s + (nSliceMax * d)] = constant2;
 				}
 			}
 		}
@@ -2764,9 +2711,27 @@ void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 
 
 
+
+
+
 //#########################################
 // Object functions
 //#########################################
+void neIndexToPos3D(Grid *grid,long int index,long int *pos){
+
+	long int *sizeProd = grid->sizeProd;
+	long int i,j,k;
+	long int p = index;///sizeProd[1];
+
+	k= (int)(p/sizeProd[3]);
+	j = (int)( (p-k*sizeProd[3])/(sizeProd[2]) );
+	i = (int)(p-j*sizeProd[2]-k*sizeProd[3])/sizeProd[1];
+	//printf("pos = %li,%li,%li \n",i,j,k);
+	pos[0]= i;
+	pos[1]= j;
+	pos[2]= k;
+
+}
 
 
 void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
@@ -2795,11 +2760,14 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 
 	bool prevInside, nextInside;
 	for(int d = 1; d < rank; d++){
-		fNext = fieldstart + fieldSizeProd[d];
-		fPrev = fieldstart - fieldSizeProd[d];
+		//fNext = fieldstart + fieldSizeProd[d]+(d-1);
+		//fPrev = fieldstart - fieldSizeProd[d]+(d-1);
 
 		sNext = start + sizeProd[d];
 		sPrev = start - sizeProd[d];
+
+		fNext = fieldstart + fieldSizeProd[d]+(d-1);
+		fPrev = fieldstart - fieldSizeProd[d]+(d-1);
 
 		s = start;
 		f = fieldstart+(d-1);
@@ -2811,8 +2779,8 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 
 
 			for (long int a=0; a<obj->nObjects; a++) {
-				for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
-					if ((obj->lookupInterior[b])==g) {
+				for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+					if ((obj->lookupSurface[b])==g) {
 						prevInside = false;
 						nextInside = false;
 						for (long int a2=0; a2<obj->nObjects; a2++) {
@@ -2829,12 +2797,36 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 
 							}
 						}
-						if(prevInside==true ||nextInside==true){
-							if(prevInside==false){
-								val[f] = -10;//*sqrt(val[fPrev]*val[fPrev]);
+						for (long int a2=0; a2<obj->nObjects; a2++) {
+
+							for (long int b2=lookupSurfOff[a2]; b2<lookupSurfOff[a2+1]; b2++) {
+								if ((obj->lookupSurface[b2])==sNext) {
+									nextInside=true;
+									//printf("setting val \n");
+								}
+								if ((obj->lookupSurface[b2])==sPrev) {
+									//printf("setting val");
+									prevInside=true;
+								}
+
 							}
+						}
+						if(nextInside==true){
+							if(prevInside==false){
+								val[f] = -1.*val[fPrev];
+								// long int gridpos[3];
+								// long int gridposPrev[3];
+								// long int gridposNext[3];
+								// neIndexToPos3D(obj->domain,g,gridpos);
+								// neIndexToPos3D(obj->domain,sPrev,gridposPrev);
+								// neIndexToPos3D(obj->domain,sNext,gridposNext);
+								// printf("in dim %i for node %li,%li,%li, using prev=%li,%li,%li, next=%li,%li,%li, \n",d,gridpos[0],gridpos[1],gridpos[2],gridposPrev[0],gridposPrev[1],gridposPrev[2],gridposNext[0],gridposNext[1],gridposNext[2]);
+							}
+						}
+						if(prevInside==true){
 							if(nextInside==false){
-								val[f] = 10;//*sqrt(val[fNext]*val[fNext]);
+								val[f] = -1.*val[fNext];
+
 							}
 						}
 					}
@@ -2884,7 +2876,7 @@ void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop){
 	long int end = sizeProd[rank]-start;
 
 
-
+	bool nextInside, prevInside;
 	for(int d = 1; d < rank; d++){
 
 
@@ -2901,18 +2893,67 @@ void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop){
 			for (long int a=0; a<obj->nObjects; a++) {
 				for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
 					if ((obj->lookupSurface[b])==g) {
+						// for (long int a2=0; a2<obj->nObjects; a2++) {
+						// 	for (long int b2=lookupIntOff[a2]; b2<lookupIntOff[a2+1]; b2++) {
+						// 		if ((obj->lookupInterior[b2])==sNext) {
+						// 			val[sNext] = 20*val[sPrev];
+						// 			//printf("setting val \n");
+						// 		}
+						// 		if ((obj->lookupInterior[b2])==sPrev) {
+						// 			val[sPrev] = 20*val[sNext];
+						// 			//printf("setting val");
+						// 		}
+						// 	}
+						// }
+						prevInside = false;
+						nextInside = false;
 						for (long int a2=0; a2<obj->nObjects; a2++) {
+
 							for (long int b2=lookupIntOff[a2]; b2<lookupIntOff[a2+1]; b2++) {
 								if ((obj->lookupInterior[b2])==sNext) {
-									val[s] = val[sPrev];
+									nextInside=true;
 									//printf("setting val \n");
 								}
 								if ((obj->lookupInterior[b2])==sPrev) {
-									val[s] = val[sNext];
 									//printf("setting val");
+									prevInside=true;
 								}
+
 							}
 						}
+						for (long int a2=0; a2<obj->nObjects; a2++) {
+
+							for (long int b2=lookupSurfOff[a2]; b2<lookupSurfOff[a2+1]; b2++) {
+								if ((obj->lookupSurface[b2])==sNext) {
+									nextInside=true;
+									//printf("setting val \n");
+								}
+								if ((obj->lookupSurface[b2])==sPrev) {
+									//printf("setting val");
+									prevInside=true;
+								}
+
+							}
+						}
+						if(nextInside==true){
+							if(prevInside==false){
+								val[s] = val[sPrev];
+								// long int gridpos[3];
+								// long int gridposPrev[3];
+								// long int gridposNext[3];
+								// neIndexToPos3D(obj->domain,g,gridpos);
+								// neIndexToPos3D(obj->domain,sPrev,gridposPrev);
+								// neIndexToPos3D(obj->domain,sNext,gridposNext);
+								// printf("in dim %i for node %li,%li,%li, using prev=%li,%li,%li, next=%li,%li,%li, \n",d,gridpos[0],gridpos[1],gridpos[2],gridposPrev[0],gridposPrev[1],gridposPrev[2],gridposNext[0],gridposNext[1],gridposNext[2]);
+							}
+						}
+						if(prevInside==true){
+							if(nextInside==false){
+								val[s] = val[sNext];
+
+							}
+						}
+
 					}
 				}
 			}
@@ -2974,6 +3015,20 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiI
 			for (long int a=0; a<obj->nObjects; a++) {
 				for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
 					if ((obj->lookupInterior[b])==p) {
+						//msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
+						//msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
+						//msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
+						neCutParticle(pop, s, pIndex, pop->pos, pop->vel);
+						cutNumber += 1;
+						//msg(STATUS,"iStop = %li",iStop);
+						iStop--;
+
+					}
+				}
+			}
+			for (long int a=0; a<obj->nObjects; a++) {
+				for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+					if ((obj->lookupSurface[b])==p) {
 						//msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
 						//msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
 						//msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
@@ -3114,15 +3169,15 @@ void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const 
 	for (long int a=0; a<obj->nObjects; a++) {
 		for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
 			rhoVal[obj->lookupInterior[b]] = constant;
-			//printf("obj->lookupInterior[b]= %li \n",obj->lookupInterior[b]);
+			//printf("rhoVal[obj->lookupInterior[b]] = %f \n",rhoVal[obj->lookupInterior[b]] );
 		}
 	}
-	for (long int a=0; a<obj->nObjects; a++) {
-		for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
-			rhoVal[obj->lookupSurface[b]] = constant;
-			//printf("obj->lookupSurfOff[b]= %li \n",obj->lookupSurface[b]);
-		}
-	}
+	// for (long int a=0; a<obj->nObjects; a++) {
+	// 	for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+	// 		rhoVal[obj->lookupSurface[b]] = constant;
+	// 		//printf("obj->lookupSurfOff[b]= %li \n",obj->lookupSurface[b]);
+	// 	}
+	// }
 	//adPrint(rhoVal,rho->sizeProd[4]);
 	//exit(0);
 
