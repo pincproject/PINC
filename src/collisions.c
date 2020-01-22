@@ -878,7 +878,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 
 	mccGetPmaxIonStatic(ini,mccVars,rhoNeutral,pop,mpiInfo,rng);
 
-	printf("pmax = %f\n",mccVars->pMaxIon );
+	//printf("pmax = %f\n",mccVars->pMaxIon );
 	double nt = 0;//mccVars->nt;
 	double NvelThermal = mccVars->NvelThermal;
 	double mccSigmaCEX= mccVars->mccSigmaCEX;
@@ -1909,32 +1909,15 @@ void oCollMode(dictionary *ini){
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 	MccVars *mccVars=mccAlloc(ini,units);
 
-	// For SPH neutral particles
-	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
-	Grid *Pgrad   = gAlloc(ini, VECTOR,mpiInfoNeut);
-	Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *IE   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfoNeut);
-
-	gZero(rhoNeutral);
-   	gZero(P);
-	gZero(IE);
-   	gZero(Pgrad);
-
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
-    // for SPH neutrals
-	gCreateNeighborhood(ini, mpiInfoNeut, rhoNeutral);
-    // We assume same form on neutral density grid and charged density grid
 
   // Setting Boundary slices
   gSetBndSlices(ini, phi, mpiInfo);
-  // need for SPH neutrals a function
-  neSetBndSlices(ini, P, mpiInfoNeut);
-  //neSetBndSlicesRho(ini, rhoNeutral, mpiInfoNeut);
+
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1955,10 +1938,6 @@ void oCollMode(dictionary *ini){
   // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
   // oReadH5(obj, mpiInfo);
 
-    // SPH neutrals
-    gOpenH5(ini, rhoNeutral, mpiInfoNeut, units, 1, "rhoNeutral");
-    gOpenH5(ini, P,   mpiInfoNeut, units, 1, "P");
-	gOpenH5(ini, Pgrad,   mpiInfoNeut, units, 1, "Pgrad");
 
     //msg(STATUS,"opening obj file");
 		//gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
@@ -1991,21 +1970,12 @@ void oCollMode(dictionary *ini){
     //msg(STATUS, "com cap matrix");
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
-
-
-
 	// Initalize particles
 	pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
-
-	// SPH neutrals
-	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
-	neVelMaxwell(ini, neutralPop, rng);
-
-
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
@@ -2017,16 +1987,7 @@ void oCollMode(dictionary *ini){
 	//add influx of new particles on boundary
 	pPurgeGhost(pop, rho);
 	pFillGhost(ini,pop,rng,mpiInfoNeut);
-	// SPH neutrals
-	nePurgeGhost(neutralPop, rhoNeutral);
-	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
-
-	MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-	// SPH neutrals
-	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
 
 
 	/*
@@ -2038,8 +1999,6 @@ void oCollMode(dictionary *ini){
     oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
     gZero(rhoObj);                                          // for capMatrix - objects
 
-    // SPH Neutrals
-    nuObjectpurge(neutralPop,rhoObj,obj,mpiInfo);
 
 	// Get initial charge density
 	distr(pop, rho,rho_e,rho_i);
@@ -2048,29 +2007,18 @@ void oCollMode(dictionary *ini){
 	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
     //gWriteH5(rho, mpiInfo, (double) 0);
 
-    NeutralDistr3D1(neutralPop, rhoNeutral);
-	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-	nuGBnd(rhoNeutral, mpiInfo);
-    //gZero(P);
 
 	// Get initial E-field
 
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
-	//gZero(P);
-	nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut );
+
     //gWriteH5(phi, mpiInfo, (double) 0);
     //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
 
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
-
-	// Compute pressure gradient SPH neutrals
-	gFinDiff1st(P, Pgrad);
-	gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
-	gMul(Pgrad, -1.);
-
 
   //Boris parameters
   int nSpecies = pop->nSpecies;
@@ -2088,9 +2036,87 @@ void oCollMode(dictionary *ini){
 	gMul(E, 2.0);
 	puGet3DRotationParameters(ini, T, S, 1.0);
 
-	gMul(Pgrad, 0.5);
-	//neAcc3D1(neutralPop,Pgrad); // SPH neutrals
-	gMul(Pgrad, 2.0);
+
+
+
+
+
+
+
+	//-----------------------------------
+	//- NEUTRALS - initialization
+	//-----------------------------------
+
+	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
+	Grid *V   = gAlloc(ini, VECTOR,mpiInfoNeut);
+	Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	Grid *dKE   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	Grid *IE   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	Grid *Vtilde   = gAlloc(ini, VECTOR,mpiInfoNeut);
+	Grid *Itilde   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfoNeut);
+
+	gZero(rhoNeutral);
+   	gZero(P);
+	gZero(dKE);
+	gZero(IE);
+   	gZero(V);
+	gZero(Itilde);
+   	gZero(Vtilde);
+
+	gCreateNeighborhood(ini, mpiInfoNeut, rhoNeutral);
+
+	neSetBndSlices(ini, IE, mpiInfoNeut);
+	neSetBndSlicesVel(ini, V, mpiInfoNeut);
+
+	/*
+	 * PREPARE FILES FOR WRITING
+	 */
+
+    gOpenH5(ini, rhoNeutral, mpiInfoNeut, units, 1, "rhoNeutral");
+    gOpenH5(ini, P,   mpiInfoNeut, units, 1, "P");
+	gOpenH5(ini, IE,   mpiInfoNeut, units, 1, "IE");
+	gOpenH5(ini, V,   mpiInfoNeut, units, units->velocity, "V");
+
+	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
+	//nePosLattice(ini, neutralPop, mpiInfoNeut);
+	//neVelMaxwell(ini, neutralPop, rng);
+	neVelDrift(ini, neutralPop);
+	//double maxVel = iniGetDouble(ini,"population:maxVel");
+
+	nePurgeGhost(neutralPop, rhoNeutral);
+	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+
+
+	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+
+    NeutralDistr3D1(neutralPop, rhoNeutral);
+	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+	gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
+	NeutralDistr3D1Vector(neutralPop,V,rhoNeutral);
+	gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
+	nuGBndVel(V,mpiInfoNeut);
+	gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+
+	neSetI(IE,V,rhoNeutral,neutralPop,ini);
+	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
+	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
+	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
+	double multiplyIEBy = 2.;
+	int sliceDim = 0;
+
+	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
+	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+
+	gWriteH5(rhoNeutral, mpiInfoNeut, (double) 0);
+	gWriteH5(IE, mpiInfoNeut, (double) 0);
+	gWriteH5(P, mpiInfoNeut, (double) 0);
+	gWriteH5(V, mpiInfoNeut, (double) 0);
+
+	//-----------------------------------
+	//- NEUTRALS - initialization - end
+	//-----------------------------------
+
 
 	/*
 	 * TIME LOOP
@@ -2104,6 +2130,63 @@ void oCollMode(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 
+
+
+		//-----------------------------------
+		//- NEUTRALS
+		//-----------------------------------
+
+		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
+		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
+		neApplyObjI(obj, P,neutralPop );
+		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
+
+
+
+		neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
+		gHaloOp(setSlice, Vtilde, mpiInfoNeut, TOHALO);
+
+
+		neAdvectI(IE,Itilde,P,V,rhoNeutral,neutralPop);
+		gHaloOp(setSlice, Itilde, mpiInfoNeut, TOHALO);
+
+		neMove(neutralPop,V,Vtilde);
+		nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+
+
+		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
+		neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+
+
+		neConvectKE(dKE,Vtilde,rhoNeutral, neutralPop);
+		gHaloOp(setSlice, dKE, mpiInfoNeut, TOHALO);
+
+
+		neConvectV(V,Vtilde,rhoNeutral,neutralPop );
+		nuGBndVel(V,mpiInfoNeut);
+		gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+
+		nePurgeGhost(neutralPop, rhoNeutral);
+		neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+		NeutralDistr3D1(neutralPop, rhoNeutral);
+		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+
+		neConvectI(IE,Itilde,dKE,rhoNeutral,neutralPop );
+
+		neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
+		nuGBnd(IE,mpiInfoNeut);
+
+		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
+		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
+		neApplyObjI(obj, IE,neutralPop );
+
+		neApplyObjVel(obj,V,neutralPop);
+
+		//-----------------------------------
+		//- NEUTRALS end
+		//-----------------------------------
+
+
 		msg(STATUS,"Computing time-step %i",n);
         msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
@@ -2112,7 +2195,6 @@ void oCollMode(dictionary *ini){
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
 
-        neVelAssertMax(neutralPop,maxVel);
 
 		tStart(t);
 
@@ -2128,26 +2210,21 @@ void oCollMode(dictionary *ini){
 
 		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
-		// SPH neutrals
-		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-		neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+
 
         //add influx of new particles on boundary
         pPurgeGhost(pop, rho);
         pFillGhost(ini,pop,rng,mpiInfoNeut);
-	    // SPH neutrals
-        nePurgeGhost(neutralPop, rhoNeutral);
-  	    neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+
 
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
-        nePosAssertInLocalFrame(neutralPop, rhoNeutral);
+
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
-        // SPH neutrals
-		nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
+
 
 
 
@@ -2158,12 +2235,7 @@ void oCollMode(dictionary *ini){
 		gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
 		gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
 
-		// SPH neutrals
-		NeutralDistr3D1(neutralPop, rhoNeutral);
-		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-		nuGBnd(rhoNeutral, mpiInfo);
 
-		//adPrint(rhoNeutral->val,rhoNeutral->sizeProd[4]);
 
         // Keep writing Rho here.
 
@@ -2200,12 +2272,6 @@ void oCollMode(dictionary *ini){
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 
-		// Compute pressure gradient SPH neutrals
-		//gZero(P);
-		gFinDiff1st(P, Pgrad);
-		gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
-		gMul(Pgrad, -1.);
-		//gZero(Pgrad);
 
 		//gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
@@ -2240,8 +2306,10 @@ void oCollMode(dictionary *ini){
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
 
+			gWriteH5(V, mpiInfoNeut, (double) n);
 			gWriteH5(rhoNeutral, mpiInfoNeut, (double) n);
-			gWriteH5(P, mpiInfoNeut, (double) n);
+			//gWriteH5(P, mpiInfoNeut, (double) n);
+			gWriteH5(IE, mpiInfoNeut, (double) n);
 		}
 
 		pWriteEnergy(history,pop,(double)n,units);
@@ -2254,8 +2322,32 @@ void oCollMode(dictionary *ini){
 	/*
 	 * FINALIZE PINC VARIABLES
 	 */
+
+
+	 //-----------------
+	 // Neutrals
+	 // -----------------
+
+	 gFreeMpi(mpiInfoNeut);
+
+	 // Close h5 files
+	 gCloseH5(rhoNeutral);
+	  gCloseH5(P);
+	 gCloseH5(IE);
+	 gCloseH5(V);
+
+	gFree(rhoNeutral);
+	gFree(P);
+	gFree(IE);
+	gFree(V);
+	gFree(Itilde);
+	gFree(Vtilde);
+	//-----------------
+	// Neutrals
+	// -----------------
+
+
 	gFreeMpi(mpiInfo);
-	gFreeMpi(mpiInfoNeut);
 
 	// Close h5 files
 	pCloseH5(pop);
@@ -2269,10 +2361,6 @@ void oCollMode(dictionary *ini){
     oCloseH5(obj);          // for capMatrix - objects
 	// is gCloseH5(obj->domain)
 
-    // SPH neutrals
-	gCloseH5(rhoNeutral);
-    gCloseH5(P);
-	gCloseH5(Pgrad);
 
 	xyCloseH5(history);
 
@@ -2289,11 +2377,6 @@ void oCollMode(dictionary *ini){
   free(T);
 
   gFree(E);
-
-  gFree(rhoNeutral);
-  gFree(P);
-  gFree(Pgrad);
-  pNeutralFree(neutralPop);
 
   pFree(pop);
   uFree(units);
@@ -2370,7 +2453,6 @@ void neutTest(dictionary *ini){
 
 	// For SPH neutral particles
 	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
-	//Grid *Pgrad   = gAlloc(ini, VECTOR,mpiInfoNeut);
 	Grid *V   = gAlloc(ini, VECTOR,mpiInfoNeut);
 	Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
 	Grid *dKE   = gAlloc(ini, SCALAR,mpiInfoNeut);
@@ -2434,11 +2516,12 @@ void neutTest(dictionary *ini){
 	// SPH neutrals
 	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
 	//nePosLattice(ini, neutralPop, mpiInfoNeut);
-	neVelMaxwell(ini, neutralPop, rng);
+	//neVelMaxwell(ini, neutralPop, rng);
+	neVelDrift(ini, neutralPop);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
-	int nSpecies = neutralPop->nSpeciesNeutral;
-	double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
+	//int nSpecies = neutralPop->nSpeciesNeutral;
+	//double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
 
 	//nePurgeGhost(neutralPop, rhoNeutral);
 	//neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
@@ -2474,8 +2557,8 @@ void neutTest(dictionary *ini){
 	// MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 	// SPH neutrals
-	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+	//neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
+	//neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
 
 	// SPH neutrals
 	nePurgeGhost(neutralPop, rhoNeutral);
@@ -2490,11 +2573,13 @@ void neutTest(dictionary *ini){
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-	//gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
+	gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
 	NeutralDistr3D1Vector(neutralPop,V,rhoNeutral);
-	//gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
+	gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
+	nuGBndVel(V,mpiInfoNeut);
 	gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
-	gCopy(V, Vtilde);
+
+	//gCopy(V, Vtilde);
 
 
 	//nuGBndVel(bulkV,mpiInfoNeut);
@@ -2513,14 +2598,15 @@ void neutTest(dictionary *ini){
 
 	//neSetV(V,neutralPop,ini);
 	neSetI(IE,V,rhoNeutral,neutralPop,ini);
+	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
-	double multiplyIEBy = 2.;
+	double multiplyIEBy = 4.;
 	int sliceDim = 0;
-	// neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
-	// neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
-	// neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
-	gCopy(IE, Itilde);
+	neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
+	neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
+	neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
+	//gCopy(IE, Itilde);
 	//nuGBndVel(I,mpiInfoNeut);
 
 	// //// reinitiate after energy addition
@@ -2624,6 +2710,7 @@ void neutTest(dictionary *ini){
 
 		neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
 		gHaloOp(setSlice, Vtilde, mpiInfoNeut, TOHALO);
+		//gHaloOp(addSlice, Vtilde, mpiInfoNeut, FROMHALO);
 		//gCopy(V,Vtilde);
 		//gZero(V);
 		//gMul(V,-1.0);
@@ -2649,12 +2736,16 @@ void neutTest(dictionary *ini){
 
 		neConvectKE(dKE,Vtilde,rhoNeutral, neutralPop);
 		gHaloOp(setSlice, dKE, mpiInfoNeut, TOHALO);
+		//gHaloOp(addSlice, dKE, mpiInfoNeut, FROMHALO);
 
 		//gCopy(Vtilde,V);
 		neConvectV(V,Vtilde,rhoNeutral,neutralPop );
-		nuGBndVel(V,mpiInfoNeut);
+		//nuGBndVel(V,mpiInfoNeut);
+		//gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+		//gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
 
+		nuGBndVel(V,mpiInfoNeut);
 
 		nePurgeGhost(neutralPop, rhoNeutral);
 		neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
@@ -2674,104 +2765,17 @@ void neutTest(dictionary *ini){
 
 		//gHaloOp(addSlice, IE, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
-		double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
-		double tempVal = velThermal[0]*velThermal[0]*0.5*( 30*(neutralPop->rho0));
+		//gHaloOp(setSlice, IE, mpiInfoNeut, FROMHALO);
+		//gHaloOp(addSliceAvg, IE, mpiInfoNeut, TOHALO);
 		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
 		neApplyObjI(obj, IE,neutralPop );
 
 		//nuGBndVel(IE,mpiInfoNeut);
 		neApplyObjVel(obj,V,neutralPop);
 
-		//gCopy(Itilde,IE);
-		//gCopy(Vtilde,V);
 
-		//exit(0);
 
-	//
-    // // not work in other run modes!
-	//     neMove(neutralPop); // SPH neutrals
-	//
-	// 	MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-	//
-	//
-	// 	// SPH neutrals
-	// 	divFinDiff1st(gradBulkV,bulkV,rhoNeutral,neutralPop);
-	// 	nuGBndVel(gradBulkV,mpiInfoNeut);
-	// 	//adPrint(rhoNeutral->val,rhoNeutral->sizeProd[4]);
-	// 	//exit(0);
-	// 	//gHaloOp(addSlice, gradBulkV, mpiInfoNeut, FROMHALO);
-	// 	//gHaloOp(setSlice, gradBulkV, mpiInfoNeut, TOHALO);
-	// 	gMul(gradBulkV, -1);
-	// 	//gZero(gradBulkV);
-	//
-	//
-	//
-	// 	// SPH neutrals
-	// 	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-	// 	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
-	//
-	// 	nePurgeGhost(neutralPop, rhoNeutral);
-  	//     neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
-	//
-	//
-    //     nePosAssertInLocalFrame(neutralPop, rhoNeutral);
-	//
-    //     // SPH neutrals
-	//
-	// 	nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
-	//
-	// 	// SPH neutrals
-	//
-	// 	NeutralDistr3D1(neutralPop, rhoNeutral);
-	// 	NeutralDistr3D1Vector(neutralPop,bulkV,rhoNeutral);
-	// 	nuObjectSetDens(rhoNeutral,rhoObj,obj,mpiInfoNeut);
-	//
-	// 	//gAddTo(bulkV,gradBulkV); // Correct from transport term
-	//
-	// 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-	// 	gHaloOp(setSlice, bulkV, mpiInfoNeut, TOHALO);
-	// 	nuGBndVel(bulkV,mpiInfoNeut);
-	// 	nuGBndVel(rhoNeutral,mpiInfoNeut);
-	//
-	// 	//gZero(P);
-    //     nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
-	// 	//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
-	// 	//gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
-	// 	neInternalEnergySolve(IE,P,bulkV,rhoNeutral,gradBulkV,neutralPop);
-	// 	//gHaloOp(addSlice, IE, mpiInfoNeut, FROMHALO);
-	// 	//gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
-	// 	nuGBndVel(IE,mpiInfoNeut);
-	// 	nuGBndVel(P,mpiInfoNeut);
-	//
-	//
-	// 	// Compute pressure gradient SPH neutrals
-	// 	//gZero(P);
-	// 	gFinDiff1st(P, Pgrad);
-	// 	//gHaloOp(setSlice, Pgrad, mpiInfoNeut, TOHALO);
-	// 	gMul(Pgrad, -1);
-	// 	//gZero(Pgrad);
-	// 	nuGBndVel(Pgrad,mpiInfoNeut);
-	//
-	//
-	// 	//neAddPressure(bulkV,Pgrad,rhoNeutral,neutralPop );
-	// 	//exit(0);
-	//
-	//
-	// 	//gZero(bulkV);
-	// 	//gAdd(bulkV, 0.1);
-	//     neAcc3D1(neutralPop,Pgrad,gradBulkV,rhoNeutral); // SPH neutrals
-	//
-	//
-	//
-	//
-	//
-	// 	tStop(t);
-	//
-	//
-	// 	// Example of writing another dataset to history.xy.h5
-	// 	// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-
-		if(n%100 == 0 || n>1500){//50614
+		if(n%100 == 0 || n>2900){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

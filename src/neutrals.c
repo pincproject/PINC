@@ -802,6 +802,31 @@ void neVelMaxwell(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *
 	free(velThermal);
 }
 
+void neVelDrift(const dictionary *ini, NeutralPopulation *pop){
+
+	//test function. takes only two species
+	int nDims = pop->nDims;
+	int nSpecies = pop->nSpeciesNeutral;
+	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+
+	//double timeStep = iniGetDouble(ini,"time:timeStep");
+	//double stepSize = iniGetDouble(ini,"grid:stepSize");
+
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+			for(int d=0;d<nDims;d++){
+				pop->vel[i*nDims+d] = velDrift[d];
+			}
+		}
+	}
+
+}
+
 void nePurgeGhost(NeutralPopulation *pop, const Grid *grid){
 
 	//this will delete all particles reciding on Dirichlet boundarys
@@ -1913,7 +1938,7 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 		//printf("\n \n");
 		for(int g = start; g < end; g++){
 			//IEVal[g] += 0.5*((rhoVal[g])/(mass[0]))*sqrt(bulkVVal[f]*bulkVVal[f]);
-			IEVal[g] = 0.5*( 30*(rhoVal[g]/rho0))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
+			IEVal[g] = 0.5*( (rhoVal[g]/rho0))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
 
 			//exit(0);
 			//printf("Using index s = %li, f = %li \n",s,f);
@@ -1937,49 +1962,49 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 	}
 	//exit(0);
 }
-
-void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo){
-
-	gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
-	gZero(P);
-	//gZero(rhoNeutral);
-
-    int *nGhostLayers = rhoNeutral->nGhostLayers;
-	int *trueSize=rhoNeutral->trueSize;
-	long int *sizeProd =  rhoNeutral->sizeProd;
-	double stiffC = pop->stiffnessConstant;
-	double rho0 = pop->rho0;
-	//Seperate values
-	double *PVal = P->val;
-	double *rhoVal = rhoNeutral->val;
-	double val = 0;
-
-    //aiPrint(nGhostLayers,8);
-	int index = 0;
-	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
-	for(int k=0;k<trueSize[3]+nGhostLayers[7];k++){
-		for(int j=0;j<trueSize[2]+nGhostLayers[6];j++){
-			for(int i=0;i<trueSize[1]+nGhostLayers[5];i++){
-				index = i+j*sizeProd[2]+k*sizeProd[3];
-				val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
-				PVal[index] = val;
-				//if (val >1000){
-				//printf("PVal[index] = %f, rhoval = %f \n",PVal[index],rhoVal[index]);
-				//}
-				//printf(" %f \n",rhoVal[index]);
-				//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
-			}
-
-		}
-	}
-	//for(int i=0;i<sizeProd[4];i++){
-	//	PVal[i] = stiffC*(pow( (rhoVal[i]/rho0),7) - 1);
-	//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
-	//printf("PVal = %f \n",PVal[i] );
-	//}
-	//gHaloOp(setSlice, P, mpiInfo, TOHALO);
-	//nuGBnd(P, mpiInfo);
-}
+//
+// void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo){
+//
+// 	gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
+// 	gZero(P);
+// 	//gZero(rhoNeutral);
+//
+//     int *nGhostLayers = rhoNeutral->nGhostLayers;
+// 	int *trueSize=rhoNeutral->trueSize;
+// 	long int *sizeProd =  rhoNeutral->sizeProd;
+// 	double stiffC = pop->stiffnessConstant;
+// 	double rho0 = pop->rho0;
+// 	//Seperate values
+// 	double *PVal = P->val;
+// 	double *rhoVal = rhoNeutral->val;
+// 	double val = 0;
+//
+//     //aiPrint(nGhostLayers,8);
+// 	int index = 0;
+// 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
+// 	for(int k=0;k<trueSize[3]+nGhostLayers[7];k++){
+// 		for(int j=0;j<trueSize[2]+nGhostLayers[6];j++){
+// 			for(int i=0;i<trueSize[1]+nGhostLayers[5];i++){
+// 				index = i+j*sizeProd[2]+k*sizeProd[3];
+// 				val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
+// 				PVal[index] = val;
+// 				//if (val >1000){
+// 				//printf("PVal[index] = %f, rhoval = %f \n",PVal[index],rhoVal[index]);
+// 				//}
+// 				//printf(" %f \n",rhoVal[index]);
+// 				//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+// 			}
+//
+// 		}
+// 	}
+// 	//for(int i=0;i<sizeProd[4];i++){
+// 	//	PVal[i] = stiffC*(pow( (rhoVal[i]/rho0),7) - 1);
+// 	//printf("index = %li, sizeprod = %li \n",index,sizeProd[4]);
+// 	//printf("PVal = %f \n",PVal[i] );
+// 	//}
+// 	//gHaloOp(setSlice, P, mpiInfo, TOHALO);
+// 	//nuGBnd(P, mpiInfo);
+// }
 
 void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo){
 
@@ -1990,6 +2015,7 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
 	double *mass = pop->mass;
     int *nGhostLayers = P->nGhostLayers;
 	int *trueSize=P->trueSize;
+	int *size=P->size;
 	long int *sizeProd =  P->sizeProd;
 	double stiffC = pop->stiffnessConstant;
 	double rho0 = pop->rho0;
@@ -2003,9 +2029,9 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
     //aiPrint(nGhostLayers,8);
 	int index = 0;
 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
-	for(int k=nGhostLayers[1];k<trueSize[3]+nGhostLayers[7];k++){
-		for(int j=nGhostLayers[2];j<trueSize[2]+nGhostLayers[6];j++){
-			for(int i=nGhostLayers[3];i<trueSize[1]+nGhostLayers[5];i++){
+	for(int k=0;k<size[3];k++){
+		for(int j=0;j<size[2];j++){
+			for(int i=0;i<size[1];i++){
 				index = i+j*sizeProd[2]+k*sizeProd[3];
 				//val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
 				//printf("rhoVal[index] = %f \n",rhoVal[index]);
@@ -2014,7 +2040,7 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
 					PVal[index] = 0;//(gamma-1)*rhoVal[index]*mass[0]*IEVal[index];
 				}
 				if(rhoVal[index]!=0){
-					PVal[index] = (gamma-1)*(rhoVal[index]/rho0)*mass[0]*IEVal[index]; //should be multiplied by massss for several species
+					PVal[index] = (gamma-1)*(rhoVal[index])*mass[0]*IEVal[index]; //should be multiplied by massss for several species
 				}
 				//if (val >1000){
 				//printf("PVal[%i] = %f, IEVal[%i] = %f \n",PVal[index],IEVal[index]);
@@ -2564,7 +2590,7 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 				for(int s = 0; s < nSliceMax; s++){
 					//for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
 
-						bndSlice[s + (nSliceMax * d)] = 0.5*30*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
+						bndSlice[s + (nSliceMax * d)] = 0.5*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
 
 					//}
 				}

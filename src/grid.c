@@ -146,6 +146,40 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
 }
 
+
+
+// test
+
+
+static const double *addSliceInnerAvg(const double *nextGhost, double **valp, const long int *mul,
+	const int *points, const long int finalMul){
+
+		if(*mul==finalMul){
+			for(int j=0;j<*mul;j++) *((*valp)) = (*((*valp)++) + *(nextGhost++))/2.;
+			*valp += (*mul)*(*points-1);
+		} else {
+			for(int j=0; j<*points;j++)
+				nextGhost = addSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+		}
+		return nextGhost;
+
+}
+
+void addSliceAvg(const double *slice, Grid *grid, int d, int offset){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	long int *sizeProd = grid->sizeProd;
+
+	double *val = grid->val;
+
+	val += offset*sizeProd[d];
+	addSliceInner(slice, &val, &sizeProd[rank-1], &size[rank-1], sizeProd[d]);
+}
+
+//test end
+
+
 static int *getSubdomain(const dictionary *ini){
 
 	// Get MPI info

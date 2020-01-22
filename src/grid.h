@@ -272,6 +272,8 @@ void setSlice(const double *slice, Grid *grid, int d, int offset);
  */
 void addSlice(const double *slice, Grid *grid, int d, int offset);
 
+void addSliceAvg(const double *slice, Grid *grid, int d, int offset);
+
 
 /**
  * @brief Set all values in grid to zero

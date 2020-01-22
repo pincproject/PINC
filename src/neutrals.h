@@ -86,6 +86,8 @@ void nePurgeGhost(NeutralPopulation *pop, const Grid *grid);
 
 void neVelMaxwell(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *rng);
 
+void neVelDrift(const dictionary *ini, NeutralPopulation *pop);
+
 void nePosLattice(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo);
 
 void nePosUniform(const dictionary *ini, NeutralPopulation *pop, const MpiInfo *mpiInfo, const gsl_rng *rng);

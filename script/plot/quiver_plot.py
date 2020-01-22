@@ -8,9 +8,9 @@ file_name = "V"#"gradBulkV"
 xSize = 32
 ySize = 32
 
-plane = 'XZ' 
+plane = 'XY' 
 
-timestep = 1 #200
+timestep = 1000 #200
 
 h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
