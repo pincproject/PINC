@@ -747,6 +747,7 @@ void gFree(Grid *grid){
 	free(grid->val);
 	free(grid->sendSlice);
 	free(grid->recvSlice);
+	free(grid->bndSlice);
 	free(grid->bnd);
 	//free(grid->bndSolution);
 	free(grid);

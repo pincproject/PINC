@@ -151,8 +151,8 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     obj->lookupInteriorOffset = lookupInteriorOffset;
 
     free(index);
-    free(lookupInterior);
-    free(lookupInteriorOffset);
+
+
 
 }
 
@@ -529,7 +529,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     }
     //printf("lookup surface done \n");
     // Add to object.
-    alPrint(lookupSurfaceOffset, obj->nObjects + 1);
+    //alPrint(lookupSurfaceOffset, obj->nObjects + 1);
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
 
@@ -661,9 +661,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
-
-
-
+    alPrint(lookupIntOff, obj->nObjects+1);
+    alPrint(obj->lookupInterior, lookupIntOff[obj->nObjects+1]);
 
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
@@ -714,6 +713,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
             // Check whether p is one of the object nodes and collect the charge if so.
             for (long int a=0; a<obj->nObjects; a++) {
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+                    //if(s==0 && i == 0) msg(STATUS,"Interior node: %li", obj->lookupInterior[b]);
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
                         //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
@@ -806,7 +806,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
 
     for (long int a=0; a<nObj; a++) {
 
-        long int nodesThisCore = exposedOff[a+1] - exposedOff[a];
+        long int nodesThisCore = obj->lookupSurfaceOffset[a+1] - obj->lookupSurfaceOffset[a];
 
         // Let every core know how many exposed surface nodes everybody has.
         MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
@@ -818,9 +818,9 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
         for (long int b=0; b<size+1; b++) nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
     }
 
-    double *invNrExposNod = malloc(nObj*sizeof(*invNrExposNod));
+    double *invNrSurfNod = malloc(nObj*sizeof(*invNrSurfNod));
     for (long int a=0; a<nObj; a++) {
-        invNrExposNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
+        invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
     }
 
 
@@ -837,11 +837,11 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
     // Add the collected charge to the exposed nodes on rhoObject.
     for (long int a=0; a<nObj; a++) {
         for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
-            val[obj->exposedNodes[b]] += chargeCounter[a] * invNrExposNod[a];
+            val[obj->exposedNodes[b]] += chargeCounter[a] * invNrSurfNod[a];
         }
     }
 
-    free(invNrExposNod);
+    free(invNrSurfNod);
     free(chargeCounter);
     free(nodCorLoc);
     free(nodCorGlob);
@@ -976,6 +976,8 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
             }
         }
     }
+   
+    alPrint(exposedNodes, exposedNodesOffset[1]);
 
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;

@@ -1023,7 +1023,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 		//avgEnergy[a] /= units->energy;
 		avgVel[a] = -1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//pop->mass[specie]); //TODO: make direction independent
 		avgVel[a] /= units->velocity;
-		//avgVel[a] *= 0.1; //EXPERIMENT!
+		//avgVel[a] *= 0.8; //EXPERIMENT!
 		msg(STATUS, "Average photoelectron velocity: %f", avgVel[a]);
 	}
 
@@ -1034,7 +1034,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 		//flux[a] /= emissionVolume;
 		//flux[a] /= units->density;
 		flux[a] /= units->weights[specie];
-		flux[a] /= exposedOff[a+1];
+		flux[a] /= (exposedOff[a+1] - exposedOff[a]);
 		flux[a] = floor(flux[a]);
 	}
 
@@ -1044,7 +1044,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 	double *vel = malloc(pop->nDims * sizeof(*vel));
 	adSetAll(pos, pop->nDims, 0.0);
 	adSetAll(vel, pop->nDims, 0.0);
-	pToGlobalFrame(pop, mpiInfo);
+	//pToGlobalFrame(pop, mpiInfo);
 
 	for(int a=0; a < nObj; a++){
 		
@@ -1058,10 +1058,13 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 			//adPrint(pos, 3);
 
 			for(long int j=0; j<(long)flux[a]; j++){
-				vel[0] = avgVel[a]; //+ gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])); //
+				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])); //
 				//if(j ==0  && i==0) msg(STATUS, "first photoelectron velocity: %f", vel[0]);
+				if(i == 0 && j == 0) adPrint(pos,3);
 				pos[0] += vel[0];
-				//if(j < 3) adPrint(pos,3);
+				pos[1] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
+				pos[2] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
+				if(i == 0 && j == 0) adPrint(pos,3);
 				pNew(pop, specie, pos, vel);
 				hit += 1;
 			}
@@ -1071,7 +1074,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 
 	}
 
-	pToLocalFrame(pop, mpiInfo);
+	//pToLocalFrame(pop, mpiInfo);
 
 	free(flux);
 	free(bandEnergy);
