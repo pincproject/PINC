@@ -661,9 +661,6 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
-    alPrint(lookupIntOff, obj->nObjects+1);
-    alPrint(obj->lookupInterior, lookupIntOff[obj->nObjects+1]);
-
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
@@ -756,8 +753,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
 }
 
-void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
-                                const MpiInfo *mpiInfo, const Units *units){
+void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
+                                Object *obj, const MpiInfo *mpiInfo, const Units *units){
     
     //int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -768,13 +765,19 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
     double *charge = pop->charge;
 
     int nObj = obj->nObjects;
+    long int *lookupInt = obj->lookupInterior;
+    long int *lookupIntOff = obj->lookupInteriorOffset;
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
     
     double *area = malloc(sizeof(obj->conductingSurface));
     double *flux = malloc(sizeof(obj->radiance));
+    double *bandEnergy = malloc(sizeof(obj->bandEnergy));
+
+    memcpy(bandEnergy, obj->bandEnergy, sizeof(obj->bandEnergy));
     memcpy(area, obj->conductingSurface, sizeof(obj->conductingSurface));
     memcpy(flux, obj->radiance, sizeof(obj->radiance));
+	double *workFunc = obj->workFunction;
 
 
     //find electron
@@ -785,13 +788,23 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
 	nSpecie = (charge[0] < 0.) ? 0 : 1;
     pSpecie = (nSpecie == 0) ? 1 : 0;
 
+    //average energy in total photoelectron flux
+	double *stoppingPot = malloc(nObj * sizeof(*stoppingPot));
+	double *objPot = malloc(nObj * sizeof(*objPot));
+ 
+	//check if photoelectron can escape object potential
+	for(int a=0; a<nObj; a++){
+		stoppingPot[a] = ((bandEnergy[a] / flux[a]) - workFunc[a]) / 1.60217662e-19;
+        stoppingPot[a] /= units->potential;
+		objPot[a] = phi->val[lookupInt[lookupIntOff[a]]];
+
+		if(objPot[a] >= stoppingPot[a]){
+			return;
+		}
+	}
+
 	//scale flux to be per cell 
 	for(size_t a = 0; a<nObj; a++){
-		
-		//area[a] /= units->hyperArea;
-		//double emissionVolume = area[a] * units->length;
-		//flux[a] /= emissionVolume;
-		//flux[a] /= units->density;
 		flux[a] /= units->weights[nSpecie];
         flux[a] /= exposedOff[a+1];
         flux[a] = floor(flux[a]);
@@ -823,13 +836,6 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
         invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
     }
 
-
-    // for (long int a=0; a<nObj; a++) {
-    //     for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
-    //         chargeCounter[a] += flux[a] * charge[pSpecie]; //electron leaving causes positive charge on object
-    //     }
-    // }
-
     memcpy(chargeCounter, flux, sizeof(flux));
 
     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -839,8 +845,12 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
         for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
             val[obj->exposedNodes[b]] += chargeCounter[a] * invNrSurfNod[a];
         }
+        msg(STATUS, "added %f charges to rhoObj", chargeCounter[a]);
     }
 
+    free(bandEnergy);
+    free(objPot);
+    free(stoppingPot);
     free(invNrSurfNod);
     free(chargeCounter);
     free(nodCorLoc);
@@ -977,7 +987,6 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
         }
     }
    
-    alPrint(exposedNodes, exposedNodesOffset[1]);
 
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
@@ -999,7 +1008,6 @@ void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *m
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
     alSetAll(exposedNodesOffset, obj->nObjects+1,0);
     //alCopy(surfOff, exposedNodesOffset, nObjects + 1);
-    alPrint(sizeProd, obj->domain->rank+1);
 
     //alSetAll(exposedNodes, exposedNodesOffset[nObjects], 0);
     

@@ -986,34 +986,52 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 
 }
 
-void pPhotoElectrons(Population *pop, Object *obj, const Units *units, 
-					const gsl_rng *rng, const MpiInfo *mpiInfo){
+void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
+ 					const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
 	
 	//object variables
 	int nObj = obj->nObjects;
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
+	long int *lookupInt = obj->lookupInterior;
+	long int *lookupIntOff = obj->lookupInteriorOffset;
 	double *flux = malloc(sizeof(obj->radiance));
 	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
 	double *area = malloc(sizeof(obj->conductingSurface));
 	memcpy(flux, obj->radiance, sizeof(obj->radiance));
 	memcpy(bandEnergy, obj->bandEnergy, sizeof(obj->bandEnergy));
 	memcpy(area, obj->conductingSurface, sizeof(obj->conductingSurface));
-
 	double *workFunc = obj->workFunction;
 
-	//mpi variables
-    //int rank = mpiInfo->mpiRank;
-    //int size = mpiInfo->mpiSize;
+	int nSpecie = 0;
+	int pSpecie = 0;
 
-	//average energy and velocity of emitted photoelectrons
+	nSpecie = (pop->charge[0] < 0.) ? 0 : 1;
+	pSpecie = (nSpecie == 0) ? 1 : 0;
+
+	//average energy in total photoelectron flux
+	double *stoppingPot = malloc(nObj * sizeof(*stoppingPot));
+	double *objPot = malloc(nObj * sizeof(*objPot));
+ 
+	//check if photoelectron can escape object potential
+	for(int a=0; a<nObj; a++){
+		stoppingPot[a] = ((bandEnergy[a] / flux[a]) - workFunc[a]) / 1.60217662e-19;
+		msg(STATUS, "Stopping potential: %.2f Volts", stoppingPot[a]);
+		stoppingPot[a] /= units->potential;
+		objPot[a] = phi->val[lookupInt[lookupIntOff[a]]];
+		msg(STATUS, "stopping potential: %f", stoppingPot[a]);
+		msg(STATUS, "object potential: %f", objPot[a]);
+
+		if(objPot[a] >= stoppingPot[a]){
+			return;
+		}
+	}
+
+
+
+	//average energy and velocity of emitted superparticle
 	double avgEnergy[nObj];
 	double avgVel[nObj];
-
-
-	int specie = 0;
-	specie = (pop->charge[0] < 0.) ? 0 : 1;
-
 
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
@@ -1029,11 +1047,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 
 	//scale flux to be per in terms of weights 
 	for(size_t a = 0; a<nObj; a++){
-		//area[a] /= units->hyperArea;
-		//double emissionVolume = area[a] * units->length;
-		//flux[a] /= emissionVolume;
-		//flux[a] /= units->density;
-		flux[a] /= units->weights[specie];
+		flux[a] /= units->weights[nSpecie];
 		flux[a] /= (exposedOff[a+1] - exposedOff[a]);
 		flux[a] = floor(flux[a]);
 	}
@@ -1065,7 +1079,7 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 				pos[1] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
 				pos[2] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
 				if(i == 0 && j == 0) adPrint(pos,3);
-				pNew(pop, specie, pos, vel);
+				pNew(pop, nSpecie, pos, vel);
 				hit += 1;
 			}
 		}
@@ -1076,6 +1090,8 @@ void pPhotoElectrons(Population *pop, Object *obj, const Units *units,
 
 	//pToLocalFrame(pop, mpiInfo);
 
+	free(stoppingPot);
+	free(objPot);
 	free(flux);
 	free(bandEnergy);
 	free(area);

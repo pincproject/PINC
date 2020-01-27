@@ -278,8 +278,8 @@ void pVicinityParticles(Population *pop, const Object *obj);
 /*
 emits photoELectrons from object surface every timestep
 */
-void pPhotoElectrons(Population *pop, Object *obj, const Units *units, 
-                     const gsl_rng *rng, const MpiInfo *mpiInfo);
+void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
+                     const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo);
 
 /*
 Find Collision type is called during puMove; returns

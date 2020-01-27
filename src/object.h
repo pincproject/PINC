@@ -147,8 +147,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
                           const MpiInfo *mpiInfo);
 
 
-void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Object *obj,
-                                const MpiInfo *MpiInfo, const Units *units);
+void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
+                                Object *obj, const MpiInfo *MpiInfo, const Units *units);
 
 /**
  * TO IMPLEMENT!
