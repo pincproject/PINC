@@ -15,7 +15,7 @@ file_name = "rhoNeutral" #"P"
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 100 #4950#50713#45715 # Must exist in dataset
+start = 1000 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -24,7 +24,7 @@ interval = 0.1#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 0.1 #(1 = all of negative values)
+restr_min = 0.05 #(1 = all of negative values)
 
 cmap = 'jet'
 plane = 'XY' # XY, XZ, YZ

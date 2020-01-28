@@ -8,9 +8,9 @@ file_name = "V"#"gradBulkV"
 xSize = 32
 ySize = 32
 
-plane = 'XY' 
+plane = 'XZ' 
 
-timestep = 1000 #200
+timestep = 19990 #200
 
 h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
@@ -26,13 +26,13 @@ data = np.squeeze(dataset)
 #print(" ")
 
 data = np.transpose(data)
-print(data.shape)
+print(data[:,int(len (data[0,0,:]) /2),:,:].shape)
 if (plane == 'XY'):
-	data = np.transpose((data[:,int(len (data[0,0,:]) /2)-1,:,:] )) #*denorm #int(len(data[0,0,:])/2)
+	data = np.transpose((data[:,int(len (data[0,0,:]) /2),:,:] )) #*denorm #int(len(data[0,0,:])/2)
 if (plane == 'YZ'):
-	data = np.transpose((  data[:,:,:,int(len(data[0,0,:])/2)-1]   )) #*denorm #int(len(data[0,0,:])/2)
+	data = np.transpose((  data[:,:,:,int(len(data[0,0,:])/2)]   )) #*denorm #int(len(data[0,0,:])/2)
 if (plane == 'XZ'):
-	data = np.transpose((data[:,:,int(len(data[0,0,:])/2)-1,:])) #*denorm #int(len(data[0,0,:])/2)
+	data = np.transpose((data[:,:,int(len(data[0,0,:])/2),:])) #*denorm #int(len(data[0,0,:])/2)
 
 #data = np.transpose(np.average(data,axis=2))*denorm 
 #print(data[0,0])
@@ -54,12 +54,12 @@ V = np.zeros(x_shape)
 
 
 DATA = np.squeeze(DATA)/vMax
-#print(DATA.shape)
+print(DATA.shape)
 
-if (plane == 'YZ'):
+if (plane == 'XY'):
 	U = DATA[:,:,1]
 	V = DATA[:,:,2]
-if (plane == 'XY'):
+if (plane == 'YZ'):
 	U = DATA[:,:,0]
 	V = DATA[:,:,1]
 if (plane == 'XZ'):

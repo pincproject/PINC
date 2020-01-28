@@ -182,28 +182,28 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 	double localDens = 0;
 
 	// Integer parts of position
-	int j = (int) xIn;
-	int k = (int) yIn;
-	int l = (int) zIn;
+	int j = (int) (xIn);
+	int k = (int) (yIn);
+	int l = (int) (zIn);
 
 	// Decimal (cell-referenced) parts of position and their complement
-	double x = xIn-j;
-	double y = yIn-k;
-	double z = zIn-l;
-	double xcomp = 1-x;
-	double ycomp = 1-y;
-	double zcomp = 1-z;
+	// double x = xIn-j;
+	// double y = yIn-k;
+	// double z = zIn-l;
+	// double xcomp = 1-x;
+	// double ycomp = 1-y;
+	// double zcomp = 1-z;
 
 	//printf("")
 	// Index of neighbouring nodes
-	long int p 		= j + k*sizeProd[2] + l*sizeProd[3];
-	long int pj 	= p + 1; //sizeProd[1];
-	long int pk 	= p + sizeProd[2];
-	long int pjk 	= pk + 1; //sizeProd[1];
-	long int pl 	= p + sizeProd[3];
-	long int pjl 	= pl + 1; //sizeProd[1];
-	long int pkl 	= pl + sizeProd[2];
-	long int pjkl 	= pkl + 1; //sizeProd[1];
+	long int p 		= j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+	// long int pj 	= p + 1; //sizeProd[1];
+	// long int pk 	= p + sizeProd[2];
+	// long int pjk 	= pk + 1; //sizeProd[1];
+	// long int pl 	= p + sizeProd[3];
+	// long int pjl 	= pl + 1; //sizeProd[1];
+	// long int pkl 	= pl + sizeProd[2];
+	// long int pjkl 	= pkl + 1; //sizeProd[1];
 
 
 	// if(p>=sizeProd[4]){
@@ -214,7 +214,7 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 	//printf("val[p] = %f\n",val[p]);
 	//MPI_Barrier(MPI_COMM_WORLD);
 
-	localDens += val[p];
+	localDens = val[p];
 	// localDens += 0.125*val[pj];
 	// localDens += 0.125*val[pk];
 	// localDens += 0.125*val[pjk];
@@ -276,7 +276,7 @@ double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, d
 		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //yes, gaussian in 3 dim
 		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); // is maxwellian
 
-		NewVelocity = sqrt((vel[i*nDims]-vxMW)*(vel[i*nDims]*vxMW)+(vel[i*nDims+1]-vyMW)\
+		NewVelocity = sqrt((vel[i*nDims]-vxMW)*(vel[i*nDims]-vxMW)+(vel[i*nDims+1]-vyMW)\
 			*(vel[i*nDims+1]-vyMW)+(vel[i*nDims+2]-vzMW)*(vel[i*nDims+2]-vzMW));
 		if(NewVelocity>MaxVelocity){
 			MaxVelocity=NewVelocity;
@@ -933,7 +933,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 		y = pos[q+1];
 		z = pos[q+2];
 		nt = mccGetLocalDens(x,y,z,rhoNeutral);
-		//printf("local dens = %f \n",nt);
+
 		//transfer to neutral stationary frame
 		double vxTran = vel[q]-vxMW;
 		double vyTran = vel[q+1]-vyMW;
@@ -2101,9 +2101,6 @@ void oCollMode(dictionary *ini){
 	neSetI(IE,V,rhoNeutral,neutralPop,ini);
 	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
-	double multiplyIEBy = 2.;
-	int sliceDim = 0;
 
 	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
 	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
@@ -2130,29 +2127,35 @@ void oCollMode(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 
+		tStart(t);
+
+		msg(STATUS,"Computing time-step %i",n);
+		msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
+
+		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 
 		//-----------------------------------
 		//- NEUTRALS
 		//-----------------------------------
 
+
+		neVelAssertMax(neutralPop,maxVel);
 		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
 		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
 		neApplyObjI(obj, P,neutralPop );
 		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
 
-
-
 		neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
 		gHaloOp(setSlice, Vtilde, mpiInfoNeut, TOHALO);
-
 
 		neAdvectI(IE,Itilde,P,V,rhoNeutral,neutralPop);
 		gHaloOp(setSlice, Itilde, mpiInfoNeut, TOHALO);
 
+		//neApplyObjVel(obj,V,neutralPop);
 		neMove(neutralPop,V,Vtilde);
-		nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
-
+		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
 		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
 		neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
@@ -2161,10 +2164,10 @@ void oCollMode(dictionary *ini){
 		neConvectKE(dKE,Vtilde,rhoNeutral, neutralPop);
 		gHaloOp(setSlice, dKE, mpiInfoNeut, TOHALO);
 
-
 		neConvectV(V,Vtilde,rhoNeutral,neutralPop );
-		nuGBndVel(V,mpiInfoNeut);
 		gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+
+		nuGBndVel(V,mpiInfoNeut);
 
 		nePurgeGhost(neutralPop, rhoNeutral);
 		neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
@@ -2175,8 +2178,8 @@ void oCollMode(dictionary *ini){
 
 		neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 		nuGBnd(IE,mpiInfoNeut);
-
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
+
 		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
 		neApplyObjI(obj, IE,neutralPop );
 
@@ -2187,16 +2190,11 @@ void oCollMode(dictionary *ini){
 		//-----------------------------------
 
 
-		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
-
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
 
 
-		tStart(t);
+		//tStart(t);
 
 		// Move particles
 		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
@@ -2295,7 +2293,7 @@ void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>29900){//50614
+		if(n%1000 == 0 || n>29950){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2603,9 +2601,9 @@ void neutTest(dictionary *ini){
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
 	double multiplyIEBy = 4.;
 	int sliceDim = 0;
-	neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
-	neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
-	neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
+	// neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
+	// neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
+	// neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
 	//gCopy(IE, Itilde);
 	//nuGBndVel(I,mpiInfoNeut);
 
@@ -2727,7 +2725,7 @@ void neutTest(dictionary *ini){
 
 		//neApplyObjVel(obj,V,neutralPop);
 		neMove(neutralPop,V,Vtilde);
-		nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
 		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
@@ -2775,7 +2773,7 @@ void neutTest(dictionary *ini){
 
 
 
-		if(n%100 == 0 || n>2900){//50614
+		if(n%100 == 0 || n>4900){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

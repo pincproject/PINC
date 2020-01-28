@@ -52,7 +52,7 @@ void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
 
@@ -83,9 +83,9 @@ void gDirichletEnerg(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
 
@@ -1938,7 +1938,7 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 		//printf("\n \n");
 		for(int g = start; g < end; g++){
 			//IEVal[g] += 0.5*((rhoVal[g])/(mass[0]))*sqrt(bulkVVal[f]*bulkVVal[f]);
-			IEVal[g] = 0.5*( (rhoVal[g]/rho0))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
+			IEVal[g] = 0.5*( (rhoVal[g]))*velTherm[0]*velTherm[0];//(bulkVVal[f+ (d-1)])*(bulkVVal[f+ (d-1)]);//0.01*(((mass[0]*rhoVal[g]/rho0)))*bulkVVal[f]*bulkVVal[f];
 
 			//exit(0);
 			//printf("Using index s = %li, f = %li \n",s,f);
@@ -2015,7 +2015,6 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
 	double *mass = pop->mass;
     int *nGhostLayers = P->nGhostLayers;
 	int *trueSize=P->trueSize;
-	int *size=P->size;
 	long int *sizeProd =  P->sizeProd;
 	double stiffC = pop->stiffnessConstant;
 	double rho0 = pop->rho0;
@@ -2029,9 +2028,9 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
     //aiPrint(nGhostLayers,8);
 	int index = 0;
 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
-	for(int k=0;k<size[3];k++){
-		for(int j=0;j<size[2];j++){
-			for(int i=0;i<size[1];i++){
+	for(int k=nGhostLayers[1];k<trueSize[3]+nGhostLayers[7];k++){
+		for(int j=nGhostLayers[2];j<trueSize[2]+nGhostLayers[6];j++){
+			for(int i=nGhostLayers[3];i<trueSize[1]+nGhostLayers[5];i++){
 				index = i+j*sizeProd[2]+k*sizeProd[3];
 				//val = stiffC*(pow( (rhoVal[index]/rho0),7) - 1); //rho0
 				//printf("rhoVal[index] = %f \n",rhoVal[index]);
@@ -2040,7 +2039,7 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
 					PVal[index] = 0;//(gamma-1)*rhoVal[index]*mass[0]*IEVal[index];
 				}
 				if(rhoVal[index]!=0){
-					PVal[index] = (gamma-1)*(rhoVal[index])*mass[0]*IEVal[index]; //should be multiplied by massss for several species
+					PVal[index] = (gamma-1)*(rhoVal[index]/rho0)*mass[0]*IEVal[index]; //should be multiplied by massss for several species
 				}
 				//if (val >1000){
 				//printf("PVal[%i] = %f, IEVal[%i] = %f \n",PVal[index],IEVal[index]);
@@ -2590,7 +2589,7 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 				for(int s = 0; s < nSliceMax; s++){
 					//for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
 
-						bndSlice[s + (nSliceMax * d)] = 0.5*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
+						bndSlice[s + (nSliceMax * d)] = 0.5*(sendSlice[s])*velTherm[0]*velTherm[0];
 
 					//}
 				}
@@ -2619,7 +2618,7 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 					//printf("  sendSlice[s] = %f \n",sendSlice[s] );
 					//bndSlice[s + (nSliceMax * (d))] = 0;
 					//for(int dd = 0;dd<rank-1;dd++){
-					bndSlice[s + (nSliceMax * (d))] =  0.5*30*(sendSlice[s]/rho0)*velTherm[0]*velTherm[0];
+					bndSlice[s + (nSliceMax * (d))] =  0.5*(sendSlice[s])*velTherm[0]*velTherm[0];
 					//}
 				}
 			}
@@ -2839,7 +2838,7 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 						}
 						if(nextInside==true){
 							if(prevInside==false){
-								val[f] = -1.*val[fPrev];
+								val[f] = -1.*sqrt(val[fPrev]*val[fPrev]);
 								// long int gridpos[3];
 								// long int gridposPrev[3];
 								// long int gridposNext[3];
@@ -2851,7 +2850,7 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 						}
 						if(prevInside==true){
 							if(nextInside==false){
-								val[f] = -1.*val[fNext];
+								val[f] = 1.*sqrt(val[fNext]*val[fNext]);
 
 							}
 						}
