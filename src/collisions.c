@@ -269,10 +269,8 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	// mccVars->mccSigmaElectronElastic = mccSigmaElectronElastic;
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	double *neutralDrift = iniGetDoubleArr(ini, "population:drift", 3*nSpecies);
 	electronMassRatio = mass[0]*units->mass/units->weights[0];
 	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
-	mccVars->neutralDrift = neutralDrift,
 	mccVars->nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	mccVars->NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
 	mccVars->mccSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
@@ -455,7 +453,6 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 	double artificialLoss = mccVars->artificialLoss;
 	double *mass = pop->mass;
-	double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -465,11 +462,9 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	double Ekin, newEkin;
 	double R2 = gsl_rng_uniform_pos(rng);
 	double R3 = gsl_rng_uniform_pos(rng);
-
-	// let colls happen in frame comoving with drift
-	double vx = *vx_point-drift[0];
-	double vy = *vy_point-drift[1];
-	double vz = *vz_point-drift[2];
+	double vx = *vx_point;
+	double vy = *vy_point;
+	double vz = *vz_point;
 	double vx_,vy_,vz_;
 
 	// unit velocities
@@ -532,9 +527,9 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	vy_ *= velchange;
 	vz_ *= velchange;
 
-	*vx_point=vx_+drift[0];
-	*vy_point=vy_+drift[1];
-	*vz_point=vz_+drift[2];
+	*vx_point=vx_;
+	*vy_point=vy_;
+	*vz_point=vz_;
 
 	// unittest
 	double energydiffexpr = Ekin*(((2.0*mass[0])/(artificialLoss*mass[1]))*(1-(cos(angleChi))));
@@ -554,7 +549,6 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 
 
 	double *mass = pop->mass;
-	double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -564,7 +558,6 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double Ekin, newEkin;
 	double velchange;
 
-    // let colls happen in frame comoving with drift
 	double vx = *vx_point;
 	double vy = *vy_point;
 	double vz = *vz_point;
@@ -573,14 +566,6 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vz_=0;
 	double R1 = gsl_rng_uniform_pos(rng);
 	double R2 = gsl_rng_uniform_pos(rng);
-
-
-	//vxMW = vxMW;
-	//vyMW = vyMW;
-	//vzMW = vzMW;
-	//printf("drift = %f, %f, %f \n",drift[3],drift[4],drift[5] );
-	//printf("vxMW = %f, %f, %f \n",vxMW,vyMW,vzMW );
-	//printf("vx = %f, %f, %f \n",vx,vy,vz );
 
 	//The scattering happens in netral rest frame
 	//transfer to neutral stationary frame
@@ -868,7 +853,6 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop,
 		fMsg(ini, "collision",
 		"counted  %i ION collisions on one MPI node, %i as CEX \n"
 		, errorcounter,errorcounter1);
-		//printf("counted  %i Ion collisions on one MPI node \n",  errorcounter);
 	}
 }
 
@@ -1165,7 +1149,6 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	double Pmax = mccVars->pMaxIon;
 	int nDims = pop->nDims;
 	double *vel = pop->vel;
-	double *drift = mccVars->neutralDrift;
 
 	double Rp, Rq;
 	long int q = 0;
@@ -1198,11 +1181,9 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 
 	for(long int i=iStart;i<mccStop;i+=mccStepSize){
 
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[3];
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[4];
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[5];
-
-		//printf("vxMW = %f, %f, %f \n",vxMW,vyMW,vzMW );
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 		Rq = gsl_rng_uniform_pos(rng);
@@ -1235,9 +1216,9 @@ void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	Rq = gsl_rng_uniform_pos(rng);
 	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; //particle q collides
 
-	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[3];
-	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[4];
-	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[5];
+	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 
 	if(Rp < MyCollFreq1/ maxfreqIon){
 		// elastic:
@@ -1417,11 +1398,11 @@ void mccMode(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR, mpiInfo);
-	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR);
+	Grid *E   = gAlloc(ini, VECTOR);
+	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *rho_e = gAlloc(ini, SCALAR);
+	Grid *rho_i = gAlloc(ini, SCALAR);
 	void *solver = solverAlloc(ini, rho, phi);
 
 
@@ -1502,7 +1483,7 @@ void mccMode(dictionary *ini){
 	*/
 
 	// Get initial charge density
-	distr(pop, rho, rho_e, rho_i); //two species
+	distr(pop, rho); //two species
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 	gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
 	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
@@ -1691,373 +1672,5 @@ void mccMode(dictionary *ini){
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
-
-}
-
-
-
-funPtr oCollMode_set(dictionary *ini){
-	return oCollMode;
-}
-
-void oCollMode(dictionary *ini){
-
-	/*
-	 * SELECT METHODS
-	 */
-	void (*acc)()   			= select(ini,	"methods:acc",
-												puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set,
-                        puBoris3D1KETEST_set);
-
-	void (*distr)() 			= select(ini,	"methods:distr",
-												puDistr3D1split_set,
-												puDistr3D1_set,
-												puDistrND1_set,
-												puDistrND0_set);
-
-
-	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
-
-
-	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
-												puExtractEmigrants3D_set,
-												puExtractEmigrantsND_set,
-                        						puExtractEmigrants3DOpen_set);
-
-	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set
-												//sSolver_set
-											);
-
-	void (*solve)() = NULL;
-	void *(*solverAlloc)() = NULL;
-	void (*solverFree)() = NULL;
-	solverInterface(&solve, &solverAlloc, &solverFree);
-
-	/*
-	 * INITIALIZE PINC VARIABLES
-	 */
-	Units *units=uAlloc(ini);
-	uNormalize(ini, units);
-	mccNormalize(ini,units);
-
-	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
-	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
-	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
-    Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
-	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
-	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
-	MccVars *mccVars=mccAlloc(ini,units);
-
-    Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
-//TODO: look into multigrid E,rho,rhoObj
-
-	// Creating a neighbourhood in the rho to handle migrants
-	gCreateNeighborhood(ini, mpiInfo, rho);
-
-  // Setting Boundary slices
-  gSetBndSlices(ini, phi, mpiInfo);
-
-	// Random number seeds
-	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
-	/*
-	 * PREPARE FILES FOR WRITING
-	 */
-
-	pOpenH5(ini, pop, units, "pop");
-	//double denorm = units->potential;
-	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
-	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
-	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
-	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
-	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
-  // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
-  // oReadH5(obj, mpiInfo);
-
-    //msg(STATUS,"opening obj file");
-		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
-		//oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-		//oReadH5(obj->domain, mpiInfo, "Object");
-
-    //msg(STATUS,"done");
-
-
-		//Count the number of objects and fill the lookup tables.
-    //msg(STATUS,"filling lookup table");
-		//oFillLookupTables(obj,mpiInfo);
-
-    //msg(STATUS,"finding surface nodes");
-		// Find all the object nodes which are part of the object surface.
-		//oFindObjectSurfaceNodes(obj, mpiInfo);
-
-
-	hid_t history = xyOpenH5(ini,"history");
-	pCreateEnergyDatasets(history,pop);
-
-	// Add more time series to history if you want
-	// xyCreateDataset(history,"/group/group/dataset");
-
-	/*
-	 * INITIAL CONDITIONS
-	 */
-
-    //Compute capacitance matrix
-    //msg(STATUS, "com cap matrix");
-    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
-
-
-
-
-	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
-	//pPosLattice(ini, pop, mpiInfo);
-	//pVelZero(pop);
-	pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
-
-	//add influx of new particles on boundary
-    pPurgeGhost(pop, rho);
-    pFillGhost(ini,pop,rng,mpiInfo);
-
-	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
-
-	// Migrate those out-of-bounds due to perturbation
-	extractEmigrants(pop, mpiInfo);
-
-	puMigrate(pop, mpiInfo, rho);
-
-
-
-	/*
-	 * INITIALIZATION (E.g. half-step)
-	 */
-
-    // Clean objects from any charge first.
-    gZero(rhoObj);                                          // for capMatrix - objects
-    oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
-    gZero(rhoObj);                                          // for capMatrix - objects
-
-
-	// Get initial charge density
-	distr(pop, rho,rho_e,rho_i);
-	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-	gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
-	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
-    //gWriteH5(rho, mpiInfo, (double) 0);
-
-	// Get initial E-field
-
-  //gBnd(phi, mpiInfo);
-	solve(solver, rho, phi, mpiInfo);
-    //gWriteH5(phi, mpiInfo, (double) 0);
-    //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
-
-	gFinDiff1st(phi, E);
-	gHaloOp(setSlice, E, mpiInfo, TOHALO);
-	gMul(E, -1.);
-
-
-  //Boris parameters
-  int nSpecies = pop->nSpecies;
-	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
-
-  // add External E
-	//gZero(E); // for testing Boris
-	//gAddTo(Ext); //needs grid definition of Eext
-  puAddEext(ini, pop, E); // adds same value to whole grid
-
-  gMul(E, 0.5);
-	puGet3DRotationParameters(ini, T, S, 0.5);
-	acc(pop, E, T, S);
-	gMul(E, 2.0);
-	puGet3DRotationParameters(ini, T, S, 1.0);
-
-	/*
-	 * TIME LOOP
-	 */
-
-	Timer *t = tAlloc(mpiInfo->mpiRank);
-
-	// n should start at 1 since that's the timestep we have after the first
-	// iteration (i.e. when storing H5-files).
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	for(int n = 1; n <= nTimeSteps; n++){
-
-
-		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles %i: ",(pop->iStop[0]- pop->iStart[0]));
-
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
-
-		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,maxVel);
-
-		tStart(t);
-
-		// Move particles
-		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
-		puMove(pop); //puMove(pop, obj); Do not change functions such that PINC does
-    // not work in other run modes!
-
-		// Migrate particles (periodic boundaries)
-		extractEmigrants(pop, mpiInfo);
-		puMigrate(pop, mpiInfo, rho);
-
-      //add influx of new particles on boundary
-      pPurgeGhost(pop, rho);
-      pFillGhost(ini,pop,rng,mpiInfo);
-
-		// Check that no particle resides out-of-bounds (just for debugging)
-		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
-
-        // Collect the charges on the objects.
-        oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
-
-
-		/*
-		*   Collisions
-		*   Changes velocity component of some particles, not position.
-		*/
-		collide(ini, pop, mccVars, rng,mpiInfo);
-
-
-		// Compute charge density
-		distr(pop, rho,rho_e,rho_i);
-		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-		gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
-		gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
-
-
-        // Keep writing Rho here.
-
-
-
-        // Add object charge to rho.
-        gAddTo(rho, rhoObj);
-        //gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
-		//gAssertNeutralGrid(rho, mpiInfo);
-
-        //gBnd(phi, mpiInfo);
-        solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
-
-
-
-
-        // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
-
-
-    //gBnd(phi, mpiInfo);
-		solve(solver, rho, phi, mpiInfo);
-
-		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
-
-		// Compute E-field
-		gFinDiff1st(phi, E);
-		gHaloOp(setSlice, E, mpiInfo, TOHALO);
-		gMul(E, -1.);
-
-		//gAssertNeutralGrid(E, mpiInfo);
-		// Apply external E
-    //gZero(E);
-    //gAddTo(Ext); //needs grid definition of Eext
-    puAddEext(ini, pop, E); // adds same value to whole grid
-
-		// Accelerate particle and compute kinetic energy for step n
-		//acc(pop, E);
-    acc(pop, E, T, S);
-
-		tStop(t);
-
-		// Sum energy for all species
-		pSumKinEnergy(pop);
-
-		// Compute potential energy for step n
-		gPotEnergy(rho,phi,pop);
-
-		// Example of writing another dataset to history.xy.h5
-		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
-
-		if(n%1000 == 0 || n>29900){//50614
-		//Write h5 files
-		//gWriteH5(E, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(rho_e, mpiInfo, (double) n);
-			gWriteH5(rho_i, mpiInfo, (double) n);
-
-			gWriteH5(phi, mpiInfo, (double) n);
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			gWriteH5(rhoObj, mpiInfo, (double) n);
-		}
-
-		pWriteEnergy(history,pop,(double)n,units);
-	}
-
-	if(mpiInfo->mpiRank==0) {
-    tMsg(t->total, "Time spent: ");
-}
-
-	/*
-	 * FINALIZE PINC VARIABLES
-	 */
-	gFreeMpi(mpiInfo);
-
-
-	// Close h5 files
-	pCloseH5(pop);
-	gCloseH5(rho);
-	gCloseH5(rho_e);
-	gCloseH5(rho_i);
-
-	gCloseH5(phi);
-	gCloseH5(E);
-    gCloseH5(rhoObj);       // for capMatrix - objects
-    oCloseH5(obj);          // for capMatrix - objects
-    // 11.10.19 segfault seems to link to oClose(), as calling this
-    // alters the segfault.
-
-	xyCloseH5(history);
-
-  // Free memory
-  // sFree(solver);
-  // mgFreeSolver(solver);
-  solverFree(solver);
-  mccFreeVars(mccVars);
-  gFree(rho);
-  gFree(rho_e);
-  gFree(rho_i);
-  gFree(phi);
-  free(S);
-  free(T)
-
-  gFree(E);
-  pFree(pop);
-  uFree(units);
-    gFree(rhoObj);          // for capMatrix - objects
-    oFree(obj);             // for capMatrix - objects
-
-
-
-
-	gsl_rng_free(rngSync);
-	gsl_rng_free(rng);
-
 
 }

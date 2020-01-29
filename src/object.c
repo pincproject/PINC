@@ -206,8 +206,8 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     void (*solverFree)() = NULL;
     solverInterface(&solve, &solverAlloc, &solverFree);
 
-    Grid *rhoCap = gAlloc(ini, SCALAR,mpiInfo);
-    Grid *phiCap = gAlloc(ini, SCALAR,mpiInfo);
+    Grid *rhoCap = gAlloc(ini, SCALAR);
+    Grid *phiCap = gAlloc(ini, SCALAR);
 
     void *solver = solverAlloc(ini, rhoCap, phiCap, mpiInfo);
     //msg(STATUS,"in oComputeCapacitanceMatrix");
@@ -914,7 +914,7 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
 
     int size = mpiInfo->mpiSize;
     int mpiRank = mpiInfo->mpiRank;
-    Grid *domain = gAlloc(ini, SCALAR,mpiInfo);
+    Grid *domain = gAlloc(ini, SCALAR);
     int rank = domain->rank;
     gZero(domain);
 
@@ -1556,12 +1556,12 @@ void oMode(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
-	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
-	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
-	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
-    Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
-	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *E   = gAlloc(ini, VECTOR);
+	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *rho_e = gAlloc(ini, SCALAR);
+	Grid *rho_i = gAlloc(ini, SCALAR);
+    Grid *rhoObj = gAlloc(ini, SCALAR);     // for capMatrix - objects
+	Grid *phi = gAlloc(ini, SCALAR);
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
     Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects

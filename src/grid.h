@@ -39,7 +39,7 @@ typedef enum{
  * NB! Assumes 1 ghost point on all edges for now.
  */
 
-Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo);
+Grid *gAlloc(const dictionary *ini, int nValues);
 
 /**
  * @brief Frees allocated grid
