@@ -277,7 +277,7 @@ long int alProd(const int *a, long int n){
 }
 
 void adCrossProd(const double *a, const double *b, double *res){
-	
+
 	res[0] +=  (a[1]*b[2]-a[2]*b[1]);
 	res[1] += -(a[0]*b[2]-a[2]*b[0]);
 	res[2] +=  (a[0]*b[1]-a[1]*b[0]);
@@ -302,7 +302,7 @@ int alDotProd(const long int *a, const long int *b, long int n){
 }
 
 void adNormal(const double *a, const double *b, double *res, long int n){
-    
+
 	double length = 1.;
 
     adCrossProd(a, b, res);
@@ -314,7 +314,7 @@ void adNormal(const double *a, const double *b, double *res, long int n){
 
 //w = v - 2(v . n)n where n=norm, v=ray, w=res, surface points a and b (x,y,z) locations
 void adReflect(const double *ray, const double *a, const double *b, double *res){
-    
+
 	double *norm = NULL;
 	adNormal(a,b,norm,3);
     int ray_dot_n = adDotProd(ray,norm,3);

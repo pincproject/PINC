@@ -535,7 +535,7 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral
 	// to determine maximum collision probability
 
 	double NvelThermal = mccVars->NvelThermal;
-	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;
+	double nt = 12.;//mccGetMaxDens(rhoNeutral);//mccVars->nt;
 	double StaticSigmaCEX = mccVars->mccSigmaCEX;
 	double StaticSigmaIonElastic = mccVars->mccSigmaIonElastic;
 	double max_v = mccGetMaxVelTran(pop,0,rng,NvelThermal);
@@ -879,7 +879,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	mccGetPmaxIonStatic(ini,mccVars,rhoNeutral,pop,mpiInfo,rng);
 
 	//printf("pmax = %f\n",mccVars->pMaxIon );
-	double nt = 0;//mccVars->nt;
+	double nt = mccVars->nt;
 	double NvelThermal = mccVars->NvelThermal;
 	double mccSigmaCEX= mccVars->mccSigmaCEX;
 	double mccSigmaIonElastic = mccVars->mccSigmaIonElastic;
@@ -2601,9 +2601,9 @@ void neutTest(dictionary *ini){
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
 	double multiplyIEBy = 4.;
 	int sliceDim = 0;
-	// neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
-	// neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
-	// neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
+	neMultiplySlice(IE,(int)(trueSize[0]/2)-1,sliceDim,multiplyIEBy, neutralPop);
+	neMultiplySlice(IE,(int)(trueSize[0]/2),sliceDim,multiplyIEBy, neutralPop);
+	neMultiplySlice(IE,(int)(trueSize[0]/2)+1,sliceDim,multiplyIEBy, neutralPop);
 	//gCopy(IE, Itilde);
 	//nuGBndVel(I,mpiInfoNeut);
 
@@ -2681,7 +2681,7 @@ void neutTest(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-		printf("\n");
+		//printf("\n");
 		msg(STATUS," Computing time-step %i",n);
         msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 		double gridEnerg = gSumTruegrid(IE);
@@ -2773,7 +2773,7 @@ void neutTest(dictionary *ini){
 
 
 
-		if(n%100 == 0 || n>4900){//50614
+		if(n%10 == 0 || n>4900){//50614
 
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
