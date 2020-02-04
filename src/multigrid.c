@@ -592,6 +592,7 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 	int *nGhostLayers = phi->nGhostLayers;
 
 
+
 	//Seperate values
 	double *phiVal = phi->val;
 	double *rhoVal = rho->val;
@@ -603,9 +604,12 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 	for(int c = 0; c < nCycles; c++){
 		//Black pass
 		//printf("\n doing an odd pass \n");
+
+
 		long int g  = gStart;
 		mgGSNDInner(phiVal, rhoVal, &coeff, &g, &rank, &nGhostLayers[rank-1], &nGhostLayers[2*rank-1],
 			&trueSize[rank-1], &sizeProd[rank-1]);
+
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
@@ -617,7 +621,9 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo){
 			&trueSize[rank-1], &sizeProd[rank-1]);
 
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
+
 		gBnd(phi, mpiInfo);
+
 
 
 	}
@@ -1550,6 +1556,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
 
  	//Solve and return at coarsest level
+
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, TOHALO);
 		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, TOHALO);
@@ -1573,12 +1580,20 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
  	gNeutralizeGrid(rho,mpiInfo);
 
+	//adPrint(rho->val,rho->sizeProd[4]);
+
+
  	//Prepare to go down
+
  	mgRho->preSmooth(phi, rho, nPreSmooth, mpiInfo);
+
  	mgResidual(res, rho, phi, mpiInfo);
  	gHaloOp(setSlice, res, mpiInfo, TOHALO);
 
  	//Go down
+
+
+
  	mgRho->restrictor(res, mgRho->grids[level + 1]);
 
 	//Repeat level + 1

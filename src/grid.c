@@ -374,86 +374,12 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 /******************************************************************************
  *	HALO FUNCTIONS
  *****************************************************************************/
-//
-// void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
-//
-// 	int rank = grid->rank;
-// 	for(int d = 1; d < rank; d++){
-// 		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir);
-// 	}
-//
-// }
-//
-// void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
-//
-//  	//Load MpiInfo
-//  	int mpiRank = mpiInfo->mpiRank;
-//  	int *subdomain = mpiInfo->subdomain;
-//  	int *nSubdomains = mpiInfo->nSubdomains;
-//  	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
-//
-// 	//Load
-// 	int rank = grid->rank;
-// 	int *size = grid->size;
-// 	long int *sizeProd = grid->sizeProd;
-// 	double *sendSlice = grid->sendSlice;
-// 	double *recvSlice = grid->recvSlice;
-//
-// 	// dir=TOHALO=0: take 2nd outermost layer and place it outermost
-// 	// dir=FROMHALO=1: take outermost layer and place it 2nd outermost
-// 	int offsetUpperTake  = size[d]-2+dir;
-// 	int offsetUpperPlace = size[d]-1-dir;
-// 	int offsetLowerTake  =         1-dir;
-// 	int offsetLowerPlace =           dir;
-//
-// 	//Dimension used for subdomains, 1 less entry than grid dimensions
-// 	int dd = d - 1;
-// 	int nSlicePoints = sizeProd[rank]/size[d];
-//
-// 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
-//
-//  	// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
-//
-// 	int upperSubdomain = firstElem
-// 		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
-// 	int lowerSubdomain = firstElem
-// 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
-//
-// 	MPI_Status 	status;
-//
-// 	// TBD: Ommitting this seems to yield race condition between consecutive
-// 	// calls to gHaloOpDim(). I'm not quite sure why so this should be
-// 	// investigated further.
-//
-// 	MPI_Barrier(MPI_COMM_WORLD);
-//
-// 	// Send and recieve upper (tag 1)
-// 	getSlice(sendSlice, grid, d, offsetUpperTake);
-// 	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
-//                  recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
-//                  MPI_COMM_WORLD, &status);
-// 	sliceOp(recvSlice, grid, d, offsetLowerPlace);
-//
-// 	// Send and recieve lower (tag 0)
-// 	getSlice(sendSlice, grid, d, offsetLowerTake);
-// 	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
-//                  recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
-//                  MPI_COMM_WORLD, &status);
-// 	sliceOp(recvSlice, grid, d, offsetUpperPlace);
-//
-// }
-
-
-
-
 
 void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
 
-
 	int rank = grid->rank;
 	for(int d = 1; d < rank; d++){
-		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir); //lower
-		//printf("EXCHANGING \n");
+		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir);
 	}
 
 }
@@ -465,11 +391,7 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
  	int *subdomain = mpiInfo->subdomain;
  	int *nSubdomains = mpiInfo->nSubdomains;
  	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
-	bndType *bnd = grid->bnd;
 
-	//printf("in gHaloOpDimOpen rank = %i \n",mpiRank);
-
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//Load
 	int rank = grid->rank;
 	int *size = grid->size;
@@ -479,14 +401,11 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
 
 	// dir=TOHALO=0: take 2nd outermost layer and place it outermost
 	// dir=FROMHALO=1: take outermost layer and place it 2nd outermost
-	//if (boundary == 1){ //upper
-		int offsetUpperTake  = size[d]-2+dir;
-		int offsetUpperPlace = size[d]-1-dir;
-	//}
-	//if (boundary == 1){ //lower
-		int offsetLowerTake  =         1-dir;
-		int offsetLowerPlace =           dir;
-	//}
+	int offsetUpperTake  = size[d]-2+dir;
+	int offsetUpperPlace = size[d]-1-dir;
+	int offsetLowerTake  =         1-dir;
+	int offsetLowerPlace =           dir;
+
 	//Dimension used for subdomains, 1 less entry than grid dimensions
 	int dd = d - 1;
 	int nSlicePoints = sizeProd[rank]/size[d];
@@ -500,54 +419,140 @@ void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDir
 	int lowerSubdomain = firstElem
 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
 
-  //msg(STATUS,"lowerSubdomain: %i, upperSubdomain: %i",lowerSubdomain,upperSubdomain);
 	MPI_Status 	status;
 
 	// TBD: Ommitting this seems to yield race condition between consecutive
 	// calls to gHaloOpDim(). I'm not quite sure why so this should be
 	// investigated further.
 
-
 	MPI_Barrier(MPI_COMM_WORLD);
+	//msg(STATUS, "In gHaloOp");
 
 	// Send and recieve upper (tag 1)
-	//printf("exchanging slices");
-	//printf("d = %i, bnd[rank+d] = %u, bnd[d] = %u \n",d,bnd[rank+d],bnd[d]);
-	//printf("d = %i, bnd[d] = %u \n",d,bnd[d]);
-
-	if(bnd[rank+d] == PERIODIC){
-		// Send and recieve lower (tag 0)
-
-			//printf("rank = %i, sending on edge %i \n",mpiInfo->mpiRank,d);
-
-		getSlice(sendSlice, grid, d, offsetLowerTake);
-		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
-	                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
-	                 MPI_COMM_WORLD, &status);
-		sliceOp(recvSlice, grid, d, offsetUpperPlace);
-	}else{
-		getSlice(sendSlice, grid, d, offsetLowerTake);
-		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
-	                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
-	                 MPI_COMM_WORLD, &status);//handshake
-	}
-	if(bnd[d] == PERIODIC){
-
-			//printf("rank = %i, sending on edge %i \n",mpiInfo->mpiRank,rank+d);
-
-		getSlice(sendSlice, grid, d, offsetUpperTake);
-		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
+	getSlice(sendSlice, grid, d, offsetUpperTake);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
                  recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
                  MPI_COMM_WORLD, &status);
-	  sliceOp(recvSlice, grid, d, offsetLowerPlace);
-	}else{
-		getSlice(sendSlice, grid, d, offsetUpperTake);
-		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
-                 recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
-                 MPI_COMM_WORLD, &status);//handshake
-	}
-	//printf("in gHaloOpDimOpen rank = %i \n",mpiRank);
+	sliceOp(recvSlice, grid, d, offsetLowerPlace);
+
+
+	// Send and recieve lower (tag 0)
+	getSlice(sendSlice, grid, d, offsetLowerTake);
+	MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
+                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
+                 MPI_COMM_WORLD, &status);
+	sliceOp(recvSlice, grid, d, offsetUpperPlace);
+	//msg(STATUS, "Exit gHaloOp");
+	MPI_Barrier(MPI_COMM_WORLD);
+
 }
+
+
+
+
+//
+// void gHaloOp(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, opDirection dir){
+//
+//
+// 	int rank = grid->rank;
+// 	for(int d = 1; d < rank; d++){
+// 		gHaloOpDim(sliceOp, grid, mpiInfo, d, dir); //lower
+// 		//printf("EXCHANGING \n");
+// 	}
+//
+// }
+//
+// void gHaloOpDim(funPtr sliceOp, Grid *grid, const MpiInfo *mpiInfo, int d, opDirection dir){
+//
+//  	//Load MpiInfo
+//  	int mpiRank = mpiInfo->mpiRank;
+//  	int *subdomain = mpiInfo->subdomain;
+//  	int *nSubdomains = mpiInfo->nSubdomains;
+//  	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
+// 	bndType *bnd = grid->bnd;
+//
+// 	//printf("in gHaloOpDimOpen rank = %i \n",mpiRank);
+//
+// 	//MPI_Barrier(MPI_COMM_WORLD);
+// 	//Load
+// 	int rank = grid->rank;
+// 	int *size = grid->size;
+// 	long int *sizeProd = grid->sizeProd;
+// 	double *sendSlice = grid->sendSlice;
+// 	double *recvSlice = grid->recvSlice;
+//
+// 	// dir=TOHALO=0: take 2nd outermost layer and place it outermost
+// 	// dir=FROMHALO=1: take outermost layer and place it 2nd outermost
+// 	//if (boundary == 1){ //upper
+// 		int offsetUpperTake  = size[d]-2+dir;
+// 		int offsetUpperPlace = size[d]-1-dir;
+// 	//}
+// 	//if (boundary == 1){ //lower
+// 		int offsetLowerTake  =         1-dir;
+// 		int offsetLowerPlace =           dir;
+// 	//}
+// 	//Dimension used for subdomains, 1 less entry than grid dimensions
+// 	int dd = d - 1;
+// 	int nSlicePoints = sizeProd[rank]/size[d];
+//
+// 	int firstElem = mpiRank - subdomain[dd]*nSubdomainsProd[dd];
+//
+//  	// msg(STATUS,"lowerSubdomain: %i",lowerSubdomain);
+//
+// 	int upperSubdomain = firstElem
+// 		+ ((subdomain[dd] + 1)%nSubdomains[dd])*nSubdomainsProd[dd];
+// 	int lowerSubdomain = firstElem
+// 		+ ((subdomain[dd] - 1 + nSubdomains[dd])%nSubdomains[dd])*nSubdomainsProd[dd];
+//
+//   //msg(STATUS,"lowerSubdomain: %i, upperSubdomain: %i",lowerSubdomain,upperSubdomain);
+// 	MPI_Status 	status;
+//
+// 	// TBD: Ommitting this seems to yield race condition between consecutive
+// 	// calls to gHaloOpDim(). I'm not quite sure why so this should be
+// 	// investigated further.
+//
+//
+// 	MPI_Barrier(MPI_COMM_WORLD);
+//
+// 	// Send and recieve upper (tag 1)
+// 	//printf("exchanging slices");
+// 	//printf("d = %i, bnd[rank+d] = %u, bnd[d] = %u \n",d,bnd[rank+d],bnd[d]);
+// 	//printf("d = %i, bnd[d] = %u \n",d,bnd[d]);
+//
+//
+// 	if(bnd[rank+d] == PERIODIC){
+// 		// Send and recieve lower (tag 0)
+//
+// 			//printf("rank = %i, sending on edge %i \n",mpiInfo->mpiRank,d);
+//
+// 		getSlice(sendSlice, grid, d, offsetLowerTake);
+// 		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
+// 	                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
+// 	                 MPI_COMM_WORLD, &status);
+// 		sliceOp(recvSlice, grid, d, offsetUpperPlace);
+// 	}else{
+// 		getSlice(sendSlice, grid, d, offsetLowerTake);
+// 		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 0,
+// 	                 recvSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 0,
+// 	                 MPI_COMM_WORLD, &status);//handshake
+// 	}
+// 	if(bnd[d] == PERIODIC){
+//
+// 			//printf("rank = %i, sending on edge %i \n",mpiInfo->mpiRank,rank+d);
+//
+// 		getSlice(sendSlice, grid, d, offsetUpperTake);
+// 		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
+//                  recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
+//                  MPI_COMM_WORLD, &status);
+// 	  sliceOp(recvSlice, grid, d, offsetLowerPlace);
+// 	}else{
+// 		getSlice(sendSlice, grid, d, offsetUpperTake);
+// 		MPI_Sendrecv(sendSlice, nSlicePoints, MPI_DOUBLE, upperSubdomain, 1,
+//                  recvSlice, nSlicePoints, MPI_DOUBLE, lowerSubdomain, 1,
+//                  MPI_COMM_WORLD, &status);//handshake
+// 	}
+// 	//printf("in gHaloOpDimOpen rank = %i \n",mpiRank);
+// }
 
 
 
@@ -736,6 +741,7 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 	int *offset = malloc(nDims*sizeof(*offset));
 	double *posToSubdomain = malloc(nDims*sizeof(*posToSubdomain));
 	//int *trueSizeAlloc = malloc(nDims*sizeof(*trueSizeAlloc));
+	bool periodic = false;
 
 	for(int d = 0; d < nDims; d++){
 		// offset[d] = subdomain[d]*trueSize[d];
@@ -757,6 +763,7 @@ MpiInfo *gAllocMpi(const dictionary *ini){
 
 	mpiInfo->nSpecies = nSpecies;
 	mpiInfo->nNeighbors = 0;	// Neighbourhood not created
+	mpiInfo->periodic = periodic;
 
 	//free(trueSize);
 
@@ -1442,24 +1449,26 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	bndType *bnd = grid->bnd;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
+	bool periodic = mpiInfo->periodic;
 
 	//If periodic neutralize phi
 
-	bool periodic =  true;
-	for(int d = 1; d < rank; d++){
-		//msg(STATUS,"d = %i",d);
-		if(bnd[d] != PERIODIC){
-			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
-			periodic = false;
-			}
-	}
-	for(int d = rank+1; d < 2*rank; d++){
-		//msg(STATUS,"d = %i",d);
-		if(bnd[d] != PERIODIC){
-			//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
-			periodic = false;
-			}
-	}
+	// bool periodic =  true;
+	// for(int d = 1; d < rank; d++){
+	// 	//msg(STATUS,"d = %i",d);
+	// 	if(bnd[d] != PERIODIC){
+	// 		//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+	// 		periodic = false;
+	// 		}
+	// }
+	// for(int d = rank+1; d < 2*rank; d++){
+	// 	//msg(STATUS,"d = %i",d);
+	// 	if(bnd[d] != PERIODIC){
+	// 		//msg(STATUS,"bnd[d] != PERIODIC, d = %i",d);
+	// 		periodic = false;
+	// 		}
+	// }
+	//printf("periodic = %d \n",mpiInfo->periodic);
 	if(periodic == true){
 		//printf("PERIODIC cond, rank %i\n",mpiInfo->mpiRank);
 		gPeriodic(grid, mpiInfo);
@@ -1506,9 +1515,15 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 
 	// RETRIEVE NECESSARY VARIABLES
 
+	int mpiSize;
+	MPI_Comm_size(MPI_COMM_WORLD,&mpiSize);
+
 	int nDims = mpiInfo->nDims;
 	int nSpecies = mpiInfo->nSpecies;
 	int *size = grid->size;
+
+	int *periodicAll = malloc(mpiSize*sizeof(*periodicAll));
+	bndType *bnd = grid->bnd;
 
 	// COMPUTE SIMPLE VARIABLES
 
@@ -1589,7 +1604,36 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 		recv[ne] = MPI_REQUEST_NULL;
 	}
 
+	// determine if the global domain is periodic
+	bool periodic = true;
+	mpiInfo->periodic = true;
+	periodicAll[mpiInfo->mpiRank] = 1; //true
+	for(int i=1;i<nDims+1;i++){
+		if(bnd[i] != PERIODIC || bnd[i+nDims+1] != PERIODIC) periodicAll[mpiInfo->mpiRank] = 0;
+		//printf("i+nDims = %i, bnd[i] = %d, bnd[2*i] = %d \n",i+nDims+2,bnd[i],bnd[i+nDims+1]);
 
+	}
+
+
+
+	//if(periodic == true){
+		//MPI_Bcast(&periodicAll[mpiInfo->mpiRank], 1, MPI_INT, mpiInfo->mpiRank, MPI_COMM_WORLD);
+		MPI_Allgather(&periodicAll[mpiInfo->mpiRank], 1, MPI_INT,
+                  periodicAll, 1, MPI_INT,  MPI_COMM_WORLD);
+	//}
+	for(int i = 0;i<mpiSize;i++){
+		if(periodicAll[i] != 1) mpiInfo->periodic = false;
+		// if(mpiInfo->mpiRank == 0){
+		// 	printf("periodicAll[i] = %i \n",periodicAll[i]);
+		// }
+	}
+
+	//printf("periodic = %d \n",periodicAll[mpiInfo->mpiRank]);
+	//printf("periodic = %d \n",mpiInfo->periodic);
+
+	free(periodicAll);
+	//exit(0);
+	//mpiInfo->periodic = periodic;
 	mpiInfo->send = send;
 	mpiInfo->recv = recv;
 	mpiInfo->nNeighbors = nNeighbors;
@@ -1604,6 +1648,9 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 	mpiInfo->thresholds = thresholds;
 	mpiInfo->immigrants = immigrants;
 	mpiInfo->neighborhoodCenter = neighborhoodCenter;
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	msg(STATUS,"nieghborhod alloc done");
 
 }
 
@@ -1628,6 +1675,7 @@ void gDestroyNeighborhood(MpiInfo *mpiInfo){
 	free(mpiInfo->nImmigrants);
 	free(mpiInfo->send);
 	free(mpiInfo->recv);
+	//free(mpiInfo->periodic);
 }
 
 /******************************************************************************

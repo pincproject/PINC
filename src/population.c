@@ -44,6 +44,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	// Number of particles to allocate for (for all computing nodes)
 	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",nSpecies);
 
+	//printf("nAllocTotal = %li, %li \n",nAllocTotal[0],nAllocTotal[1]);
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
 	for(int s=0;s<nSpecies;s++){
@@ -126,6 +127,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("in pop rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 
+	//printf("Acctually allocating %li particles total, (half is %li)\n",iStart[nSpecies],iStart[nSpecies]/2 );
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));

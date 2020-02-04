@@ -1573,8 +1573,8 @@ void oMode(dictionary *ini){
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
-  // Setting Boundary slices
-  gSetBndSlices(ini, phi, mpiInfo);
+  	// Setting Boundary slices
+  	gSetBndSlices(ini, phi, mpiInfo);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1623,7 +1623,7 @@ void oMode(dictionary *ini){
 	 */
 
     //Compute capacitance matrix
-    //msg(STATUS, "com cap matrix");
+    msg(STATUS, "com cap matrix");
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 
@@ -1670,8 +1670,10 @@ void oMode(dictionary *ini){
 
 	// Get initial E-field
 
+
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
+
     //gWriteH5(phi, mpiInfo, (double) 0);
     //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
 
@@ -1688,7 +1690,8 @@ void oMode(dictionary *ini){
   // add External E
 	//gZero(E); // for testing Boris
 	//gAddTo(Ext); //needs grid definition of Eext
-  puAddEext(ini, pop, E); // adds same value to whole grid
+  	puAddEext(ini, pop, E); // adds same value to whole grid
+
 
   gMul(E, 0.5);
 	puGet3DRotationParameters(ini, T, S, 0.5);
@@ -1795,7 +1798,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>2900){//50614
+		if(n%1000 == 0 || n>122700){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -1804,7 +1807,7 @@ void oMode(dictionary *ini){
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			gWriteH5(rhoObj, mpiInfo, (double) n);
+			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 
 		pWriteEnergy(history,pop,(double)n,units);
