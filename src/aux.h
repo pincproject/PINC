@@ -183,6 +183,8 @@ void aiScale(int *a, long int n, int value);
 void alScale(long int *a, long int n, int value);
 ///@brief Returns maximum value in an array
 double adMax(const double *a, long int n);
+///@brief Helper function to rotate about y and z axis, used by photoelectron module
+void adRotateRandom3D(double *a, const gsl_rng *r);
 ///@brief Returns unit normal vector. Assumes 3D eucledian vector
 void adNormal(const double *a, const double *b, double *res, long int n);
 ///@brief Returns vector reflected by an arbitrary plane

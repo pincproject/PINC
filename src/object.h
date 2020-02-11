@@ -147,6 +147,9 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
                           const MpiInfo *mpiInfo);
 
 
+//Set the the object nodes of a grid to some value
+void oSetObjectValues(Object *obj, Grid *grid, int nthObj, double value);
+
 void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
                                 Object *obj, const MpiInfo *MpiInfo, const Units *units);
 
@@ -197,7 +200,7 @@ void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *m
 Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
-void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj);
+void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj, Grid *phi);
 
 
 /*

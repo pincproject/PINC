@@ -989,45 +989,46 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
  					const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
 	
+	//mpi
+	int size = mpiInfo->mpiSize;
+	int rank = mpiInfo->mpiRank;
+
 	//object variables
 	int nObj = obj->nObjects;
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
 	long int *lookupInt = obj->lookupInterior;
 	long int *lookupIntOff = obj->lookupInteriorOffset;
+	long int nodesThisCore;
+	long int *nodesAllCores = malloc(size * sizeof(*nodesAllCores));
+
 	double *flux = malloc(sizeof(obj->radiance));
 	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
-	double *area = malloc(sizeof(obj->conductingSurface));
-	memcpy(flux, obj->radiance, sizeof(obj->radiance));
-	memcpy(bandEnergy, obj->bandEnergy, sizeof(obj->bandEnergy));
-	memcpy(area, obj->conductingSurface, sizeof(obj->conductingSurface));
-	double *workFunc = obj->workFunction;
+	double *workFunc = malloc(sizeof(obj->workFunction));
+	memcpy(flux, obj->radiance, sizeof(*(obj->radiance)) * nObj);
+	memcpy(bandEnergy, obj->bandEnergy, sizeof(*(obj->bandEnergy)) * nObj);
+	memcpy(workFunc, obj->workFunction, sizeof(*(obj->workFunction)) * nObj);
 
+
+
+	for(int a=0; a<nObj; a++){
+		nodesThisCore = exposedOff[a+1] - exposedOff[a];
+		MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+	}
+
+	long int totExpNodes = alSum(nodesAllCores, size); 
+
+	//specie variables
 	int nSpecie = 0;
 	int pSpecie = 0;
-
 	nSpecie = (pop->charge[0] < 0.) ? 0 : 1;
 	pSpecie = (nSpecie == 0) ? 1 : 0;
 
-	//average energy in total photoelectron flux
-	double *stoppingPot = malloc(nObj * sizeof(*stoppingPot));
-	double *objPot = malloc(nObj * sizeof(*objPot));
- 
-	//check if photoelectron can escape object potential
-	for(int a=0; a<nObj; a++){
-		stoppingPot[a] = ((bandEnergy[a] / flux[a]) - workFunc[a]) / 1.60217662e-19;
-		msg(STATUS, "Stopping potential: %.2f Volts", stoppingPot[a]);
-		stoppingPot[a] /= units->potential;
-		objPot[a] = phi->val[lookupInt[lookupIntOff[a]]];
-		msg(STATUS, "stopping potential: %f", stoppingPot[a]);
-		msg(STATUS, "object potential: %f", objPot[a]);
-
-		if(objPot[a] >= stoppingPot[a]){
-			return;
-		}
+	//convert wavenumber to workfunction energy
+	for(int a = 0; a<nObj; a++){
+		workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
+		workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunctiona as energy (Joules) 
 	}
-
-
 
 	//average energy and velocity of emitted superparticle
 	double avgEnergy[nObj];
@@ -1038,63 +1039,60 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	for(int a=0; a<nObj; a++){
 		avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
 		avgEnergy[a] -= workFunc[a];
-		//avgEnergy[a] /= units->energy;
 		avgVel[a] = -1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//pop->mass[specie]); //TODO: make direction independent
 		avgVel[a] /= units->velocity;
-		//avgVel[a] *= 0.8; //EXPERIMENT!
-		msg(STATUS, "Average photoelectron velocity: %f", avgVel[a]);
+		msg(STATUS|ALL, "avgVel %f", avgVel[a]);
 	}
 
-	//scale flux to be per in terms of weights 
+	//scale flux to each core 
 	for(size_t a = 0; a<nObj; a++){
 		flux[a] /= units->weights[nSpecie];
-		flux[a] /= (exposedOff[a+1] - exposedOff[a]);
+		flux[a] /= (double)totExpNodes;
 		flux[a] = floor(flux[a]);
 	}
 
 
-
 	double *pos = malloc(pop->nDims * sizeof(*pos));
 	double *vel = malloc(pop->nDims * sizeof(*vel));
-	adSetAll(pos, pop->nDims, 0.0);
-	adSetAll(vel, pop->nDims, 0.0);
 	//pToGlobalFrame(pop, mpiInfo);
 
 	for(int a=0; a < nObj; a++){
 		
-		long int hit = 0;
-		long int nodesThisCore = exposedOff[a+1] - exposedOff[a]; 
+		long int hit = 0; 
 		for(int i = 0; i < nodesThisCore; i++){
-
+			adSetAll(pos, pop->nDims, 0.0);
+			adSetAll(vel, pop->nDims, 0.0);
 			long int node = exposedNodes[exposedOff[a] + i]; 
 			gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
-			//msg(STATUS, "Position of node %li pPhotoElectron", node);
-			//adPrint(pos, 3);
+			if(rank==0) adPrint(pos,3);
 
 			for(long int j=0; j<(long)flux[a]; j++){
+				adSetAll(pos, pop->nDims, 0.0);
+				adSetAll(vel, pop->nDims, 0.0);
 				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])); //
-				//if(j ==0  && i==0) msg(STATUS, "first photoelectron velocity: %f", vel[0]);
-				if(i == 0 && j == 0) adPrint(pos,3);
+				adRotateRandom3D(vel, rng);
+
 				pos[0] += vel[0];
-				pos[1] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
-				pos[2] += gsl_ran_gaussian_ziggurat(rng, fabs(avgVel[a]));
-				if(i == 0 && j == 0) adPrint(pos,3);
+				pos[1] += vel[1];
+				pos[2] += vel[2];
+
 				pNew(pop, nSpecie, pos, vel);
 				hit += 1;
 			}
+			if(rank==0) adPrint(vel,3);
+			if(rank==0) adPrint(pos,3);
 		}
 
-		msg(STATUS, "Number of super particles created in timestep: %li", hit);
 
+		msg(STATUS|ALL, "Number of super particles created in timestep: %li", hit);
+		
 	}
 
 	//pToLocalFrame(pop, mpiInfo);
-
-	free(stoppingPot);
-	free(objPot);
+	free(nodesAllCores);
 	free(flux);
 	free(bandEnergy);
-	free(area);
+	free(workFunc);
 	free(pos);
 	free(vel);
 }

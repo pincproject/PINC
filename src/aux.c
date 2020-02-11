@@ -12,6 +12,9 @@
 #include <mpi.h>
 #include <stdarg.h>
 #include <math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_blas.h>
 
 /******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
@@ -322,6 +325,60 @@ void adReflect(const double *ray, const double *a, const double *b, double *res)
     for(int i=0;i<3;i++) res[i] = ray[i] - 2 * ray_dot_n * norm[i];
 }
 
+void adRotateRandom3D(double *a, const gsl_rng *r){
+
+	double beta = PI/2 * gsl_rng_uniform(r);
+	double gamma = PI/2 * gsl_rng_uniform(r);
+	int signSB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
+	int signSG = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
+	int signCB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
+	int signCG = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
+
+
+	//compute sin,cos once
+	const double sinB = sin(signSB * beta);
+	const double sinG = sin(signSG * gamma);
+	const double cosB = cos(signCB * beta);
+	const double cosG = cos(signCG * gamma); 
+
+	//msg(STATUS, "cosB: %f, sinB: %f, cosG: %f, sinG: %f", cosB, sinB, cosG, sinG);
+	gsl_vector_view aVec = gsl_vector_view_array(a, 3);
+	
+	double Ry[] = {cosB, 0.0, sinB,
+				   0.0, 1.0, 0.0,
+				   -sinB,0.0, cosB};
+
+	double Rz[] = {cosG, -sinG, 0.0,
+				   sinG, cosG, 0.0,
+				   0.0, 0.0, 1.0};
+				
+	
+	gsl_matrix_view Ry_mat = gsl_matrix_view_array(Ry, 3, 3);
+	gsl_matrix_view Rz_mat = gsl_matrix_view_array(Rz, 3, 3);
+	gsl_matrix *R_tot = gsl_matrix_alloc(3, 3);
+	gsl_matrix_set_all(R_tot, 0.0);
+
+	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &Ry_mat.matrix, &Rz_mat.matrix,
+				   0.0, R_tot);
+	gsl_vector *rotatedVec = gsl_vector_alloc(3);
+	gsl_vector_set_all(rotatedVec, 0.0);
+	gsl_blas_dgemv(CblasNoTrans, 1.0, R_tot, &aVec.vector, 0.0, rotatedVec);
+
+	//printf("==================== \n");
+	//msg(STATUS, "Before rotation");
+	//adPrint(a, 3);
+	for(int i = 0; i < 3; i++){
+		a[i] = gsl_vector_get(rotatedVec, i);
+	}
+
+	//msg(STATUS, "After rotation");
+	//adPrint(a,3);
+	//printf("==================== \n");
+
+	gsl_vector_free(rotatedVec);
+	gsl_matrix_free(R_tot);
+
+}
 
 int adEq(const double *a, const double *b, long int n, double tol){
 	for(long int i=0;i<n;i++) if(fabs(a[i]-b[i])>tol) return 0;

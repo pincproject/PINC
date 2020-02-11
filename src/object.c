@@ -146,7 +146,6 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     //alPrint(lookupInterior,(lookupInteriorOffset[nObjects]) );
     // Add to the object.
     //obj->nObjects = nObjects;
-    msg(STATUS, "Number of interior points %li", lookupInteriorOffset[1]);
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
 
@@ -688,7 +687,8 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     }
 
-    int cutNumber = 0;
+   int cutNumber = 0;
+
     for(int s=0;s<nSpecies;s++) {
 
         long int iStart = pop->iStart[s];
@@ -729,8 +729,9 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         }
     }
 
-    msg(STATUS, "Cut %d particles during oCollectObjectCharge", cutNumber);
     MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    msg(STATUS|ALL, "Cut %d particles during oCollectObjectCharge", cutNumber);
+
     //printf("cutNumber = %i \n",cutNumber);
     cutNumber = 0;
 
@@ -756,7 +757,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
                                 Object *obj, const MpiInfo *mpiInfo, const Units *units){
     
-    //int rank = mpiInfo->mpiRank;
+    int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
 
     double *val = rhoObj->val;
@@ -765,63 +766,36 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     double *charge = pop->charge;
 
     int nObj = obj->nObjects;
-    long int *lookupInt = obj->lookupInterior;
-    long int *lookupIntOff = obj->lookupInteriorOffset;
-	long int *exposedNodes = obj->exposedNodes;
+    long int *lookUpSurf = obj->lookupSurface;
+    long int *lookupSurfOff = obj->lookupSurfaceOffset;
+    long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
-    
-    double *area = malloc(sizeof(obj->conductingSurface));
-    double *flux = malloc(sizeof(obj->radiance));
-    double *bandEnergy = malloc(sizeof(obj->bandEnergy));
+    long int expNodesThisCore;
+    long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
 
-    memcpy(bandEnergy, obj->bandEnergy, sizeof(obj->bandEnergy));
-    memcpy(area, obj->conductingSurface, sizeof(obj->conductingSurface));
-    memcpy(flux, obj->radiance, sizeof(obj->radiance));
-	double *workFunc = obj->workFunction;
-
-
-    //find electron
-	int nSpecie = 0; //negative charge specie
-    int pSpecie = 0; //positive charge specie
-
-    //find which specie has positive and negative charge. Assumes two species.
-	nSpecie = (charge[0] < 0.) ? 0 : 1;
-    pSpecie = (nSpecie == 0) ? 1 : 0;
-
-    //average energy in total photoelectron flux
-	double *stoppingPot = malloc(nObj * sizeof(*stoppingPot));
-	double *objPot = malloc(nObj * sizeof(*objPot));
- 
-	//check if photoelectron can escape object potential
-	for(int a=0; a<nObj; a++){
-		stoppingPot[a] = ((bandEnergy[a] / flux[a]) - workFunc[a]) / 1.60217662e-19;
-        stoppingPot[a] /= units->potential;
-		objPot[a] = phi->val[lookupInt[lookupIntOff[a]]];
-
-		if(objPot[a] >= stoppingPot[a]){
-			return;
-		}
-	}
-
-	//scale flux to be per cell 
-	for(size_t a = 0; a<nObj; a++){
-		flux[a] /= units->weights[nSpecie];
-        flux[a] /= exposedOff[a+1];
-        flux[a] = floor(flux[a]);
-	}
-
-    double *chargeCounter = malloc(nObj*sizeof(*chargeCounter));
-    adSetAll(chargeCounter,nObj,0);//sets charge counter=0 for all objects
-
+	double *flux = malloc(sizeof(obj->radiance));
+	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
+	memcpy(flux, obj->radiance, sizeof(*(obj->radiance)) * nObj);
+	memcpy(bandEnergy, obj->bandEnergy, sizeof(*(obj->bandEnergy)) * nObj);
 
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
-    long int *nodCorGlob = malloc(nObj*(size+1)*sizeof(*nodCorGlob));
+    long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
-    for (long int a=0; a<nObj; a++) {
 
-        long int nodesThisCore = obj->lookupSurfaceOffset[a+1] - obj->lookupSurfaceOffset[a];
+    for(int a=0; a<nObj; a++){
+		expNodesThisCore = exposedOff[a+1] - exposedOff[a];
+        MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+	}
 
-        // Let every core know how many exposed surface nodes everybody has.
+    alPrint(expNodesAllCores, size);
+    long int totExpNodes = alSum(expNodesAllCores, size);
+    msg(STATUS, "Total exposed nodes %li", totExpNodes);
+
+    for (long int a=0; a<obj->nObjects; a++) {
+
+        long int nodesThisCore = lookupSurfOff[a+1] - lookupSurfOff[a];
+
+        // Let every core know how many surface nodes everybody has.
         MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodCorLoc, 1, MPI_LONG, MPI_COMM_WORLD);
 
         for(long int i=size-1;i>-1;i--) nodCorLoc[i+1]=nodCorLoc[i];
@@ -831,33 +805,51 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
         for (long int b=0; b<size+1; b++) nodCorGlob[a*(size+1)+b] = nodCorLoc[b];
     }
 
-    double *invNrSurfNod = malloc(nObj*sizeof(*invNrSurfNod));
-    for (long int a=0; a<nObj; a++) {
+
+    double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
+    for (long int a=0; a<obj->nObjects; a++) {
         invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
     }
 
-    memcpy(chargeCounter, flux, sizeof(flux));
+    //find electron
+	int nSpecie = 0; //negative charge specie
 
-    MPI_Allreduce(MPI_IN_PLACE, chargeCounter, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    //find which specie has positive and negative charge. Assumes two species.
+	nSpecie = (charge[0] < 0.) ? 0 : 1;
 
-    // Add the collected charge to the exposed nodes on rhoObject.
+	//scale flux 
+	for(size_t a = 0; a<nObj; a++){
+		flux[a] /= units->weights[nSpecie];
+        flux[a] *= ((double)expNodesThisCore/totExpNodes);
+        flux[a] = floor(flux[a]);
+	}
+
+    //Add the collected charge to the exposed nodes on rhoObject.
     for (long int a=0; a<nObj; a++) {
-        for (long int b=exposedOff[a]; b<exposedOff[a+1]; b++) {
-            val[obj->exposedNodes[b]] += chargeCounter[a] * invNrSurfNod[a];
+        for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+            val[obj->lookupSurface[b]] += flux[a]*invNrSurfNod[a];// * invNrExpNod[a];
         }
-        msg(STATUS, "added %f charges to rhoObj", chargeCounter[a]);
+        msg(STATUS|ALL, "added %f charges to rhoObj", flux[a]);
     }
 
     free(bandEnergy);
-    free(objPot);
-    free(stoppingPot);
+    free(expNodesAllCores);
     free(invNrSurfNod);
-    free(chargeCounter);
     free(nodCorLoc);
     free(nodCorGlob);
-    free(area);
     free(flux);
 
+}
+
+
+void oSetObjectValues(Object *obj, Grid *grid, int nthObj, double value){
+
+    long int *surf = obj->lookupSurface;
+    long int surfOff = obj->lookupSurfaceOffset[nthObj];
+
+    for(int i = 0; i<obj->lookupSurface[nthObj+1]; i ++){
+        grid->val[surf[surfOff + i]] = value;
+    }
 }
 
 //sets true or false for pop->objVicinity[i] depending on whether particle i is close or not 
@@ -911,31 +903,28 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
     
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
-    double *val = obj->domain->val;
     long int *surf = obj->lookupSurface;
     long int *surfOff = obj->lookupSurfaceOffset;
-    int *trueSize = obj->domain->trueSize;
+    int *size = obj->domain->size;
 
-    //alPrint(surf, surfOff[nObjects]);
     long int *exposedNodesOffset = malloc((nObjects+1)*sizeof(*exposedNodesOffset));
     alSetAll(exposedNodesOffset, obj->nObjects+1,0);
 
     for(long int a = 0; a<nObjects; a++){
-        for(int k=0; k<trueSize[3]; k++){
-            for(int j=0; j<trueSize[2]; j++){ 
+        for(int k=0; k<size[3]; k++){
+            for(int j=0; j<size[2]; j++){ 
                 
                 //need flag to break out of i loop, otherwise all surface nodes selected
                 int flag = 0;
-                for(int i=0; i<trueSize[1]; i++){
+                for(int i=0; i<size[1]; i++){
                     
                     long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
                     int surfNode = 0;
 
                     if(!isGhostNode(obj->domain, p)){
-
                         int numSurfNodes = surfOff[a+1] - surfOff[a];
                         for(int b = 0; b<numSurfNodes; b++){
-                            surfNode = surf[b];
+                            surfNode = surf[surfOff[a] + b];
                             if(p == surfNode){
                                 exposedNodesOffset[a+1]++;
                                 flag = 1;
@@ -954,25 +943,29 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
     long int *exposedNodes = malloc((exposedNodesOffset[nObjects])*sizeof(*exposedNodes));
     alSetAll(exposedNodes,exposedNodesOffset[nObjects],0);
 
-    long int *index = malloc(sizeof(*exposedNodesOffset));
-    memcpy(index,exposedNodesOffset, sizeof(*exposedNodesOffset));
+    long int *index = malloc(nObjects * sizeof(*index));
+        for (long int i=0; i<nObjects; i++) {
+        index[i]=exposedNodesOffset[i];
+
+    }
 
     for(long int a = 0; a<nObjects; a++){
         
         long int counter = 0;
 
-        for(int k=0; k<trueSize[3]; k++){
-            for(int j=0; j<trueSize[2]; j++){ 
+        for(int k=0; k<size[3]; k++){
+            for(int j=0; j<size[2]; j++){ 
 
                 int flag = 0;
-                for(int i=0; i<trueSize[1]; i++){
+                for(int i=0; i<size[1]; i++){
 
                     long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
                     if(!isGhostNode(obj->domain, p)){
                         int surfNode = 0;
                         int numSurfNodes = surfOff[a+1] - surfOff[a];
+
                         for(int b = 0; b<numSurfNodes; b++){
-                            surfNode = surf[b];
+                            surfNode = surf[surfOff[a] + b];
                             if(p == surfNode){
                                 exposedNodes[index[a]] = p;
                                 index[a]++;
@@ -987,7 +980,6 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
         }
     }
    
-
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
 
@@ -1035,8 +1027,8 @@ void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *m
                 }
                 //msg(STATUS, "Sum is %f", sum);
                 if(sum < a + 0.5){
-                    msg(STATUS, "node %i is a exposed node", b);
-                    adPrint(pos, 3);
+                    //msg(STATUS, "node %i is a exposed node", b);
+                    //adPrint(pos, 3);
                     exposedNodesOffset[a+1]++;
                 }
             }
@@ -1235,7 +1227,7 @@ double *oFindIntersectPoint(Population *pop, long int id, Object *obj,
 }
 
 
-void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
+void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj, Grid *phi){
 	// integral of spectral photon radiance from sigma (m-1) to infinity.
 	// result is in photons per timestep.
 	// follows Widger and Woodall, Bulletin of the American Meteorological
@@ -1251,23 +1243,44 @@ void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
 	double Boltzmann = 1.380658e-23;
 	double speedOfLight = 299792458.0;
 	double sunSurfaceArea = 6.1e18;
+    double charge = -1.60217662e-19;
 	double temperature = iniGetDouble(ini, "spectrum:blackBodyTemp");
-	
-	// object variables
-	int nObj = obj->nObjects;
 	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
 
-    double *area = malloc(sizeof(obj->conductingSurface));
-    double *sigma = malloc(sizeof(obj->workFunction));
-    memcpy(area, obj->conductingSurface, sizeof(obj->conductingSurface));
-    memcpy(sigma, obj->workFunction, sizeof(obj->workFunction));
+	//objects
+	int nObj = obj->nObjects;
+    long int *sizeProd = obj->domain->sizeProd;
+    long int *intNodes = obj->lookupInterior;
+    long int *intNodesOff = obj->lookupInteriorOffset;
+    long int *expNodes = obj->exposedNodes;
+    long int *expOff = obj->exposedNodesOffset;
+    double *area = obj->conductingSurface;
+    double *sigma = obj->workFunction;
 
-	double *radiance = malloc(nObj*sizeof(*radiance));
-	adSetAll(radiance, (long)nObj, 0.0);
+
+/*     // Update cutoff wavenumber based on average potential barrier in sol direction
+    for(int a = 0; a<nObj; a++){
+        
+        long int nNodes = expOff[a+1] - expOff[a];
+        double sum = 0.; 
+        double avgPhi = 0.;
+        
+        for(int i = 0; i<nNodes; i++){
+            sum += units->potential * phi->val[expNodes[i] - sizeProd[1]];
+            //msg(STATUS, "phi, %.10e", units->potential * phi->val[expNodes[i] - sizeProd[1]]);
+        }
+
+        avgPhi = sum/nNodes;
+        msg(STATUS, "avg phi, potential barrier: %.10e", avgPhi);
+        sigma[a] = sigma[a] + ((avgPhi * charge) / (100. * Planck * speedOfLight));
+
+    } */
+
+	double *radiance = obj->radiance;
 
 	// compute powers of x, the dimensionless spectral coordinate
 	for(int a=0; a<nObj; a++){
-		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.); //wavenumber in cm^-1
+		//sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.); //wavenumber in cm^-1
 		double c1 = Planck * speedOfLight / Boltzmann;
 		double x = c1 * 100. * (double)sigma[a]/temperature;
 		double x2 = x * x;
@@ -1291,11 +1304,7 @@ void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj){
 		radiance[a] *= time;
 	}
 
-
-	obj->radiance = radiance;
-
-    free(area);
-	free(sigma);
+    adPrint(radiance, nObj);
 
 }
 
@@ -1315,19 +1324,25 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
 	double speedOfLight_sq = speedOfLight * speedOfLight;
 	double temperature = iniGetDouble(ini, "spectrum:BlackBodyTemp");
 	double sunSurfaceArea = 6.1e18; //m^2
-
-	//object variables
-	int nObj = obj->nObjects;
 	double distFromSun = iniGetDouble(ini, "objects:distanceFromSun");
+
+    //objects
+    int nObj = obj->nObjects;
+    long int *expNodes = obj->exposedNodes;
+    long int *expOff = obj->exposedNodesOffset;
+    long int *sizeProd = obj->domain->sizeProd;
+    long int *intNodes = obj->lookupInterior;
+    long int *intNodesOff = obj->lookupInteriorOffset;
 	double *area = iniGetDoubleArr(ini, "objects:ConductingSurface", nObj);
-	double *bandEnergy = malloc(nObj*sizeof(*bandEnergy));
-	adSetAll(bandEnergy, (long)nObj, 0.0);	
-	double *sigma = iniGetDoubleArr(ini, "objects:workFunction", nObj);
+	double *bandEnergy = obj->bandEnergy;
+	
+	
+    double *sigma = obj->workFunction;
 
 
 	// compute powers of x, the dimensionless spectral coordinate
 	for(int a=0; a<nObj; a++){
-		sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);	//convert energy to photon wavenumber in cm^-1
+		//sigma[a] = ((double)sigma[a]) / (Planck * speedOfLight * 100.);	//convert energy to photon wavenumber in cm^-1
 		double c1 = (Planck*speedOfLight/Boltzmann);
 		double x = c1 * 100 * sigma[a] / temperature;
 		double x2 = x * x;
@@ -1344,19 +1359,16 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
 			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
 		}
 		
+        // result, in units of W/m2/sr, convert to joule/timestep
+        double solidAngle = (double)area[a] / pow(distFromSun,2.);
 		bandEnergy[a] = (2.0*Planck*speedOfLight_sq);
 		bandEnergy[a] = bandEnergy[a]*pow(temperature/c1,4)*sum;
-		double solidAngle = (double)area[a] / pow(distFromSun,2.);
 		bandEnergy[a] *= solidAngle * sunSurfaceArea;
 		bandEnergy[a] *= time;
 	}
 
-	
-	obj->bandEnergy = bandEnergy;
-
+	adPrint(bandEnergy, nObj);
 	free(area);
-	free(sigma);
-
 }
 
 
@@ -1420,13 +1432,17 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     obj->capMatrixSum = capMatrixSum;
 
     
-	obj->workFunction = iniGetDoubleArr(ini,"objects:workFunction", 1);
+	obj->workFunction = iniGetDoubleArr(ini,"objects:workFunction", nObjects);
     obj->conductingSurface = iniGetDoubleArr(ini, "objects:ConductingSurface", nObjects);
 
-    oPlanckPhotonIntegral(ini, units, obj);
-    oPlanckEnergyIntegral(ini, units, obj);
-    adPrint(obj->radiance, obj->nObjects);
-    adPrint(obj->bandEnergy, obj->nObjects);
+    //oPlanckPhotonIntegral(ini, units, obj);
+    //oPlanckEnergyIntegral(ini, units, obj);
+    double *radiance = malloc(obj->nObjects * sizeof(*radiance));
+    double *bandEnergy = malloc(obj->nObjects * sizeof(*bandEnergy));
+    adSetAll(bandEnergy, (long)obj->nObjects, 0.0);	
+    adSetAll(bandEnergy, (long)obj->nObjects, 0.0);	
+    obj->radiance = radiance;
+    obj->bandEnergy = bandEnergy;
 
 
     free(nodCorLoc);
