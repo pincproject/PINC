@@ -1986,7 +1986,7 @@ void oCollMode(dictionary *ini){
 
 	//add influx of new particles on boundary
 	pPurgeGhost(pop, rho);
-	pFillGhost(ini,pop,rng,mpiInfoNeut);
+	pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
 
 
 
@@ -2212,7 +2212,7 @@ void oCollMode(dictionary *ini){
 
         //add influx of new particles on boundary
         pPurgeGhost(pop, rho);
-        pFillGhost(ini,pop,rng,mpiInfoNeut);
+        pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
 
 
 

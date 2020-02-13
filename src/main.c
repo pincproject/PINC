@@ -455,7 +455,7 @@ void BorisTestMode(dictionary *ini){
 		pNew(pop, 0, pos, vel);
 		double pos1[3] = {31., 31., 31.};
 		double vel1[3] = { velThermal[1], 0., 0.};
-		//pNew(pop, 1, pos1, vel1); //second particle
+		pNew(pop, 1, pos1, vel1); //second particle
 	}
 
 	// Perturb particles
@@ -576,7 +576,7 @@ void BorisTestMode(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		if(n%10==0){
+		if(n%1000==0){
 			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);

@@ -1858,11 +1858,8 @@ static inline void neExchangeNMigrants(NeutralPopulation *pop, MpiInfo *mpiInfo)
 
 void neMigrate(NeutralPopulation *pop, MpiInfo *mpiInfo, Grid *grid){
 
-	MPI_Barrier(MPI_COMM_WORLD);
 	neExchangeNMigrants(pop,mpiInfo);
-	MPI_Barrier(MPI_COMM_WORLD); //debug
 	neExchangeMigrants(pop,mpiInfo,grid);
-	MPI_Barrier(MPI_COMM_WORLD);
 
 }
 

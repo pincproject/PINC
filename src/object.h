@@ -21,6 +21,9 @@ typedef struct{
   long int *capMatrixAllOffsets;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
   double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
 	int nObjects;					///< Number of objects
+	double *deltaPhi;
+	double *rhoCorr;
+	double *invNrSurfNod;
 } Object;
 
 
@@ -175,4 +178,18 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  */
 void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
                         double *surfPoint, double *intersection);
+
+
+
+/**
+ * @brief   Check whether a certain node is a ghost node.
+ * @param	grid	Grid
+ * @param	node	long int
+ * @return	bool
+ */
+bool isGhostNode(Grid *grid, long int node);
+void oGhost(long int node, const int *nGhostLayersBefore,
+            const int *nGhostLayersAfter, const int *trueSize,
+            const long int *sizeProd, bool *ghost);
+			
 #endif // OBJECT_H
