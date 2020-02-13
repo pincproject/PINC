@@ -34,12 +34,21 @@ typedef struct{
 	double electron_a;
 	double electron_b;
 	double energyConvFactor; // convert from PINC to eV
+	double *neutralDrift;
 
 
 } MccVars;
 
+
+void neutTest(dictionary *ini);
+funPtr neutTest_set(dictionary *ini);
+
+void oCollMode(dictionary *ini);
+funPtr oCollMode_set(dictionary *ini);
+
 void mccMode(dictionary *ini);
 funPtr mccMode_set(dictionary *ini);
+
 
 funPtr constCrossect_set(dictionary *ini);
 funPtr functionalCrossect_set(dictionary *ini);
@@ -127,8 +136,8 @@ void mccGetPmaxElectronFunctional(const dictionary *ini,
  * mccAlloc() must be called prior to this function. Function is called in the
  * main collission function.
  */
-void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,
-	Population *pop, MpiInfo *mpiInfo,const gsl_rng *rng);
+ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral,
+ 	Population *pop, MpiInfo *mpiInfo,const gsl_rng *rng);
 
 
 /**
@@ -142,7 +151,7 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,
  * main collission function.
  */
 void mccGetPmaxElectronStatic(const dictionary *ini,
-	MccVars *mccVars, Population *pop,
+	MccVars *mccVars,Grid *rhoNeutral, Population *pop,
 	MpiInfo *mpiInfo);
 
 
@@ -159,7 +168,7 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideElectronStatic(const dictionary *ini, Population *pop,
+void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 
 
@@ -176,7 +185,7 @@ void mccCollideElectronStatic(const dictionary *ini, Population *pop,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideIonStatic(const dictionary *ini, Population *pop,
+void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 
 
@@ -193,7 +202,7 @@ void mccCollideIonStatic(const dictionary *ini, Population *pop,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideElectronFunctional(const dictionary *ini, Population *pop,
+void mccCollideElectronFunctional(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo);
 
@@ -211,7 +220,7 @@ void mccCollideElectronFunctional(const dictionary *ini, Population *pop,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideIonFunctional(const dictionary *ini, Population *pop,
+void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,MpiInfo *mpiInfo);
 
 
@@ -229,7 +238,7 @@ void mccCollideIonFunctional(const dictionary *ini, Population *pop,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
+void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo);
 
@@ -248,7 +257,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
+void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 
 

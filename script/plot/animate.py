@@ -10,28 +10,29 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"
+file_name = "rho"#"phi"#"rhoNeutral" #"P"
 
-ppc = 12 # particle per cell
+ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 9000#45714 # Must exist in dataset
+start = 10 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
-levels = 200 ## granularity of contourf
+levels = 500 ## granularity of contourf
 interval = 0.1#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 0.1 #(1 = all of negative values)
+restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XY'
+plane = 'XY' # XY, XZ, YZ
 
 show_anim = True 
 
 save_figs = False#True
+
 
 ## Needs ffmpeg codec
 save_anim = False ## Bool (if false anim is only shown on screen)
@@ -68,7 +69,7 @@ for i in timesteps:
 	#print(data.shape)
 	data = np.transpose(data)
 	if (plane == 'XY'):
-		data = np.transpose((data[:,:,int(len(data[0,0,:])/2)]))*denorm #int(len(data[0,0,:])/2)
+		data = np.transpose((data[:,:,int(len(data[0,0,:])/2)-2 ]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'YZ'):
 		data = np.transpose((data[int(len(data[0,0,:])/2),:,:]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'XZ'):
@@ -78,9 +79,11 @@ for i in timesteps:
 			data = -1*data
 		data = (data/denorm)/ppc # Number density
 	#data = np.transpose(np.average(data,axis=2))*denorm 
-	#print(data.shape)
+	#print(data[0,0])
 	DATA.append(data)
 DATA = np.array(DATA)
+print("max value = %f"%np.amax(DATA))
+print("min value = %f"%np.amin(DATA))
 
 
 vMin=restr_min*np.amin(DATA)
@@ -111,9 +114,16 @@ def animate(i):
         #ax.clear()
         img = ax.contourf(X, Y, DATA[i,:,:],cmap = cmap , levels=levels, vmin=vMin,vmax=vMax)#,cmap = 'RdYlBu'
         #img = ax.imshow(DATA[i,:,:],extent=[0,x[-1],0,y[-1]],cmap = cmap, vmin=vMin,vmax=vMax) 
-        ax.set_title(file_name+'Timestep: %03d'%(timesteps[i]+start) )
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
+        ax.set_title(file_name+' Timestep: %03d'%(timesteps[i]) )
+        if (plane == 'XY'):
+                ax.set_xlabel("X (m)")
+                ax.set_ylabel("Y (m)")
+        if (plane == 'YZ'):
+                ax.set_xlabel("Y (m)")
+                ax.set_ylabel("Z (m)")
+        if (plane == 'XZ'):
+                ax.set_xlabel("X (m)")
+                ax.set_ylabel("Z (m)")
         mesh = cax.pcolormesh(data, cmap = cmap)
         mesh.set_clim(vMin,vMax)
         if("rho" in file_name ):
@@ -123,12 +133,14 @@ def animate(i):
         fig.colorbar(mesh,cax=cax)
 
         if(save_figs == True): 
-            plt.savefig("anim_output/timestep_%03d"%(timesteps[i]+start)+".png")
+            plt.savefig("anim_output/"+file_name+"_timestep_%03d"%(timesteps[i])+".png")
     
 for i in range(len(DATA[:,0,0])):
     if (start==timesteps[i]):
         start_index=i
+
 DATA = DATA[start_index:,:,:]
+timesteps = timesteps[start_index:]
 ani = animation.FuncAnimation(fig,animate,len(DATA[:,0,0]),interval=interval*1e+3,blit=False)
 
 if(save_anim == True):

@@ -41,7 +41,9 @@ int main(int argc, char *argv[]){
 												mgMode_set,
 												mgModeErrorScaling_set,
 												sMode_set,
-												oMode_set);
+												oMode_set,
+											    oCollMode_set,
+												neutTest_set);
 	run(ini);
 
 	/*
@@ -134,7 +136,7 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
@@ -175,13 +177,8 @@ void regular(dictionary *ini){
 	//gBnd(phi, mpiInfo);
 	//gBnd(rho, mpiInfo);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	msg(STATUS, "solving");
 	solve(solver, rho, phi, mpiInfo);
 	//gBnd(phi, mpiInfo);
-
-	msg(STATUS, "finding E");
 
 	gFinDiff1st(phi, E);
 
@@ -412,14 +409,14 @@ void BorisTestMode(dictionary *ini){
 	 * PREPARE FILES FOR WRITING
 	 */
 
-	//---------------------------REMOVE v ?
-	int rank = phi->rank;
-	double *denorm = malloc((rank-1)*sizeof(*denorm));
-	double *dimen = malloc((rank-1)*sizeof(*dimen));
-
-	for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
-	for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
-	//----------------------------------------------------
+	// //---------------------------REMOVE v ?
+	// int rank = phi->rank;
+	// double *denorm = malloc((rank-1)*sizeof(*denorm));
+	// double *dimen = malloc((rank-1)*sizeof(*dimen));
+	//
+	// for(int d = 1; d < rank;d++) denorm[d-1] = 1.;
+	// for(int d = 1; d < rank;d++) dimen[d-1] = 1.;
+	// //----------------------------------------------------
 
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
@@ -434,8 +431,8 @@ void BorisTestMode(dictionary *ini){
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
 
-	free(denorm);
-	free(dimen);
+	//free(denorm);
+	//free(dimen);
 
 	/*
 	 * INITIAL CONDITIONS
@@ -458,7 +455,7 @@ void BorisTestMode(dictionary *ini){
 		pNew(pop, 0, pos, vel);
 		double pos1[3] = {31., 31., 31.};
 		double vel1[3] = { velThermal[1], 0., 0.};
-		pNew(pop, 1, pos1, vel1); //second particle
+		//pNew(pop, 1, pos1, vel1); //second particle
 	}
 
 	// Perturb particles
@@ -506,7 +503,7 @@ void BorisTestMode(dictionary *ini){
 	 * TIME LOOP
 	 */
 
-	Timer *t = tAlloc(rank);
+	Timer *t = tAlloc(mpiInfo->mpiRank);
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
@@ -579,11 +576,13 @@ void BorisTestMode(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		//gWriteH5(E, mpiInfo, (double) n);
-		gWriteH5(rho, mpiInfo, (double) n);
-		gWriteH5(phi, mpiInfo, (double) n);
-		pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		pWriteEnergy(history,pop,(double)n,units);
+		if(n%10==0){
+			//gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(rho, mpiInfo, (double) n);
+			gWriteH5(phi, mpiInfo, (double) n);
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+			pWriteEnergy(history,pop,(double)n,units);
+		}
 
 	}
 
@@ -604,7 +603,7 @@ void BorisTestMode(dictionary *ini){
 	pCloseH5(pop);
 	gCloseH5(rho);
 	gCloseH5(phi);
-	//gCloseH5(E);
+	gCloseH5(E);
 	// oCloseH5(obj);
 	xyCloseH5(history);
 

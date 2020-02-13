@@ -99,6 +99,11 @@ void uNormalize(dictionary *ini, const Units *units){
 	adScale(mass,   nSpecies, 1.0/units->mass);
 	adScale(density, nSpecies, 1.0/units->density);
 
+	// for(int s=0; s<nSpecies; s++){
+	// 	printf("mass[s] = %f \n",mass[s]);
+	// 	printf("weights[s] = %f \n",weights[s]);
+	// }
+
 	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
 	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
 	iniSetDoubleArr(ini, "population:density", density, nSpecies);
@@ -119,7 +124,7 @@ void uNormalize(dictionary *ini, const Units *units){
 	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
 	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
-	msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
+	//msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
 
 }
 /*
@@ -217,6 +222,7 @@ static Units *uSI(const dictionary *ini){
 	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
+		//printf("weights[%i] = %f \n",s,weights[s]);
 	}
 
 	double X  = stepSize[0];
@@ -263,5 +269,5 @@ static void uAddDerivedUnits(Units *units){
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
 
-	msg(STATUS, "units->potential = %f",units->potential);
+	//msg(STATUS, "units->potential = %f",units->potential);
 }

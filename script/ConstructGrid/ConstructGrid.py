@@ -110,20 +110,19 @@ def main():
         ostop = time.time()
         print (" Compute time:", ostop-ostart, "sec.\n")
 
-    # Write to file.
-    wstart = time.time()
-    print( " 4. Write output:")
-    grid = np.transpose(grid,(2, 0, 1))
-    gg.writeOutput(grid, gridpar, outfile)
-    gg.writeOutput(box, gridpar, boundaryFile)
-    wstop = time.time()
-    print (" Compute time:", wstop-wstart, "sec.\n")
+# Write to file.
+wstart = time.time()
+print( " 4. Write output:")
+gg.writeOutput(grid, gridpar, outfile)
+gg.writeOutput(box, gridpar, boundaryFile)
+wstop = time.time()
+print (" Compute time:", wstop-wstart, "sec.\n")
 
-    # Find total computing time.
-    stop = time.time()
-    print (" Total compute time:", stop-start, "sec.")
-    print ("\n All done, now go have a beer!\n")
-    return grid
+# Find total computing time.
+stop = time.time()
+print (" Total compute time:", stop-start, "sec.")
+print ("\n All done, now go have a beer!\n")
+return grid
 
 if __name__ == '__main__':
     grid = main()

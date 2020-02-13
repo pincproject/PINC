@@ -1628,10 +1628,10 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 // Works
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
-	exchangeNMigrants(mpiInfo);
-  MPI_Barrier(MPI_COMM_WORLD); //debug
-  exchangeMigrants(pop,mpiInfo,grid);
-  MPI_Barrier(MPI_COMM_WORLD);
+    exchangeNMigrants(mpiInfo);
+    MPI_Barrier(MPI_COMM_WORLD); //debug
+    exchangeMigrants(pop,mpiInfo,grid);
+    MPI_Barrier(MPI_COMM_WORLD);
 
 }
 
