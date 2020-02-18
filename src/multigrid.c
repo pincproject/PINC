@@ -175,6 +175,7 @@ Grid **mgAllocSubGrids(const dictionary *ini, Grid *grid,
 		double *sendSlice = malloc(nSliceMax*sizeof(*sendSlice));
 		double *recvSlice = malloc(nSliceMax*sizeof(*recvSlice));
 		double *bndSlice = malloc(2*rank*nSliceMax*sizeof(*bndSlice));
+		adSetAll(bndSlice,2*rank*nSliceMax,0);
 
 		//Ghost layer vector
 		int *subNGhostLayers = malloc(rank*2*sizeof(*subNGhostLayers));
@@ -1560,7 +1561,7 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
  	if(level == bottom){
  		gHaloOp(setSlice, mgPhi->grids[level], mpiInfo, TOHALO);
 		gHaloOp(setSlice, mgRho->grids[level], mpiInfo, TOHALO);
-		gNeutralizeGrid(mgRho->grids[level], mpiInfo);
+		//gNeutralizeGrid(mgRho->grids[level], mpiInfo);
  		mgRho->coarseSolv(mgPhi->grids[level], mgRho->grids[level], mgRho->nCoarseSolve, mpiInfo);
 		gBnd(mgPhi->grids[level], mpiInfo);
  		mgRho->prolongator(mgRes->grids[level-1], mgPhi->grids[level], mpiInfo);
@@ -1578,7 +1579,8 @@ void parseMGOptim(dictionary *ini, Multigrid *multigrid){
 
  	//Boundary
  	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
- 	gNeutralizeGrid(rho,mpiInfo);
+ 	//gNeutralizeGrid(rho,mpiInfo);
+	gBnd(rho,mpiInfo);
 
 	//adPrint(rho->val,rho->sizeProd[4]);
 
@@ -1660,7 +1662,8 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 		//Boundary
 		gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 		gBnd(phi, mpiInfo);
-		gNeutralizeGrid(rho, mpiInfo);
+		gBnd(rho,mpiInfo);
+		//gNeutralizeGrid(rho, mpiInfo);
 
 
 		preSmooth(phi, rho, nPreSmooth, mpiInfo);
@@ -1682,7 +1685,8 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	/*****************************************************
 	 *	//OBS, ONLY NEEDED FOR PERIODIC (neutralize)
 	 *****************************************************/
-	gNeutralizeGrid(rho, mpiInfo);
+	//gNeutralizeGrid(rho, mpiInfo);
+	gBnd(rho,mpiInfo);
 
 	//Solve at coarsest
 	gHaloOp(setSlice, rho, mpiInfo, TOHALO);
@@ -1761,13 +1765,14 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	int nLevels = mgRho->nLevels;
 
 	//gZero(mgPhi->grids[0]);
-	double tol = 1.E-10; //1.E-10;
+	double tol = 1.E-6; //1.E-10;
 	double barRes = 2.;
 
 	//gBnd(mgPhi->grids[0], mpiInfo);
 	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
 
 
+	int iterations = 0;
 	if(nLevels >1){
 		while(barRes > tol){
 		//for(int c = 0; c < nMGCycles; c++){
@@ -1785,6 +1790,11 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			//msg(STATUS, "barRes = %f", barRes);
 			//exit(0);
 			//adPrint(mgPhi->grids[0]->val,mgPhi->grids[0]->sizeProd[4]);
+			iterations += 1;
+			if (iterations > 128){
+				msg(WARNING,"MGsolver did not converge, continuing with error = %e",barRes);
+				barRes = 0.0;
+			}
 		}
 		//exit(0);
 		// for(int c = 0; c < nMGCycles; c++){
@@ -1797,12 +1807,13 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			Grid *phi = mgPhi->grids[0];
 			Grid *rho = mgRho->grids[0];
 			gHaloOp(setSlice, rho, mpiInfo, TOHALO);
-			gBnd(rho, mpiInfo);
+			//gBnd(rho, mpiInfo);
 			mgRho->coarseSolv(phi, rho,
 								mgRho->nCoarseSolve, mpiInfo);
 		}
 	}
-
+	msg(STATUS,"MG iterations = %i",iterations);
+	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
 	return;
 }
 

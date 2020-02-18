@@ -222,4 +222,6 @@ void puModeParticle(dictionary *ini);
 funPtr puModeInterp_set(dictionary *ini);
 void puModeInterp(dictionary *ini);
 
+void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo);
+
 #endif // PUSHER_H

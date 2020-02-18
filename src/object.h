@@ -27,6 +27,9 @@ typedef struct{
   double *radiance; ///< Solar radiance in Photons/timestep
   double *bandEnergy;     ///< Energy in frequency band above work function energy of object
   int nObjects;					///< Number of objects
+	double *deltaPhi;
+	double *rhoCorr;
+	double *invNrSurfNod;
 } Object;
 
 
@@ -209,4 +212,16 @@ total energy in Joule in the band per timetep
 */
 void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj);
 
+
+/**
+ * @brief   Check whether a certain node is a ghost node.
+ * @param	grid	Grid
+ * @param	node	long int
+ * @return	bool
+ */
+bool isGhostNode(Grid *grid, long int node);
+void oGhost(long int node, const int *nGhostLayersBefore,
+            const int *nGhostLayersAfter, const int *trueSize,
+            const long int *sizeProd, bool *ghost);
+			
 #endif // OBJECT_H

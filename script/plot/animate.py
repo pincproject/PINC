@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho"#"phi"#"rhoNeutral" #"P"
+file_name = "phi"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 10 #4950#50713#45715 # Must exist in dataset
+start = 910#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -69,7 +69,7 @@ for i in timesteps:
 	#print(data.shape)
 	data = np.transpose(data)
 	if (plane == 'XY'):
-		data = np.transpose((data[:,:,int(len(data[0,0,:])/2)-2 ]))*denorm #int(len(data[0,0,:])/2)
+		data = np.transpose((data[:,:,int(len(data[0,0,:])/2) ]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'YZ'):
 		data = np.transpose((data[int(len(data[0,0,:])/2),:,:]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'XZ'):

@@ -79,6 +79,7 @@ static inline void addCross(const double *a, const double *b, double *res);
  */
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
@@ -1354,6 +1355,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
+				puAssertEmigrantsAlloc(nEmigrants[ne*nSpecies+s],ne,mpiInfo);
+
 				}
 
 			}
@@ -1362,6 +1365,10 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	}
 	free(nSubdomains);
 }
+
+
+
+
 
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
@@ -1629,9 +1636,8 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
     exchangeNMigrants(mpiInfo);
-    MPI_Barrier(MPI_COMM_WORLD); //debug
+    //MPI_Barrier(MPI_COMM_WORLD); //debug
     exchangeMigrants(pop,mpiInfo,grid);
-    MPI_Barrier(MPI_COMM_WORLD);
 
 }
 
@@ -1644,6 +1650,15 @@ void puReflect(){
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
+
+void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo){
+	long int *nEmigrantsAlloc = mpiInfo->nEmigrantsAlloc;
+	//printf("count = %li,  nEmigrantsAlloc[ne] = %li\n",count,nEmigrantsAlloc[ne] );
+	if (count > nEmigrantsAlloc[ne]){
+		msg(STATUS,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+		msg(ERROR,"number of emmigrants ran out of bounds in ExtractEmigrants");
+	}
+}
 
 static void puSanity(dictionary *ini, const char* name, int dim, int order){
 

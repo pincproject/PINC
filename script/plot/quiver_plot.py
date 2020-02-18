@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
-file_name = "V"#"gradBulkV"
+file_name = "E"#"gradBulkV"
 
-xSize = 32
-ySize = 32
+xSize = 64
+ySize = 64
 
-plane = 'XZ' 
+plane = 'YZ' 
 
-timestep = 19990 #200
+timestep = 100 #200
 
 h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
@@ -18,32 +18,17 @@ dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
 print(denorm)
 
-DATA = []
+#DATA = []
 
 dataset = h5["/n=%.1f"%timestep]
 #data = np.transpose(dataset,(3,2,1,0))	
 data = np.squeeze(dataset)
 #print(" ")
 
-data = np.transpose(data)
-print(data[:,int(len (data[0,0,:]) /2),:,:].shape)
-if (plane == 'XY'):
-	data = np.transpose((data[:,int(len (data[0,0,:]) /2),:,:] )) #*denorm #int(len(data[0,0,:])/2)
-if (plane == 'YZ'):
-	data = np.transpose((  data[:,:,:,int(len(data[0,0,:])/2)]   )) #*denorm #int(len(data[0,0,:])/2)
-if (plane == 'XZ'):
-	data = np.transpose((data[:,:,int(len(data[0,0,:])/2),:])) #*denorm #int(len(data[0,0,:])/2)
+vMin=0.1*np.amin(data)
+vMax=0.1*np.amax(data)
 
-#data = np.transpose(np.average(data,axis=2))*denorm 
-#print(data[0,0])
-DATA.append(data)
-DATA = np.array(DATA)
-
-vMin=np.amin(DATA)
-vMax=np.amax(DATA)
-
-print(vMin)
-print(vMax)
+data = np.squeeze(data)/vMax
 
 X, Y = np.meshgrid(np.arange(0, xSize, 1), np.arange(0, ySize, 1))
 
@@ -52,19 +37,47 @@ x_shape = X.shape
 U = np.zeros(x_shape)
 V = np.zeros(x_shape)
 
-
-DATA = np.squeeze(DATA)/vMax
-print(DATA.shape)
-
+#data = np.transpose(data)
+print(data[:,:,:,:].shape)
 if (plane == 'XY'):
-	U = DATA[:,:,1]
-	V = DATA[:,:,2]
+	U = data[int(len (data[0,0,:]) /2),:,:,2] #[Z,Y,X,(z,y,x)]
+	V = data[int(len (data[0,0,:]) /2),:,:,1]
+	#data = np.transpose((data[:,:,:,int(len (data[0,0,:]) /2)] )) #*denorm #int(len(data[0,0,:])/2)
+
 if (plane == 'YZ'):
-	U = DATA[:,:,0]
-	V = DATA[:,:,1]
+	U = data[:,:,int(len (data[0,0,:]) /2),1] #[Z,Y,X,(z,y,x)]
+	V = data[:,:,int(len (data[0,0,:]) /2),0]
+	#data = np.transpose((  data[:,int(len(data[0,0,:])/2),:,:]   )) #*denorm #int(len(data[0,0,:])/2)
 if (plane == 'XZ'):
-	U = DATA[:,:,0]
-	V = DATA[:,:,2]
+	U = data[:,int(len (data[0,0,:]) /2),:,0] #[Z,Y,X,(z,y,x)]
+	V = data[:,int(len (data[0,0,:]) /2),:,2]
+	#data = np.transpose((data[:,:,int(len(data[0,0,:])/2),:])) #*denorm #int(len(data[0,0,:])/2)
+
+#data = np.transpose(np.average(data,axis=2))*denorm 
+#print(data[0,0])
+#DATA= data
+##DATA = np.array(DATA)
+
+
+
+print(vMin)
+print(vMax)
+
+
+
+
+
+print(data.shape)
+
+#if (plane == 'XY'):
+#	U = DATA[:,:,1]
+#	V = DATA[:,:,2]
+#if (plane == 'YZ'):
+#	U = DATA[:,:,1]
+#	V = DATA[:,:,0]
+#if (plane == 'XZ'):
+#	U = DATA[:,:,0]
+#	V = DATA[:,:,2]
 
 #print(U.shape)
 
