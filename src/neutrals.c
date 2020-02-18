@@ -25,6 +25,61 @@
 /******************************************************************************
 * DEFINING LOCAL FUNCTIONS
 *****************************************************************************/
+void neCutParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
+
+	int nDims = pop->nDims;
+	long int pLast = (pop->iStop[s]-1)*nDims;
+	//printf("Cutting particle p = %li \n",p);
+	for(int d=0;d<nDims;d++){
+		pos[d] = pop->pos[p+d];
+		vel[d] = pop->vel[p+d];
+		//printf("pos[%i] = %f \n",d,pos[d]);
+		pop->pos[p+d] = pop->pos[pLast+d];
+		pop->vel[p+d] = pop->vel[pLast+d];
+	}
+
+	pop->iStop[s]--;
+
+}
+
+
+void nePToLocalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
+
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
+		}
+	}
+}
+
+void nePToGlobalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
+
+	int *offset = mpiInfo->offset;
+	int nSpecies = pop->nSpeciesNeutral;
+	int nDims = pop->nDims;
+
+	for(int s=0;s<nSpecies;s++){
+
+		long int iStart = pop->iStart[s];
+		long int iStop = pop->iStop[s];
+
+		for(long int i=iStart;i<iStop;i++){
+
+			double *pos = &pop->pos[i*nDims];
+			for(int d=0;d<nDims;d++) pos[d] += offset[d];
+		}
+	}
+}
 
 void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
@@ -421,61 +476,7 @@ void neScatterParticle(NeutralPopulation *pop, int s, long int p, double *pos, d
 
 
 
-void neCutParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
 
-	int nDims = pop->nDims;
-	long int pLast = (pop->iStop[s]-1)*nDims;
-	//printf("Cutting particle p = %li \n",p);
-	for(int d=0;d<nDims;d++){
-		pos[d] = pop->pos[p+d];
-		vel[d] = pop->vel[p+d];
-		//printf("pos[%i] = %f \n",d,pos[d]);
-		pop->pos[p+d] = pop->pos[pLast+d];
-		pop->vel[p+d] = pop->vel[pLast+d];
-	}
-
-	pop->iStop[s]--;
-
-}
-
-
-void nePToLocalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
-
-	int *offset = mpiInfo->offset;
-	int nSpecies = pop->nSpeciesNeutral;
-	int nDims = pop->nDims;
-
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-
-		for(long int i=iStart;i<iStop;i++){
-
-			double *pos = &pop->pos[i*nDims];
-			for(int d=0;d<nDims;d++) pos[d] -= offset[d];
-		}
-	}
-}
-
-void nePToGlobalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
-
-	int *offset = mpiInfo->offset;
-	int nSpecies = pop->nSpeciesNeutral;
-	int nDims = pop->nDims;
-
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-
-		for(long int i=iStart;i<iStop;i++){
-
-			double *pos = &pop->pos[i*nDims];
-			for(int d=0;d<nDims;d++) pos[d] += offset[d];
-		}
-	}
-}
 
 
 

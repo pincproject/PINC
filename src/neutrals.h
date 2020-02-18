@@ -98,6 +98,7 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 
 void neMultiplySlice(Grid *target,int slicePos,int dim,double multiplyBy, NeutralPopulation *pop);
 
+
 //#########################################
 // Mover/Accelerator
 // ########################################
