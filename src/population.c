@@ -853,7 +853,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 				long int globalSizeProd = ((L[0])*(L[1])*(L[2])); //TODO: make nDimensional
 				long int newParticles = (nParticles[s])/globalSizeProd ; // slice * particles per cell
 
-				
+
 				long int tempindex = 0;
 				for (int k = 0;k<nDims;k++){
 					tempindex += gPos[k]*sizeProd[k+1];
@@ -1232,7 +1232,7 @@ void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisi
 
 
 
-	return collisionType;
+	//return collisionType;
 }
 
 void pBackscatter(Population *pop){
