@@ -457,7 +457,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
 				index = (s*nDims)+d;
-				vel[d] = velDrift[index] + gsl_ran_gaussian_ziggurat(rng,velTh);
+				vel[d] = gsl_ran_gaussian_ziggurat(rng,velTh); //velDrift[index] +
 			}
 		}
 	}
@@ -808,7 +808,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 		long int iStart = pop->iStart[s];
 		long int iStop = pop->iStop[s];
 
-		double velTh = velThermal[s];
+		//double velTh = velThermal[s];
 
 		for (long int gIndex=0;gIndex<sizeProd[rank];gIndex++){
 			bool outerGhost[nDims];
@@ -853,6 +853,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 				long int globalSizeProd = ((L[0])*(L[1])*(L[2])); //TODO: make nDimensional
 				long int newParticles = (nParticles[s])/globalSizeProd ; // slice * particles per cell
 
+				
 				long int tempindex = 0;
 				for (int k = 0;k<nDims;k++){
 					tempindex += gPos[k]*sizeProd[k+1];
@@ -863,8 +864,10 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 					for(long int i=0;i<newParticles;i++){
 						//generate velocity for particle
 						for(int d=0;d<nDims;d++){
-							vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+							vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velThermal[s]); //sqrt(3)*sqrt(pow(gsl_ran_gaussian_ziggurat(rng,velDrift[(s*nDims)+d]),2)) +
+
 						}
+
 
 						// Generate position for particle
 						for(int dd=0;dd<nDims;dd++){

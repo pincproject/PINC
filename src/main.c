@@ -576,7 +576,7 @@ void BorisTestMode(dictionary *ini){
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
 		//Write h5 files
-		if(n%1000==0){
+		if(n%10==0){
 			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);

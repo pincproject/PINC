@@ -693,7 +693,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 	adSetAll(invNrSurfNod,obj->nObjects,0);
     for (long int a=0; a<obj->nObjects; a++) {
         invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
-        //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
+        //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",1./invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     }
 
     int cutNumber = 0;
@@ -716,7 +716,24 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
             long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
             //msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
             // Check whether p is one of the object nodes and collect the charge if so.
-            for (long int a=0; a<obj->nObjects; a++) {
+            // for (long int a=0; a<obj->nObjects; a++) {
+            //     for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
+            //         if ((obj->lookupSurface[b])==p) {
+            //             chargeCounter[a] += charge[s];
+			// 			//printf("adding charge = %f\n",charge[s] );
+            //             //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
+            //             //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
+            //             //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
+            //             pCut(pop, s, pIndex, pop->pos, pop->vel);
+            //             cutNumber += 1;
+            //             //msg(STATUS,"iStop = %li",iStop);
+            //             iStop--;
+			//
+            //         }
+            //     }
+			//
+            // }
+			for (long int a=0; a<obj->nObjects; a++) {
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
@@ -1606,7 +1623,7 @@ void oMode(dictionary *ini){
   	// Setting Boundary slices
   	gSetBndSlices(ini, phi, mpiInfo);
 	//gSetBndSlices(ini, rho, mpiInfo);
-	//gSetBndSlicesE(ini, E, mpiInfo);
+	gSetBndSlicesE(ini, E, mpiInfo);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1662,7 +1679,7 @@ void oMode(dictionary *ini){
 	//pPosLattice(ini, pop, mpiInfo);
 	pPosUniformCell(ini,rho,pop,rng,mpiInfo);
 	//pVelZero(pop);
-	pVelMaxwell(ini, pop, rng);
+	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 
@@ -1689,9 +1706,9 @@ void oMode(dictionary *ini){
 	 */
 
     // Clean objects from any charge first.
-    // gZero(rhoObj);                                          // for capMatrix - objects
-    // oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
-    // gZero(rhoObj);                                          // for capMatrix - objects
+    gZero(rhoObj);                                          // for capMatrix - objects
+    oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);        // for capMatrix - objects
+    gZero(rhoObj);                                          // for capMatrix - objects
 
 
 	// Get initial charge density
@@ -1714,7 +1731,7 @@ void oMode(dictionary *ini){
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
-	gBndE(E, mpiInfo);
+	gBnd(E, mpiInfo);
 
 
   //Boris parameters
@@ -1745,10 +1762,13 @@ void oMode(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-
+		long int totPs0 = (pop->iStop[0]- pop->iStart[0]); //debug
+		long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
+		MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles s=0 %i: ",(pop->iStop[0]- pop->iStart[0]));
-		msg(STATUS, "Nr. of particles s=1 %i: ",(pop->iStop[1]- pop->iStart[1]));
+        msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
+		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
 
 		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
@@ -1759,6 +1779,9 @@ void oMode(dictionary *ini){
 
 		// Move particles
 		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
+
+
+
 		puMove(pop); //puMove(pop, obj); Do not change functions such that PINC does
     // not work in other run modes!
 
@@ -1772,6 +1795,7 @@ void oMode(dictionary *ini){
 		puMigrate(pop, mpiInfo, rho);
 
 		pFillGhost(ini,rho,pop,rng,mpiInfo);
+
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
@@ -1812,7 +1836,7 @@ void oMode(dictionary *ini){
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
-		gBndE(E, mpiInfo); // always neumann cond
+		gBnd(E, mpiInfo); // always neumann cond
 		//gBnd(E, mpiInfo);
 
 		//gAssertNeutralGrid(E, mpiInfo);
@@ -1836,7 +1860,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>61000){//122700){//50614
+		if(n%10 == 0 || n>122700){//50614
 		//Write h5 files
 		gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -1847,6 +1871,9 @@ void oMode(dictionary *ini){
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
+		// if(n%1 == 0){
+		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		// }
 
 		pWriteEnergy(history,pop,(double)n,units);
 	}

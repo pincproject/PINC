@@ -1386,9 +1386,9 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
 
@@ -1476,10 +1476,11 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	// 	getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset);
 	// }
 	// //adPrint(bndSolution,2*4*nSliceMax);
-	getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
-	for(long int k = boundary*nSliceMax;k<nSliceMax;k++){
-		bndSlice[k] *= 2*bndSlice[k];
-	}
+	getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+	// for(long int k = boundary*nSliceMax;k<nSliceMax;k++){
+	// 	bndSlice[k] *= 2*bndSlice[k];
+	// }
 
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
 
@@ -1610,7 +1611,8 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				gDirichletE(grid, d, mpiInfo);
+				//gDirichletE(grid, d, mpiInfo);
+				gNeumann(grid, d, mpiInfo);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
@@ -1623,7 +1625,7 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gDirichletE(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gNeumann(grid, d, mpiInfo);//gDirichletE(grid, d, mpiInfo);
 			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
 		}
 	}
