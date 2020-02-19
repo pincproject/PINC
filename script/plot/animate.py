@@ -15,7 +15,7 @@ file_name = "phi"#"rhoNeutral" #"P"
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 910#50600 #4950#50713#45715 # Must exist in dataset
+start = 49000#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -31,7 +31,7 @@ plane = 'XY' # XY, XZ, YZ
 
 show_anim = True 
 
-save_figs = False#True
+save_figs = True
 
 
 ## Needs ffmpeg codec
