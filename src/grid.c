@@ -1386,7 +1386,7 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 		if(nSlice>nSliceMax) nSliceMax = nSlice;
 	}
 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
 	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
 
@@ -1712,7 +1712,7 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 	for(int i=0;i<nNeighbors;i++)
 		if(i!=neighborhoodCenter){
 			migrants[i] = malloc(nEmigrantsAlloc[i]*sizeof(*migrants));
-			emigrants[i] = malloc(2*nDims*nEmigrantsAlloc[i]*sizeof(*emigrants));
+			emigrants[i] = malloc(2*nSpecies*nDims*nEmigrantsAlloc[i]*sizeof(*emigrants));
 		}
 
 	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
@@ -1724,11 +1724,12 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 
 	// ALLOCATE SIMPLE ARRAYS AND STORE IN STRUCT
 
-	long int *nEmigrants = malloc(nNeighbors*nSpecies*sizeof(*nEmigrants));
-	long int *nImmigrants = malloc(nNeighbors*nSpecies*sizeof(*nImmigrants));
+	long int *nEmigrants = malloc(nNeighbors*(nSpecies+1)*sizeof(*nEmigrants));
+	long int *nImmigrants = malloc(nNeighbors*(nSpecies+1)*sizeof(*nImmigrants));
 
-	long int nImmigrantsAlloc = 2*nDims*alMax(nEmigrantsAlloc,nNeighbors);
-	double *immigrants = malloc(nImmigrantsAlloc*sizeof(*immigrants));
+	long int nImmigrantsAlloc = 2*alMax(nEmigrantsAlloc,nNeighbors);
+	// TODO: Investigat: It seems to be more stable with the 2*, not shure why
+	double *immigrants = malloc(2*nSpecies*nDims*nImmigrantsAlloc*sizeof(*immigrants));
 
 	MPI_Request *send = malloc(nNeighbors*sizeof(*send));
 	MPI_Request *recv = malloc(nNeighbors*sizeof(*recv));

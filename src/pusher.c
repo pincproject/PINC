@@ -1078,7 +1078,7 @@ void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
 	for(int neigh=0;neigh<nNeighbors;neigh++){
 		migrants[neigh] = mpiInfo->migrants[neigh];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1127,7 +1127,7 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 	for(int neigh=0;neigh<nNeighbors;neigh++){
 		migrants[neigh] = mpiInfo->migrants[neigh];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1198,7 +1198,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1355,7 +1356,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
-				puAssertEmigrantsAlloc(nEmigrants[ne*nSpecies+s],ne,mpiInfo);
+
 
 				}
 
@@ -1395,7 +1396,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1478,7 +1479,7 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1527,14 +1528,15 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
 			int reciprocal = puNeighborToReciprocal(ne,mpiInfo->nDims);
-			//msg(STATUS,"ne =%i, rank = %i, reciprocal = %i",ne,rank,reciprocal);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
-			// We get segfault on large simulation systems, as a safety measure we can
-			// try to use a different tag here than in exchangeMigrants()
-			// hence the "2*nNeighbors"
-			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal+2*nNeighbors,MPI_COMM_WORLD,&send[ne]);
-			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne+2*nNeighbors        ,MPI_COMM_WORLD,&recv[ne]);
+
+			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
+			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne        ,MPI_COMM_WORLD,&recv[ne]);
+			for(int s=0;s<nSpecies;s++){
+				puAssertEmigrantsAlloc(mpiInfo->nEmigrants[nSpecies*ne+s],ne,mpiInfo);
+				puAssertImmigrantsAlloc(mpiInfo->nImmigrants[nSpecies*ne+s],mpiInfo);
+			}
 		}
 	}
 
@@ -1618,7 +1620,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
-		MPI_Recv(immigrants,nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
 		// adPrint(mpiInfo->immigrants,6);
@@ -1653,9 +1655,18 @@ void puReflect(){
 
 void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo){
 	long int *nEmigrantsAlloc = mpiInfo->nEmigrantsAlloc;
-	//printf("count = %li,  nEmigrantsAlloc[ne] = %li\n",count,nEmigrantsAlloc[ne] );
-	if (count > nEmigrantsAlloc[ne]){
+	//printf("On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+	if (count > nEmigrantsAlloc[ne]){//2*mpiInfo->nDims*
 		msg(STATUS,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+		msg(ERROR,"number of emmigrants ran out of bounds in ExtractEmigrants");
+	}
+}
+
+void puAssertImmigrantsAlloc(long int count, MpiInfo *mpiInfo){
+	long int nImmigrantsAlloc = mpiInfo->nImmigrantsAlloc;
+	//printf("On proc = %i, count = %li,  nImmigrantsAlloc  = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
+	if (count > nImmigrantsAlloc){
+		msg(STATUS,"On proc = %i, count = %li,  nImigrantsAlloc = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
 		msg(ERROR,"number of emmigrants ran out of bounds in ExtractEmigrants");
 	}
 }
