@@ -1513,7 +1513,6 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 }
 
 // Works
-// TODO: Add fault-handling in case of too small Population struct
 static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	int nSpecies = mpiInfo->nSpecies;
@@ -1530,7 +1529,9 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 			int reciprocal = puNeighborToReciprocal(ne,mpiInfo->nDims);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
-
+			// sometimes on larger runs nImmigrants ends up uninitialized
+			// after the exchange. Zeroing it seems to help this.
+			alSetAll(nImmigrants,nSpecies,0);
 			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
 			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne        ,MPI_COMM_WORLD,&recv[ne]);
 			for(int s=0;s<nSpecies;s++){
@@ -1658,7 +1659,7 @@ void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo){
 	//printf("On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
 	if (count > nEmigrantsAlloc[ne]){//2*mpiInfo->nDims*
 		msg(STATUS,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
-		msg(ERROR,"number of emmigrants ran out of bounds in ExtractEmigrants");
+		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
 	}
 }
 
@@ -1667,7 +1668,7 @@ void puAssertImmigrantsAlloc(long int count, MpiInfo *mpiInfo){
 	//printf("On proc = %i, count = %li,  nImmigrantsAlloc  = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
 	if (count > nImmigrantsAlloc){
 		msg(STATUS,"On proc = %i, count = %li,  nImigrantsAlloc = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
-		msg(ERROR,"number of emmigrants ran out of bounds in ExtractEmigrants");
+		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
 	}
 }
 
