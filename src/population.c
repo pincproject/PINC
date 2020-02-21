@@ -1361,11 +1361,11 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 				//if(j==0) adPrint(vel,3);
 				adRotateRandom3D(vel, rng);
 				//if(i==0) adPrint(vel,3);
-				int signY = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
-				int signZ = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
-				newPos[0] -= 0.5 + vel[0] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[0];
-				newPos[1] += 0.5*signY + vel[1] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[1];
-				newPos[2] += 0.5*signZ + vel[2] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[2];
+				//int signY = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
+				//int signZ = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
+				newPos[0] -= 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[0];
+				newPos[1] += 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[1];
+				newPos[2] += 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[2];
 
 				pNew(pop, nSpecie, newPos, vel);
 				adSetAll(vel, pop->nDims, 0.0);
