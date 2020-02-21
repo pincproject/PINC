@@ -92,7 +92,7 @@ void uNormalize(dictionary *ini, const Units *units){
 		charge[s]  *= weights[s];
 		mass[s]    *= weights[s];
 		density[s] /= weights[s];
-		//printf("weights[%i] = %f \n",s,weights[s] );
+		
 	}
 
 	// Normalization

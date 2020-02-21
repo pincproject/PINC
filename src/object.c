@@ -2277,10 +2277,10 @@ void oMode(dictionary *ini){
 		tStart(t);
 
 		// Move particles
-		puMove(pop);
-        //oObjectParticleInteraction(pop, obj);
+		// oRayTrace(pop, obj, deltaRho); <- do we need this still???
 
-
+		puMove(pop); //puMove(pop, obj); Do not change functions such that PINC does
+    // not work in other run modes!
 
 		//add influx of new particles on boundary
 		pPurgeGhost(pop, rho);
@@ -2358,14 +2358,14 @@ void oMode(dictionary *ini){
 
 		if(n%1 == 0){//50614
 		//Write h5 files
-		gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			gWriteH5(rhoObj, mpiInfo, (double) n);
+			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 		// if(n%1 == 0){
 		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);

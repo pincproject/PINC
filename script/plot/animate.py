@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho_i"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 910#50600 #4950#50713#45715 # Must exist in dataset
+start = 900#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
