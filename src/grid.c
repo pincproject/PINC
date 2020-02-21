@@ -533,7 +533,7 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  	long int *sizeProd = malloc((rank+1)*sizeof(*sizeProd));
  	ailCumProd(size,sizeProd,rank);
 
-	printf("sizeProd[1] = %li\n", sizeProd[1]);
+	//printf("sizeProd[1] = %li\n", sizeProd[1]);
 
  	//Number of elements in slice
  	long int nSliceMax = 0;

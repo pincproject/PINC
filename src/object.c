@@ -288,6 +288,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         MPI_Allreduce(MPI_IN_PLACE, capMatrix, mpiSendNr, \
                       MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+
         //printf("(totSNGlob*totSNGlob) = %li \n", mpiSendNr);
         //adPrint(capMatrix, (totSNGlob*totSNGlob));
         // Compute the inverse of the capacitance matrix.
@@ -318,6 +319,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
         free(capMatrix),
         free(invCapMatrix);
         gsl_permutation_free(p);
+
     }
 
     //long int *capMatrixAllOffsets = nodCorGlob;
@@ -666,7 +668,6 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     // We might add this to the Object, although probably better  to store the rhoObj for restarts and insulators later on.
     double *chargeCounter = malloc(obj->nObjects*sizeof(*chargeCounter));
-
     adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
 
     //long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
@@ -759,7 +760,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     }
 
     MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    msg(STATUS|ALL, "Cut %d particles during oCollectObjectCharge", cutNumber);
+    msg(STATUS, "Cut %d particles during oCollectObjectCharge", cutNumber);
 
     //printf("cutNumber = %i \n",cutNumber);
     cutNumber = 0;
@@ -821,9 +822,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
         MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
 	}
 
-    alPrint(expNodesAllCores, size);
     long int totExpNodes = alSum(expNodesAllCores, size);
-    msg(STATUS, "Total exposed nodes %li", totExpNodes);
 
     for (long int a=0; a<obj->nObjects; a++) {
 
@@ -854,16 +853,24 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	//scale flux 
 	for(size_t a = 0; a<nObj; a++){
 		flux[a] /= units->weights[nSpecie];
-        flux[a] *= ((double)expNodesThisCore/totExpNodes);
+        flux[a] /= totExpNodes;
         flux[a] = floor(flux[a]);
 	}
+
+    double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
+    
+    MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    for(int a=0; a<nObj; a++){
+        msg(STATUS, "Added %f charges to rhoObj", totPhotoElectrons[a]);
+    }
+
 
     //Add the collected charge to the exposed nodes on rhoObject.
     for (long int a=0; a<nObj; a++) {
         for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
             val[obj->lookupSurface[b]] += flux[a]*invNrSurfNod[a];// * invNrExpNod[a];
         }
-        msg(STATUS|ALL, "added %f charges to rhoObj", flux[a]);
     }
 
     free(bandEnergy);
@@ -2134,7 +2141,7 @@ void oMode(dictionary *ini){
 
 
     //msg(STATUS,"opening obj file");
-		gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
+    gOpenH5(ini, rhoObj, mpiInfo, units, units->chargeDensity, "rhoObj");        // for capMatrix - objects
 		//oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
 		//oReadH5(obj->domain, mpiInfo, "Object");
 
@@ -2253,6 +2260,7 @@ void oMode(dictionary *ini){
 		long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
 		MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+        msg(STATUS, "====================================================");
 		msg(STATUS,"Computing time-step %i",n);
         msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
 		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
@@ -2261,6 +2269,10 @@ void oMode(dictionary *ini){
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
+        
+        if(n==1){
+            obj->radiance[0] = 5.0625e8; //J=1.6e-2 A/m^2, deca et al.
+        }
 
 		tStart(t);
 
@@ -2279,11 +2291,12 @@ void oMode(dictionary *ini){
 
 		pFillGhost(ini,rho,pop,rng,mpiInfo);
 
-
+        pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
 
         // Collect the charges on the objects.
+        oCollectPhotoelectronCharge(pop, rhoObj, phi, obj, mpiInfo, units);
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
 
@@ -2343,7 +2356,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%10 == 0 || n>122700){//50614
+		if(n%1 == 0){//50614
 		//Write h5 files
 		gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2390,17 +2403,17 @@ void oMode(dictionary *ini){
   // Free memory
   // sFree(solver);
   // mgFreeSolver(solver);
-  solverFree(solver);
-  gFree(rho);
-  gFree(rho_e);
-  gFree(rho_i);
-  gFree(phi);
-  free(S);
-  free(T);
+    solverFree(solver);
+    gFree(rho);
+    gFree(rho_e);
+    gFree(rho_i);
+    gFree(phi);
+    free(S);
+    free(T);
 
-  gFree(E);
-  pFree(pop);
-  uFree(units);
+    gFree(E);
+    pFree(pop);
+    uFree(units);
     gFree(rhoObj);          // for capMatrix - objects
     oFree(obj);             // for capMatrix - objects
 

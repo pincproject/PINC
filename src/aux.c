@@ -327,8 +327,8 @@ void adReflect(const double *ray, const double *a, const double *b, double *res)
 
 void adRotateRandom3D(double *a, const gsl_rng *r){
 
-	double beta = PI/2 * gsl_rng_uniform(r);
-	double gamma = PI/2 * gsl_rng_uniform(r);
+	double beta = PI/2 * gsl_rng_uniform_pos(r);
+	double gamma = PI/2 * gsl_rng_uniform_pos(r);
 	int signSB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
 	int signSG = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
 	int signCB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
@@ -336,10 +336,10 @@ void adRotateRandom3D(double *a, const gsl_rng *r){
 
 
 	//compute sin,cos once
-	const double sinB = sin(signSB * beta);
-	const double sinG = sin(signSG * gamma);
-	const double cosB = cos(signCB * beta);
-	const double cosG = cos(signCG * gamma); 
+	double sinB = sin(signSB * beta);
+	double sinG = sin(signSG * gamma);
+	double cosB = cos(signCB * beta);
+	double cosG = cos(signCG * gamma); 
 
 	//msg(STATUS, "cosB: %f, sinB: %f, cosG: %f, sinG: %f", cosB, sinB, cosG, sinG);
 	gsl_vector_view aVec = gsl_vector_view_array(a, 3);

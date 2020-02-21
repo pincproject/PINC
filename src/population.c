@@ -1311,7 +1311,7 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	//convert wavenumber to workfunction energy
 	for(int a = 0; a<nObj; a++){
 		workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
-		workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunctiona as energy (Joules) 
+		workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules) 
 	}
 
 	//average energy and velocity of emitted superparticle
@@ -1321,11 +1321,13 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
-		avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
-		avgEnergy[a] -= workFunc[a];
-		avgVel[a] = -1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//pop->mass[specie]); //TODO: make direction independent
+		//avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
+		//avgEnergy[a] -= workFunc[a]; //COMMENTED OUT FOR DECA'S TESTCASE
+		avgEnergy[a] = 4.807e-19;
+		avgEnergy[a] *= units->weights[nSpecie]; //scale to energy to super particles
+		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
 		avgVel[a] /= units->velocity;
-		msg(STATUS|ALL, "avgVel %f", avgVel[a]);
+		msg(STATUS, "avgVel %f", avgVel[a]);
 	}
 
 	//scale flux to each core 
@@ -1337,38 +1339,44 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 
 
 	double *pos = malloc(pop->nDims * sizeof(*pos));
+	double *newPos = malloc(pop->nDims * sizeof(*newPos));
 	double *vel = malloc(pop->nDims * sizeof(*vel));
-	//pToGlobalFrame(pop, mpiInfo);
+	adSetAll(pos, pop->nDims, 0.0);
+	adSetAll(newPos, pop->nDims, 0.0);
+	adSetAll(vel, pop->nDims, 0.0);
+
+	double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
+	MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	for(int a=0; a < nObj; a++){
 		
 		long int hit = 0; 
 		for(int i = 0; i < nodesThisCore; i++){
-			adSetAll(pos, pop->nDims, 0.0);
-			adSetAll(vel, pop->nDims, 0.0);
 			long int node = exposedNodes[exposedOff[a] + i]; 
 			gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
-			if(rank==0) adPrint(pos,3);
 
 			for(long int j=0; j<(long)flux[a]; j++){
-				adSetAll(pos, pop->nDims, 0.0);
-				adSetAll(vel, pop->nDims, 0.0);
-				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,fabs(avgVel[a])); //
+				memcpy(newPos, pos, pop->nDims * sizeof(*newPos));
+				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //
+				//if(j==0) adPrint(vel,3);
 				adRotateRandom3D(vel, rng);
+				//if(i==0) adPrint(vel,3);
+				int signY = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
+				int signZ = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
+				newPos[0] -= 0.5 + vel[0] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[0];
+				newPos[1] += 0.5*signY + vel[1] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[1];
+				newPos[2] += 0.5*signZ + vel[2] + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[2];
 
-				pos[0] += vel[0];
-				pos[1] += vel[1];
-				pos[2] += vel[2];
-
-				pNew(pop, nSpecie, pos, vel);
+				pNew(pop, nSpecie, newPos, vel);
+				adSetAll(vel, pop->nDims, 0.0);
 				hit += 1;
+
 			}
-			if(rank==0) adPrint(vel,3);
-			if(rank==0) adPrint(pos,3);
+
 		}
 
 
-		msg(STATUS|ALL, "Number of super particles created in timestep: %li", hit);
+		msg(STATUS, "Number of super particles created in timestep: %f", totPhotoElectrons[a]);
 		
 	}
 
@@ -1377,7 +1385,9 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	free(flux);
 	free(bandEnergy);
 	free(workFunc);
+	free(totPhotoElectrons);
 	free(pos);
+	free(newPos);
 	free(vel);
 }
 

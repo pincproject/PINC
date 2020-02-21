@@ -247,6 +247,7 @@ static Units *uSI(const dictionary *ini){
 	units->charge = Q;
 	units->mass = M;
 
+	adPrint(weights, nSpecies);
 	return units;
 }
 
@@ -270,5 +271,5 @@ static void uAddDerivedUnits(Units *units){
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
 
-	//msg(STATUS, "units->potential = %f",units->potential);
+	msg(STATUS, "units->potential = %f",units->potential);
 }

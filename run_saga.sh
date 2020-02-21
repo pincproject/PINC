@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Job name:
-#SBATCH --job-name=daedalus1-PINC
+#SBATCH --job-name=pinc-decaetall
 #
 # Project:
-#SBATCH --account=nn9299k
+#SBATCH --account=nn0000k
 #
 # Wall clock limit:
 #SBATCH --time=7-00:00:00
@@ -39,7 +39,7 @@ make
 ## Copy input files to the work directory:
 mkdir $SCRATCH//$SLURM_JOB_ID
 cp $SUBMITDIR/pinc $SCRATCH/$SLURM_JOB_ID
-cp $SUBMITDIR/daedalus1.ini $SCRATCH/$SLURM_JOB_ID
+cp $SUBMITDIR/decaetall.ini $SCRATCH/$SLURM_JOB_ID
 mkdir $SCRATCH/$SLURM_JOB_ID/data
 cp $SUBMITDIR/object.grid.h5 $SCRATCH/$SLURM_JOB_ID/data
 
@@ -55,6 +55,6 @@ ls
 echo "data folder contents:"
 ls data/
 echo "Running pinc"
-srun ./pinc daedalus1.ini
+srun ./pinc decaetall.ini
 
 

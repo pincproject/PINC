@@ -37,21 +37,21 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 
 def main():
     # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-    gridpar = [-6.4, 6.4,-6.4, 6.4,-6.4, 6.4, 128, 128, 128] #0.3125
+    gridpar = [-5, 5, -3.5, 6.5, -5, 5, 64, 64, 64] #0.3125
     #gridpar = [0, 0.3125*64, 0, 0.3125*64, 0, 0.3125*64, 64, 64, 64] #0.3125
     #gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
     # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
-    infile = ["mmo2"]
+    infile = ["cubesat"]
     #infile = ["box", "box"]
     # Outputfiles and comment.
     outfile = ["object.grid.h5", "test satellite"]
-    boundaryFile = ["bound.grid.h5", "bounding box"]
+    #boundaryFile = ["bound.grid.h5", "bounding box"]
     # Object file contents. Provide one entry for each file in "infile".
     # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
     # identifier (one per file, assume all objects in file have the same floating potential) {-> Sigvald, we could use a predefined
     # number say "666" for insulators or dielectrics.} Note, the default is "0" for free voxels.]
-    content[0] = [1, (0,0,0.5),1]
+    content[0] = [1, (0,0,0.0),1]
     #content[1] = [1, (0,0,0),2]
     #content[2] = [1, (0,0,0),3]
     #content[3] = [2, (0.1,0,0),(0.9,0,0),4]
@@ -110,35 +110,36 @@ def main():
         ostop = time.time()
         print (" Compute time:", ostop-ostart, "sec.\n")
 
-# Write to file.
-wstart = time.time()
-print( " 4. Write output:")
-gg.writeOutput(grid, gridpar, outfile)
-gg.writeOutput(box, gridpar, boundaryFile)
-wstop = time.time()
-print (" Compute time:", wstop-wstart, "sec.\n")
+    # Write to file.
+    wstart = time.time()
+    print( " 4. Write output:")
+    #grid = np.transpose(grid,(2, 0, 1))
+    gg.writeOutput(grid, gridpar, outfile)
+    #gg.writeOutput(box, gridpar, boundaryFile)
+    wstop = time.time()
+    print (" Compute time:", wstop-wstart, "sec.\n")
 
-# Find total computing time.
-stop = time.time()
-print (" Total compute time:", stop-start, "sec.")
-print ("\n All done, now go have a beer!\n")
-return grid
+    # Find total computing time.
+    stop = time.time()
+    print (" Total compute time:", stop-start, "sec.")
+    print ("\n All done, now go have a beer!\n")
+    return grid
 
 if __name__ == '__main__':
     grid = main()
     grid_bool = np.array(grid, dtype=bool)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlim3d(0,128)
-    ax.set_ylim3d(0,128)
-    ax.set_zlim3d(0,128)
+    ax.set_xlim3d(0,64)
+    ax.set_ylim3d(0,64)
+    ax.set_zlim3d(0,64)
     points = np.nonzero(grid)
     #ax.voxels(grid_bool, edgecolor='k')
     # points = np.loadtxt('points2.txt', delimiter=',')
     ax.scatter(points[0],points[1],points[2])
-    ax.set_xlabel('x axis')
-    ax.set_ylabel('y axis')
-    ax.set_zlabel('z axis')
+    #ax.set_xlabel('x axis')
+    #ax.set_ylabel('y axis')
+    #ax.set_zlabel('z axis')
     plt.show()
 ######################################################################################################################################
 #matshow(grid[:,:,101])

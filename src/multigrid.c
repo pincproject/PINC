@@ -1812,7 +1812,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 								mgRho->nCoarseSolve, mpiInfo);
 		}
 	}
-	msg(STATUS,"MG iterations = %i",iterations);
+	//msg(STATUS,"MG iterations = %i",iterations);
 	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
 	return;
 }
