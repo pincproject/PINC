@@ -1573,12 +1573,14 @@ static inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 }
 
 // Works
-static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
+static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies,MpiInfo *mpiInfo){
 
 	int nDims = pop->nDims;
 	long int *iStop = pop->iStop;
 
 	for(int s=0;s<nSpecies;s++){
+
+		puAssertImmigrantsAlloc(nParticles[s],mpiInfo);
 
 		double *pos = &pop->pos[nDims*iStop[s]];
 		double *vel = &pop->vel[nDims*iStop[s]];
@@ -1621,13 +1623,16 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
+		adSetAll(immigrants,2*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
+		//PINC still chrashes in puMigrate under certain conditions
 		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
 		// adPrint(mpiInfo->immigrants,6);
 		shiftImmigrants(mpiInfo,grid,ne);
 		// adPrint(mpiInfo->immigrants,6);
-		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies);
+
+		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies,mpiInfo);
 
 	}
 

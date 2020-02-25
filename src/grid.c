@@ -533,7 +533,7 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  	long int *sizeProd = malloc((rank+1)*sizeof(*sizeProd));
  	ailCumProd(size,sizeProd,rank);
 
-	
+
 
  	//Number of elements in slice
  	long int nSliceMax = 0;
@@ -1728,7 +1728,7 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 	long int *nImmigrants = malloc(nNeighbors*(nSpecies+1)*sizeof(*nImmigrants));
 
 	long int nImmigrantsAlloc = 2*alMax(nEmigrantsAlloc,nNeighbors);
-	// TODO: Investigat: It seems to be more stable with the 2*, not shure why
+	// TODO: Investigate: It seems to be more stable with the 2*, not shure why
 	double *immigrants = malloc(2*nSpecies*nDims*nImmigrantsAlloc*sizeof(*immigrants));
 
 	MPI_Request *send = malloc(nNeighbors*sizeof(*send));
