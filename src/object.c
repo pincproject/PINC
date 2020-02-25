@@ -853,7 +853,6 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	//scale flux 
 	for(size_t a = 0; a<nObj; a++){
 		flux[a] /= units->weights[nSpecie];
-        flux[a] /= totExpNodes;
         flux[a] = floor(flux[a]);
 	}
 
@@ -861,9 +860,9 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     
     MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     
-    for(int a=0; a<nObj; a++){
+/*     for(int a=0; a<nObj; a++){
         msg(STATUS, "Added %f charges to rhoObj", totPhotoElectrons[a]);
-    }
+    } */
 
 
     //Add the collected charge to the exposed nodes on rhoObject.
@@ -2375,7 +2374,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1 == 0){//50614
+		if(n%6 == 0){//50614
 		//Write h5 files
 			gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
