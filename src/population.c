@@ -1324,7 +1324,6 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 		//avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
 		//avgEnergy[a] -= workFunc[a]; //COMMENTED OUT FOR DECA'S TESTCASE
 		avgEnergy[a] = 4.807e-19;
-		avgEnergy[a] *= units->weights[nSpecie]; //scale to energy to super particles
 		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
 		avgVel[a] /= units->velocity;
 		msg(STATUS, "avgVel %f", avgVel[a]);
@@ -1347,7 +1346,7 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 
 	double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
 	MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
+	//pToGlobalFrame(pop, mpiInfo);
 	for(int a=0; a < nObj; a++){
 		
 		long int hit = 0; 
@@ -1363,9 +1362,9 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 				//if(i==0) adPrint(vel,3);
 				//int signY = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
 				//int signZ = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
-				newPos[0] -= 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[0];
-				newPos[1] += 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[1];
-				newPos[2] += 0.5 + gsl_ran_gaussian_ziggurat(rng,0.18); //vel[2];
+				newPos[0] -= vel[0] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[0];
+				newPos[1] += vel[1] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[1];
+				newPos[2] += vel[2] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[2];
 
 				pNew(pop, nSpecie, newPos, vel);
 				adSetAll(vel, pop->nDims, 0.0);
@@ -1380,6 +1379,7 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 		
 	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
 	//pToLocalFrame(pop, mpiInfo);
 	free(nodesAllCores);
 	free(flux);

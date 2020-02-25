@@ -1595,7 +1595,7 @@ static inline void importParticles(Population *pop, double *particles, long int 
 
 // Works
 static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *grid){
-
+	
 	int nSpecies = mpiInfo->nSpecies;
 	int nNeighbors = mpiInfo->nNeighbors;
 	long int nImmigrantsAlloc = mpiInfo->nImmigrantsAlloc;
@@ -1621,6 +1621,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
+		adSetAll(immigrants,2*nDims*nImmigrantsAlloc,0.0);
 		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 

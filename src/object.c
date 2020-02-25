@@ -1023,7 +1023,7 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
    
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
-
+    alPrint(exposedNodes, exposedNodesOffset[1]);
     free(index);
 
 }
@@ -1412,7 +1412,24 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj){
 	free(area);
 }
 
+void oPhotoElectronCurrent(dictionary *ini, const Units *units, Object *obj){
+    
+    int nObj = obj->nObjects;
+    double *flux = obj->radiance;
+    double *area = obj->conductingSurface;
+    double jNormalize = 1.60217662e-19 / units->time / units->hyperArea;
 
+    double *currentDensity = iniGetDoubleArr(ini, "objects:currentDensity", nObj);
+
+    //Q = j * A * t
+    for(int a = 0; a<nObj; a++){
+        //don't need to divide by timestep, we want flux in terms of timestep anyway 
+        flux[a] = currentDensity[a]/jNormalize * area[a]/units->hyperArea;
+        msg(STATUS, "real photoelectron flux: %.10e", flux[a]); 
+    }
+
+
+}
 
 /*****************************************************************************
  *  ALLOC/DESTRUCTORS
@@ -2271,7 +2288,7 @@ void oMode(dictionary *ini){
 		pVelAssertMax(pop,maxVel);
         
         if(n==1){
-            obj->radiance[0] = 5.0625e8; //J=1.6e-2 A/m^2, deca et al.
+            oPhotoElectronCurrent(ini, units, obj);//5.0625e8 //J=1.6e-2 A/m^2, deca et al.
         }
 
 		tStart(t);
@@ -2292,6 +2309,8 @@ void oMode(dictionary *ini){
 		pFillGhost(ini,rho,pop,rng,mpiInfo);
 
         pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
+        extractEmigrants(pop, mpiInfo);
+		puMigrate(pop, mpiInfo, rho);
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
 
@@ -2362,7 +2381,6 @@ void oMode(dictionary *ini){
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
-
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);

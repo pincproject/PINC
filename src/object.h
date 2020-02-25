@@ -213,6 +213,12 @@ total energy in Joule in the band per timetep
 void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj);
 
 
+/*
+Alternative to calculating the electron flux from the blackbody integrals. Uses a constant
+value for the photoelectrons current density from the ini file to calculate total flux of 
+real (non-computational) electrons per timestep
+*/
+void oPhotoElectronCurrent(dictionary *ini, const Units *units, Object *obj);
 /**
  * @brief   Check whether a certain node is a ghost node.
  * @param	grid	Grid
