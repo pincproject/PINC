@@ -179,7 +179,7 @@ long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc, \
 
 
 // Compute the capacitance matrix for each object.
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
+void oComputeCapacitanceMatrix(Object *obj, dictionary *ini, const MpiInfo *mpiInfo) {
 
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -200,7 +200,13 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
     Grid *rhoCap = gAlloc(ini, SCALAR,mpiInfo);
     Grid *phiCap = gAlloc(ini, SCALAR,mpiInfo);
 
+	double realTol = iniGetDouble(ini, "multigrid:tol");
+	double objTol = iniGetDouble(ini, "multigrid:objTol");
+	iniSetDouble(ini, "multigrid:tol", objTol);
     void *solver = solverAlloc(ini, rhoCap, phiCap, mpiInfo);
+	iniSetDouble(ini, "multigrid:tol", realTol);//1e-6;
+	//setting tol for residual only for cap matrix
+
     //msg(STATUS,"in oComputeCapacitanceMatrix");
     //exit(0);
     // for(int r=0; r<2*phiCap->rank; r++){
@@ -336,7 +342,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini, const MpiInfo
 }
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo){
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, const MpiInfo *mpiInfo,Units *units){
 
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -394,7 +400,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 		//printf("capMatrixSum[a] = %f\n",capMatrixSum[a] );
 		//printf("capMatrixPhiSum = %f\n",capMatrixPhiSum );
-        msg(STATUS,"Potential-check for object %ld : %f",a,capMatrixPhiSum);
+        msg(STATUS,"Potential-check for object %ld : %f",a,(units->potential*capMatrixPhiSum));
         //capMatrixPhiSum=0.03;
 
         for (long int j=beginIndex; j<endIndex; j++) {
@@ -482,7 +488,7 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
             }
         }
         //MPI_Allreduce(MPI_IN_PLACE, &lookupSurfaceOffset[a+1], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-        aiPrint(&lookupSurfaceOffset[a+1],1);
+        //aiPrint(&lookupSurfaceOffset[a+1],1);
     }
     //printf("offsets done \n");
     alCumSum(lookupSurfaceOffset+1,lookupSurfaceOffset,obj->nObjects);
@@ -705,7 +711,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
         for(long int i=iStart;i<iStop;i++){
 
             double *pos = &pop->pos[i*nDims];
-            double *vel = &pop->vel[i*nDims];
+            //double *vel = &pop->vel[i*nDims];
 
             // Integer parts of position
             int j = (int) pos[0];
@@ -831,53 +837,53 @@ void oVicinityParticles(Population *pop, Object *obj){
 
 //Relies on a courant number < 1 (otherwise particle might be inside object)
 //checks which particles in object vicinity will collide => overwrites pop->collisions
-void oFindParticleCollisions(Population *pop, Object *obj){
-
-    long int *lookupIntOff = obj->lookupInteriorOffset;
-    long int *sizeProd = obj->domain->sizeProd;
-
-    oVicinityParticles(pop, obj);
-    long int *vicinity = pop->objVicinity;
-    long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
-    long int counter = 0;
-    alSetAll(pop->collisions, nCloseParticles, 0);
-
-
-    for(int i=0;i<nCloseParticles;i++){
-
-        double *pos = &pop->pos[3*i];
-        double *vel = &pop->vel[3*i];
-        double *nextPos;
-        adAdd(pos,vel,nextPos,3);
-
-        // Integer parts of position in next time step
-        int j = (int) nextPos[0];
-        int k = (int) nextPos[1];
-        int l = (int) nextPos[2];
-
-        long int p = j + k*sizeProd[2] + l*sizeProd[3];
-
-        // Check whether p is one of the object nodes
-        for (long int a=0; a<obj->nObjects; a++) {
-            for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
-                if ((obj->lookupInterior[b])==p) {
-                    pop->collisions[counter] = p; // CHECK THIS: p is particle position, not index. The index is 3*i, or nDims*i
-                    counter++;
-                }
-            }
-        }
-    }
-}
+// void oFindParticleCollisions(Population *pop, Object *obj){
+//
+//     long int *lookupIntOff = obj->lookupInteriorOffset;
+//     long int *sizeProd = obj->domain->sizeProd;
+//
+//     oVicinityParticles(pop, obj);
+//     long int *vicinity = pop->objVicinity;
+//     long int nCloseParticles = sizeof(vicinity) / sizeof(vicinity[0]);
+//     long int counter = 0;
+//     alSetAll(pop->collisions, nCloseParticles, 0);
+//
+//
+//     for(int i=0;i<nCloseParticles;i++){
+//
+//         double *pos = &pop->pos[3*i];
+//         double *vel = &pop->vel[3*i];
+//         double *nextPos;
+//         adAdd(pos,vel,nextPos,3);
+//
+//         // Integer parts of position in next time step
+//         int j = (int) nextPos[0];
+//         int k = (int) nextPos[1];
+//         int l = (int) nextPos[2];
+//
+//         long int p = j + k*sizeProd[2] + l*sizeProd[3];
+//
+//         // Check whether p is one of the object nodes
+//         for (long int a=0; a<obj->nObjects; a++) {
+//             for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
+//                 if ((obj->lookupInterior[b])==p) {
+//                     pop->collisions[counter] = p; // CHECK THIS: p is particle position, not index. The index is 3*i, or nDims*i
+//                     counter++;
+//                 }
+//             }
+//         }
+//     }
+// }
 
 //Moves a particle according to the type of collision, also creates and removes new particles
-void oParticleCollision(Population *pop, Object *obj, long int i){
-
-    void (*collisionType)(Population *);
-
-    pFindCollisionType(pop, obj, i, collisionType);
-
-    //collisionType();
-}
+// void oParticleCollision(Population *pop, Object *obj, long int i){
+//
+//     void (*collisionType)(Population *);
+//
+//     pFindCollisionType(pop, obj, i, collisionType);
+//
+//     //collisionType();
+// }
 
 
 //Finds nearest 3 object surface nodes to a specific particle of index p
@@ -942,9 +948,9 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
 Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
 
     int size = mpiInfo->mpiSize;
-    int mpiRank = mpiInfo->mpiRank;
+    //int mpiRank = mpiInfo->mpiRank;
     Grid *domain = gAlloc(ini, SCALAR,mpiInfo);
-    int rank = domain->rank;
+    //int rank = domain->rank;
     gZero(domain);
 
     Object *obj = malloc(sizeof(*obj));
@@ -1635,7 +1641,7 @@ void oMode(dictionary *ini){
 	 */
 
 	pOpenH5(ini, pop, units, "pop");
-	double denorm = units->potential;
+	//double denorm = units->potential;
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
 	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
 	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
@@ -1817,7 +1823,7 @@ void oMode(dictionary *ini){
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
         // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
+        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
 
 		//gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
@@ -1826,14 +1832,17 @@ void oMode(dictionary *ini){
 		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		double rhoSum = gSumTruegrid(rho);
+		double rhoObjSum = gSumTruegrid(rhoObj);
+		MPI_Allreduce(MPI_IN_PLACE, &rhoObjSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 		MPI_Allreduce(MPI_IN_PLACE, &rhoSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-		msg(STATUS,"total charge = %f",rhoSum);
+		msg(STATUS,"total charge = %f PINC values",(rhoSum));
+		msg(STATUS,"Object charge = %.6e C",(units->charge*rhoObjSum));
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
-		gBnd(E, mpiInfo); // always neumann cond
-		//gBnd(E, mpiInfo);
+		gBnd(E, mpiInfo);
+		//gBndE(E, mpiInfo); // always neumann cond
 
 		//gAssertNeutralGrid(E, mpiInfo);
 		// Apply external E
@@ -1856,7 +1865,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>12000){//n>122700){//50614
+		if(n%100 == 0 || n>90800){//n>122700){//50614
 		//Write h5 files
 			gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -1865,7 +1874,7 @@ void oMode(dictionary *ini){
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			//gWriteH5(rhoObj, mpiInfo, (double) n);
+			gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 		// if(n%1 == 0){
 		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);

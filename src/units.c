@@ -92,7 +92,7 @@ void uNormalize(dictionary *ini, const Units *units){
 		charge[s]  *= weights[s];
 		mass[s]    *= weights[s];
 		density[s] /= weights[s];
-		
+
 	}
 
 	// Normalization
@@ -124,7 +124,7 @@ void uNormalize(dictionary *ini, const Units *units){
 	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
 	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
-	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+	//double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
 	//msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
 
 }

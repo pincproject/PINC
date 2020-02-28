@@ -81,6 +81,49 @@ void nePToGlobalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
 	}
 }
 
+void neGNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
+
+	//msg(STATUS, "Hello from NEUMANN");
+
+	//Load data
+	int rank = grid->rank;
+	int *size = grid->size;
+	double *bndSlice = grid->bndSlice; // two slices in each dim
+	//double *slice = grid->sendSlice;
+	//double *bndSolution = grid->bndSolution; // two slices in each dim
+
+
+	//Compute dimensions and slicesize
+	int d = boundary%rank;
+	int offset = 1 + (boundary>rank)*(size[d]-3);
+
+	//int offset = 0;
+	//if (boundary>rank) offset = 1 + (boundary>rank)*(size[d]-1);
+	//if (boundary<rank) offset = (boundary>rank)*(size[d]-1);
+
+	//Number of elements in slice
+	long int nSliceMax = 0; //TODO: this can/should be stored.
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+	//  /// OLD comment: Compute d/dx u(x) = u(x_2) - 2A
+	// constant *=-2;
+
+	getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+	//getSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+	// for(long int k = boundary*nSliceMax;k<nSliceMax;k++){
+	// 	bndSlice[k] *= 2*bndSlice[k];
+	// }
+
+	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
+
+	return;
+}
+
 void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 	//msg(STATUS, "Hello from Dirichlet");
@@ -192,7 +235,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				gNeumann(grid, d, mpiInfo);
+				neGNeumann(grid, d, mpiInfo);
 			}
 		}
 	}
@@ -201,7 +244,7 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET) gDirichletEnerg(grid, d, mpiInfo);//gDirichlet(grid, d, mpiInfo);
-			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	neGNeumann(grid, d, mpiInfo);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -260,7 +303,7 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				gNeumann(grid, d, mpiInfo);
+				neGNeumann(grid, d, mpiInfo);
 			}
 		}
 	}
@@ -272,7 +315,7 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 				gDirichletVel(grid, d, mpiInfo);
 				//gNeumann(grid, d, mpiInfo);
 			}
-			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	neGNeumann(grid, d, mpiInfo);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -314,7 +357,7 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 
 	int nSpecies = pop->nSpeciesNeutral;
 	int nDims = pop->nDims;
-	bndType *bnd = pop->bnd;
+	//bndType *bnd = pop->bnd;
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
 	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nSpecies);
@@ -322,13 +365,13 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
-	int rank = nDims+1;
+	//int rank = nDims+1;
 
 	// Read from mpiInfo
 	int *subdomain = mpiInfo->subdomain;
 	double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
 	// int edge[nDims];
@@ -337,8 +380,8 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 
 	for(int s=0;s<nSpecies;s++){
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		//long int iStart = pop->iStart[s];
+		//long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
 
@@ -391,11 +434,11 @@ void neInjectParticles(int slicePos,int dim,int multiplyDens,const dictionary *i
 
 void neMultiplySlice(Grid *target,int slicePos,int dim,double multiplyBy, NeutralPopulation *pop){
 
-	int nSpecies = pop->nSpeciesNeutral;
+	//int nSpecies = pop->nSpeciesNeutral;
 	int nDims = pop->nDims;
 
 	int rank = nDims+1;
-	long int *sizeProd = target->sizeProd;
+	//long int *sizeProd = target->sizeProd;
 	int *size = target->size;
 
 	long int nSliceMax = 0;
@@ -426,8 +469,8 @@ void neScatterParticle(NeutralPopulation *pop, int s, long int p, double *pos, d
 
     // neutral object coll
 	int nDims = pop->nDims;
-	long int pLast = (pop->iStop[s]-1)*nDims;
-	double *newvel = vel;
+	//long int pLast = (pop->iStop[s]-1)*nDims;
+	//double *newvel = vel;
 	//printf("Cutting particle p = %li \n",p);
 	//Decide in  whitch dimension we crossed boundary
 	double oldPos[nDims];
@@ -890,7 +933,7 @@ void neFillGhost(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *r
 	int *subdomain = mpiInfo->subdomain;
 	double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
 	// int edge[nDims];
@@ -899,13 +942,13 @@ void neFillGhost(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *r
 
 	for(int s=0;s<nSpecies;s++){
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		//long int iStart = pop->iStart[s];
+		//long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
 
 		for (int d=0;d<nDims;d++){
-			index = (s*nDims)+d;
+			//index = (s*nDims)+d;
 
 			//compute edge
 			// for (int dd=0;dd<nDims;dd++){
@@ -1279,8 +1322,8 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
 	double *val = Pgrad->val;
 	long int *divSizeProd = divBulkV->sizeProd;
 	double *divVal = divBulkV->val;
-	double *rhoVal = rho->val;
-	double *scalarSizeProd = rho->sizeProd;
+	//double *rhoVal = rho->val;
+	//long int *scalarSizeProd = rho->sizeProd;
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1298,11 +1341,11 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
 			neInterp3D1(divergence,&pos[p],divVal,divSizeProd); // grad not div
 
 
-			int j = (int) pos[p];
-			int k = (int) pos[p+1];
-			int l = (int) pos[p+2];
+			// int j = (int) pos[p];
+			// int k = (int) pos[p+1];
+			// int l = (int) pos[p+2];
 
-			long int scalarIndex = j+k*scalarSizeProd[2]+l*scalarSizeProd[3];
+			//long int scalarIndex = j+k*scalarSizeProd[2]+l*scalarSizeProd[3];
 
 			//neInterp3D1(divergence,&pos[p],divVal,divSizeProd);
 			for(int d=0;d<nDims;d++){
@@ -1319,7 +1362,7 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
 				}
 
 				 if(vel[p+d]>1.){
-				 	printf("vel[%li] = %f, rhoVal[%li], pos = %i, %i, %i \n",(p+d),vel[p+d],scalarIndex,rhoVal[scalarIndex],j,k,l);
+				 	//printf("vel[%li] = %f, rhoVal[%li], pos = %i, %i, %i \n",(p+d),vel[p+d],scalarIndex,rhoVal[scalarIndex],j,k,l);
 					vel[p+d] = 0.001;
 
 				}
@@ -1341,7 +1384,7 @@ void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde){
 	int nSpecies = pop->nSpeciesNeutral;
 
 	double *val = V->val;
-	double *tildeval = Vtilde->val;
+	//double *tildeval = Vtilde->val;
 	long int *sizeProd = V->sizeProd;
 
 	int nDims = pop->nDims;
@@ -1441,7 +1484,7 @@ void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde){
 	double *fieldVal = field->val;
 	double *rhoVal = rho->val;
 
-	double *mass = pop->mass;
+	//double *mass = pop->mass;
 
 
  	// Scalar indices
@@ -1521,7 +1564,7 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
-	int *subdomain = mpiInfo->subdomain;
+	//int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
 	//int rank = mpiInfo->mpiRank;
 
@@ -1896,20 +1939,20 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 
 	gZero(I);
 	double *IEVal = I->val;
-	double *bulkVVal = V->val;
+	//double *bulkVVal = V->val;
 	double *rhoVal = rho->val;
 
-	double *mass = pop->mass;
+	//double *mass = pop->mass;
 
 	int rank = I->rank;
 	long int *sizeProd =  I->sizeProd;
 	long int *fieldSizeProd =  V->sizeProd;
-	double rho0 = pop->rho0;
+	//double rho0 = pop->rho0;
 
 
 	int nDims = rank-1;
 	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
-	double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
+	//double *velDrift = iniGetDoubleArr(ini,"collisions:neutralDrift",nDims*nSpecies);
 	double *velTherm = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nDims*nSpecies);
 
 	//int index = 0;
@@ -1922,7 +1965,7 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 	long int end = sizeProd[rank]-start;
 
 	long int fieldstart = 0;//alSum(&fieldSizeProd[1], rank-1 );
-	long int fieldend = fieldSizeProd[rank]-start;
+	//long int fieldend = fieldSizeProd[rank]-start;
 
 	//printf("start = %li, end = %li \n",start,end);
 
@@ -2014,7 +2057,7 @@ void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const 
     int *nGhostLayers = P->nGhostLayers;
 	int *trueSize=P->trueSize;
 	long int *sizeProd =  P->sizeProd;
-	double stiffC = pop->stiffnessConstant;
+	//double stiffC = pop->stiffnessConstant;
 	double rho0 = pop->rho0;
 	//Seperate values
 	double *PVal = P->val;
@@ -2074,8 +2117,8 @@ void neAdvectI(Grid *IE,Grid *Itilde,Grid *P,Grid *V,Grid *rho,NeutralPopulation
 	int rank = IE->rank;
 	long int *sizeProd =  IE->sizeProd;
 	long int *fieldSizeProd =  V->sizeProd;
-	int *trueSize= IE->trueSize;
-	int *nGhostLayers = IE->nGhostLayers;
+	//int *trueSize= IE->trueSize;
+	//int *nGhostLayers = IE->nGhostLayers;
 
 	//int index = 0;
 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
@@ -2087,7 +2130,7 @@ void neAdvectI(Grid *IE,Grid *Itilde,Grid *P,Grid *V,Grid *rho,NeutralPopulation
 	long int end = sizeProd[rank]-start;
 
 	long int fieldstart = alSum(&fieldSizeProd[1], rank-1 );
-	long int fieldend = fieldSizeProd[rank]-start;
+	//long int fieldend = fieldSizeProd[rank]-start;
 
 	//printf("start = %li, end = %li \n",start,end);
 
@@ -2150,7 +2193,7 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 	double *bulkVtildeVal = Vtilde->val;
 	double *rhoVal = rho->val;
 	double *mass = pop->mass;
-	int nDims = pop->nDims;
+	//int nDims = pop->nDims;
 
 	//adPrint(rhoVal,rho->sizeProd[4]);
 	//exit(0);
@@ -2168,7 +2211,7 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 	long int end = sizeProd[rank]-start;
 
 	long int fieldstart = alSum(&fieldSizeProd[1], rank-1 );
-	long int fieldend = fieldSizeProd[rank]-start;
+	//long int fieldend = fieldSizeProd[rank]-start;
 
 	//printf("start = %li, end = %li \n",start,end);
 
@@ -2413,7 +2456,7 @@ void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop ){
 	double *PgradVal = Pgrad->val;
 	double *rhoVal = rho->val;
 
-	double *mass = pop->mass;
+	//double *mass = pop->mass;
 
  	// indices
 	long int s;
@@ -2455,14 +2498,14 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 	int *size = grid->size;
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
-	int *nGhostLayers = grid->nGhostLayers;
+	//int *nGhostLayers = grid->nGhostLayers;
 	//double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
-	int nDims = mpiInfo->nDims;
+	//int nDims = mpiInfo->nDims;
 
 	// using ini is slow, but setting boundary slices is likely only done once.
-	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
+	//int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
 
 
 	//Number of elements in slice
@@ -2539,7 +2582,7 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
 	double *sendSlice = rho->sendSlice;
-	int *nGhostLayers = grid->nGhostLayers;
+	//int *nGhostLayers = grid->nGhostLayers;
 	//double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
@@ -2548,8 +2591,8 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 	// using ini is slow, but setting boundary slices is likely only done once.
 	int nSpecies = iniGetInt(ini,"collisions:nSpeciesNeutral");
 	double *velTherm = iniGetDoubleArr(ini,"collisions:thermalVelocityNeutrals",nDims*nSpecies);
-	double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
-	double rho0 = density[0];
+	//double *density = iniGetDoubleArr(ini, "collisions:numberDensityNeutrals", nSpecies);
+	//double rho0 = density[0];
 
 	double veld[nDims];
 
@@ -2642,7 +2685,7 @@ void neSetBndSlicesVel(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo)
 	int *size = grid->size;
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
-	int *nGhostLayers = grid->nGhostLayers;
+	//int *nGhostLayers = grid->nGhostLayers;
 	//double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
@@ -2761,7 +2804,7 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = V->val;
-	int nDims = pop->nDims;
+	//int nDims = pop->nDims;
 
 	int rank = obj->domain->rank;
 	long int *lookupSurfOff = obj->lookupSurfaceOffset;
@@ -2779,7 +2822,7 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 	long int end = sizeProd[rank]-start;
 
 	long int fieldstart = alSum(&fieldSizeProd[1], rank-1 );
-	long int fieldend = fieldSizeProd[rank]-start;
+	//long int fieldend = fieldSizeProd[rank]-start;
 
 	bool prevInside, nextInside;
 	for(int d = 1; d < rank; d++){
@@ -2881,7 +2924,7 @@ void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = IE->val;
-	int nDims = pop->nDims;
+	//int nDims = pop->nDims;
 
 	int rank = obj->domain->rank;
 	long int *lookupSurfOff = obj->lookupSurfaceOffset;
@@ -3003,9 +3046,9 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiI
 
 
 	//int rank = mpiInfo->mpiRank;
-	int size = mpiInfo->mpiSize;
+	//int size = mpiInfo->mpiSize;
 
-	double *val = rhoObj->val;
+	//double *val = rhoObj->val;
 	long int *sizeProd = rhoObj->sizeProd;
 	long int nDims = pop->nDims;
 
@@ -3024,7 +3067,7 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiI
 		for(long int i=iStart;i<iStop;i++){
 
 			double *pos = &pop->pos[i*nDims];
-			double *vel = &pop->vel[i*nDims];
+			//double *vel = &pop->vel[i*nDims];
 
 			// Integer parts of position
 			int j = (int) pos[0];
@@ -3080,16 +3123,16 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 
 
 	//int rank = mpiInfo->mpiRank;
-	int size = mpiInfo->mpiSize;
+	//int size = mpiInfo->mpiSize;
 
-	double *val = rhoObj->val;
+	//double *val = rhoObj->val;
 	long int *sizeProd = rhoObj->sizeProd;
 	long int nDims = pop->nDims;
 
 	int nSpecies = pop->nSpeciesNeutral;
 
 	long int *lookupIntOff = obj->lookupInteriorOffset;
-	long int *lookupSurfOff = obj->lookupSurfaceOffset;
+	//long int *lookupSurfOff = obj->lookupSurfaceOffset;
 
 
 	int cutNumber = 0;
@@ -3176,15 +3219,15 @@ void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const 
 
 
 	//int rank = mpiInfo->mpiRank;
-	int size = mpiInfo->mpiSize;
+	//int size = mpiInfo->mpiSize;
 
-	double *val = rhoObj->val;
+	//double *val = rhoObj->val;
 	double *rhoVal = rho->val;
 
-	long int *sizeProd = rhoObj->sizeProd;
+	//long int *sizeProd = rhoObj->sizeProd;
 
 	long int *lookupIntOff = obj->lookupInteriorOffset;
-	long int *lookupSurfOff = obj->lookupSurfaceOffset;
+	//long int *lookupSurfOff = obj->lookupSurfaceOffset;
 
 	//adPrint(rhoVal,rho->sizeProd[4]);
 	//msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));

@@ -341,6 +341,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo){
 	multigrid->nPostSmooth = nPostSmooth;
 	multigrid->nCoarseSolve = nCoarseSolve;
     multigrid->grids = grids;
+	multigrid->tol = iniGetDouble(ini, "multigrid:tol");;//1e-3;
 
     //Setting the algorithms to be used, pointer functions
 	mgSetSolver(ini, multigrid);
@@ -1421,15 +1422,15 @@ void mgRestrictBnd(Multigrid *mgGrid){
 
  	//for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] += rhoVal[g];
 
- 	int *size = phi->size;
+ 	//int *size = phi->size;
  	//long int *sizeProd = phi->sizeProd;
  	int *trueSize = phi->trueSize;
  	int *nGhostLayers = phi->nGhostLayers;
 
  	long int g;
- 	int gj = sizeProd[1];
- 	int gk = sizeProd[2];
- 	int gl = sizeProd[3];
+ 	// int gj = sizeProd[1];
+ 	// int gk = sizeProd[2];
+ 	// int gl = sizeProd[3];
 
  	//g = sizeProd[3]*nGhostLayers[3];
  	for(int l = nGhostLayers[3]; l < trueSize[3]+nGhostLayers[3];l++){
@@ -1461,6 +1462,25 @@ void mgRestrictBnd(Multigrid *mgGrid){
  	return;
  }
 
+ // void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiInfo){
+ //
+ // 	//Load
+ // 	long int *sizeProd = res->sizeProd;
+ // 	int rank = res->rank;
+ // 	double *resVal = res->val;
+ // 	double *rhoVal = rho->val;
+ //
+ // 	//Should consider changing to function pointers
+ // 	if(rank == 4){
+ // 		gFinDiff2nd3D(res, phi);
+ // 	} else {
+ // 		gFinDiff2ndND(res,phi);
+ // 	}
+ //
+ // 	for (long int g = 0; g < sizeProd[rank]; g++) resVal[g] += rhoVal[g];
+ //
+ // 	return;
+ // }
 
 double mgResMass3D(Grid *grid, MpiInfo *mpiInfo){
 
@@ -1765,7 +1785,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	int nLevels = mgRho->nLevels;
 
 	//gZero(mgPhi->grids[0]);
-	double tol = 1.E-10; //1.E-10;
+	double tol = mgRho->tol;//1.E-3; //1.E-10;
 	double barRes = 2.;
 
 	//gBnd(mgPhi->grids[0], mpiInfo);
@@ -1791,8 +1811,8 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			//exit(0);
 			//adPrint(mgPhi->grids[0]->val,mgPhi->grids[0]->sizeProd[4]);
 			iterations += 1;
-			if (iterations > 128){
-				msg(WARNING,"MGsolver did not converge, continuing with error = %e",barRes);
+			if (iterations > 256){
+				msg(WARNING,"MGsolver did not converge, continuing with residual= %e",barRes);
 				barRes = 0.0;
 			}
 		}

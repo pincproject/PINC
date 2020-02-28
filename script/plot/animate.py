@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho_i"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-start = 4000#50600 #4950#50713#45715 # Must exist in dataset
+start = 100#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -24,14 +24,14 @@ interval = 0.1#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 0.1 #(1 = all of negative values)
+restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
 plane = 'XZ' # XY, XZ, YZ
 
 show_anim = True 
 
-save_figs = True
+save_figs = False#"True
 
 
 ## Needs ffmpeg codec
@@ -102,8 +102,12 @@ cax = div.append_axes('right', '5%', '5%')
 print("dx = %f"%dimen)
 print("denorm = %e"%denorm )
 
-x= np.linspace(0,dimen*(len(DATA[0,:,0])-1),len(DATA[0,:,0]))
-y= np.linspace(0,dimen*(len(DATA[0,0,:])-1),len(DATA[0,:,0]))
+
+x= np.linspace(0,dimen*(len(DATA[0,0,:])-1),len(DATA[0,0,:]))
+y= np.linspace(0,dimen*(len(DATA[0,:,0])-1),len(DATA[0,:,0]))
+
+
+
 
 X,Y = np.meshgrid(x,y) # not necessarily actual x, y dimensions
 

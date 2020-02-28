@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
 # timesteps:
-timestep = 10000#50600 #4950#50713#45715 # Must exist in dataset
+timestep = 1000#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -86,8 +86,8 @@ DATA = np.array(DATA)
 
 
 print(DATA.shape)
-plt.plot(DATA[1,:])
-plt.title("timestep = %03d"%((timesteps[1])))
+plt.plot(DATA[0,:])
+plt.title("timestep = %03d"%((timesteps[0])))
 if (line == 'X'):
 	plt.xlabel("X (m)")
 	plt.ylabel(file_name)

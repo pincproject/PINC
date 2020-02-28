@@ -143,6 +143,14 @@ void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
 void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
+void neSetBndSlicesVel(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
+
+void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiInfo *mpiInfo);
+
+void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo);
+
+void nuGBnd(Grid *grid, const MpiInfo *mpiInfo);
+
 void neConvectKE(Grid *dKE,Grid *Vtilde,Grid *rhoNeutral,NeutralPopulation *pop );
 
 void neConvectV(Grid *V,Grid *Vtilde,Grid *rhoNeutral,NeutralPopulation *pop );
@@ -156,6 +164,6 @@ void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulati
 void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop);
 void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop);
 void neObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
-void neObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const MpiInfo *mpiInfo);
-void neObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const MpiInfo *mpiInfo);
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
 #endif // POPULATION_H

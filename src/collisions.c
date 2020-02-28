@@ -53,16 +53,16 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	iniSetDouble(ini,"collisions:collFrqIonElastic",collFrqIonElastic);
 	iniSetDouble(ini,"collisions:collFrqCEX",collFrqCEX);
 
-	// //numberdensityneutrals given as numberofparticles/m^3
-	// double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
-	//
-    // printf("nt = %e \n",nt);
-	// nt /= units->density; // assumes same for elecron and ion
-	// nt /= units->weights[0];
-	//
-    // printf("nt = %f \n",nt);
-	// //we use computational particles that contain many real particles.
-	// iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
+	//numberdensityneutrals given as numberofparticles/m^3
+	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
+
+    printf("nt = %e \n",nt);
+	nt /= units->density; // assumes same for elecron and ion
+	//nt /= units->weights[0];
+
+    printf("nt = %f \n",nt);
+	//we use computational particles that contain many real particles.
+	iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
 
 	// in m/s
 	// TODO: shoulb be per Neutral specie
@@ -80,9 +80,9 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	StaticSigmaElectronElastic /= (units->length*units->length);
 
 	//cross section for computational particles
-	StaticSigmaCEX *= units->weights[1];
-	StaticSigmaIonElastic *= units->weights[1];
-	StaticSigmaElectronElastic *= units->weights[1];
+	// StaticSigmaCEX *= units->weights[1];
+	// StaticSigmaIonElastic *= units->weights[1];
+	// StaticSigmaElectronElastic *= units->weights[1];
 
 	iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
 	iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
@@ -103,9 +103,9 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	ion_elastic_a /= (units->length*units->length);
 	electron_a /= (units->length*units->length);
 
-	CEX_a *= units->weights[1];
-	ion_elastic_a *= units->weights[1];
-	electron_a *= units->weights[1];
+	// CEX_a *= units->weights[1];
+	// ion_elastic_a *= units->weights[1];
+	// electron_a *= units->weights[1];
 
 	CEX_b /= ((units->length/units->time)*(units->length/units->time));
 	ion_elastic_b /= ((units->length/units->time)*(units->length/units->time));
@@ -535,7 +535,7 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral
 	// to determine maximum collision probability
 
 	double NvelThermal = mccVars->NvelThermal;
-	double nt = 12.;//mccGetMaxDens(rhoNeutral);//mccVars->nt;
+	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;
 	double StaticSigmaCEX = mccVars->mccSigmaCEX;
 	double StaticSigmaIonElastic = mccVars->mccSigmaIonElastic;
 	double max_v = mccGetMaxVelTran(pop,0,rng,NvelThermal);
@@ -559,13 +559,13 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
 	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;//iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	double StaticSigmaElectronElastic = mccVars->mccSigmaElectronElastic;//iniGetDouble(ini,"collisions:sigmaElectronElastic");
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
-	double min_v = mccGetMinVel(pop,0);
+	//double min_v = mccGetMinVel(pop,0);
 	mccVars->maxFreqElectron=StaticSigmaElectronElastic*max_v*nt;
 	mccVars->pMaxElectron = 1-exp(-(mccVars->maxFreqElectron));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision","getPmax electron =  %f \n", mccVars->pMaxElectron);
 		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
-		fMsg(ini, "collision", "min velocity electron = %f \n", min_v);
+		//fMsg(ini, "collision", "min velocity electron = %f \n", min_v);
 	}
 }
 
@@ -1425,6 +1425,7 @@ void mccCollideConstantCrossect(const dictionary *ini,Grid *rhoNeutral, Populati
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "\n Computing time-step \n");
 	}
+
 	mccCollideIonStatic(ini,rhoNeutral, pop, mccVars, rng, mpiInfo);
 	mccCollideElectronStatic(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 }
@@ -1433,6 +1434,7 @@ funPtr constCrossect_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
+
 	//point to function that calls both collision functions.. or more
 	collissions = &mccCollideConstantCrossect;
 
@@ -1583,6 +1585,10 @@ void mccMode(dictionary *ini){
 	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
 	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
 
+	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfo);
+	gZero(rhoNeutral);
+	gAdd(rhoNeutral,mccVars->nt);
+
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
@@ -1714,7 +1720,7 @@ void mccMode(dictionary *ini){
 		/*
 		*   Collisions
 		*/
-		collide(ini, pop, mccVars, rng,mpiInfo);
+		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho);
@@ -2257,7 +2263,7 @@ void oCollMode(dictionary *ini){
 
 
         // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
+        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);   // for capMatrix - objects
 
 
     //gBnd(phi, mpiInfo);
@@ -2400,33 +2406,33 @@ void neutTest(dictionary *ini){
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   			= select(ini,	"methods:acc",
-												puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set,
-                        puBoris3D1KETEST_set);
+	// void (*acc)()   			= select(ini,	"methods:acc",
+	// 											puAcc3D1_set,
+	// 											puAcc3D1KE_set,
+	// 											puAccND1_set,
+	// 											puAccND1KE_set,
+	// 											puAccND0_set,
+	// 											puAccND0KE_set,
+    //                     puBoris3D1KETEST_set);
 
-	void (*distr)() 			= select(ini,	"methods:distr",
-												puDistr3D1split_set,
-												puDistr3D1_set,
-												puDistrND1_set,
-												puDistrND0_set);
-
-
-	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+	// void (*distr)() 			= select(ini,	"methods:distr",
+	// 											puDistr3D1split_set,
+	// 											puDistr3D1_set,
+	// 											puDistrND1_set,
+	// 											puDistrND0_set);
 
 
-	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
-												puExtractEmigrants3D_set,
-												puExtractEmigrantsND_set,
-                        						puExtractEmigrants3DOpen_set);
+	// void (*collide)() = select(ini,	"methods:mcc",
+	// 								collissionsOff_set,
+	// 								constCrossect_set,
+	// 								constFreq_set,
+	// 								functionalCrossect_set);
+
+
+	// void (*extractEmigrants)()	= select(ini,	"methods:migrate",
+	// 											puExtractEmigrants3D_set,
+	// 											puExtractEmigrantsND_set,
+    //                     						puExtractEmigrants3DOpen_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set
@@ -2447,7 +2453,7 @@ void neutTest(dictionary *ini){
 
 	MpiInfo *mpiInfoNeut = gAllocMpi(ini);
 
-	MccVars *mccVars=mccAlloc(ini,units);
+	//MccVars *mccVars=mccAlloc(ini,units);
 
 	// For SPH neutral particles
 	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);

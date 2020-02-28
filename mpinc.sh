@@ -22,8 +22,8 @@ NP=`$DIR/pinc "$@" getnp`
 # Run
 if [ "$NP" -eq 1 ]
 then
-	$DIR/pinc "$@"
+	$DIR/pinc "$@" 2>&1 | tee PINC.out
 else
 	#mpirun --oversubscribe -np "$NP" $DIR/pinc "$@"
-	mpirun -np "$NP" $DIR/pinc "$@"
+	mpirun -np "$NP" $DIR/pinc "$@" 2>&1 | tee PINC.out
 fi

@@ -114,7 +114,7 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo);
  long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
 
 
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
+void oComputeCapacitanceMatrix(Object *obj, dictionary *ini,
                                const MpiInfo *mpiInfo);
 
 /**
@@ -128,7 +128,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
  * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
  */
 void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
-                             const MpiInfo *mpiInfo);
+                             const MpiInfo *mpiInfo,Units *units);
 
 /**
  * @brief	Collect the charge inside each object
@@ -191,5 +191,5 @@ bool isGhostNode(Grid *grid, long int node);
 void oGhost(long int node, const int *nGhostLayersBefore,
             const int *nGhostLayersAfter, const int *trueSize,
             const long int *sizeProd, bool *ghost);
-			
+
 #endif // OBJECT_H

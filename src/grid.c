@@ -151,19 +151,19 @@ void addSlice(const double *slice, Grid *grid, int d, int offset){
 // test
 
 
-static const double *addSliceInnerAvg(const double *nextGhost, double **valp, const long int *mul,
-	const int *points, const long int finalMul){
-
-		if(*mul==finalMul){
-			for(int j=0;j<*mul;j++) *((*valp)) = (*((*valp)++) + *(nextGhost++))/2.;
-			*valp += (*mul)*(*points-1);
-		} else {
-			for(int j=0; j<*points;j++)
-				nextGhost = addSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
-		}
-		return nextGhost;
-
-}
+// static const double *addSliceInnerAvg(const double *nextGhost, double **valp, const long int *mul,
+// 	const int *points, const long int finalMul){
+//
+// 		if(*mul==finalMul){
+// 			for(int j=0;j<*mul;j++) *((*valp)) = (*((*valp)++) + *(nextGhost++))/2.;
+// 			*valp += (*mul)*(*points-1);
+// 		} else {
+// 			for(int j=0; j<*points;j++)
+// 				nextGhost = addSliceInner(nextGhost, valp, mul-1,points-1,finalMul);
+// 		}
+// 		return nextGhost;
+//
+// }
 
 void addSliceAvg(const double *slice, Grid *grid, int d, int offset){
 
@@ -442,6 +442,9 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  	//printf("exchanging slices");
  	//printf("d = %i, bnd[rank+d] = %i, bnd[d] = %u \n",d,bnd[rank+d],bnd[d]);
  	//printf("d = %i, bnd[d] = %u \n",d,bnd[d]);
+
+	adSetAll(recvSlice,nSlicePoints,0.0); // Ad-Hoc fix.. maybe?
+	//PINC still chrashes in puMigrate under certain conditions
 
  	if(bnd[rank+d] == PERIODIC){
  		// Send and recieve lower (tag 0)
@@ -969,7 +972,7 @@ void gSetBndSlicesE(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
 	long int *sizeProd = grid->sizeProd;
 	bndType *bnd = grid->bnd;
 	double *bndSlice = grid->bndSlice;
-	int *nGhostLayers = grid->nGhostLayers;
+	//int *nGhostLayers = grid->nGhostLayers;
 	//double *bndSolution = grid->bndSolution;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
@@ -1441,7 +1444,7 @@ void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	int rank = grid->rank;
 	int *size = grid->size;
 	double *bndSlice = grid->bndSlice; // two slices in each dim
-	double *slice = grid->sendSlice;
+	//double *slice = grid->sendSlice;
 	//double *bndSolution = grid->bndSolution; // two slices in each dim
 
 
@@ -1602,7 +1605,7 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 	bndType *bnd = grid->bnd;
 	int *subdomain = mpiInfo->subdomain;
 	int *nSubdomains = mpiInfo->nSubdomains;
-	bool periodic = mpiInfo->periodic;
+	//bool periodic = mpiInfo->periodic;
 
 
 	//gHaloOp(setSlice, grid,mpiInfo,TOHALO);
@@ -1739,7 +1742,7 @@ void gCreateNeighborhood(const dictionary *ini, MpiInfo *mpiInfo, Grid *grid){
 	}
 
 	// determine if the global domain is periodic
-	bool periodic = true;
+	//bool periodic = true;
 	mpiInfo->periodic = true;
 	periodicAll[mpiInfo->mpiRank] = 1; //true
 	for(int i=1;i<nDims+1;i++){

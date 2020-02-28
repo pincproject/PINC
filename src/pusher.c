@@ -1172,7 +1172,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
-	int *subdomain = mpiInfo->subdomain;
+	//int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
 	//int rank = mpiInfo->mpiRank;
 

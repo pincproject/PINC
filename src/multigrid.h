@@ -31,6 +31,7 @@
 	int nPreSmooth;					///<
 	int nPostSmooth;
 	int nCoarseSolve;
+	double tol;
 
     ///< Function pointer to a Coarse Grid Solver function
     void (*coarseSolv)(	Grid *phi, const Grid *rho, const int nCycles,
