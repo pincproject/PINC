@@ -5,18 +5,21 @@ import h5py
 
 
 import numpy as np
+import matplotlib
+import tkinter
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho_i"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
-ppc = 12 # particle per cell (for rho plots)
+ppc = 10 # particle per cell (for rho plots)
 
 # timesteps:
-start = 900#50600 #4950#50713#45715 # Must exist in dataset
-#step = 1
+start = 5450#50600 #4950#50713#45715 # Must exist in dataset
+step = 1
 
 # Plot:
 levels = 500 ## granularity of contourf
@@ -31,7 +34,7 @@ plane = 'XY' # XY, XZ, YZ
 
 show_anim = True 
 
-save_figs = False#True
+save_figs = True#True
 
 
 ## Needs ffmpeg codec
@@ -112,7 +115,7 @@ def animate(i):
 
         cax.cla()
         #ax.clear()
-        img = ax.contourf(X, Y, DATA[i,:,:],cmap = cmap , levels=levels, vmin=vMin,vmax=vMax)#,cmap = 'RdYlBu'
+        img = ax.contourf(X, Y, DATA[i,:,:],cmap = cmap , levels=500, vmin=vMin,vmax=vMax)#,cmap = 'RdYlBu'
         #img = ax.imshow(DATA[i,:,:],extent=[0,x[-1],0,y[-1]],cmap = cmap, vmin=vMin,vmax=vMax) 
         ax.set_title(file_name+' Timestep: %03d'%(timesteps[i]) )
         if (plane == 'XY'):
