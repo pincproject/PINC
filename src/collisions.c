@@ -58,7 +58,7 @@ static void mccNormalize(dictionary *ini,const Units *units){
 
     printf("nt = %e \n",nt);
 	nt /= units->density; // assumes same for elecron and ion
-	//nt /= units->weights[0];
+	nt /= units->weights[1];
 
     printf("nt = %f \n",nt);
 	//we use computational particles that contain many real particles.
@@ -80,9 +80,9 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	StaticSigmaElectronElastic /= (units->length*units->length);
 
 	//cross section for computational particles
-	// StaticSigmaCEX *= units->weights[1];
-	// StaticSigmaIonElastic *= units->weights[1];
-	// StaticSigmaElectronElastic *= units->weights[1];
+	StaticSigmaCEX *= units->weights[1];
+	StaticSigmaIonElastic *= units->weights[1];
+	StaticSigmaElectronElastic *= units->weights[1];
 
 	iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
 	iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
@@ -103,9 +103,9 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	ion_elastic_a /= (units->length*units->length);
 	electron_a /= (units->length*units->length);
 
-	// CEX_a *= units->weights[1];
-	// ion_elastic_a *= units->weights[1];
-	// electron_a *= units->weights[1];
+	CEX_a *= units->weights[1];
+	ion_elastic_a *= units->weights[1];
+	electron_a *= units->weights[1];
 
 	CEX_b /= ((units->length/units->time)*(units->length/units->time));
 	ion_elastic_b /= ((units->length/units->time)*(units->length/units->time));
@@ -779,7 +779,7 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 
 	mccGetPmaxElectronStatic(ini,mccVars,rhoNeutral,pop,mpiInfo);
 
-	double nt = mccVars->nt;
+	double nt = 0;//mccVars->nt;
 	double mccSigmaElectronElastic = mccVars->mccSigmaElectronElastic;
 	double maxfreqElectron = mccVars->maxFreqElectron;
 	double Pmax = mccVars->pMaxElectron;
@@ -870,7 +870,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	mccGetPmaxIonStatic(ini,mccVars,rhoNeutral,pop,mpiInfo,rng);
 
 	//printf("pmax = %f\n",mccVars->pMaxIon );
-	double nt = mccVars->nt;
+	double nt = 0;//mccVars->nt;
 	double NvelThermal = mccVars->NvelThermal;
 	double mccSigmaCEX= mccVars->mccSigmaCEX;
 	double mccSigmaIonElastic = mccVars->mccSigmaIonElastic;
