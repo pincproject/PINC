@@ -41,7 +41,7 @@ typedef struct{
  *
  */
 void oMode(dictionary *ini);
-funPtr oMode_set(dictionary *ini);
+funPtr oMode_set();
 
 /**
  * @brief Allocates an Object object
@@ -87,13 +87,12 @@ void oCloseH5(Object *obj);
 /**
  * @brief	Read values from .grid.h5-field to Object
  * @param	obj             Object
- * @param	mpiInfo			MpiInfo
  * @return	void
  * @see gReadH5()
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Object *obj, const MpiInfo *mpiInfo);
+void oReadH5(Object *obj);
 
 /**
  * @brief   Compute the capacitance matrix. (one big matrix containing all objects)

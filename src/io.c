@@ -196,7 +196,7 @@ void msg(msgKind kind, const char* restrict format,...){
 
 	// Parse and assemble message
 	int rank;
-	char msg[bufferSize], buffer[bufferSize];
+	char msg[bufferSize*2], buffer[bufferSize*2];
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	vsnprintf(msg,bufferSize,format,args);
 	if((kind&ALL)){

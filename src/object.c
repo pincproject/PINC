@@ -26,10 +26,9 @@ void print_gsl_mat(gsl_matrix_view A);
 /**
  * @brief   Count the number of objects and fills the lookup tables.
  * @param	obj		Object
- * @param	ini		input settings
  * @return	void
  */
-void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
+void oFillLookupTables(Object *obj);
 
 /**
  * @brief   Find all the object nodes which are part of the object surface.
@@ -37,7 +36,7 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo);
  * @param	ini		input settings
  * @return	void
  */
-void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo);
+void oFindObjectSurfaceNodes(Object *obj);
 
 
 
@@ -100,7 +99,7 @@ void oGhost(long int node, const int *nGhostLayersBefore,
 }
 
 // Count the number of objects and fill the lookup tables
-void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
+void oFillLookupTables(Object *obj) {
 
     //printf("oFillLookupTables \n");
     int nObjects = obj->nObjects;
@@ -433,7 +432,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
 }
 
 //Find all the object nodes which are part of the object surface.
-void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
+void oFindObjectSurfaceNodes(Object *obj) {
 
     //printf("in oFindObjSurf \n");
     long int *sizeProd = obj->domain->sizeProd;
@@ -888,26 +887,26 @@ void oVicinityParticles(Population *pop, Object *obj){
 
 //Finds nearest 3 object surface nodes to a specific particle of index p
 //3 object surface nodes needed to compute normal from cross product of surface vectors
-double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *obj){
-
-    double *pos = NULL;
-    for(int i=0; i<3; i++){
-        pos[i] = pop->pos[3*particleId + i];
-    }
-
-
-    return pos;
-
-}
-
-bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
-
-    //find nearest nodes
-    double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
-
-    nearest += 0;
-    return false;
-}
+// double *oFindNearestSurfaceNodes(Population *pop, long int particleId, Object *obj){
+//
+//     double *pos = NULL;
+//     for(int i=0; i<3; i++){
+//         pos[i] = pop->pos[3*particleId + i];
+//     }
+//
+//
+//     return pos;
+//
+// }
+//
+// bool oParticleIntersection(Population *pop, long int particleId, Object *obj){
+//
+//     //find nearest nodes
+//     double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
+//
+//     nearest += 0;
+//     return false;
+// }
 
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
@@ -957,7 +956,7 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     obj->domain = domain;
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-	oReadH5(obj, mpiInfo);
+	oReadH5(obj);
     //oCloseH5(obj);
     //Communicate the boundary nodes
 		gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
@@ -982,13 +981,16 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
 
     obj->nObjects = nObjects;
 
-    oFillLookupTables(obj,mpiInfo);
+    oFillLookupTables(obj);
 
-    oFindObjectSurfaceNodes(obj, mpiInfo);
+    oFindObjectSurfaceNodes(obj);
 
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
+	for (int i=0;i<size+1;i++){ // AD-HOC sol, initialize manually for safety.
+		nodCorLoc[i] = 0;
+	}
 
     double *capMatrixSum = malloc(obj->nObjects*sizeof(*capMatrixSum));
     //long int *capMatrixAllOffsets = malloc(obj->nObjects*(size+1)*sizeof(*capMatrixAllOffsets));
@@ -1050,7 +1052,7 @@ void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
     gOpenH5(ini, obj->domain,   mpiInfo, units, denorm, fName);
 }
 
-void oReadH5(Object *obj, const MpiInfo *mpiInfo){
+void oReadH5(Object *obj){
 
     // Identical to gReadH5()
     hid_t fileSpace = obj->domain->h5FileSpace;
@@ -1378,7 +1380,7 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo){
  */
 
 //depreciated...
-void oFindObjectSurfaceNodes_v1(Object *obj, const MpiInfo *mpiInfo) {
+void oFindObjectSurfaceNodes_v1(Object *obj) {
 
     long int *sizeProd = obj->domain->sizeProd;
 
@@ -1563,7 +1565,8 @@ void oFindObjectSurfaceNodes_v1(Object *obj, const MpiInfo *mpiInfo) {
 
 } */
 
-funPtr oMode_set(dictionary *ini){
+funPtr oMode_set(){ // dictionary *ini
+	  // TODO: sanity
 	return oMode;
 }
 
@@ -1780,6 +1783,7 @@ void oMode(dictionary *ini){
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		tStart(t);
 
@@ -1865,16 +1869,16 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%100 == 0 || n>90800){//n>122700){//50614
+		if(n%100 == 0 || n>59500){//n>122700){//50614
 		//Write h5 files
-			gWriteH5(E, mpiInfo, (double) n);
+			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			gWriteH5(rhoObj, mpiInfo, (double) n);
+			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 		// if(n%1 == 0){
 		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);

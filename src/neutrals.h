@@ -103,15 +103,15 @@ void neMultiplySlice(Grid *target,int slicePos,int dim,double multiplyBy, Neutra
 // Mover/Accelerator
 // ########################################
 
-void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde);
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV,Grid *rho);
+void neMove(NeutralPopulation *pop,Grid *V);
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad, Grid *divBulkV);
 funPtr neAcc3D1_set(dictionary *ini);
 
 //#########################################
 // Finite diff functions
 // ########################################
 
-void divFinDiff1st(Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop);
+void divFinDiff1st(Grid *result, Grid *field, Grid *rho);
 
 
 //#############################
@@ -127,19 +127,19 @@ void nePNew(NeutralPopulation *pop, int s, const double *pos, const double *vel)
 // Pressure solver
 //#############################
 
-void neSetI(Grid *IE,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *ini);
+void neSetI(Grid *IE,Grid *V,Grid *rho,const dictionary *ini);
 
-void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo);
+void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop);
 
-void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop, const MpiInfo *mpiInfo);
+void nePressureInitiate3D(Grid *rhoNeutral,Grid *P,NeutralPopulation *pop);
 
 void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop);
 
 void neAdvectI(Grid *IE,Grid *Itilde,Grid *P,Grid *V,Grid *rho,NeutralPopulation *pop);
 
-void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop);
+void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho);
 
-void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
+void neSetBndSlices( Grid *grid,const MpiInfo *mpiInfo);
 
 void neSetBndSlicesRho(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
@@ -161,9 +161,9 @@ void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulati
 // Object functions
 //#############################
 
-void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop);
-void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop);
+void neApplyObjI(Object *obj, Grid *IE);
+void neApplyObjVel(Object *obj, Grid *V);
 void neObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
-void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const MpiInfo *mpiInfo);
-void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
+void nuObjectSetVal(Grid *rho,double constant, Object *obj);
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj);
 #endif // POPULATION_H

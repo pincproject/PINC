@@ -1741,7 +1741,7 @@ void mgVRegular(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgP
 	return;
 }
 
-void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgFMG(int bottom, Multigrid *mgRho, Multigrid *mgPhi,
  			Multigrid *mgRes, const MpiInfo *mpiInfo){
 	//Info
 	Grid **rho = &mgRho->grids[0];;
@@ -1764,7 +1764,7 @@ void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 	return;
 }
 
-void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgW( int bottom, Multigrid *mgRho, Multigrid *mgPhi,
 			Multigrid *mgRes, const MpiInfo *mpiInfo){
 
 	int middle = bottom/2;
@@ -1842,7 +1842,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
  *		RUNS
  ************************************************/
 
-funPtr mgModeErrorScaling_set(dictionary *ini){
+funPtr mgModeErrorScaling_set(){ //dictionary *ini
 	return mgModeErrorScaling;
 }
 void mgModeErrorScaling(dictionary *ini){
@@ -1964,7 +1964,7 @@ void mgModeErrorScaling(dictionary *ini){
 
 }
 
-funPtr mgMode_set(dictionary *ini){
+funPtr mgMode_set(){//dictionary *ini
 	return mgMode;
 }
 void mgMode(dictionary *ini){

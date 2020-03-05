@@ -1523,6 +1523,8 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 	// Send number of emigrants and receive number of immigrants.
 	// Order of reception is not necessarily as determined by the for-loop since
 	// we're using non-blocking send/receive.
+
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
@@ -1543,6 +1545,7 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
 	MPI_Waitall(nNeighbors,recv,MPI_STATUS_IGNORE);
+
 
 }
 
@@ -1607,6 +1610,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	long int *nImmigrants = mpiInfo->nImmigrants;
 	MPI_Request *send = mpiInfo->send;
 
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
@@ -1620,10 +1624,14 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	// Since "immigrants" is reused for every receive operation MPI_Irecv cannot
 	// be used. However, in order to receive and process whichever comes first
 	// MPI_ANY_SOURCE is used.
+
+
+
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
-		adSetAll(immigrants,2*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
+		//2*nSpecies*nDims*nImmigrantsAlloc
+		adSetAll(immigrants,2*nSpecies*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
 		//PINC still chrashes in puMigrate under certain conditions
 		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
@@ -1635,8 +1643,9 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies,mpiInfo);
 
 	}
-
+	
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
+
 
 }
 
@@ -1649,11 +1658,11 @@ void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 }
 
-void puReflect(){
-
-
-
-}
+// void puReflect(){
+//
+//
+//
+// }
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS

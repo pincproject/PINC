@@ -12,7 +12,7 @@
 # Max memory usage:
 #SBATCH --mem-per-cpu=4G
 #
-#SBATCH --ntasks=64
+#SBATCH --ntasks=8
 #
 # Outfile
 #SBATCH --output=pinc-%j.out
@@ -34,7 +34,7 @@ module list
 
 #Compile
 echo "compiling"
-##make clean
+make clean
 make
 ## Copy input files to the work directory:
 mkdir $SCRATCH//$SLURM_JOB_ID

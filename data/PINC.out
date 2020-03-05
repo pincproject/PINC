@@ -1,0 +1,4659 @@
+STATUS: PINC 0.1.0-89-g9f6b-dirty started.
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 1.000000e+10 
+nt = 10000.000000 
+nt = 10000.000000 
+STATUS: Solving capacitance matrix for node 1 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 2 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 3 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 4 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 5 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 6 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 7 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 8 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 9 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 10 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 11 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 12 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 13 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 14 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 15 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 16 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 17 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 18 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 19 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 20 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 21 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 22 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 23 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 24 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 25 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 26 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 27 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 28 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 29 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 30 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 31 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 32 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 33 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 34 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 35 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 36 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 37 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 38 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 39 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 40 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 41 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 42 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 43 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 44 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 45 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 46 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 47 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 48 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 49 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 50 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 51 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 52 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 53 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 54 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 55 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 56 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 57 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 58 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 59 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 60 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 61 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 62 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 63 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 64 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 65 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 66 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 67 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 68 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 69 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 70 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 71 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 72 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 73 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 74 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 75 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 76 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 77 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 78 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 79 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 80 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 81 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 82 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 83 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 84 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 85 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 86 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 87 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 88 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 89 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 90 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 91 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 92 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 93 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 94 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 95 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 96 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 97 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 98 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 99 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 100 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 101 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 102 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 103 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 104 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 105 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 106 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 107 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 108 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 109 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 110 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 111 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 112 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 113 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 114 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 115 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 116 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 117 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 118 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 119 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 120 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 121 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 122 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 123 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 124 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 125 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 126 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 127 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 128 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 129 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 130 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 131 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 132 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 133 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 134 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 135 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 136 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 137 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 138 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 139 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 140 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 141 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 142 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 143 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 144 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 145 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 146 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 147 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 148 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 149 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 150 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 151 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 152 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 153 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 154 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 155 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 156 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 157 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 158 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 159 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 160 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 161 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 162 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 163 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 164 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 165 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 166 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 167 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 168 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 169 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 170 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 171 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 172 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 173 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 174 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 175 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 176 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 177 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 178 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 179 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 180 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 181 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 182 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 183 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 184 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 185 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 186 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 187 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 188 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 189 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 190 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 191 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 192 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 193 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 194 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 195 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 196 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 197 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 198 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 199 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 200 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 201 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 202 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 203 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 204 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 205 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 206 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 207 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 208 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 209 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 210 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 211 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 212 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 213 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 214 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 215 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 216 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 217 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 218 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 219 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 220 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 221 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 222 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 223 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 224 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 225 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 226 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 227 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 228 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 229 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 230 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 231 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 232 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 233 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 234 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 235 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 236 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 237 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 238 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 239 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 240 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 241 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 242 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 243 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 244 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 245 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 246 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 247 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 248 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 249 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 250 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 251 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 252 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 253 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 254 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 255 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 256 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 257 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 258 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 259 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 260 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 261 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 262 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 263 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 264 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 265 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 266 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 267 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 268 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 269 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 270 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 271 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 272 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 273 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 274 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 275 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 276 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 277 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 278 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 279 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 280 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 281 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 282 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 283 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 284 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 285 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 286 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 287 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 288 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 289 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 290 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 291 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 292 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 293 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 294 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 295 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 296 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 297 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 298 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 299 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 300 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 301 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 302 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 303 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 304 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 305 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 306 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 307 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 308 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 309 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 310 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 311 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 312 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 313 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 314 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 315 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 316 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 317 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 318 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 319 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 320 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 321 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 322 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 323 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 324 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 325 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 326 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 327 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 328 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 329 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 330 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 331 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 332 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 333 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 334 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 335 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 336 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 337 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 338 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 339 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 340 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 341 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 342 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 343 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 344 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 345 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 346 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 347 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 348 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 349 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 350 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 351 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 352 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 353 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 354 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 355 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 356 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 357 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 358 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 359 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 360 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 361 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 362 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 363 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 364 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 365 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 366 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 367 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 368 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 369 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 370 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 371 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 372 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 373 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 374 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 375 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 376 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 377 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 378 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 379 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 380 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 381 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 382 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 383 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 384 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 385 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 386 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 387 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 388 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 389 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 390 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 391 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 392 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 393 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 394 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 395 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 396 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 397 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 398 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 399 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 400 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 401 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 402 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 403 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 404 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 405 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 406 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 407 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 408 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 409 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 410 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 411 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 412 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 413 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 414 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 415 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 416 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 417 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 418 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 419 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 420 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 421 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 422 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 423 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 424 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 425 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 426 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 427 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 428 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 429 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 430 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 431 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 432 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 433 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 434 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 435 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 436 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 437 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 438 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 439 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 440 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 441 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 442 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 443 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 444 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 445 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 446 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 447 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 448 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 449 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 450 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 451 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 452 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 453 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 454 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 455 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 456 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 457 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 458 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 459 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 460 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 461 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 462 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 463 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 464 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 465 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 466 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 467 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 468 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 469 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 470 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 471 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 472 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 473 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 474 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 475 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 476 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 477 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 478 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 479 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 480 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 481 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 482 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 483 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 484 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 485 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 486 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 487 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 488 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 489 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 490 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 491 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 492 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 493 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 494 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 495 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 496 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 497 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 498 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 499 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 500 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 501 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 502 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 503 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 504 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 505 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 506 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 507 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 508 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 509 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 510 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 511 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 512 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 513 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 514 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 515 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 516 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 517 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 518 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 519 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 520 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 521 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 522 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 523 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 524 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 525 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 526 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 527 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 528 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 529 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 530 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 531 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 532 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 533 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 534 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 535 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 536 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 537 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 538 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 539 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 540 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 541 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 542 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 543 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 544 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 545 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 546 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 547 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 548 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 549 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 550 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 551 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 552 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 553 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 554 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 555 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 556 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 557 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 558 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 559 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 560 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 561 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 562 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 563 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 564 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 565 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 566 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 567 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 568 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 569 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 570 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 571 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 572 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 573 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 574 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 575 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 576 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 577 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 578 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 579 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 580 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 581 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 582 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 583 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 584 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 585 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 586 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 587 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 588 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 589 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 590 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 591 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 592 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 593 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 594 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 595 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 596 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 597 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 598 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 599 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 600 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 601 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 602 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 603 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 604 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 605 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 606 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 607 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 608 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 609 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 610 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 611 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 612 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 613 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 614 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 615 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 616 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 617 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 618 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 619 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 620 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 621 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 622 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 623 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 624 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 625 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 626 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 627 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 628 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 629 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 630 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 631 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 632 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 633 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 634 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 635 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 636 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 637 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 638 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 639 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 640 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 641 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 642 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 643 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 644 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 645 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 646 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 647 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 648 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 649 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 650 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 651 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 652 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 653 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 654 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 655 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 656 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 657 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 658 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 659 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 660 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 661 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 662 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 663 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 664 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 665 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 666 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 667 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 668 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 669 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 670 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 671 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 672 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 673 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 674 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 675 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 676 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 677 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 678 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 679 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 680 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 681 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 682 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 683 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 684 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 685 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 686 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 687 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 688 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 689 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 690 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 691 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 692 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 693 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 694 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 695 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 696 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 697 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 698 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 699 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 700 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 701 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 702 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 703 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 704 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 705 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 706 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 707 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 708 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 709 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 710 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 711 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 712 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 713 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 714 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 715 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 716 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 717 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 718 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 719 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 720 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 721 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 722 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 723 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 724 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 725 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 726 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 727 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 728 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 729 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 730 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 731 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 732 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 733 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 734 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 735 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 736 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 737 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 738 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 739 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 740 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 741 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 742 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 743 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 744 of 788 for object 1 of 1.
+STATUS: MG iterations = 6
+STATUS: Solving capacitance matrix for node 745 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 746 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 747 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 748 of 788 for object 1 of 1.
+STATUS: MG iterations = 7
+STATUS: Solving capacitance matrix for node 749 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 750 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 751 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 752 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 753 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 754 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 755 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 756 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 757 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 758 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 759 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 760 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 761 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 762 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 763 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 764 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 765 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 766 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 767 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 768 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 769 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 770 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 771 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 772 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 773 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 774 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 775 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 776 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 777 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 778 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 779 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 780 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 781 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 782 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 783 of 788 for object 1 of 1.
+STATUS: MG iterations = 4
+STATUS: Solving capacitance matrix for node 784 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 785 of 788 for object 1 of 1.
+STATUS: MG iterations = 5
+STATUS: Solving capacitance matrix for node 786 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 787 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: Solving capacitance matrix for node 788 of 788 for object 1 of 1.
+STATUS: MG iterations = 3
+STATUS: MG iterations = 4
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+cutNumber = 7763 
+STATUS: Computing time-step 1
+STATUS: Nr. of particles 418357: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.001705
+STATUS: MG iterations = 1
+STATUS: Computing time-step 2
+STATUS: Nr. of particles 419577: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.002278
+STATUS: MG iterations = 1
+STATUS: Computing time-step 3
+STATUS: Nr. of particles 419602: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.002722
+STATUS: MG iterations = 1
+STATUS: Computing time-step 4
+STATUS: Nr. of particles 419788: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.003203
+STATUS: MG iterations = 1
+STATUS: Computing time-step 5
+STATUS: Nr. of particles 419984: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.003735
+STATUS: MG iterations = 1
+STATUS: Computing time-step 6
+STATUS: Nr. of particles 419876: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.004387
+STATUS: MG iterations = 1
+STATUS: Computing time-step 7
+STATUS: Nr. of particles 419794: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.005162
+STATUS: MG iterations = 1
+STATUS: Computing time-step 8
+STATUS: Nr. of particles 420184: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.006052
+STATUS: MG iterations = 1
+STATUS: Computing time-step 9
+STATUS: Nr. of particles 419903: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.007114
+STATUS: MG iterations = 1
+STATUS: Computing time-step 10
+STATUS: Nr. of particles 420070: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.008295
+STATUS: MG iterations = 1
+STATUS: Computing time-step 11
+STATUS: Nr. of particles 419718: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.009575
+STATUS: MG iterations = 1
+STATUS: Computing time-step 12
+STATUS: Nr. of particles 419906: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.010969
+STATUS: MG iterations = 1
+STATUS: Computing time-step 13
+STATUS: Nr. of particles 419879: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.012447
+STATUS: MG iterations = 1
+STATUS: Computing time-step 14
+STATUS: Nr. of particles 419814: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.014001
+STATUS: MG iterations = 1
+STATUS: Computing time-step 15
+STATUS: Nr. of particles 419795: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.015686
+STATUS: MG iterations = 1
+STATUS: Computing time-step 16
+STATUS: Nr. of particles 419557: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.017423
+STATUS: MG iterations = 1
+STATUS: Computing time-step 17
+STATUS: Nr. of particles 420010: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.019240
+STATUS: MG iterations = 1
+STATUS: Computing time-step 18
+STATUS: Nr. of particles 419884: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.021083
+STATUS: MG iterations = 1
+STATUS: Computing time-step 19
+STATUS: Nr. of particles 419890: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.022993
+STATUS: MG iterations = 1
+STATUS: Computing time-step 20
+STATUS: Nr. of particles 419936: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.025001
+STATUS: MG iterations = 1
+STATUS: Computing time-step 21
+STATUS: Nr. of particles 419681: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.027016
+STATUS: MG iterations = 1
+STATUS: Computing time-step 22
+STATUS: Nr. of particles 420072: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.029047
+STATUS: MG iterations = 1
+STATUS: Computing time-step 23
+STATUS: Nr. of particles 419624: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.031133
+STATUS: MG iterations = 1
+STATUS: Computing time-step 24
+STATUS: Nr. of particles 419887: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.033241
+STATUS: MG iterations = 1
+STATUS: Computing time-step 25
+STATUS: Nr. of particles 420207: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.035333
+STATUS: MG iterations = 1
+STATUS: Computing time-step 26
+STATUS: Nr. of particles 419932: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.037438
+STATUS: MG iterations = 1
+STATUS: Computing time-step 27
+STATUS: Nr. of particles 419792: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.039560
+STATUS: MG iterations = 1
+STATUS: Computing time-step 28
+STATUS: Nr. of particles 419727: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.041698
+STATUS: MG iterations = 1
+STATUS: Computing time-step 29
+STATUS: Nr. of particles 420058: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.043810
+STATUS: MG iterations = 1
+STATUS: Computing time-step 30
+STATUS: Nr. of particles 419878: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.045906
+STATUS: MG iterations = 1
+STATUS: Computing time-step 31
+STATUS: Nr. of particles 420048: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.047928
+STATUS: MG iterations = 1
+STATUS: Computing time-step 32
+STATUS: Nr. of particles 420035: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.049934
+STATUS: MG iterations = 1
+STATUS: Computing time-step 33
+STATUS: Nr. of particles 419793: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.051942
+STATUS: MG iterations = 1
+STATUS: Computing time-step 34
+STATUS: Nr. of particles 419895: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.053872
+STATUS: MG iterations = 1
+STATUS: Computing time-step 35
+STATUS: Nr. of particles 420074: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.055746
+STATUS: MG iterations = 1
+STATUS: Computing time-step 36
+STATUS: Nr. of particles 420002: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.057592
+STATUS: MG iterations = 1
+STATUS: Computing time-step 37
+STATUS: Nr. of particles 420231: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.059404
+STATUS: MG iterations = 1
+STATUS: Computing time-step 38
+STATUS: Nr. of particles 420115: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.061175
+STATUS: MG iterations = 1
+STATUS: Computing time-step 39
+STATUS: Nr. of particles 419811: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.062871
+STATUS: MG iterations = 1
+STATUS: Computing time-step 40
+STATUS: Nr. of particles 419797: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.064466
+STATUS: MG iterations = 1
+STATUS: Computing time-step 41
+STATUS: Nr. of particles 419932: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.065993
+STATUS: MG iterations = 1
+STATUS: Computing time-step 42
+STATUS: Nr. of particles 419961: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.067453
+STATUS: MG iterations = 1
+STATUS: Computing time-step 43
+STATUS: Nr. of particles 419708: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.069927
+STATUS: MG iterations = 1
+STATUS: Computing time-step 44
+STATUS: Nr. of particles 419711: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.070454
+STATUS: MG iterations = 1
+STATUS: Computing time-step 45
+STATUS: Nr. of particles 419776: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.072537
+STATUS: MG iterations = 1
+STATUS: Computing time-step 46
+STATUS: Nr. of particles 419868: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.073801
+STATUS: MG iterations = 1
+STATUS: Computing time-step 47
+STATUS: Nr. of particles 419957: 
+STATUS: MG iterations = 1
+STATUS: Potential-check for object 0 : -0.074033
+STATUS: MG iterations = 1
+STATUS: Computing time-step 48
+STATUS: Nr. of particles 420033: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.075828
+STATUS: MG iterations = 1
+STATUS: Computing time-step 49
+STATUS: Nr. of particles 419926: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.076844
+STATUS: MG iterations = 1
+STATUS: Computing time-step 50
+STATUS: Nr. of particles 419720: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.077717
+STATUS: MG iterations = 2
+STATUS: Computing time-step 51
+STATUS: Nr. of particles 419811: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.078217
+STATUS: MG iterations = 1
+STATUS: Computing time-step 52
+STATUS: Nr. of particles 419727: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.079174
+STATUS: MG iterations = 2
+STATUS: Computing time-step 53
+STATUS: Nr. of particles 420015: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.079581
+STATUS: MG iterations = 2
+STATUS: Computing time-step 54
+STATUS: Nr. of particles 419836: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.080095
+STATUS: MG iterations = 2
+STATUS: Computing time-step 55
+STATUS: Nr. of particles 419823: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.080626
+STATUS: MG iterations = 2
+STATUS: Computing time-step 56
+STATUS: Nr. of particles 419925: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.081090
+STATUS: MG iterations = 2
+STATUS: Computing time-step 57
+STATUS: Nr. of particles 420228: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.081505
+STATUS: MG iterations = 2
+STATUS: Computing time-step 58
+STATUS: Nr. of particles 419839: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.081847
+STATUS: MG iterations = 2
+STATUS: Computing time-step 59
+STATUS: Nr. of particles 419778: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082170
+STATUS: MG iterations = 2
+STATUS: Computing time-step 60
+STATUS: Nr. of particles 419675: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082445
+STATUS: MG iterations = 2
+STATUS: Computing time-step 61
+STATUS: Nr. of particles 419839: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082681
+STATUS: MG iterations = 2
+STATUS: Computing time-step 62
+STATUS: Nr. of particles 419651: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082868
+STATUS: MG iterations = 2
+STATUS: Computing time-step 63
+STATUS: Nr. of particles 419693: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083024
+STATUS: MG iterations = 2
+STATUS: Computing time-step 64
+STATUS: Nr. of particles 419911: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083141
+STATUS: MG iterations = 2
+STATUS: Computing time-step 65
+STATUS: Nr. of particles 420033: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083212
+STATUS: MG iterations = 2
+STATUS: Computing time-step 66
+STATUS: Nr. of particles 419850: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083245
+STATUS: MG iterations = 2
+STATUS: Computing time-step 67
+STATUS: Nr. of particles 419812: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083258
+STATUS: MG iterations = 2
+STATUS: Computing time-step 68
+STATUS: Nr. of particles 419996: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083264
+STATUS: MG iterations = 2
+STATUS: Computing time-step 69
+STATUS: Nr. of particles 420218: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083232
+STATUS: MG iterations = 2
+STATUS: Computing time-step 70
+STATUS: Nr. of particles 420129: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083208
+STATUS: MG iterations = 2
+STATUS: Computing time-step 71
+STATUS: Nr. of particles 419926: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083191
+STATUS: MG iterations = 2
+STATUS: Computing time-step 72
+STATUS: Nr. of particles 420054: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083164
+STATUS: MG iterations = 2
+STATUS: Computing time-step 73
+STATUS: Nr. of particles 419909: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083146
+STATUS: MG iterations = 2
+STATUS: Computing time-step 74
+STATUS: Nr. of particles 419560: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083108
+STATUS: MG iterations = 2
+STATUS: Computing time-step 75
+STATUS: Nr. of particles 419813: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083096
+STATUS: MG iterations = 2
+STATUS: Computing time-step 76
+STATUS: Nr. of particles 419676: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083068
+STATUS: MG iterations = 2
+STATUS: Computing time-step 77
+STATUS: Nr. of particles 420075: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083051
+STATUS: MG iterations = 2
+STATUS: Computing time-step 78
+STATUS: Nr. of particles 419789: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083018
+STATUS: MG iterations = 2
+STATUS: Computing time-step 79
+STATUS: Nr. of particles 419560: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082997
+STATUS: MG iterations = 2
+STATUS: Computing time-step 80
+STATUS: Nr. of particles 419843: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082979
+STATUS: MG iterations = 2
+STATUS: Computing time-step 81
+STATUS: Nr. of particles 419860: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082979
+STATUS: MG iterations = 2
+STATUS: Computing time-step 82
+STATUS: Nr. of particles 419662: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082967
+STATUS: MG iterations = 2
+STATUS: Computing time-step 83
+STATUS: Nr. of particles 419994: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082970
+STATUS: MG iterations = 2
+STATUS: Computing time-step 84
+STATUS: Nr. of particles 419697: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.082988
+STATUS: MG iterations = 2
+STATUS: Computing time-step 85
+STATUS: Nr. of particles 419778: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083023
+STATUS: MG iterations = 2
+STATUS: Computing time-step 86
+STATUS: Nr. of particles 419857: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083058
+STATUS: MG iterations = 2
+STATUS: Computing time-step 87
+STATUS: Nr. of particles 419839: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083105
+STATUS: MG iterations = 2
+STATUS: Computing time-step 88
+STATUS: Nr. of particles 420108: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083206
+STATUS: MG iterations = 2
+STATUS: Computing time-step 89
+STATUS: Nr. of particles 420070: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083322
+STATUS: MG iterations = 2
+STATUS: Computing time-step 90
+STATUS: Nr. of particles 419873: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083458
+STATUS: MG iterations = 2
+STATUS: Computing time-step 91
+STATUS: Nr. of particles 420028: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083638
+STATUS: MG iterations = 2
+STATUS: Computing time-step 92
+STATUS: Nr. of particles 419914: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.083843
+STATUS: MG iterations = 2
+STATUS: Computing time-step 93
+STATUS: Nr. of particles 419896: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.084114
+STATUS: MG iterations = 2
+STATUS: Computing time-step 94
+STATUS: Nr. of particles 419727: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.084381
+STATUS: MG iterations = 2
+STATUS: Computing time-step 95
+STATUS: Nr. of particles 420311: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.084701
+STATUS: MG iterations = 2
+STATUS: Computing time-step 96
+STATUS: Nr. of particles 419874: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.085067
+STATUS: MG iterations = 2
+STATUS: Computing time-step 97
+STATUS: Nr. of particles 420175: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.085474
+STATUS: MG iterations = 2
+STATUS: Computing time-step 98
+STATUS: Nr. of particles 420204: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.085921
+STATUS: MG iterations = 2
+STATUS: Computing time-step 99
+STATUS: Nr. of particles 420003: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.086409
+STATUS: MG iterations = 2
+STATUS: Computing time-step 100
+STATUS: Nr. of particles 419998: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.086958
+STATUS: MG iterations = 2
+STATUS: Computing time-step 101
+STATUS: Nr. of particles 420155: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.087473
+STATUS: MG iterations = 2
+STATUS: Computing time-step 102
+STATUS: Nr. of particles 420101: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.088068
+STATUS: MG iterations = 2
+STATUS: Computing time-step 103
+STATUS: Nr. of particles 419867: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.088656
+STATUS: MG iterations = 2
+STATUS: Computing time-step 104
+STATUS: Nr. of particles 419975: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.089323
+STATUS: MG iterations = 2
+STATUS: Computing time-step 105
+STATUS: Nr. of particles 419965: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.090013
+STATUS: MG iterations = 2
+STATUS: Computing time-step 106
+STATUS: Nr. of particles 420017: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.090739
+STATUS: MG iterations = 2
+STATUS: Computing time-step 107
+STATUS: Nr. of particles 419934: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.091492
+STATUS: MG iterations = 2
+STATUS: Computing time-step 108
+STATUS: Nr. of particles 419744: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.092261
+STATUS: MG iterations = 2
+STATUS: Computing time-step 109
+STATUS: Nr. of particles 419678: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.093064
+STATUS: MG iterations = 2
+STATUS: Computing time-step 110
+STATUS: Nr. of particles 419718: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.093915
+STATUS: MG iterations = 2
+STATUS: Computing time-step 111
+STATUS: Nr. of particles 419768: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.094766
+STATUS: MG iterations = 2
+STATUS: Computing time-step 112
+STATUS: Nr. of particles 420161: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.095650
+STATUS: MG iterations = 2
+STATUS: Computing time-step 113
+STATUS: Nr. of particles 420141: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.096520
+STATUS: MG iterations = 2
+STATUS: Computing time-step 114
+STATUS: Nr. of particles 419995: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.097397
+STATUS: MG iterations = 2
+STATUS: Computing time-step 115
+STATUS: Nr. of particles 419988: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.098291
+STATUS: MG iterations = 2
+STATUS: Computing time-step 116
+STATUS: Nr. of particles 419934: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.099149
+STATUS: MG iterations = 2
+STATUS: Computing time-step 117
+STATUS: Nr. of particles 419812: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.100013
+STATUS: MG iterations = 2
+STATUS: Computing time-step 118
+STATUS: Nr. of particles 419862: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.100883
+STATUS: MG iterations = 2
+STATUS: Computing time-step 119
+STATUS: Nr. of particles 420243: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.101745
+STATUS: MG iterations = 2
+STATUS: Computing time-step 120
+STATUS: Nr. of particles 420138: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.102601
+STATUS: MG iterations = 2
+STATUS: Computing time-step 121
+STATUS: Nr. of particles 420121: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.103446
+STATUS: MG iterations = 2
+STATUS: Computing time-step 122
+STATUS: Nr. of particles 419904: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.104295
+STATUS: MG iterations = 2
+STATUS: Computing time-step 123
+STATUS: Nr. of particles 420054: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.105119
+STATUS: MG iterations = 2
+STATUS: Computing time-step 124
+STATUS: Nr. of particles 420036: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.105919
+STATUS: MG iterations = 2
+STATUS: Computing time-step 125
+STATUS: Nr. of particles 420226: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.106764
+STATUS: MG iterations = 2
+STATUS: Computing time-step 126
+STATUS: Nr. of particles 420053: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.107594
+STATUS: MG iterations = 2
+STATUS: Computing time-step 127
+STATUS: Nr. of particles 420162: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.108377
+STATUS: MG iterations = 2
+STATUS: Computing time-step 128
+STATUS: Nr. of particles 420033: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.109134
+STATUS: MG iterations = 2
+STATUS: Computing time-step 129
+STATUS: Nr. of particles 420129: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.109885
+STATUS: MG iterations = 2
+STATUS: Computing time-step 130
+STATUS: Nr. of particles 420224: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.110616
+STATUS: MG iterations = 2
+STATUS: Computing time-step 131
+STATUS: Nr. of particles 420089: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.111308
+STATUS: MG iterations = 2
+STATUS: Computing time-step 132
+STATUS: Nr. of particles 419924: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.112014
+STATUS: MG iterations = 2
+STATUS: Computing time-step 133
+STATUS: Nr. of particles 420004: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.112696
+STATUS: MG iterations = 2
+STATUS: Computing time-step 134
+STATUS: Nr. of particles 420144: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.113366
+STATUS: MG iterations = 2
+STATUS: Computing time-step 135
+STATUS: Nr. of particles 420283: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.113981
+STATUS: MG iterations = 2
+STATUS: Computing time-step 136
+STATUS: Nr. of particles 420303: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.114561
+STATUS: MG iterations = 2
+STATUS: Computing time-step 137
+STATUS: Nr. of particles 420181: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.115121
+STATUS: MG iterations = 2
+STATUS: Computing time-step 138
+STATUS: Nr. of particles 420215: 
+STATUS: MG iterations = 2
+STATUS: Potential-check for object 0 : -0.115637
+STATUS: MG iterations = 2
+STATUS: Computing time-step 139
+STATUS: Nr. of particles 419987: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.117115
+STATUS: MG iterations = 3
+STATUS: Computing time-step 140
+STATUS: Nr. of particles 419719: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.117247
+STATUS: MG iterations = 3
+STATUS: Computing time-step 141
+STATUS: Nr. of particles 419926: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.117657
+STATUS: MG iterations = 3
+STATUS: Computing time-step 142
+STATUS: Nr. of particles 419819: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.118043
+STATUS: MG iterations = 3
+STATUS: Computing time-step 143
+STATUS: Nr. of particles 420235: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.118390
+STATUS: MG iterations = 3
+STATUS: Computing time-step 144
+STATUS: Nr. of particles 420210: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.118724
+STATUS: MG iterations = 3
+STATUS: Computing time-step 145
+STATUS: Nr. of particles 420276: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.119039
+STATUS: MG iterations = 3
+STATUS: Computing time-step 146
+STATUS: Nr. of particles 420002: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.119307
+STATUS: MG iterations = 3
+STATUS: Computing time-step 147
+STATUS: Nr. of particles 420247: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.119585
+STATUS: MG iterations = 3
+STATUS: Computing time-step 148
+STATUS: Nr. of particles 420191: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.119835
+STATUS: MG iterations = 3
+STATUS: Computing time-step 149
+STATUS: Nr. of particles 420087: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120067
+STATUS: MG iterations = 3
+STATUS: Computing time-step 150
+STATUS: Nr. of particles 420266: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120297
+STATUS: MG iterations = 3
+STATUS: Computing time-step 151
+STATUS: Nr. of particles 420077: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120468
+STATUS: MG iterations = 3
+STATUS: Computing time-step 152
+STATUS: Nr. of particles 420132: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120622
+STATUS: MG iterations = 3
+STATUS: Computing time-step 153
+STATUS: Nr. of particles 420196: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120734
+STATUS: MG iterations = 3
+STATUS: Computing time-step 154
+STATUS: Nr. of particles 420067: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120849
+STATUS: MG iterations = 3
+STATUS: Computing time-step 155
+STATUS: Nr. of particles 420277: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.120964
+STATUS: MG iterations = 3
+STATUS: Computing time-step 156
+STATUS: Nr. of particles 420312: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121089
+STATUS: MG iterations = 3
+STATUS: Computing time-step 157
+STATUS: Nr. of particles 420429: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121189
+STATUS: MG iterations = 3
+STATUS: Computing time-step 158
+STATUS: Nr. of particles 420091: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121260
+STATUS: MG iterations = 3
+STATUS: Computing time-step 159
+STATUS: Nr. of particles 419903: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121313
+STATUS: MG iterations = 3
+STATUS: Computing time-step 160
+STATUS: Nr. of particles 420104: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121343
+STATUS: MG iterations = 3
+STATUS: Computing time-step 161
+STATUS: Nr. of particles 420273: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121374
+STATUS: MG iterations = 3
+STATUS: Computing time-step 162
+STATUS: Nr. of particles 420124: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121399
+STATUS: MG iterations = 3
+STATUS: Computing time-step 163
+STATUS: Nr. of particles 420275: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121414
+STATUS: MG iterations = 3
+STATUS: Computing time-step 164
+STATUS: Nr. of particles 420127: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121398
+STATUS: MG iterations = 3
+STATUS: Computing time-step 165
+STATUS: Nr. of particles 420299: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121401
+STATUS: MG iterations = 3
+STATUS: Computing time-step 166
+STATUS: Nr. of particles 420293: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121364
+STATUS: MG iterations = 3
+STATUS: Computing time-step 167
+STATUS: Nr. of particles 420224: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121356
+STATUS: MG iterations = 3
+STATUS: Computing time-step 168
+STATUS: Nr. of particles 420213: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121351
+STATUS: MG iterations = 3
+STATUS: Computing time-step 169
+STATUS: Nr. of particles 420265: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121352
+STATUS: MG iterations = 3
+STATUS: Computing time-step 170
+STATUS: Nr. of particles 420326: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121387
+STATUS: MG iterations = 3
+STATUS: Computing time-step 171
+STATUS: Nr. of particles 420213: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121440
+STATUS: MG iterations = 3
+STATUS: Computing time-step 172
+STATUS: Nr. of particles 420006: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121489
+STATUS: MG iterations = 3
+STATUS: Computing time-step 173
+STATUS: Nr. of particles 420304: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121585
+STATUS: MG iterations = 3
+STATUS: Computing time-step 174
+STATUS: Nr. of particles 420217: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121691
+STATUS: MG iterations = 3
+STATUS: Computing time-step 175
+STATUS: Nr. of particles 420266: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121809
+STATUS: MG iterations = 3
+STATUS: Computing time-step 176
+STATUS: Nr. of particles 420001: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.121957
+STATUS: MG iterations = 3
+STATUS: Computing time-step 177
+STATUS: Nr. of particles 420382: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122107
+STATUS: MG iterations = 3
+STATUS: Computing time-step 178
+STATUS: Nr. of particles 420506: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122267
+STATUS: MG iterations = 3
+STATUS: Computing time-step 179
+STATUS: Nr. of particles 420526: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122433
+STATUS: MG iterations = 3
+STATUS: Computing time-step 180
+STATUS: Nr. of particles 420276: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122630
+STATUS: MG iterations = 3
+STATUS: Computing time-step 181
+STATUS: Nr. of particles 420292: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122811
+STATUS: MG iterations = 3
+STATUS: Computing time-step 182
+STATUS: Nr. of particles 420352: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.122980
+STATUS: MG iterations = 3
+STATUS: Computing time-step 183
+STATUS: Nr. of particles 420471: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.123173
+STATUS: MG iterations = 3
+STATUS: Computing time-step 184
+STATUS: Nr. of particles 420114: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.123350
+STATUS: MG iterations = 3
+STATUS: Computing time-step 185
+STATUS: Nr. of particles 420273: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.123526
+STATUS: MG iterations = 3
+STATUS: Computing time-step 186
+STATUS: Nr. of particles 419994: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.123694
+STATUS: MG iterations = 3
+STATUS: Computing time-step 187
+STATUS: Nr. of particles 420478: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.123875
+STATUS: MG iterations = 3
+STATUS: Computing time-step 188
+STATUS: Nr. of particles 420304: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.124046
+STATUS: MG iterations = 3
+STATUS: Computing time-step 189
+STATUS: Nr. of particles 419980: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.124247
+STATUS: MG iterations = 3
+STATUS: Computing time-step 190
+STATUS: Nr. of particles 420014: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.124467
+STATUS: MG iterations = 3
+STATUS: Computing time-step 191
+STATUS: Nr. of particles 420340: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.124696
+STATUS: MG iterations = 3
+STATUS: Computing time-step 192
+STATUS: Nr. of particles 420113: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.124937
+STATUS: MG iterations = 3
+STATUS: Computing time-step 193
+STATUS: Nr. of particles 420477: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.125193
+STATUS: MG iterations = 3
+STATUS: Computing time-step 194
+STATUS: Nr. of particles 420529: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.125459
+STATUS: MG iterations = 3
+STATUS: Computing time-step 195
+STATUS: Nr. of particles 420468: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.125718
+STATUS: MG iterations = 3
+STATUS: Computing time-step 196
+STATUS: Nr. of particles 420236: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.125991
+STATUS: MG iterations = 3
+STATUS: Computing time-step 197
+STATUS: Nr. of particles 420359: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.126268
+STATUS: MG iterations = 3
+STATUS: Computing time-step 198
+STATUS: Nr. of particles 420521: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.126531
+STATUS: MG iterations = 3
+STATUS: Computing time-step 199
+STATUS: Nr. of particles 420339: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.126829
+STATUS: MG iterations = 3
+STATUS: Computing time-step 200
+STATUS: Nr. of particles 420704: 
+STATUS: MG iterations = 3
+STATUS: Potential-check for object 0 : -0.127095
+STATUS: MG iterations = 3
+STATUS: Computing time-step 201
+STATUS: Nr. of particles 420554: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.128506
+STATUS: MG iterations = 4
+STATUS: Computing time-step 202
+STATUS: Nr. of particles 420926: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.128405
+STATUS: MG iterations = 4
+STATUS: Computing time-step 203
+STATUS: Nr. of particles 420371: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.128713
+STATUS: MG iterations = 4
+STATUS: Computing time-step 204
+STATUS: Nr. of particles 420445: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.128965
+STATUS: MG iterations = 4
+STATUS: Computing time-step 205
+STATUS: Nr. of particles 420358: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.129228
+STATUS: MG iterations = 4
+STATUS: Computing time-step 206
+STATUS: Nr. of particles 420487: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.129490
+STATUS: MG iterations = 4
+STATUS: Computing time-step 207
+STATUS: Nr. of particles 420586: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.129735
+STATUS: MG iterations = 4
+STATUS: Computing time-step 208
+STATUS: Nr. of particles 420664: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.129990
+STATUS: MG iterations = 4
+STATUS: Computing time-step 209
+STATUS: Nr. of particles 420799: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.130225
+STATUS: MG iterations = 4
+STATUS: Computing time-step 210
+STATUS: Nr. of particles 420707: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.130451
+STATUS: MG iterations = 4
+STATUS: Computing time-step 211
+STATUS: Nr. of particles 420765: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.130681
+STATUS: MG iterations = 4
+STATUS: Computing time-step 212
+STATUS: Nr. of particles 420488: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.130884
+STATUS: MG iterations = 4
+STATUS: Computing time-step 213
+STATUS: Nr. of particles 420589: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131054
+STATUS: MG iterations = 4
+STATUS: Computing time-step 214
+STATUS: Nr. of particles 420728: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131209
+STATUS: MG iterations = 4
+STATUS: Computing time-step 215
+STATUS: Nr. of particles 420521: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131356
+STATUS: MG iterations = 4
+STATUS: Computing time-step 216
+STATUS: Nr. of particles 420952: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131485
+STATUS: MG iterations = 4
+STATUS: Computing time-step 217
+STATUS: Nr. of particles 420704: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131607
+STATUS: MG iterations = 4
+STATUS: Computing time-step 218
+STATUS: Nr. of particles 420553: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131727
+STATUS: MG iterations = 4
+STATUS: Computing time-step 219
+STATUS: Nr. of particles 420410: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131845
+STATUS: MG iterations = 4
+STATUS: Computing time-step 220
+STATUS: Nr. of particles 420098: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.131945
+STATUS: MG iterations = 4
+STATUS: Computing time-step 221
+STATUS: Nr. of particles 420626: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132040
+STATUS: MG iterations = 4
+STATUS: Computing time-step 222
+STATUS: Nr. of particles 420338: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132136
+STATUS: MG iterations = 4
+STATUS: Computing time-step 223
+STATUS: Nr. of particles 420034: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132219
+STATUS: MG iterations = 4
+STATUS: Computing time-step 224
+STATUS: Nr. of particles 420117: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132308
+STATUS: MG iterations = 4
+STATUS: Computing time-step 225
+STATUS: Nr. of particles 420443: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132378
+STATUS: MG iterations = 4
+STATUS: Computing time-step 226
+STATUS: Nr. of particles 420273: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132422
+STATUS: MG iterations = 4
+STATUS: Computing time-step 227
+STATUS: Nr. of particles 420153: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132460
+STATUS: MG iterations = 4
+STATUS: Computing time-step 228
+STATUS: Nr. of particles 420179: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132489
+STATUS: MG iterations = 4
+STATUS: Computing time-step 229
+STATUS: Nr. of particles 420378: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132509
+STATUS: MG iterations = 4
+STATUS: Computing time-step 230
+STATUS: Nr. of particles 420371: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132531
+STATUS: MG iterations = 4
+STATUS: Computing time-step 231
+STATUS: Nr. of particles 420134: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132544
+STATUS: MG iterations = 4
+STATUS: Computing time-step 232
+STATUS: Nr. of particles 420502: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132552
+STATUS: MG iterations = 4
+STATUS: Computing time-step 233
+STATUS: Nr. of particles 420225: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132543
+STATUS: MG iterations = 4
+STATUS: Computing time-step 234
+STATUS: Nr. of particles 420153: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132529
+STATUS: MG iterations = 4
+STATUS: Computing time-step 235
+STATUS: Nr. of particles 420257: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132503
+STATUS: MG iterations = 4
+STATUS: Computing time-step 236
+STATUS: Nr. of particles 420369: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132470
+STATUS: MG iterations = 4
+STATUS: Computing time-step 237
+STATUS: Nr. of particles 419882: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132408
+STATUS: MG iterations = 4
+STATUS: Computing time-step 238
+STATUS: Nr. of particles 420091: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132345
+STATUS: MG iterations = 4
+STATUS: Computing time-step 239
+STATUS: Nr. of particles 420008: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132285
+STATUS: MG iterations = 4
+STATUS: Computing time-step 240
+STATUS: Nr. of particles 420141: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132246
+STATUS: MG iterations = 4
+STATUS: Computing time-step 241
+STATUS: Nr. of particles 420077: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132221
+STATUS: MG iterations = 4
+STATUS: Computing time-step 242
+STATUS: Nr. of particles 420132: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132194
+STATUS: MG iterations = 4
+STATUS: Computing time-step 243
+STATUS: Nr. of particles 420029: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132171
+STATUS: MG iterations = 4
+STATUS: Computing time-step 244
+STATUS: Nr. of particles 420434: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132157
+STATUS: MG iterations = 4
+STATUS: Computing time-step 245
+STATUS: Nr. of particles 420335: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132147
+STATUS: MG iterations = 4
+STATUS: Computing time-step 246
+STATUS: Nr. of particles 420168: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132150
+STATUS: MG iterations = 4
+STATUS: Computing time-step 247
+STATUS: Nr. of particles 420239: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132150
+STATUS: MG iterations = 4
+STATUS: Computing time-step 248
+STATUS: Nr. of particles 420139: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132156
+STATUS: MG iterations = 4
+STATUS: Computing time-step 249
+STATUS: Nr. of particles 420209: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132191
+STATUS: MG iterations = 4
+STATUS: Computing time-step 250
+STATUS: Nr. of particles 419997: 
+STATUS: MG iterations = 4
+STATUS: Potential-check for object 0 : -0.132216
+STATUS: MG iterations = 4
+STATUS: Computing time-step 251
+STATUS: Nr. of particles 420121: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133488
+STATUS: MG iterations = 5
+STATUS: Computing time-step 252
+STATUS: Nr. of particles 420204: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133265
+STATUS: MG iterations = 5
+STATUS: Computing time-step 253
+STATUS: Nr. of particles 420235: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133374
+STATUS: MG iterations = 5
+STATUS: Computing time-step 254
+STATUS: Nr. of particles 419904: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133456
+STATUS: MG iterations = 5
+STATUS: Computing time-step 255
+STATUS: Nr. of particles 420163: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133538
+STATUS: MG iterations = 5
+STATUS: Computing time-step 256
+STATUS: Nr. of particles 419956: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133603
+STATUS: MG iterations = 5
+STATUS: Computing time-step 257
+STATUS: Nr. of particles 420397: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133664
+STATUS: MG iterations = 5
+STATUS: Computing time-step 258
+STATUS: Nr. of particles 420179: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133734
+STATUS: MG iterations = 5
+STATUS: Computing time-step 259
+STATUS: Nr. of particles 420067: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133807
+STATUS: MG iterations = 5
+STATUS: Computing time-step 260
+STATUS: Nr. of particles 420416: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133887
+STATUS: MG iterations = 5
+STATUS: Computing time-step 261
+STATUS: Nr. of particles 420105: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.133973
+STATUS: MG iterations = 5
+STATUS: Computing time-step 262
+STATUS: Nr. of particles 420091: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134060
+STATUS: MG iterations = 5
+STATUS: Computing time-step 263
+STATUS: Nr. of particles 420369: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134183
+STATUS: MG iterations = 5
+STATUS: Computing time-step 264
+STATUS: Nr. of particles 419956: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134323
+STATUS: MG iterations = 5
+STATUS: Computing time-step 265
+STATUS: Nr. of particles 420172: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134455
+STATUS: MG iterations = 5
+STATUS: Computing time-step 266
+STATUS: Nr. of particles 419945: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134611
+STATUS: MG iterations = 5
+STATUS: Computing time-step 267
+STATUS: Nr. of particles 420283: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134783
+STATUS: MG iterations = 5
+STATUS: Computing time-step 268
+STATUS: Nr. of particles 420126: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.134962
+STATUS: MG iterations = 5
+STATUS: Computing time-step 269
+STATUS: Nr. of particles 420236: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.135142
+STATUS: MG iterations = 5
+STATUS: Computing time-step 270
+STATUS: Nr. of particles 420148: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.135333
+STATUS: MG iterations = 5
+STATUS: Computing time-step 271
+STATUS: Nr. of particles 419845: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.135524
+STATUS: MG iterations = 5
+STATUS: Computing time-step 272
+STATUS: Nr. of particles 420169: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.135710
+STATUS: MG iterations = 5
+STATUS: Computing time-step 273
+STATUS: Nr. of particles 420477: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.135889
+STATUS: MG iterations = 5
+STATUS: Computing time-step 274
+STATUS: Nr. of particles 420096: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136047
+STATUS: MG iterations = 5
+STATUS: Computing time-step 275
+STATUS: Nr. of particles 419970: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136205
+STATUS: MG iterations = 5
+STATUS: Computing time-step 276
+STATUS: Nr. of particles 419885: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136354
+STATUS: MG iterations = 5
+STATUS: Computing time-step 277
+STATUS: Nr. of particles 420281: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136488
+STATUS: MG iterations = 5
+STATUS: Computing time-step 278
+STATUS: Nr. of particles 420370: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136613
+STATUS: MG iterations = 5
+STATUS: Computing time-step 279
+STATUS: Nr. of particles 419957: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136726
+STATUS: MG iterations = 5
+STATUS: Computing time-step 280
+STATUS: Nr. of particles 420201: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136832
+STATUS: MG iterations = 5
+STATUS: Computing time-step 281
+STATUS: Nr. of particles 420203: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.136929
+STATUS: MG iterations = 5
+STATUS: Computing time-step 282
+STATUS: Nr. of particles 420133: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137039
+STATUS: MG iterations = 5
+STATUS: Computing time-step 283
+STATUS: Nr. of particles 420249: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137154
+STATUS: MG iterations = 5
+STATUS: Computing time-step 284
+STATUS: Nr. of particles 420259: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137252
+STATUS: MG iterations = 5
+STATUS: Computing time-step 285
+STATUS: Nr. of particles 420079: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137345
+STATUS: MG iterations = 5
+STATUS: Computing time-step 286
+STATUS: Nr. of particles 420218: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137430
+STATUS: MG iterations = 5
+STATUS: Computing time-step 287
+STATUS: Nr. of particles 420256: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137515
+STATUS: MG iterations = 5
+STATUS: Computing time-step 288
+STATUS: Nr. of particles 420246: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137575
+STATUS: MG iterations = 5
+STATUS: Computing time-step 289
+STATUS: Nr. of particles 420526: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137632
+STATUS: MG iterations = 5
+STATUS: Computing time-step 290
+STATUS: Nr. of particles 420315: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137693
+STATUS: MG iterations = 5
+STATUS: Computing time-step 291
+STATUS: Nr. of particles 420390: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137758
+STATUS: MG iterations = 5
+STATUS: Computing time-step 292
+STATUS: Nr. of particles 420160: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137812
+STATUS: MG iterations = 5
+STATUS: Computing time-step 293
+STATUS: Nr. of particles 420266: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137858
+STATUS: MG iterations = 5
+STATUS: Computing time-step 294
+STATUS: Nr. of particles 420518: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137919
+STATUS: MG iterations = 5
+STATUS: Computing time-step 295
+STATUS: Nr. of particles 420409: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.137983
+STATUS: MG iterations = 5
+STATUS: Computing time-step 296
+STATUS: Nr. of particles 420419: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138039
+STATUS: MG iterations = 5
+STATUS: Computing time-step 297
+STATUS: Nr. of particles 420304: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138100
+STATUS: MG iterations = 5
+STATUS: Computing time-step 298
+STATUS: Nr. of particles 420398: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138175
+STATUS: MG iterations = 5
+STATUS: Computing time-step 299
+STATUS: Nr. of particles 420344: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138260
+STATUS: MG iterations = 5
+STATUS: Computing time-step 300
+STATUS: Nr. of particles 420554: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138345
+STATUS: MG iterations = 5
+STATUS: Computing time-step 301
+STATUS: Nr. of particles 420488: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138444
+STATUS: MG iterations = 5
+STATUS: Computing time-step 302
+STATUS: Nr. of particles 420404: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138553
+STATUS: MG iterations = 5
+STATUS: Computing time-step 303
+STATUS: Nr. of particles 420320: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138635
+STATUS: MG iterations = 5
+STATUS: Computing time-step 304
+STATUS: Nr. of particles 420716: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138707
+STATUS: MG iterations = 5
+STATUS: Computing time-step 305
+STATUS: Nr. of particles 420742: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138767
+STATUS: MG iterations = 5
+STATUS: Computing time-step 306
+STATUS: Nr. of particles 420454: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138806
+STATUS: MG iterations = 5
+STATUS: Computing time-step 307
+STATUS: Nr. of particles 420388: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138833
+STATUS: MG iterations = 5
+STATUS: Computing time-step 308
+STATUS: Nr. of particles 420521: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138858
+STATUS: MG iterations = 5
+STATUS: Computing time-step 309
+STATUS: Nr. of particles 420554: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138870
+STATUS: MG iterations = 5
+STATUS: Computing time-step 310
+STATUS: Nr. of particles 420610: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138867
+STATUS: MG iterations = 5
+STATUS: Computing time-step 311
+STATUS: Nr. of particles 420782: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138855
+STATUS: MG iterations = 5
+STATUS: Computing time-step 312
+STATUS: Nr. of particles 420651: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138839
+STATUS: MG iterations = 5
+STATUS: Computing time-step 313
+STATUS: Nr. of particles 420426: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138809
+STATUS: MG iterations = 5
+STATUS: Computing time-step 314
+STATUS: Nr. of particles 420681: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138769
+STATUS: MG iterations = 5
+STATUS: Computing time-step 315
+STATUS: Nr. of particles 420615: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138722
+STATUS: MG iterations = 5
+STATUS: Computing time-step 316
+STATUS: Nr. of particles 420806: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138666
+STATUS: MG iterations = 5
+STATUS: Computing time-step 317
+STATUS: Nr. of particles 420769: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138608
+STATUS: MG iterations = 5
+STATUS: Computing time-step 318
+STATUS: Nr. of particles 420772: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138567
+STATUS: MG iterations = 5
+STATUS: Computing time-step 319
+STATUS: Nr. of particles 420808: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138535
+STATUS: MG iterations = 5
+STATUS: Computing time-step 320
+STATUS: Nr. of particles 420581: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138519
+STATUS: MG iterations = 5
+STATUS: Computing time-step 321
+STATUS: Nr. of particles 420632: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138515
+STATUS: MG iterations = 5
+STATUS: Computing time-step 322
+STATUS: Nr. of particles 420726: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138523
+STATUS: MG iterations = 5
+STATUS: Computing time-step 323
+STATUS: Nr. of particles 421126: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138521
+STATUS: MG iterations = 5
+STATUS: Computing time-step 324
+STATUS: Nr. of particles 420907: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138503
+STATUS: MG iterations = 5
+STATUS: Computing time-step 325
+STATUS: Nr. of particles 420724: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138488
+STATUS: MG iterations = 5
+STATUS: Computing time-step 326
+STATUS: Nr. of particles 420912: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138492
+STATUS: MG iterations = 5
+STATUS: Computing time-step 327
+STATUS: Nr. of particles 421048: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138494
+STATUS: MG iterations = 5
+STATUS: Computing time-step 328
+STATUS: Nr. of particles 420987: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138506
+STATUS: MG iterations = 5
+STATUS: Computing time-step 329
+STATUS: Nr. of particles 420973: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138538
+STATUS: MG iterations = 5
+STATUS: Computing time-step 330
+STATUS: Nr. of particles 421158: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138583
+STATUS: MG iterations = 5
+STATUS: Computing time-step 331
+STATUS: Nr. of particles 421209: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138649
+STATUS: MG iterations = 5
+STATUS: Computing time-step 332
+STATUS: Nr. of particles 421252: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138716
+STATUS: MG iterations = 5
+STATUS: Computing time-step 333
+STATUS: Nr. of particles 421129: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138816
+STATUS: MG iterations = 5
+STATUS: Computing time-step 334
+STATUS: Nr. of particles 420909: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138930
+STATUS: MG iterations = 5
+STATUS: Computing time-step 335
+STATUS: Nr. of particles 421050: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139045
+STATUS: MG iterations = 5
+STATUS: Computing time-step 336
+STATUS: Nr. of particles 420957: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139162
+STATUS: MG iterations = 5
+STATUS: Computing time-step 337
+STATUS: Nr. of particles 421207: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139293
+STATUS: MG iterations = 5
+STATUS: Computing time-step 338
+STATUS: Nr. of particles 421276: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139432
+STATUS: MG iterations = 5
+STATUS: Computing time-step 339
+STATUS: Nr. of particles 421140: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139575
+STATUS: MG iterations = 5
+STATUS: Computing time-step 340
+STATUS: Nr. of particles 421122: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139714
+STATUS: MG iterations = 5
+STATUS: Computing time-step 341
+STATUS: Nr. of particles 421335: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139858
+STATUS: MG iterations = 5
+STATUS: Computing time-step 342
+STATUS: Nr. of particles 421246: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140001
+STATUS: MG iterations = 5
+STATUS: Computing time-step 343
+STATUS: Nr. of particles 421535: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140147
+STATUS: MG iterations = 5
+STATUS: Computing time-step 344
+STATUS: Nr. of particles 421614: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140286
+STATUS: MG iterations = 5
+STATUS: Computing time-step 345
+STATUS: Nr. of particles 421222: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140424
+STATUS: MG iterations = 5
+STATUS: Computing time-step 346
+STATUS: Nr. of particles 421318: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140565
+STATUS: MG iterations = 5
+STATUS: Computing time-step 347
+STATUS: Nr. of particles 421345: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140700
+STATUS: MG iterations = 5
+STATUS: Computing time-step 348
+STATUS: Nr. of particles 421299: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140817
+STATUS: MG iterations = 5
+STATUS: Computing time-step 349
+STATUS: Nr. of particles 421346: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140933
+STATUS: MG iterations = 5
+STATUS: Computing time-step 350
+STATUS: Nr. of particles 421528: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141045
+STATUS: MG iterations = 5
+STATUS: Computing time-step 351
+STATUS: Nr. of particles 421302: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141155
+STATUS: MG iterations = 5
+STATUS: Computing time-step 352
+STATUS: Nr. of particles 421606: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141273
+STATUS: MG iterations = 5
+STATUS: Computing time-step 353
+STATUS: Nr. of particles 421764: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141402
+STATUS: MG iterations = 5
+STATUS: Computing time-step 354
+STATUS: Nr. of particles 421613: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141515
+STATUS: MG iterations = 5
+STATUS: Computing time-step 355
+STATUS: Nr. of particles 421517: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141642
+STATUS: MG iterations = 5
+STATUS: Computing time-step 356
+STATUS: Nr. of particles 421688: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141753
+STATUS: MG iterations = 5
+STATUS: Computing time-step 357
+STATUS: Nr. of particles 421544: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141859
+STATUS: MG iterations = 5
+STATUS: Computing time-step 358
+STATUS: Nr. of particles 421780: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141967
+STATUS: MG iterations = 5
+STATUS: Computing time-step 359
+STATUS: Nr. of particles 421759: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142068
+STATUS: MG iterations = 5
+STATUS: Computing time-step 360
+STATUS: Nr. of particles 421723: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142166
+STATUS: MG iterations = 5
+STATUS: Computing time-step 361
+STATUS: Nr. of particles 421626: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142256
+STATUS: MG iterations = 5
+STATUS: Computing time-step 362
+STATUS: Nr. of particles 421836: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142345
+STATUS: MG iterations = 5
+STATUS: Computing time-step 363
+STATUS: Nr. of particles 422038: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142426
+STATUS: MG iterations = 5
+STATUS: Computing time-step 364
+STATUS: Nr. of particles 422037: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142491
+STATUS: MG iterations = 5
+STATUS: Computing time-step 365
+STATUS: Nr. of particles 421838: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142555
+STATUS: MG iterations = 5
+STATUS: Computing time-step 366
+STATUS: Nr. of particles 422041: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142612
+STATUS: MG iterations = 5
+STATUS: Computing time-step 367
+STATUS: Nr. of particles 422259: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142649
+STATUS: MG iterations = 5
+STATUS: Computing time-step 368
+STATUS: Nr. of particles 421837: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142675
+STATUS: MG iterations = 5
+STATUS: Computing time-step 369
+STATUS: Nr. of particles 421744: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142689
+STATUS: MG iterations = 5
+STATUS: Computing time-step 370
+STATUS: Nr. of particles 422167: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142681
+STATUS: MG iterations = 5
+STATUS: Computing time-step 371
+STATUS: Nr. of particles 421963: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142669
+STATUS: MG iterations = 5
+STATUS: Computing time-step 372
+STATUS: Nr. of particles 422039: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142663
+STATUS: MG iterations = 5
+STATUS: Computing time-step 373
+STATUS: Nr. of particles 422024: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142656
+STATUS: MG iterations = 5
+STATUS: Computing time-step 374
+STATUS: Nr. of particles 421959: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142634
+STATUS: MG iterations = 5
+STATUS: Computing time-step 375
+STATUS: Nr. of particles 421967: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142622
+STATUS: MG iterations = 5
+STATUS: Computing time-step 376
+STATUS: Nr. of particles 421956: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142619
+STATUS: MG iterations = 5
+STATUS: Computing time-step 377
+STATUS: Nr. of particles 421981: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142627
+STATUS: MG iterations = 5
+STATUS: Computing time-step 378
+STATUS: Nr. of particles 422077: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142634
+STATUS: MG iterations = 5
+STATUS: Computing time-step 379
+STATUS: Nr. of particles 421913: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142644
+STATUS: MG iterations = 5
+STATUS: Computing time-step 380
+STATUS: Nr. of particles 421976: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142659
+STATUS: MG iterations = 5
+STATUS: Computing time-step 381
+STATUS: Nr. of particles 421716: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142685
+STATUS: MG iterations = 5
+STATUS: Computing time-step 382
+STATUS: Nr. of particles 422019: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142690
+STATUS: MG iterations = 5
+STATUS: Computing time-step 383
+STATUS: Nr. of particles 422067: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142688
+STATUS: MG iterations = 5
+STATUS: Computing time-step 384
+STATUS: Nr. of particles 421884: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142689
+STATUS: MG iterations = 5
+STATUS: Computing time-step 385
+STATUS: Nr. of particles 421848: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142697
+STATUS: MG iterations = 5
+STATUS: Computing time-step 386
+STATUS: Nr. of particles 421942: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142694
+STATUS: MG iterations = 5
+STATUS: Computing time-step 387
+STATUS: Nr. of particles 422215: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142671
+STATUS: MG iterations = 5
+STATUS: Computing time-step 388
+STATUS: Nr. of particles 421904: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142647
+STATUS: MG iterations = 5
+STATUS: Computing time-step 389
+STATUS: Nr. of particles 422440: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142603
+STATUS: MG iterations = 5
+STATUS: Computing time-step 390
+STATUS: Nr. of particles 421987: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142567
+STATUS: MG iterations = 5
+STATUS: Computing time-step 391
+STATUS: Nr. of particles 422102: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142558
+STATUS: MG iterations = 5
+STATUS: Computing time-step 392
+STATUS: Nr. of particles 422126: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142557
+STATUS: MG iterations = 5
+STATUS: Computing time-step 393
+STATUS: Nr. of particles 422024: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142554
+STATUS: MG iterations = 5
+STATUS: Computing time-step 394
+STATUS: Nr. of particles 422082: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142556
+STATUS: MG iterations = 5
+STATUS: Computing time-step 395
+STATUS: Nr. of particles 421962: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142580
+STATUS: MG iterations = 5
+STATUS: Computing time-step 396
+STATUS: Nr. of particles 421993: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142603
+STATUS: MG iterations = 5
+STATUS: Computing time-step 397
+STATUS: Nr. of particles 422420: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142655
+STATUS: MG iterations = 5
+STATUS: Computing time-step 398
+STATUS: Nr. of particles 421907: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142734
+STATUS: MG iterations = 5
+STATUS: Computing time-step 399
+STATUS: Nr. of particles 422319: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142820
+STATUS: MG iterations = 5
+STATUS: Computing time-step 400
+STATUS: Nr. of particles 422325: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142918
+STATUS: MG iterations = 5
+STATUS: Computing time-step 401
+STATUS: Nr. of particles 422041: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143017
+STATUS: MG iterations = 5
+STATUS: Computing time-step 402
+STATUS: Nr. of particles 422255: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143127
+STATUS: MG iterations = 5
+STATUS: Computing time-step 403
+STATUS: Nr. of particles 422626: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143239
+STATUS: MG iterations = 5
+STATUS: Computing time-step 404
+STATUS: Nr. of particles 422376: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143331
+STATUS: MG iterations = 5
+STATUS: Computing time-step 405
+STATUS: Nr. of particles 422323: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143423
+STATUS: MG iterations = 5
+STATUS: Computing time-step 406
+STATUS: Nr. of particles 422498: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143512
+STATUS: MG iterations = 5
+STATUS: Computing time-step 407
+STATUS: Nr. of particles 422475: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143581
+STATUS: MG iterations = 5
+STATUS: Computing time-step 408
+STATUS: Nr. of particles 422349: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143641
+STATUS: MG iterations = 5
+STATUS: Computing time-step 409
+STATUS: Nr. of particles 422248: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143696
+STATUS: MG iterations = 5
+STATUS: Computing time-step 410
+STATUS: Nr. of particles 422391: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143753
+STATUS: MG iterations = 5
+STATUS: Computing time-step 411
+STATUS: Nr. of particles 422280: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143787
+STATUS: MG iterations = 5
+STATUS: Computing time-step 412
+STATUS: Nr. of particles 422429: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143825
+STATUS: MG iterations = 5
+STATUS: Computing time-step 413
+STATUS: Nr. of particles 422569: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143882
+STATUS: MG iterations = 5
+STATUS: Computing time-step 414
+STATUS: Nr. of particles 422365: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143913
+STATUS: MG iterations = 5
+STATUS: Computing time-step 415
+STATUS: Nr. of particles 422652: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143939
+STATUS: MG iterations = 5
+STATUS: Computing time-step 416
+STATUS: Nr. of particles 422520: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143939
+STATUS: MG iterations = 5
+STATUS: Computing time-step 417
+STATUS: Nr. of particles 422772: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143909
+STATUS: MG iterations = 5
+STATUS: Computing time-step 418
+STATUS: Nr. of particles 422684: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143882
+STATUS: MG iterations = 5
+STATUS: Computing time-step 419
+STATUS: Nr. of particles 422450: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143859
+STATUS: MG iterations = 5
+STATUS: Computing time-step 420
+STATUS: Nr. of particles 422677: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143827
+STATUS: MG iterations = 5
+STATUS: Computing time-step 421
+STATUS: Nr. of particles 422754: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143774
+STATUS: MG iterations = 5
+STATUS: Computing time-step 422
+STATUS: Nr. of particles 422487: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143699
+STATUS: MG iterations = 5
+STATUS: Computing time-step 423
+STATUS: Nr. of particles 422645: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143613
+STATUS: MG iterations = 5
+STATUS: Computing time-step 424
+STATUS: Nr. of particles 422839: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143529
+STATUS: MG iterations = 5
+STATUS: Computing time-step 425
+STATUS: Nr. of particles 422723: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143441
+STATUS: MG iterations = 5
+STATUS: Computing time-step 426
+STATUS: Nr. of particles 422666: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143351
+STATUS: MG iterations = 5
+STATUS: Computing time-step 427
+STATUS: Nr. of particles 422815: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143259
+STATUS: MG iterations = 5
+STATUS: Computing time-step 428
+STATUS: Nr. of particles 422951: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143173
+STATUS: MG iterations = 5
+STATUS: Computing time-step 429
+STATUS: Nr. of particles 422855: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143108
+STATUS: MG iterations = 5
+STATUS: Computing time-step 430
+STATUS: Nr. of particles 422849: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143066
+STATUS: MG iterations = 5
+STATUS: Computing time-step 431
+STATUS: Nr. of particles 422850: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143044
+STATUS: MG iterations = 5
+STATUS: Computing time-step 432
+STATUS: Nr. of particles 422931: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143033
+STATUS: MG iterations = 5
+STATUS: Computing time-step 433
+STATUS: Nr. of particles 423040: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143038
+STATUS: MG iterations = 5
+STATUS: Computing time-step 434
+STATUS: Nr. of particles 422886: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143072
+STATUS: MG iterations = 5
+STATUS: Computing time-step 435
+STATUS: Nr. of particles 423241: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143104
+STATUS: MG iterations = 5
+STATUS: Computing time-step 436
+STATUS: Nr. of particles 422903: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143147
+STATUS: MG iterations = 5
+STATUS: Computing time-step 437
+STATUS: Nr. of particles 423003: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143210
+STATUS: MG iterations = 5
+STATUS: Computing time-step 438
+STATUS: Nr. of particles 422935: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143278
+STATUS: MG iterations = 5
+STATUS: Computing time-step 439
+STATUS: Nr. of particles 423327: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143366
+STATUS: MG iterations = 5
+STATUS: Computing time-step 440
+STATUS: Nr. of particles 423148: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143463
+STATUS: MG iterations = 5
+STATUS: Computing time-step 441
+STATUS: Nr. of particles 422933: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143557
+STATUS: MG iterations = 5
+STATUS: Computing time-step 442
+STATUS: Nr. of particles 423203: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143646
+STATUS: MG iterations = 5
+STATUS: Computing time-step 443
+STATUS: Nr. of particles 422810: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143738
+STATUS: MG iterations = 5
+STATUS: Computing time-step 444
+STATUS: Nr. of particles 423309: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143810
+STATUS: MG iterations = 5
+STATUS: Computing time-step 445
+STATUS: Nr. of particles 423275: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143870
+STATUS: MG iterations = 5
+STATUS: Computing time-step 446
+STATUS: Nr. of particles 423454: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143927
+STATUS: MG iterations = 5
+STATUS: Computing time-step 447
+STATUS: Nr. of particles 423450: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143971
+STATUS: MG iterations = 5
+STATUS: Computing time-step 448
+STATUS: Nr. of particles 423563: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144026
+STATUS: MG iterations = 5
+STATUS: Computing time-step 449
+STATUS: Nr. of particles 423485: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144076
+STATUS: MG iterations = 5
+STATUS: Computing time-step 450
+STATUS: Nr. of particles 423225: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144125
+STATUS: MG iterations = 5
+STATUS: Computing time-step 451
+STATUS: Nr. of particles 423525: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144161
+STATUS: MG iterations = 5
+STATUS: Computing time-step 452
+STATUS: Nr. of particles 423739: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144195
+STATUS: MG iterations = 5
+STATUS: Computing time-step 453
+STATUS: Nr. of particles 423675: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144215
+STATUS: MG iterations = 5
+STATUS: Computing time-step 454
+STATUS: Nr. of particles 423699: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144225
+STATUS: MG iterations = 5
+STATUS: Computing time-step 455
+STATUS: Nr. of particles 423930: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144240
+STATUS: MG iterations = 5
+STATUS: Computing time-step 456
+STATUS: Nr. of particles 423583: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144253
+STATUS: MG iterations = 5
+STATUS: Computing time-step 457
+STATUS: Nr. of particles 423562: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144272
+STATUS: MG iterations = 5
+STATUS: Computing time-step 458
+STATUS: Nr. of particles 423925: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144292
+STATUS: MG iterations = 5
+STATUS: Computing time-step 459
+STATUS: Nr. of particles 424018: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144311
+STATUS: MG iterations = 5
+STATUS: Computing time-step 460
+STATUS: Nr. of particles 423567: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144349
+STATUS: MG iterations = 5
+STATUS: Computing time-step 461
+STATUS: Nr. of particles 424118: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144397
+STATUS: MG iterations = 5
+STATUS: Computing time-step 462
+STATUS: Nr. of particles 423887: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144439
+STATUS: MG iterations = 5
+STATUS: Computing time-step 463
+STATUS: Nr. of particles 423984: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144473
+STATUS: MG iterations = 5
+STATUS: Computing time-step 464
+STATUS: Nr. of particles 424267: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144491
+STATUS: MG iterations = 5
+STATUS: Computing time-step 465
+STATUS: Nr. of particles 423791: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144515
+STATUS: MG iterations = 5
+STATUS: Computing time-step 466
+STATUS: Nr. of particles 424276: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144536
+STATUS: MG iterations = 5
+STATUS: Computing time-step 467
+STATUS: Nr. of particles 423976: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144566
+STATUS: MG iterations = 5
+STATUS: Computing time-step 468
+STATUS: Nr. of particles 424214: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144595
+STATUS: MG iterations = 5
+STATUS: Computing time-step 469
+STATUS: Nr. of particles 424368: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144615
+STATUS: MG iterations = 5
+STATUS: Computing time-step 470
+STATUS: Nr. of particles 424293: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144639
+STATUS: MG iterations = 5
+STATUS: Computing time-step 471
+STATUS: Nr. of particles 424326: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144680
+STATUS: MG iterations = 5
+STATUS: Computing time-step 472
+STATUS: Nr. of particles 424228: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144721
+STATUS: MG iterations = 5
+STATUS: Computing time-step 473
+STATUS: Nr. of particles 424322: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144760
+STATUS: MG iterations = 5
+STATUS: Computing time-step 474
+STATUS: Nr. of particles 424323: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144810
+STATUS: MG iterations = 5
+STATUS: Computing time-step 475
+STATUS: Nr. of particles 424620: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144867
+STATUS: MG iterations = 5
+STATUS: Computing time-step 476
+STATUS: Nr. of particles 424412: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144918
+STATUS: MG iterations = 5
+STATUS: Computing time-step 477
+STATUS: Nr. of particles 424229: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144984
+STATUS: MG iterations = 5
+STATUS: Computing time-step 478
+STATUS: Nr. of particles 424552: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145048
+STATUS: MG iterations = 5
+STATUS: Computing time-step 479
+STATUS: Nr. of particles 424534: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145119
+STATUS: MG iterations = 5
+STATUS: Computing time-step 480
+STATUS: Nr. of particles 424387: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145214
+STATUS: MG iterations = 5
+STATUS: Computing time-step 481
+STATUS: Nr. of particles 424330: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145308
+STATUS: MG iterations = 5
+STATUS: Computing time-step 482
+STATUS: Nr. of particles 424243: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145397
+STATUS: MG iterations = 5
+STATUS: Computing time-step 483
+STATUS: Nr. of particles 424732: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145475
+STATUS: MG iterations = 5
+STATUS: Computing time-step 484
+STATUS: Nr. of particles 424490: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145561
+STATUS: MG iterations = 5
+STATUS: Computing time-step 485
+STATUS: Nr. of particles 424710: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145634
+STATUS: MG iterations = 5
+STATUS: Computing time-step 486
+STATUS: Nr. of particles 424714: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145699
+STATUS: MG iterations = 5
+STATUS: Computing time-step 487
+STATUS: Nr. of particles 424659: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145745
+STATUS: MG iterations = 5
+STATUS: Computing time-step 488
+STATUS: Nr. of particles 424426: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145799
+STATUS: MG iterations = 5
+STATUS: Computing time-step 489
+STATUS: Nr. of particles 424547: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145862
+STATUS: MG iterations = 5
+STATUS: Computing time-step 490
+STATUS: Nr. of particles 424601: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145909
+STATUS: MG iterations = 5
+STATUS: Computing time-step 491
+STATUS: Nr. of particles 424590: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145945
+STATUS: MG iterations = 5
+STATUS: Computing time-step 492
+STATUS: Nr. of particles 424438: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145986
+STATUS: MG iterations = 5
+STATUS: Computing time-step 493
+STATUS: Nr. of particles 424482: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146025
+STATUS: MG iterations = 5
+STATUS: Computing time-step 494
+STATUS: Nr. of particles 424544: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146050
+STATUS: MG iterations = 5
+STATUS: Computing time-step 495
+STATUS: Nr. of particles 424434: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146084
+STATUS: MG iterations = 5
+STATUS: Computing time-step 496
+STATUS: Nr. of particles 424899: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146117
+STATUS: MG iterations = 5
+STATUS: Computing time-step 497
+STATUS: Nr. of particles 424840: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146149
+STATUS: MG iterations = 5
+STATUS: Computing time-step 498
+STATUS: Nr. of particles 424536: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146187
+STATUS: MG iterations = 5
+STATUS: Computing time-step 499
+STATUS: Nr. of particles 424699: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146214
+STATUS: MG iterations = 5
+STATUS: Computing time-step 500
+STATUS: Nr. of particles 425034: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146231
+STATUS: MG iterations = 5
+STATUS: Computing time-step 501
+STATUS: Nr. of particles 424654: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146246
+STATUS: MG iterations = 5
+STATUS: Computing time-step 502
+STATUS: Nr. of particles 424650: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146267
+STATUS: MG iterations = 5
+STATUS: Computing time-step 503
+STATUS: Nr. of particles 424724: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146277
+STATUS: MG iterations = 5
+STATUS: Computing time-step 504
+STATUS: Nr. of particles 424692: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146286
+STATUS: MG iterations = 5
+STATUS: Computing time-step 505
+STATUS: Nr. of particles 424978: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146291
+STATUS: MG iterations = 5
+STATUS: Computing time-step 506
+STATUS: Nr. of particles 424720: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146297
+STATUS: MG iterations = 5
+STATUS: Computing time-step 507
+STATUS: Nr. of particles 424862: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146289
+STATUS: MG iterations = 5
+STATUS: Computing time-step 508
+STATUS: Nr. of particles 425149: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146262
+STATUS: MG iterations = 5
+STATUS: Computing time-step 509
+STATUS: Nr. of particles 425119: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146215
+STATUS: MG iterations = 5
+STATUS: Computing time-step 510
+STATUS: Nr. of particles 425229: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146153
+STATUS: MG iterations = 5
+STATUS: Computing time-step 511
+STATUS: Nr. of particles 424951: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146088
+STATUS: MG iterations = 5
+STATUS: Computing time-step 512
+STATUS: Nr. of particles 425118: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146015
+STATUS: MG iterations = 5
+STATUS: Computing time-step 513
+STATUS: Nr. of particles 424982: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145912
+STATUS: MG iterations = 5
+STATUS: Computing time-step 514
+STATUS: Nr. of particles 425366: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145800
+STATUS: MG iterations = 5
+STATUS: Computing time-step 515
+STATUS: Nr. of particles 425060: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145678
+STATUS: MG iterations = 5
+STATUS: Computing time-step 516
+STATUS: Nr. of particles 425146: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145544
+STATUS: MG iterations = 5
+STATUS: Computing time-step 517
+STATUS: Nr. of particles 424936: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145429
+STATUS: MG iterations = 5
+STATUS: Computing time-step 518
+STATUS: Nr. of particles 425035: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145283
+STATUS: MG iterations = 5
+STATUS: Computing time-step 519
+STATUS: Nr. of particles 425066: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145129
+STATUS: MG iterations = 5
+STATUS: Computing time-step 520
+STATUS: Nr. of particles 425229: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144971
+STATUS: MG iterations = 5
+STATUS: Computing time-step 521
+STATUS: Nr. of particles 424910: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144816
+STATUS: MG iterations = 5
+STATUS: Computing time-step 522
+STATUS: Nr. of particles 425229: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144680
+STATUS: MG iterations = 5
+STATUS: Computing time-step 523
+STATUS: Nr. of particles 424927: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144553
+STATUS: MG iterations = 5
+STATUS: Computing time-step 524
+STATUS: Nr. of particles 425281: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144433
+STATUS: MG iterations = 5
+STATUS: Computing time-step 525
+STATUS: Nr. of particles 425353: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144324
+STATUS: MG iterations = 5
+STATUS: Computing time-step 526
+STATUS: Nr. of particles 425038: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144221
+STATUS: MG iterations = 5
+STATUS: Computing time-step 527
+STATUS: Nr. of particles 425222: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144130
+STATUS: MG iterations = 5
+STATUS: Computing time-step 528
+STATUS: Nr. of particles 425454: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144043
+STATUS: MG iterations = 5
+STATUS: Computing time-step 529
+STATUS: Nr. of particles 425261: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143948
+STATUS: MG iterations = 5
+STATUS: Computing time-step 530
+STATUS: Nr. of particles 425669: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143869
+STATUS: MG iterations = 5
+STATUS: Computing time-step 531
+STATUS: Nr. of particles 425369: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143796
+STATUS: MG iterations = 5
+STATUS: Computing time-step 532
+STATUS: Nr. of particles 425690: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143736
+STATUS: MG iterations = 5
+STATUS: Computing time-step 533
+STATUS: Nr. of particles 425363: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143695
+STATUS: MG iterations = 5
+STATUS: Computing time-step 534
+STATUS: Nr. of particles 425569: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143671
+STATUS: MG iterations = 5
+STATUS: Computing time-step 535
+STATUS: Nr. of particles 425341: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143655
+STATUS: MG iterations = 5
+STATUS: Computing time-step 536
+STATUS: Nr. of particles 425560: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143649
+STATUS: MG iterations = 5
+STATUS: Computing time-step 537
+STATUS: Nr. of particles 425377: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143659
+STATUS: MG iterations = 5
+STATUS: Computing time-step 538
+STATUS: Nr. of particles 425208: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143670
+STATUS: MG iterations = 5
+STATUS: Computing time-step 539
+STATUS: Nr. of particles 425307: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143692
+STATUS: MG iterations = 5
+STATUS: Computing time-step 540
+STATUS: Nr. of particles 425441: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143749
+STATUS: MG iterations = 5
+STATUS: Computing time-step 541
+STATUS: Nr. of particles 425477: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143833
+STATUS: MG iterations = 5
+STATUS: Computing time-step 542
+STATUS: Nr. of particles 425584: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143924
+STATUS: MG iterations = 5
+STATUS: Computing time-step 543
+STATUS: Nr. of particles 425642: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144027
+STATUS: MG iterations = 5
+STATUS: Computing time-step 544
+STATUS: Nr. of particles 425386: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144125
+STATUS: MG iterations = 5
+STATUS: Computing time-step 545
+STATUS: Nr. of particles 425818: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144236
+STATUS: MG iterations = 5
+STATUS: Computing time-step 546
+STATUS: Nr. of particles 425734: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144371
+STATUS: MG iterations = 5
+STATUS: Computing time-step 547
+STATUS: Nr. of particles 425460: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144516
+STATUS: MG iterations = 5
+STATUS: Computing time-step 548
+STATUS: Nr. of particles 425252: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144663
+STATUS: MG iterations = 5
+STATUS: Computing time-step 549
+STATUS: Nr. of particles 425522: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144818
+STATUS: MG iterations = 5
+STATUS: Computing time-step 550
+STATUS: Nr. of particles 425678: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144957
+STATUS: MG iterations = 5
+STATUS: Computing time-step 551
+STATUS: Nr. of particles 425420: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145102
+STATUS: MG iterations = 5
+STATUS: Computing time-step 552
+STATUS: Nr. of particles 425435: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145256
+STATUS: MG iterations = 5
+STATUS: Computing time-step 553
+STATUS: Nr. of particles 425492: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145410
+STATUS: MG iterations = 5
+STATUS: Computing time-step 554
+STATUS: Nr. of particles 425730: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145551
+STATUS: MG iterations = 5
+STATUS: Computing time-step 555
+STATUS: Nr. of particles 425383: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145679
+STATUS: MG iterations = 5
+STATUS: Computing time-step 556
+STATUS: Nr. of particles 425443: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145801
+STATUS: MG iterations = 5
+STATUS: Computing time-step 557
+STATUS: Nr. of particles 425394: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145931
+STATUS: MG iterations = 5
+STATUS: Computing time-step 558
+STATUS: Nr. of particles 425530: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146030
+STATUS: MG iterations = 5
+STATUS: Computing time-step 559
+STATUS: Nr. of particles 425711: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146121
+STATUS: MG iterations = 5
+STATUS: Computing time-step 560
+STATUS: Nr. of particles 425542: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146186
+STATUS: MG iterations = 5
+STATUS: Computing time-step 561
+STATUS: Nr. of particles 425717: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146226
+STATUS: MG iterations = 5
+STATUS: Computing time-step 562
+STATUS: Nr. of particles 425699: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146234
+STATUS: MG iterations = 5
+STATUS: Computing time-step 563
+STATUS: Nr. of particles 425716: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146221
+STATUS: MG iterations = 5
+STATUS: Computing time-step 564
+STATUS: Nr. of particles 425589: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146192
+STATUS: MG iterations = 5
+STATUS: Computing time-step 565
+STATUS: Nr. of particles 425658: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146148
+STATUS: MG iterations = 5
+STATUS: Computing time-step 566
+STATUS: Nr. of particles 425777: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.146080
+STATUS: MG iterations = 5
+STATUS: Computing time-step 567
+STATUS: Nr. of particles 425793: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145998
+STATUS: MG iterations = 5
+STATUS: Computing time-step 568
+STATUS: Nr. of particles 425643: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145916
+STATUS: MG iterations = 5
+STATUS: Computing time-step 569
+STATUS: Nr. of particles 425822: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145819
+STATUS: MG iterations = 5
+STATUS: Computing time-step 570
+STATUS: Nr. of particles 425892: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145715
+STATUS: MG iterations = 5
+STATUS: Computing time-step 571
+STATUS: Nr. of particles 425631: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145595
+STATUS: MG iterations = 5
+STATUS: Computing time-step 572
+STATUS: Nr. of particles 426244: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145448
+STATUS: MG iterations = 5
+STATUS: Computing time-step 573
+STATUS: Nr. of particles 426049: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145292
+STATUS: MG iterations = 5
+STATUS: Computing time-step 574
+STATUS: Nr. of particles 425945: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.145098
+STATUS: MG iterations = 5
+STATUS: Computing time-step 575
+STATUS: Nr. of particles 425911: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144881
+STATUS: MG iterations = 5
+STATUS: Computing time-step 576
+STATUS: Nr. of particles 426037: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144648
+STATUS: MG iterations = 5
+STATUS: Computing time-step 577
+STATUS: Nr. of particles 426022: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144385
+STATUS: MG iterations = 5
+STATUS: Computing time-step 578
+STATUS: Nr. of particles 425835: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.144109
+STATUS: MG iterations = 5
+STATUS: Computing time-step 579
+STATUS: Nr. of particles 426220: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143834
+STATUS: MG iterations = 5
+STATUS: Computing time-step 580
+STATUS: Nr. of particles 425950: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143553
+STATUS: MG iterations = 5
+STATUS: Computing time-step 581
+STATUS: Nr. of particles 425608: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.143266
+STATUS: MG iterations = 5
+STATUS: Computing time-step 582
+STATUS: Nr. of particles 426011: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142952
+STATUS: MG iterations = 5
+STATUS: Computing time-step 583
+STATUS: Nr. of particles 426295: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142637
+STATUS: MG iterations = 5
+STATUS: Computing time-step 584
+STATUS: Nr. of particles 426330: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.142311
+STATUS: MG iterations = 5
+STATUS: Computing time-step 585
+STATUS: Nr. of particles 426052: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141978
+STATUS: MG iterations = 5
+STATUS: Computing time-step 586
+STATUS: Nr. of particles 426216: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141654
+STATUS: MG iterations = 5
+STATUS: Computing time-step 587
+STATUS: Nr. of particles 426480: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141338
+STATUS: MG iterations = 5
+STATUS: Computing time-step 588
+STATUS: Nr. of particles 426184: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.141028
+STATUS: MG iterations = 5
+STATUS: Computing time-step 589
+STATUS: Nr. of particles 426028: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140729
+STATUS: MG iterations = 5
+STATUS: Computing time-step 590
+STATUS: Nr. of particles 426332: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140442
+STATUS: MG iterations = 5
+STATUS: Computing time-step 591
+STATUS: Nr. of particles 426301: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.140154
+STATUS: MG iterations = 5
+STATUS: Computing time-step 592
+STATUS: Nr. of particles 426247: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139874
+STATUS: MG iterations = 5
+STATUS: Computing time-step 593
+STATUS: Nr. of particles 426287: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139617
+STATUS: MG iterations = 5
+STATUS: Computing time-step 594
+STATUS: Nr. of particles 426486: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139385
+STATUS: MG iterations = 5
+STATUS: Computing time-step 595
+STATUS: Nr. of particles 426533: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139168
+STATUS: MG iterations = 5
+STATUS: Computing time-step 596
+STATUS: Nr. of particles 426666: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138990
+STATUS: MG iterations = 5
+STATUS: Computing time-step 597
+STATUS: Nr. of particles 426565: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138838
+STATUS: MG iterations = 5
+STATUS: Computing time-step 598
+STATUS: Nr. of particles 426450: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138722
+STATUS: MG iterations = 5
+STATUS: Computing time-step 599
+STATUS: Nr. of particles 426438: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138645
+STATUS: MG iterations = 5
+STATUS: Computing time-step 600
+STATUS: Nr. of particles 426607: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138600
+STATUS: MG iterations = 5
+STATUS: Computing time-step 601
+STATUS: Nr. of particles 426668: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138565
+STATUS: MG iterations = 5
+STATUS: Computing time-step 602
+STATUS: Nr. of particles 426522: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138562
+STATUS: MG iterations = 5
+STATUS: Computing time-step 603
+STATUS: Nr. of particles 426617: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138599
+STATUS: MG iterations = 5
+STATUS: Computing time-step 604
+STATUS: Nr. of particles 426674: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138686
+STATUS: MG iterations = 5
+STATUS: Computing time-step 605
+STATUS: Nr. of particles 426709: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138809
+STATUS: MG iterations = 5
+STATUS: Computing time-step 606
+STATUS: Nr. of particles 426914: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.138943
+STATUS: MG iterations = 5
+STATUS: Computing time-step 607
+STATUS: Nr. of particles 426595: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139096
+STATUS: MG iterations = 5
+STATUS: Computing time-step 608
+STATUS: Nr. of particles 426689: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139262
+STATUS: MG iterations = 5
+STATUS: Computing time-step 609
+STATUS: Nr. of particles 426969: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139442
+STATUS: MG iterations = 5
+STATUS: Computing time-step 610
+STATUS: Nr. of particles 426790: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139638
+STATUS: MG iterations = 5
+STATUS: Computing time-step 611
+STATUS: Nr. of particles 426841: 
+STATUS: MG iterations = 5
+STATUS: Potential-check for object 0 : -0.139832
+STATUS: MG iterations = 5
+STATUS: Computing time-step 612
+STATUS: Nr. of particles 426980: 

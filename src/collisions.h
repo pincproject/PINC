@@ -41,10 +41,10 @@ typedef struct{
 
 
 void neutTest(dictionary *ini);
-funPtr neutTest_set(dictionary *ini);
+funPtr neutTest_set();
 
 void oCollMode(dictionary *ini);
-funPtr oCollMode_set(dictionary *ini);
+funPtr oCollMode_set();
 
 void mccMode(dictionary *ini);
 funPtr mccMode_set(dictionary *ini);

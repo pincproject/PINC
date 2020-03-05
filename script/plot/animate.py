@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho_i"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
@@ -24,14 +24,14 @@ interval = 0.1#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 1 #(1 = all of negative values)
+restr_min = 0.5 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XZ' # XY, XZ, YZ
+plane = 'XY' # XY, XZ, YZ
 
 show_anim = True 
 
-save_figs = False#"True
+save_figs = False#True
 
 
 ## Needs ffmpeg codec

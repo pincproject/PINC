@@ -121,7 +121,7 @@ funPtr getMgAlgo(const dictionary *ini);
  *
  */
 void mgMode(dictionary *ini);
-funPtr mgMode_set(dictionary *ini);
+funPtr mgMode_set();
 
 /**
  * @brief Performs a Multigrid run on a test case, used to optimize
@@ -134,7 +134,7 @@ funPtr mgMode_set(dictionary *ini);
  */
 
 void mgModeErrorScaling(dictionary *ini);
-funPtr mgModeErrorScaling_set(dictionary *ini);
+funPtr mgModeErrorScaling_set();
 
 
 /**
@@ -172,7 +172,7 @@ void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho,
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgFMG(int bottom, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
 /**
  * @brief Performs a multigrid W cycle
@@ -184,7 +184,7 @@ void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgW( int bottom, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 

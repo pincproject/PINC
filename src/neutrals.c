@@ -81,7 +81,7 @@ void nePToGlobalFrame(NeutralPopulation *pop, const MpiInfo *mpiInfo){
 	}
 }
 
-void neGNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
+void neGNeumann(Grid *grid, const int boundary){
 
 	//msg(STATUS, "Hello from NEUMANN");
 
@@ -124,7 +124,7 @@ void neGNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
 	return;
 }
 
-void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+void gDirichletVel(Grid *grid, const int boundary){
 
 	//msg(STATUS, "Hello from Dirichlet");
 
@@ -158,7 +158,7 @@ void gDirichletVel(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 }
 
-void gDirichletEnerg(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+void gDirichletEnerg(Grid *grid, const int boundary){
 
 	//msg(STATUS, "Hello from Dirichlet");
 
@@ -230,12 +230,12 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
 				//gDirichlet(grid, d, mpiInfo);
-				gDirichletEnerg(grid, d, mpiInfo);
+				gDirichletEnerg(grid, d);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				neGNeumann(grid, d, mpiInfo);
+				neGNeumann(grid, d);
 			}
 		}
 	}
@@ -243,8 +243,8 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gDirichletEnerg(grid, d, mpiInfo);//gDirichlet(grid, d, mpiInfo);
-			if(bnd[d] == NEUMANN)	neGNeumann(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichletEnerg(grid, d);//gDirichlet(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	neGNeumann(grid, d);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -297,13 +297,13 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 			//printf("sdsfdf \n");
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				gDirichletVel(grid, d, mpiInfo);
+				gDirichletVel(grid, d);
 				//gNeumann(grid, d, mpiInfo);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				neGNeumann(grid, d, mpiInfo);
+				neGNeumann(grid, d);
 			}
 		}
 	}
@@ -312,10 +312,10 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
 			if(bnd[d] == DIRICHLET) {
-				gDirichletVel(grid, d, mpiInfo);
+				gDirichletVel(grid, d);
 				//gNeumann(grid, d, mpiInfo);
 			}
-			if(bnd[d] == NEUMANN)	neGNeumann(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	neGNeumann(grid, d);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -465,7 +465,7 @@ void neMultiplySlice(Grid *target,int slicePos,int dim,double multiplyBy, Neutra
 	return;
 }
 
-void neScatterParticle(NeutralPopulation *pop, int s, long int p, double *pos, double *vel){
+void neScatterParticle(NeutralPopulation *pop, double *pos, double *vel){
 
     // neutral object coll
 	int nDims = pop->nDims;
@@ -1044,9 +1044,50 @@ void neFillGhost(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *r
 // ########################################
 
 
+static void puSanity(dictionary *ini, const char* name, int dim, int order){
+
+	int nDims = iniGetInt(ini,"grid:nDims");
+	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	double *thresholds = iniGetDoubleArr(ini,"grid:thresholds",2*nDims);
+
+	// TBD: can be improved by checking dimensions separately
+	int minLayers = aiMin(nGhostLayers,2*nDims);
+	double minThreshold = adMin(thresholds,2*nDims);
+	double maxThreshold = adMax(thresholds,2*nDims);
+
+	if(nDims!=dim && dim!=0)
+		msg(ERROR,"%s only supports grid:nDims=%d",name,dim);
+
+	int reqLayers = 0;
+	if(order==0) reqLayers = 0;
+	if(order==1) reqLayers = 1;
+	if(order==2) reqLayers = 1;
+
+	if(minLayers<1)
+		msg(ERROR,"%s requires grid:nGhostLayers >=%d",name,reqLayers);
+
+	double reqMinThreshold = 0;
+	if(order==0) reqMinThreshold = -0.5;
+	if(order==1) reqMinThreshold = 0;
+	if(order==2) reqMinThreshold = 0.5;
+
+	if(minThreshold<reqMinThreshold)
+		msg(ERROR,"%s requires grid:thresholds >=%.1f",name,reqMinThreshold);
+
+	double reqMaxThreshold = minLayers-0.5;
+
+	if(maxThreshold>reqMaxThreshold)
+		msg(ERROR,"%s requires grid:thresholds <= grid:nGhostLayers - 0.5",name);
+
+	if(minThreshold==reqMaxThreshold)
+		msg(WARNING,"%s is not very well tested for grid:thresholds of exactly equal to grid:nGhostLayers - 0.5",name);
+
+	free(nGhostLayers);
+	free(thresholds);
+}
 
 funPtr NeutralDistr3D1_set(dictionary *ini){
-	//puSanity(ini,"puDistr3D1",3,1);
+		puSanity(ini,"puDistr3D1",3,1); //reuse puSanity for now
 	return NeutralDistr3D1;
 }
 void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
@@ -1126,7 +1167,7 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 
 
 funPtr NeutralDistr3D1Vector_set(dictionary *ini){
-	//puSanity(ini,"puDistr3D1",3,1);
+		puSanity(ini,"puDistr3D1",3,1);
 	return NeutralDistr3D1Vector;
 }
 void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *bulkV, Grid *rho){
@@ -1307,11 +1348,12 @@ static inline void neInterp3D1scalar(	double *result, const double *pos,
 }
 
 
+
 funPtr neAcc3D1_set(dictionary *ini){
-	//puSanity(ini,"puAcc3D1",3,1);
+		puSanity(ini,"puAcc3D1",3,1); //reuse puSanity for now
 	return neAcc3D1;
 }
-void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
+void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV){
 
 	int nSpecies = pop->nSpeciesNeutral;
 	int nDims = 3; // pop->nDims; // hard-coding allows compiler to replace by value
@@ -1379,7 +1421,7 @@ void neAcc3D1(NeutralPopulation *pop, Grid *Pgrad,Grid *divBulkV,Grid *rho){
 // Mover
 //###########################
 
-void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde){
+void neMove(NeutralPopulation *pop,Grid *V){
 
 	int nSpecies = pop->nSpeciesNeutral;
 
@@ -1470,7 +1512,7 @@ void neMove(NeutralPopulation *pop,Grid *V, Grid *Vtilde){
 // 	return;
 // }
 
- void divFinDiff1st(Grid *result, Grid *field, Grid *rho, NeutralPopulation *pop){
+ void divFinDiff1st(Grid *result, Grid *field, Grid *rho){
 
 	// Performs first order centered finite difference on field and returns a scalar
 	// divFinDiff1st(gradBulkV,bulkV,rhoNeutral,neutralPop);
@@ -1935,7 +1977,7 @@ void nePNew(NeutralPopulation *pop, int s, const double *pos, const double *vel)
 // Pressure solver
 //#############################
 
-void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *ini){
+void neSetI(Grid *I,Grid *V,Grid *rho,const dictionary *ini){
 
 	gZero(I);
 	double *IEVal = I->val;
@@ -2047,7 +2089,7 @@ void neSetI(Grid *I,Grid *V,Grid *rho,NeutralPopulation *pop,const dictionary *i
 // 	//nuGBnd(P, mpiInfo);
 // }
 
-void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop, const MpiInfo *mpiInfo){
+void nePressureSolve3D(Grid *P,Grid *IE,Grid *rho,NeutralPopulation *pop){
 
 	//gHaloOp(setSlice, rhoNeutral, mpiInfo, TOHALO);
 	gZero(P);
@@ -2447,7 +2489,7 @@ void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulati
 
 }
 
-void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop ){
+void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho ){
 
 	int rank = bulkV->rank;
 	long int *fieldSizeProd = bulkV->sizeProd;
@@ -2492,7 +2534,7 @@ void neAddPressure(Grid *bulkV, Grid *Pgrad, Grid *rho,NeutralPopulation *pop ){
 *	Boundary functions
 ***********************************/
 
-void neSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo){
+void neSetBndSlices( Grid *grid,const MpiInfo *mpiInfo){
 
 	int rank = grid->rank;
 	int *size = grid->size;
@@ -2800,7 +2842,7 @@ void neIndexToPos3D(Grid *grid,long int index,long int *pos){
 }
 
 
-void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
+void neApplyObjVel(Object *obj, Grid *V){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = V->val;
@@ -2920,7 +2962,7 @@ void neApplyObjVel(Object *obj, Grid *V,NeutralPopulation *pop){
 	//exit(0);
 }
 
-void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop){
+void neApplyObjI(Object *obj, Grid *IE){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = IE->val;
@@ -3042,7 +3084,7 @@ void neApplyObjI(Object *obj, Grid *IE,NeutralPopulation *pop){
 }
 
 
-void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3119,7 +3161,7 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiI
 }
 
 
-void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo) {
+void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3152,7 +3194,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 			int l = (int) pos[2];
 
 			long int p = j + k*sizeProd[2] + l*sizeProd[3];
-			long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
+			//long int pIndex = i*nDims; //j + k*sizeProd[2] + l*sizeProd[3];
 			//msg(STATUS,"i, pIndex: %li,%i",(i-iStart),(pIndex-iStart*nDims));
 			// Check whether p is one of the object nodes and collect the charge if so.
 			// for (long int a=0; a<obj->nObjects; a++) {
@@ -3169,7 +3211,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 						//printf("Before: pos = %f,%f,%f \n",pos[0],pos[1],pos[2]);
 						//printf("Before: vel = %f,%f,%f \n",vel[0],vel[1],vel[2]);
 
-						neScatterParticle(pop, s, pIndex, pos, vel);
+						neScatterParticle(pop, pos, vel);
 
 						//printf("After: pos = %f,%f,%f \n",pos[0],pos[1],pos[2]);
 						//printf("After: vel = %f,%f,%f \n",vel[0],vel[1],vel[2]);
@@ -3215,7 +3257,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const Mp
 }
 
 
-void nuObjectSetVal(Grid *rho, Grid *rhoObj,double constant, Object *obj, const MpiInfo *mpiInfo) {
+void nuObjectSetVal(Grid *rho,double constant, Object *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;

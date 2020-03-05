@@ -673,11 +673,10 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vxMW, double vyMW, double vzMW,
-	const gsl_rng *rng, MccVars *mccVars, Population *pop){
+	const gsl_rng *rng, Population *pop){
 
 
 	double *mass = pop->mass;
-	//double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -696,14 +695,6 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vz_=0;
 	double R1 = gsl_rng_uniform_pos(rng);
 	double R2 = gsl_rng_uniform_pos(rng);
-
-
-	//vxMW = vxMW;
-	//vyMW = vyMW;
-	//vzMW = vzMW;
-	//printf("drift = %f, %f, %f \n",drift[3],drift[4],drift[5] );
-	//printf("vxMW = %f, %f, %f \n",vxMW,vyMW,vzMW );
-	//printf("vx = %f, %f, %f \n",vx,vy,vz );
 
 	//The scattering happens in netral rest frame
 	//transfer to neutral stationary frame
@@ -954,7 +945,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 				vx = &vel[q];
 				vy = &vel[q+1];
 				vz = &vel[q+2];
-				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 			}else{
 				errorcounter += 1;
 				errorcounter1 += 1;
@@ -998,7 +989,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 			vx = &vel[q];
 			vy = &vel[q+1];
 			vz = &vel[q+2];
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			// Charge exchange:
 			// flip ion and neutral. Neutral is new ion.
@@ -1174,7 +1165,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 				vx = &vel[q];
 				vy = &vel[q+1];
 				vz = &vel[q+2];
-				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 			}else{
 				errorcounter += 1;
 				errorcounter1 += 1;
@@ -1219,7 +1210,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 			vy = &vel[q+1];
 			vz = &vel[q+2];
 
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			// Charge exchange:
 			// flip ion and neutral. Neutral is new ion.
@@ -1364,7 +1355,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 			vy = &vel[q+1];
 			vz = &vel[q+2];
 
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			errorcounter += 1;
 			errorcounter1 += 1;
@@ -1394,7 +1385,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 		vy = &vel[q+1];
 		vz = &vel[q+2];
 
-		scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+		scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 	}else{
 		// Charge exchange:
 		// flip ion and neutral. Neutral is new ion.
@@ -1482,8 +1473,7 @@ funPtr functionalCrossect_set(dictionary *ini){
 	return collissions;
 }
 
-void collissionsOff(const dictionary *ini, Population *pop,
-	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo){
+void collissionsOff(){
 	//does nothing to turn off all collisions.
 	NULL;
 }
@@ -1849,7 +1839,8 @@ void mccMode(dictionary *ini){
 
 
 
-funPtr oCollMode_set(dictionary *ini){
+funPtr oCollMode_set(){ //dictionary *ini
+	 // TODO: sanity
 	return oCollMode;
 }
 
@@ -2072,7 +2063,7 @@ void oCollMode(dictionary *ini){
 
 	gCreateNeighborhood(ini, mpiInfoNeut, rhoNeutral);
 
-	neSetBndSlices(ini, IE, mpiInfoNeut);
+	neSetBndSlices( IE, mpiInfoNeut);
 	neSetBndSlicesVel(ini, V, mpiInfoNeut);
 
 	/*
@@ -2094,7 +2085,7 @@ void oCollMode(dictionary *ini){
 	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
 
 
-	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+	nuObjectpurge(neutralPop,rhoObj,obj);
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
@@ -2104,7 +2095,7 @@ void oCollMode(dictionary *ini){
 	nuGBndVel(V,mpiInfoNeut);
 	gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
 
-	neSetI(IE,V,rhoNeutral,neutralPop,ini);
+	neSetI(IE,V,rhoNeutral,ini);
 	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 
@@ -2147,9 +2138,9 @@ void oCollMode(dictionary *ini){
 
 
 		neVelAssertMax(neutralPop,maxVel);
-		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
-		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, P,neutralPop );
+		nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
+		nuObjectSetVal(P,0.,obj);
+		neApplyObjI(obj, P );
 		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
 
 		neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
@@ -2159,7 +2150,7 @@ void oCollMode(dictionary *ini){
 		gHaloOp(setSlice, Itilde, mpiInfoNeut, TOHALO);
 
 		//neApplyObjVel(obj,V,neutralPop);
-		neMove(neutralPop,V,Vtilde);
+		neMove(neutralPop,V);
 		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
@@ -2186,10 +2177,10 @@ void oCollMode(dictionary *ini){
 		nuGBnd(IE,mpiInfoNeut);
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 
-		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, IE,neutralPop );
+		nuObjectSetVal(IE,0.,obj);
+		neApplyObjI(obj, IE );
 
-		neApplyObjVel(obj,V,neutralPop);
+		neApplyObjVel(obj,V);
 
 		//-----------------------------------
 		//- NEUTRALS end
@@ -2258,7 +2249,7 @@ void oCollMode(dictionary *ini){
         //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 		//gZero(P);
-        nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
+        nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
 		//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
 
 
@@ -2397,7 +2388,8 @@ void oCollMode(dictionary *ini){
 }
 
 
-funPtr neutTest_set(dictionary *ini){
+funPtr neutTest_set(){ //dictionary *ini
+	// TODO: sanity
 	return neutTest;
 }
 
@@ -2484,7 +2476,7 @@ void neutTest(dictionary *ini){
 
     // need for SPH neutrals a function
 
-	neSetBndSlices(ini, IE, mpiInfoNeut);
+	neSetBndSlices( IE, mpiInfoNeut);
 	neSetBndSlicesVel(ini, V, mpiInfoNeut);
 
 
@@ -2573,7 +2565,7 @@ void neutTest(dictionary *ini){
 	 */
 
 
-	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+	nuObjectpurge(neutralPop,rhoObj,obj);
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
@@ -2601,7 +2593,7 @@ void neutTest(dictionary *ini){
 	////nuGBnd(P, mpiInfoNeut);
 
 	//neSetV(V,neutralPop,ini);
-	neSetI(IE,V,rhoNeutral,neutralPop,ini);
+	neSetI(IE,V,rhoNeutral,ini);
 	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
@@ -2703,9 +2695,9 @@ void neutTest(dictionary *ini){
 
 		tStart(t);
 
-		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
-		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, P,neutralPop );
+		nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
+		nuObjectSetVal(P,0.,obj);
+		neApplyObjI(obj, P );
 		//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
 		//nuGBnd(P,mpiInfoNeut);
@@ -2730,7 +2722,7 @@ void neutTest(dictionary *ini){
 		//nuGBndVel(Itilde,mpiInfoNeut);
 
 		//neApplyObjVel(obj,V,neutralPop);
-		neMove(neutralPop,V,Vtilde);
+		neMove(neutralPop,V);
 		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
@@ -2771,11 +2763,11 @@ void neutTest(dictionary *ini){
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 		//gHaloOp(setSlice, IE, mpiInfoNeut, FROMHALO);
 		//gHaloOp(addSliceAvg, IE, mpiInfoNeut, TOHALO);
-		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, IE,neutralPop );
+		nuObjectSetVal(IE,0.,obj);
+		neApplyObjI(obj, IE );
 
 		//nuGBndVel(IE,mpiInfoNeut);
-		neApplyObjVel(obj,V,neutralPop);
+		neApplyObjVel(obj,V);
 
 
 
