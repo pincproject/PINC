@@ -65,28 +65,28 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
 
 	// in m/s
-	// TODO: shoulb be per Neutral specie
+	// TODO: should be per Neutral specie
 	double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
 	NvelThermal /= units->velocity;//(units->length/units->time);
 	iniSetDouble(ini,"collisions:thermalVelocityNeutrals",NvelThermal);
 
 	// cross sections given in m^2
-	double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
-	double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
-	double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-
-	StaticSigmaCEX /= (units->length*units->length);
-	StaticSigmaIonElastic /= (units->length*units->length);
-	StaticSigmaElectronElastic /= (units->length*units->length);
-
-	//cross section for computational particles
-	StaticSigmaCEX *= units->weights[1];
-	StaticSigmaIonElastic *= units->weights[1];
-	StaticSigmaElectronElastic *= units->weights[1];
-
-	iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
-	iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
-	iniSetDouble(ini,"collisions:sigmaElectronElastic",StaticSigmaElectronElastic);
+	// double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
+	// double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
+	// double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
+	//
+	// StaticSigmaCEX /= (units->length*units->length);
+	// StaticSigmaIonElastic /= (units->length*units->length);
+	// StaticSigmaElectronElastic /= (units->length*units->length);
+	//
+	// //cross section for computational particles
+	// StaticSigmaCEX *= units->weights[1];
+	// StaticSigmaIonElastic *= units->weights[1];
+	// StaticSigmaElectronElastic *= units->weights[1];
+	//
+	// iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
+	// iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
+	// iniSetDouble(ini,"collisions:sigmaElectronElastic",StaticSigmaElectronElastic);
 
 	// "a" parameter is max crossect (m^2)
 	// "b" parameter decides velocity to center about.
@@ -379,28 +379,29 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	mccVars->pMaxIon = pMaxIon;
 	mccVars->maxFreqIon = maxFreqIon;
 	mccVars->artificialLoss = iniGetDouble(ini,"collisions:artificialLoss");
-	// double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
-	// double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	// double mccSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	// mccVars->nt = nt;
-	// mccVars->NvelThermal = NvelThermal;
-	// mccVars->mccSigmaElectronElastic = mccSigmaElectronElastic;
+
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
+	int nSpeciesNeutral = iniGetInt(ini, "collisions:nSpeciesNeutral");
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpecies);
+	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpeciesNeutral);
+	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity",nSpecies);
 	electronMassRatio = mass[0]*units->mass/units->weights[0];
 	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
 	mccVars->neutralDrift = neutralDrift,
 	mccVars->nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	mccVars->NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	mccVars->mccSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	mccVars->mccSigmaCEX= iniGetDouble(ini,"collisions:sigmaCEX");
-	mccVars->mccSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
+
 	mccVars->energyConvFactor = (units->energy/6.24150913*pow(10,18)); //J/(J/eV)
 
 	mccVars->collFrqCex = iniGetDouble(ini,"collisions:collFrqCex");
 	mccVars->collFrqIonElastic = iniGetDouble(ini,"collisions:collFrqIonElastic");
 	mccVars->collFrqElectronElastic = iniGetDouble(ini,"collisions:collFrqElectronElastic");
+
+	//TODO: We are assuming one Ion species here, this should be extended to
+	// several species
+	mccVars->mccSigmaElectronElastic = mccVars->collFrqElectronElastic/(mccVars->nt*sqrt(3)*(thermalVelocity[0]) );//iniGetDouble(ini,"collisions:sigmaElectronElastic");
+	mccVars->mccSigmaCEX= mccVars->collFrqCex/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) );//iniGetDouble(ini,"collisions:sigmaCEX");
+	mccVars->mccSigmaIonElastic = mccVars->collFrqIonElastic/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) );//iniGetDouble(ini,"collisions:sigmaIonElastic");
 
 	mccVars->CEX_a = iniGetDouble(ini,"collisions:CEX_a");
 	mccVars->CEX_b = iniGetDouble(ini,"collisions:CEX_b");

@@ -89,12 +89,12 @@ typedef struct {
  *  the coarsest grid.
  */
 
-Multigrid *mgAlloc(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo);
+Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 
 MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi,const MpiInfo *mpiInfo);
 void mgFreeSolver(MultigridSolver *solver);
 void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
-funPtr mgSolver_set(const dictionary *ini);
+funPtr mgSolver_set();
 
  /**
   * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
@@ -205,7 +205,7 @@ void mgW( int bottom, Multigrid *mgRho, Multigrid *mgPhi,
 void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,
     Multigrid *mgRes, const MpiInfo *mpiInfo);
 
-funPtr mgSolveRaw_set(dictionary *ini);
+funPtr mgSolveRaw_set();
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -269,8 +269,7 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
  */
 void mgJacobND(Grid *phi, const Grid *rho, const int nCycles,
                 const MpiInfo *mpiInfo);
-void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles,
-                const MpiInfo *mpiInfo);
+void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles);
 void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles,
                 const MpiInfo *mpiInfo);
 
@@ -415,18 +414,17 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
 
 
-double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo);
+double	mgAvgError(Grid *phi,Grid *sol,Grid *error);
 
 /**
  * @brief Returns the square of the error on the true grid
  * @param  error               Difference between solutions
- * @param  mpiInfo             MpiInfo
  * @return error
  *
  *  WARNING!    Stores the squared values on the original grid
  *              Recompute error if needed
  */
-double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo);
+double mgSumTrueSquared(Grid *error);
 
  /**
   * @brief Writes out information about the MG cycles, used when optimizing the

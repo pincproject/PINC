@@ -3154,7 +3154,7 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	printf("cutNumber = %i \n",cutNumber);
+	printf("Neutrals cutNumber = %i \n",cutNumber);
 	cutNumber = 0;
 
 
