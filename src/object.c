@@ -80,6 +80,8 @@ bool isGhostNode(Grid *grid, long int node) {
   return ghost;
 }
 
+
+//delete this
 void oGhost(long int node, const int *nGhostLayersBefore,
             const int *nGhostLayersAfter, const int *trueSize,
             const long int *sizeProd, bool *ghost) {
