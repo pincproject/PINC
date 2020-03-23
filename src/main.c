@@ -98,9 +98,9 @@ void regular(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *phi = gAlloc(ini, SCALAR);
+	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -177,13 +177,8 @@ void regular(dictionary *ini){
 	//gBnd(phi, mpiInfo);
 	//gBnd(rho, mpiInfo);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	msg(STATUS, "solving");
 	solve(solver, rho, phi, mpiInfo);
 	//gBnd(phi, mpiInfo);
-
-	msg(STATUS, "finding E");
 
 	gFinDiff1st(phi, E);
 
@@ -381,9 +376,9 @@ void BorisTestMode(dictionary *ini){
 
  	MpiInfo *mpiInfo = gAllocMpi(ini);
  	Population *pop = pAlloc(ini,mpiInfo);
- 	Grid *E   = gAlloc(ini, VECTOR);
- 	Grid *rho = gAlloc(ini, SCALAR);
- 	Grid *phi = gAlloc(ini, SCALAR);
+ 	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
+ 	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
+ 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
  	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 

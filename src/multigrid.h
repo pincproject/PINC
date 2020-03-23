@@ -91,7 +91,7 @@ typedef struct {
 
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 
-MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi);
+MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi,const MpiInfo *mpiInfo);
 void mgFreeSolver(MultigridSolver *solver);
 void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
 funPtr mgSolver_set();

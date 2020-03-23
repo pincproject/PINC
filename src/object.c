@@ -198,8 +198,8 @@ void oComputeCapacitanceMatrix(Object *obj, dictionary *ini, const MpiInfo *mpiI
     void (*solverFree)() = NULL;
     solverInterface(&solve, &solverAlloc, &solverFree);
 
-    Grid *rhoCap = gAlloc(ini, SCALAR);
-    Grid *phiCap = gAlloc(ini, SCALAR);
+    Grid *rhoCap = gAlloc(ini, SCALAR,mpiInfo);
+    Grid *phiCap = gAlloc(ini, SCALAR,mpiInfo);
 
 	double realTol = iniGetDouble(ini, "multigrid:tol");
 	double objTol = iniGetDouble(ini, "multigrid:objTol");

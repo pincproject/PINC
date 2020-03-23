@@ -34,6 +34,7 @@ typedef struct{
 	double electron_a;
 	double electron_b;
 	double energyConvFactor; // convert from PINC to eV
+	double *neutralDrift;
 
 
 } MccVars;
@@ -47,6 +48,7 @@ funPtr oCollMode_set();
 
 void mccMode(dictionary *ini);
 funPtr mccMode_set(dictionary *ini);
+
 
 funPtr constCrossect_set(dictionary *ini);
 funPtr functionalCrossect_set(dictionary *ini);

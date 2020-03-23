@@ -128,8 +128,8 @@ void sMode(dictionary *ini){
 
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
 
 	SpectralSolver *solver = sAlloc(ini, rho, phi);
 

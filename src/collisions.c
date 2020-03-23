@@ -387,6 +387,7 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity",nSpecies);
 	electronMassRatio = mass[0]*units->mass/units->weights[0];
 	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
+	mccVars->neutralDrift = neutralDrift,
 	mccVars->nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	mccVars->NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
 
@@ -578,6 +579,7 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 	double artificialLoss = mccVars->artificialLoss;
 	double *mass = pop->mass;
+	double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -587,9 +589,11 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	double Ekin, newEkin;
 	double R2 = gsl_rng_uniform_pos(rng);
 	double R3 = gsl_rng_uniform_pos(rng);
-	double vx = *vx_point;
-	double vy = *vy_point;
-	double vz = *vz_point;
+
+	// let colls happen in frame comoving with drift
+	double vx = *vx_point-drift[0];
+	double vy = *vy_point-drift[1];
+	double vz = *vz_point-drift[2];
 	double vx_,vy_,vz_;
 
 	// unit velocities
@@ -652,9 +656,9 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	vy_ *= velchange;
 	vz_ *= velchange;
 
-	*vx_point=vx_;
-	*vy_point=vy_;
-	*vz_point=vz_;
+	*vx_point=vx_+drift[0];
+	*vy_point=vy_+drift[1];
+	*vz_point=vz_+drift[2];
 
 	// unittest
 	double energydiffexpr = Ekin*(((2.0*mass[0])/(artificialLoss*mass[1]))*(1-(cos(angleChi))));
@@ -683,6 +687,7 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double Ekin, newEkin;
 	double velchange;
 
+    // let colls happen in frame comoving with drift
 	double vx = *vx_point;
 	double vy = *vy_point;
 	double vz = *vz_point;
@@ -1001,6 +1006,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 		fMsg(ini, "collision",
 		"counted  %i ION collisions on one MPI node, %i as CEX \n"
 		, errorcounter,errorcounter1);
+		//printf("counted  %i Ion collisions on one MPI node \n",  errorcounter);
 	}
 }
 
@@ -1298,6 +1304,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 	double Pmax = mccVars->pMaxIon;
 	int nDims = pop->nDims;
 	double *vel = pop->vel;
+	double *drift = mccVars->neutralDrift;
 
 	double Rp, Rq;
 	long int q = 0;
@@ -1550,11 +1557,11 @@ void mccMode(dictionary *ini){
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *E   = gAlloc(ini, VECTOR);
-	Grid *rho = gAlloc(ini, SCALAR);
-	Grid *rho_e = gAlloc(ini, SCALAR);
-	Grid *rho_i = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *E   = gAlloc(ini, VECTOR, mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi);
 
 
@@ -1639,7 +1646,7 @@ void mccMode(dictionary *ini){
 	*/
 
 	// Get initial charge density
-	distr(pop, rho); //two species
+	distr(pop, rho, rho_e, rho_i); //two species
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 	gHaloOp(addSlice, rho_e, mpiInfo, FROMHALO);
 	gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
