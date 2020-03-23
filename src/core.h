@@ -152,6 +152,7 @@ typedef struct{
 	double **emigrantsDummy;	///< YAY
 	double *immigrants;			///< Buffer to house immigrants
 	double *thresholds;			///< Threshold for migration (2*nDims elements)
+	bool periodic;				/// global periodicity for boundaries
 
 	MPI_Request *send;
 	MPI_Request *recv;
@@ -424,6 +425,7 @@ typedef struct{
 	double eField;			///< Electric field
 	double bField;			///< Magnetic flux density
 	double energy;			///< Energy
+  double current;     ///< electric current
 
 } Units;
 /**
@@ -488,5 +490,6 @@ typedef void (*funPtr)();
 #include "io.h"
 #include "aux.h"
 #include "units.h"
+#include "neutrals.h"
 
 #endif // CORE_H

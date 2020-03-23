@@ -92,12 +92,18 @@ void uNormalize(dictionary *ini, const Units *units){
 		charge[s]  *= weights[s];
 		mass[s]    *= weights[s];
 		density[s] /= weights[s];
+
 	}
 
 	// Normalization
 	adScale(charge, nSpecies, 1.0/units->charge);
 	adScale(mass,   nSpecies, 1.0/units->mass);
 	adScale(density, nSpecies, 1.0/units->density);
+
+	// for(int s=0; s<nSpecies; s++){
+	// 	printf("mass[s] = %f \n",mass[s]);
+	// 	printf("weights[s] = %f \n",weights[s]);
+	// }
 
 	iniSetDoubleArr(ini, "population:charge", charge, nSpecies);
 	iniSetDoubleArr(ini, "population:mass", mass, nSpecies);
@@ -118,8 +124,8 @@ void uNormalize(dictionary *ini, const Units *units){
 	iniScaleDouble(ini, "fields:EExt", 1.0/units->eField);
 	//msg(ERROR,"1.0/units->eField = %f",1.0/units->eField);
 
-	double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
-	msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
+	//double *vTh = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+	//msg(STATUS, "vTh[0] = %f, vTh[1] = %f",vTh[0],vTh[1]);
 
 }
 /*
@@ -263,6 +269,7 @@ static void uAddDerivedUnits(Units *units){
 	units->eField        = length*mass/(pow(time,2)*charge);
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
+	units->current			 = charge/time;
 
 	//msg(STATUS, "units->potential = %f",units->potential);
 }

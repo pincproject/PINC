@@ -3,7 +3,7 @@
 #
 # @file			mpinc.sh
 # @brief		PINC-wrapper for MPI
-# @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+# @author		Steffen Brask steffen.brask@fys.uio.no (Sigvald Marholm <sigvaldm@fys.uio.no>)
 #
 # Automatically determines number of MPI processes to use when
 # calling PINC, based on feedback from PINC itself. Normally,
@@ -22,8 +22,8 @@ NP=`$DIR/pinc "$@" getnp`
 # Run
 if [ "$NP" -eq 1 ]
 then
-	$DIR/pinc "$@" 2>&1 | tee PINC.out
+	valgrind $DIR/pinc "$@"
 else
 	#mpirun --oversubscribe -np "$NP" $DIR/pinc "$@"
-	mpirun -np "$NP" $DIR/pinc "$@" 2>&1 | tee PINC.out
+	mpirun -np "$NP" --tag-output valgrind --log-file=debug.txt $DIR/pinc "$@"
 fi

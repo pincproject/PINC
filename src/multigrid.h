@@ -31,6 +31,7 @@
 	int nPreSmooth;					///<
 	int nPostSmooth;
 	int nCoarseSolve;
+	double tol;
 
     ///< Function pointer to a Coarse Grid Solver function
     void (*coarseSolv)(	Grid *phi, const Grid *rho, const int nCycles,
@@ -93,7 +94,7 @@ Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi);
 void mgFreeSolver(MultigridSolver *solver);
 void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
-funPtr mgSolver_set(const dictionary *ini);
+funPtr mgSolver_set();
 
  /**
   * @brief Free multigrid struct, top gridQuantity needs to be freed seperately
@@ -120,7 +121,7 @@ funPtr getMgAlgo(const dictionary *ini);
  *
  */
 void mgMode(dictionary *ini);
-funPtr mgMode_set(dictionary *ini);
+funPtr mgMode_set();
 
 /**
  * @brief Performs a Multigrid run on a test case, used to optimize
@@ -133,7 +134,7 @@ funPtr mgMode_set(dictionary *ini);
  */
 
 void mgModeErrorScaling(dictionary *ini);
-funPtr mgModeErrorScaling_set(dictionary *ini);
+funPtr mgModeErrorScaling_set();
 
 
 /**
@@ -171,7 +172,7 @@ void mgVRecursive(int level, int bottom, int top, Multigrid *mgRho,
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgFMG(int bottom, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
 /**
  * @brief Performs a multigrid W cycle
@@ -183,7 +184,7 @@ void mgFMG(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
  * @param   mgRho       MgGrid struct containing rho
  * @param   mpiInfo     MpiInfo struct containing subdomain information
  */
-void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
+void mgW( int bottom, Multigrid *mgRho, Multigrid *mgPhi,
  					Multigrid *mgRes, const MpiInfo *mpiInfo);
 
 
@@ -204,7 +205,7 @@ void mgW(int level, int bottom, int top, Multigrid *mgRho, Multigrid *mgPhi,
 void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi,
     Multigrid *mgRes, const MpiInfo *mpiInfo);
 
-funPtr mgSolveRaw_set(dictionary *ini);
+funPtr mgSolveRaw_set();
 
 /**
  * @brief Gauss-Seidel Red and Black 3D
@@ -268,8 +269,7 @@ void mgGSND(Grid *phi, const Grid *rho, int nCycles, const MpiInfo *mpiInfo);
  */
 void mgJacobND(Grid *phi, const Grid *rho, const int nCycles,
                 const MpiInfo *mpiInfo);
-void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles,
-                const MpiInfo *mpiInfo);
+void mgJacob1D(Grid *phi, const Grid *rho, const int nCycles);
 void mgJacob3D(Grid *phi, const Grid *rho, const int nCycles,
                 const MpiInfo *mpiInfo);
 
@@ -414,18 +414,17 @@ void mgResidual(Grid *res, const Grid *rho, const Grid *phi,const MpiInfo *mpiIn
 void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error);
 
 
-double	mgAvgError(Grid *phi,Grid *sol,Grid *error,MpiInfo *mpiInfo);
+double	mgAvgError(Grid *phi,Grid *sol,Grid *error);
 
 /**
  * @brief Returns the square of the error on the true grid
  * @param  error               Difference between solutions
- * @param  mpiInfo             MpiInfo
  * @return error
  *
  *  WARNING!    Stores the squared values on the original grid
  *              Recompute error if needed
  */
-double mgSumTrueSquared(Grid *error,const MpiInfo *mpiInfo);
+double mgSumTrueSquared(Grid *error);
 
  /**
   * @brief Writes out information about the MG cycles, used when optimizing the

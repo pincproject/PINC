@@ -1,5 +1,3 @@
-# Compares 2 runs in different, used to debug a langmuir wave disrepancy in x-y
-# direction
 
 import h5py
 import numpy as np
@@ -64,7 +62,7 @@ pop = popX
 popTemp = []
 
 for i in range(pop.shape[0]):
-	if pop[i,0] < 16 and  pop[i,0] >12: # slice 12 to 16
+	if pop[i,2] < 17 and  pop[i,2] >15: # slice 9 to 18
 		popTemp.append(pop[i,:])
 
 pop = np.array(popTemp)
@@ -75,7 +73,7 @@ z = pop[:,2]
 
 fig = plt.figure()
 
-plt.hist2d(y, z, bins=200) # a slice in x needs to plot y-z.. etc
+plt.hist2d(x, y, bins=200) # a slice in x needs to plot y-z.. etc
 plt.colorbar()
 
 

@@ -44,6 +44,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	// Number of particles to allocate for (for all computing nodes)
 	long int *nAllocTotal = iniGetLongIntArr(ini,"population:nAlloc",nSpecies);
 
+	//printf("nAllocTotal = %li, %li \n",nAllocTotal[0],nAllocTotal[1]);
 	// Determine memory to allocate for this node
 	long int *nAlloc = malloc(nSpecies*sizeof(long int));
 	for(int s=0;s<nSpecies;s++){
@@ -126,6 +127,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	//msg(ERROR,"%d, %d, %d, %d, %d, %d,%d, %d, ",bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 	//printf("in pop rank = %i, %d, %d, %d, %d, %d, %d,%d, %d \n",mpiRank,bnd[0], bnd[1],bnd[2],bnd[3],bnd[4],bnd[5],bnd[6],bnd[7]);
 
+	//printf("Acctually allocating %li particles total, (half is %li)\n",iStart[nSpecies],iStart[nSpecies]/2 );
 	Population *pop = malloc(sizeof(Population));
 	pop->pos = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
 	pop->vel = malloc((long int)nDims*iStart[nSpecies]*sizeof(double));
@@ -143,6 +145,7 @@ Population *pAlloc(const dictionary *ini,const MpiInfo *mpiInfo){
 	pop->potEnergy = malloc((nSpecies+1)*sizeof(double));
 	pop->charge = iniGetDoubleArr(ini,"population:charge",nSpecies);
 	pop->mass = iniGetDoubleArr(ini,"population:mass",nSpecies);
+	//printf("pop->mass = %f \n",pop->mass[1] );
 	pop->bnd = bnd;
 
 	free(nAlloc);
@@ -439,7 +442,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nDims = pop->nDims;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	long int index = 0;
+
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -453,8 +456,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
-				index = (s*nDims)+d;
-				vel[d] = velDrift[index] + gsl_ran_gaussian_ziggurat(rng,velTh);
+				vel[d] = gsl_ran_gaussian_ziggurat(rng,velTh); //velDrift[index] +
 			}
 		}
 	}
@@ -618,220 +620,512 @@ void pPurgeGhost(Population *pop, const Grid *grid){
 // 	return;
 // }
 
-void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+// void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+//
+// 	int nSpecies = pop->nSpecies;
+// 	int nDims = pop->nDims;
+// 	bndType *bnd = pop->bnd;
+// 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+// 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
+// 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+// 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+// 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+// 	//double timeStep = iniGetDouble(ini, "time:timeStep");
+// 	int *L = gGetGlobalSize(ini);
+// 	int rank = nDims+1;
+//
+// 	// Read from mpiInfo
+// 	int *subdomain = mpiInfo->subdomain;
+// 	double *posToSubdomain = mpiInfo->posToSubdomain;
+//
+// 	long int index = 0;
+// 	double pos[nDims];
+// 	double vel[nDims];
+// 	// int edge[nDims];
+//
+// 	pToGlobalFrame(pop,mpiInfo);
+//
+// 	for(int s=0;s<nSpecies;s++){
+//
+// 		long int iStart = pop->iStart[s];
+// 		long int iStop = pop->iStop[s];
+//
+// 		double velTh = velThermal[s];
+//
+// 		for (int d=0;d<nDims;d++){
+// 			index = (s*nDims)+d;
+//
+// 			//compute edge
+// 			// for (int dd=0;dd<nDims;dd++){
+// 			// 	if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
+// 			// 	else edge[dd] = 1;
+// 			// }
+//
+//
+// 			long int globalSizeProd = ((L[0])*(L[1])*(L[2])); //TODO: make nDimensional
+// 			// = ((L[0]+nGhostLayers[0]+nGhostLayers[3])*(L[1]+nGhostLayers[1]+nGhostLayers[4])*(L[2]+nGhostLayers[2]+nGhostLayers[5]));
+// 			//printf("nParticles[s] = %li\n",nParticles[s]/globalSizeProd );
+// 			//msg(STATUS,"nGhostLayers[0] = %i",nGhostLayers[0]);
+// 			long int sliceSize = (globalSizeProd/(L[d])); //-nGhostLayers[d]-nGhostLayers[d+nDims]
+// 			long int newParticles = (sliceSize)*( (nParticles[s])/globalSizeProd ); // slice * particles per cell
+// 			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
+// 			//for(long int i=iStart;i<iStop;i++){
+// 			//for(long int i=0;i<newParticles;i++){
+//
+// 				//Lower ghost slice
+// 			if(bnd[d+1]==DIRICHLET || bnd[d+1]==NEUMANN){
+// 				for(long int i=0;i<newParticles;i++){
+// 					//generate velocity for particle
+// 					for(int d=0;d<nDims;d++){
+// 						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+// 					}
+//
+// 					// Generate position for particle
+// 					for(int dd=0;dd<nDims;dd++){
+// 						pos[dd] = (L[dd])*gsl_rng_uniform_pos(rng)-nGhostLayers[d]*0.5;
+// 					}
+// 					pos[d] = nGhostLayers[d]*(gsl_rng_uniform_pos(rng))-nGhostLayers[d]; //in lower ghost
+// 					//printf("nGhostLayers[d+1] = %i\n",nGhostLayers[d]);
+// 					int correctRange = 0;
+// 					for(int dd=0;dd<nDims;dd++){
+// 						//printf("posToSubdomain[dd] = %f, dd = %i \n",posToSubdomain[dd],dd);
+// 						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
+// 					}
+// 					// Add only if particle resides in this sub-domain.
+// 					if(correctRange==nDims){
+// 						if((mpiInfo->mpiRank)==4){
+// 							//printf("adding to pos: %f,%f,%f \n",pos[0],pos[1],pos[2]);
+// 						}
+// 						pNew(pop,s,pos,vel);
+// 					}
+// 				}
+// 			}
+//
+// 				//Upper ghost slice
+// 			if(bnd[d+rank+1]==DIRICHLET || bnd[d+rank+1]==NEUMANN){
+// 				for(long int i=0;i<newParticles;i++){
+// 					//generate velocity for particle
+//
+// 					for(int d=0;d<nDims;d++){
+// 						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+// 					}
+//
+// 					// Generate position for particle
+// 					for(int dd=0;dd<nDims;dd++){
+// 						pos[dd] = (L[dd])*gsl_rng_uniform_pos(rng)-nGhostLayers[d]*0.5;
+//
+// 					}
+// 					pos[d] = L[d]+nGhostLayers[d]*(gsl_rng_uniform_pos(rng))-nGhostLayers[d]; //in lower ghost
+//
+// 					int correctRange = 0;
+// 					for(int dd=0;dd<nDims;dd++)
+// 						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd])));
+//
+// 					// Add only if particle resides in this sub-domain.
+// 					if(correctRange==nDims){
+// 						pNew(pop,s,pos,vel);
+//
+// 					}
+// 				}
+//
+//
+//
+// 			}
+// 		}
+// 	}
+// 	pToLocalFrame(pop,mpiInfo);
+//
+// 	free(velDrift);
+// 	free(velThermal);
+// 	free(trueSize);
+// 	free(nParticles);
+// 	free(nGhostLayers);
+// 	free(L);
+//
+// 	return;
+// }
+
+
+void pIndexToPos3D(Grid *grid,long int index,long int *pos){
+
+	long int *sizeProd = grid->sizeProd;
+	long int i,j,k;
+	long int p = index;///sizeProd[1];
+
+	k= (int)(p/sizeProd[3]);
+	j = (int)( (p-k*sizeProd[3])/(sizeProd[2]) );
+	i = (int)(p-j*sizeProd[2]-k*sizeProd[3])/sizeProd[1];
+	//printf("pos = %li,%li,%li \n",i,j,k);
+	pos[0]= i;
+	pos[1]= j;
+	pos[2]= k;
+
+}
+
+void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 	bndType *bnd = pop->bnd;
-	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
+	long int *sizeProd = rho->sizeProd;
+	int *size = rho->size;
+	int *trueSize = rho->trueSize;//iniGetIntArr(ini,"grid:trueSize",nDims);
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	//int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
 	int rank = nDims+1;
 
 	// Read from mpiInfo
-	int *subdomain = mpiInfo->subdomain;
-	double *posToSubdomain = mpiInfo->posToSubdomain;
+	// int *subdomain = mpiInfo->subdomain;
+	// double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
 	// int edge[nDims];
 
-	pToGlobalFrame(pop,mpiInfo);
+	//pToGlobalFrame(pop,mpiInfo);
+
+	// we need  way to make shure that overlapping cells (between nodes, and
+	// edges etc), does not get filled twice, the easiest way to do this is
+	// with a lookup table, albiet at the expence of memory consumption. We
+	// could do it with logic also, but the logic gets wery complicated to
+	// account for all posibilities.
+
+
+	// This must be moved to an "alloc" function, and stored in a struct
+	bool *lookupFilled = malloc(sizeProd[rank]*sizeof(*lookupFilled));
+
 
 	for(int s=0;s<nSpecies;s++){
+		for(int q = 0;q<sizeProd[rank];q++){
+			lookupFilled[q] = false;
+		}
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		// long int iStart = pop->iStart[s];
+		// long int iStop = pop->iStop[s];
 
-		double velTh = velThermal[s];
+		//double velTh = velThermal[s];
 
-		for (int d=0;d<nDims;d++){
-			index = (s*nDims)+d;
+		for (long int gIndex=0;gIndex<sizeProd[rank];gIndex++){
+			bool outerGhost[nDims];
+			for (int k = 0;k<nDims;k++){
+				outerGhost[k] = false;
+			}
+			long int gPos[nDims];
+			pIndexToPos3D(rho,gIndex,gPos);
+			bool fillNode = false;
+			bool periodic = false;
+			for (int k = 0;k<nDims;k++){
+				//printf("trueSize[k] = %li\n",trueSize[k+1] );
+				if(gPos[k] < 1 || gPos[k] > trueSize[k+1]){
+					fillNode = true;
 
-			//compute edge
-			// for (int dd=0;dd<nDims;dd++){
-			// 	if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
-			// 	else edge[dd] = 1;
-			// }
-
-			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
-
-			long int sliceSize = (globalSizeProd/(L[d]));
-			long int newParticles = ( (sliceSize*nParticles[s])/globalSizeProd ); // slice * particles per cell
-			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
-			//for(long int i=iStart;i<iStop;i++){
-			//for(long int i=0;i<newParticles;i++){
-
-				//Lower ghost slice
-			if(bnd[d+1]==DIRICHLET || bnd[d+1]==NEUMANN){
-				for(long int i=0;i<newParticles;i++){
-					//generate velocity for particle
-					for(int d=0;d<nDims;d++){
-						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
-					}
-
-					// Generate position for particle
-					for(int dd=0;dd<nDims;dd++){
-						pos[dd] = (L[dd])*gsl_rng_uniform_pos(rng)-nGhostLayers[d]*0.5;
-					}
-					pos[d] = nGhostLayers[d]*(gsl_rng_uniform_pos(rng))-nGhostLayers[d]; //in lower ghost
-					//printf("nGhostLayers[d+1] = %i\n",nGhostLayers[d]);
-					int correctRange = 0;
-					for(int dd=0;dd<nDims;dd++){
-						//printf("posToSubdomain[dd] = %f, dd = %i \n",posToSubdomain[dd],dd);
-						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
-					}
-					// Add only if particle resides in this sub-domain.
-					if(correctRange==nDims){
-						if((mpiInfo->mpiRank)==4){
-							//printf("adding to pos: %f,%f,%f \n",pos[0],pos[1],pos[2]);
+				}
+			}
+			if(fillNode){
+				for (int k = 0;k<nDims;k++){
+					if(gPos[k]<1){
+						outerGhost[k] = true;
+						if(bnd[k+1]==PERIODIC){
+							outerGhost[k] = false;
+							periodic = true;
 						}
-						pNew(pop,s,pos,vel);
 					}
-				}
-			}
-
-				//Upper ghost slice
-			if(bnd[d+rank+1]==DIRICHLET || bnd[d+rank+1]==NEUMANN){
-				for(long int i=0;i<newParticles;i++){
-					//generate velocity for particle
-
-					for(int d=0;d<nDims;d++){
-						vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
-					}
-
-					// Generate position for particle
-					for(int dd=0;dd<nDims;dd++){
-						pos[dd] = (L[dd])*gsl_rng_uniform_pos(rng)-nGhostLayers[d]*0.5;
-
-					}
-					pos[d] = L[d]+nGhostLayers[d]*(gsl_rng_uniform_pos(rng))-nGhostLayers[d]; //in lower ghost
-
-					int correctRange = 0;
-					for(int dd=0;dd<nDims;dd++)
-						correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*(pos[dd])));
-
-					// Add only if particle resides in this sub-domain.
-					if(correctRange==nDims){
-						pNew(pop,s,pos,vel);
-
+					if(gPos[k]>trueSize[k+1]){
+						outerGhost[k] = true;
+						gPos[k] -=1;
+						if(bnd[k+rank+1]==PERIODIC){
+							outerGhost[k] = false;
+							periodic = true;
+						}
 					}
 				}
 
+				int ghostSum = 0;
+				for (int k = 0;k<nDims;k++){
+					ghostSum += outerGhost[k];
+				}
+
+				long int globalSizeProd = ((L[0])*(L[1])*(L[2])); //TODO: make nDimensional
+				long int newParticles = (nParticles[s])/globalSizeProd ; // slice * particles per cell
 
 
+				long int tempindex = 0;
+				for (int k = 0;k<nDims;k++){
+					tempindex += gPos[k]*sizeProd[k+1];
+				}
+
+				if(ghostSum>0 && periodic == false && lookupFilled[tempindex] == false){
+					lookupFilled[tempindex] = true;
+					for(long int i=0;i<newParticles;i++){
+						//generate velocity for particle
+						for(int d=0;d<nDims;d++){
+							vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velThermal[s]); //sqrt(3)*sqrt(pow(gsl_ran_gaussian_ziggurat(rng,velDrift[(s*nDims)+d]),2)) +
+
+						}
+
+
+						// Generate position for particle
+						for(int dd=0;dd<nDims;dd++){
+							pos[dd] = gPos[dd] + gsl_rng_uniform_pos(rng);
+						}
+						bool outOfBounds = false;
+						for(int dd=0; dd<nDims; dd++){ // mostly for debug
+							if(pos[dd]>=size[dd+1]-1 || pos[dd]<=0){
+								msg(WARNING,"generated particle has position \
+								out of bounds in pFillGhost, generating new");
+								outOfBounds = true;
+							}
+
+						}
+						if(outOfBounds){
+							newParticles ++;
+						} else {
+							pNew(pop,s,pos,vel);
+						}
+					}
+				}
 			}
+		//}
 		}
 	}
-	pToLocalFrame(pop,mpiInfo);
+	//pToLocalFrame(pop,mpiInfo);
+	free(lookupFilled);
 
 	free(velDrift);
 	free(velThermal);
-	free(trueSize);
 	free(nParticles);
-	free(nGhostLayers);
 	free(L);
 
 	return;
 }
 
-//Depricated: Not the best way to add a particle flux
-void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+
+
+void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
+	bndType *bnd = pop->bnd;
+	long int *sizeProd = rho->sizeProd;
+	int *trueSize = rho->trueSize;//iniGetIntArr(ini,"grid:trueSize",nDims);
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	//int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
+	int rank = nDims+1;
 
 	// Read from mpiInfo
-	int *subdomain = mpiInfo->subdomain;
-	double *posToSubdomain = mpiInfo->posToSubdomain;
+	//int *subdomain = mpiInfo->subdomain;
+	//double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
-	int edge[nDims];
+	// int edge[nDims];
+
+	//pToGlobalFrame(pop,mpiInfo);
+
+	// we need  way to make shure that overlapping cells (between nodes, and
+	// edges etc), does not get filled twice, the easiest way to do this is
+	// with a lookup table, albiet at the expence of memory consumption. We
+	// could do it with logic also, but the logic gets wery complicated to
+	// account for all posibilities.
+
+
+	// This must be moved to an "alloc" function, and stored in a struct
+	bool *lookupFilled = malloc(sizeProd[rank]*sizeof(*lookupFilled));
+
 
 	for(int s=0;s<nSpecies;s++){
+		for(int q = 0;q<sizeProd[rank];q++){
+			lookupFilled[q] = false;
+		}
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		// long int iStart = pop->iStart[s];
+		// long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
 
-		for (int d=0;d<nDims;d++){
-			index = (s*nDims)+d;
+		for (long int gIndex=0;gIndex<sizeProd[rank];gIndex++){
+			// bool outerGhost[nDims];
+			// for (int k = 0;k<nDims;k++){
+			// 	outerGhost[k] = false;
+			// }
+			long int gPos[nDims];
+			pIndexToPos3D(rho,gIndex,gPos);
+			bool fillNode = false;
+			bool periodic = false;
+			for (int k = 0;k<nDims;k++){
+				//printf("trueSize[k] = %li\n",trueSize[k+1] );
+				if(gPos[k] > 1 || gPos[k] < trueSize[k+1]){
+					fillNode = true;
 
-			//compute edge
-			for (int dd=0;dd<nDims;dd++){
-				if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
-				else edge[dd] = 1;
-			}
-
-
-			// long int globalSizeProd = (( (nGhostLayers[0]+L[0]) )
-			// 	*( (nGhostLayers[1]+L[1]))
-			// 	*( (nGhostLayers[2]+L[2]) )); //TODO: make nDimensional
-			//
-			// long int sliceSize = (globalSizeProd/(nGhostLayers[d]+L[d]));
-
-
-			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
-
-			//printf("L[0]= %i, L[1]= %i, L[2]= %i \n",nGhostLayers[0]+L[0],L[1],L[2]);
-			long int sliceSize = (globalSizeProd/(L[d]));
-			long int newParticles = ( (sliceSize*nParticles[s]/(L[0]*L[1]*L[2]))*(velDrift[index]+(!edge[d])*(velTh)*velDrift[index]));
-				//+(!edge[d])*(1.414*nDims*velDrift[index]*(velTh-velDrift[index]))*(velTh) ) );
-			//need check if veldrift is < 0
-			//printf("%f,%li \n",velDrift[index],sliceSize);
-			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
-			//for(long int i=iStart;i<iStop;i++){
-			for(long int i=0;i<newParticles;i++){
-				//double *vel = &pop->vel[i*nDims];
-
-				for(int d=0;d<nDims;d++){
-					//index = (s*nDims)+d;
-					vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
-					//printf("vel[d] = %f, d= %i\n",vel[d],d);
-				}
-
-				// Generate position for particle
-				for(int dd=0;dd<nDims;dd++){
-					pos[dd] = edge[dd]*(L[dd])*gsl_rng_uniform_pos(rng);
-
-					//printf("pos[%i] = %f\n",dd,pos[dd]);
-				}
-				pos[d] = 1+velDrift[index]*(gsl_rng_uniform_pos(rng)); // pos in local frame
-				//printf("pos[%i] = %f\n",d,pos[d]);
-				// Count the number of dimensions where the particle resides in
-				// the range of this node
-				int correctRange = 0;
-				for(int dd=0;dd<nDims;dd++)
-					correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
-
-				// Add only if particle resides in this sub-domain.
-				if(correctRange==nDims){
-					//printf("pos[%i] = %f\n",d,pos[d]);
-					//printf("%f,%li \n",velDrift[index],sliceSize);
-					pNew(pop,s,pos,vel);
 				}
 			}
+			if(fillNode){
+				for (int k = 0;k<nDims;k++){
+					if(gPos[k]<1){
+						//outerGhost[k] = true;
+						if(bnd[k+1]==PERIODIC){
+							//outerGhost[k] = false;
+							periodic = true;
+						}
+					}
+					if(gPos[k]>trueSize[k+1]){
+						//outerGhost[k] = true;
+						//gPos[k] -=1;
+						if(bnd[k+rank+1]==PERIODIC){
+							//outerGhost[k] = false;
+							periodic = true;
+						}
+					}
+				}
+
+				int ghostSum = 1;
+				//for (int k = 0;k<nDims;k++){
+				//	ghostSum += outerGhost[k];
+				//}
+
+				long int globalSizeProd = ((L[0])*(L[1])*(L[2])); //TODO: make nDimensional
+				long int newParticles = (nParticles[s])/globalSizeProd ; // slice * particles per cell
+
+				long int tempindex = 0;
+				for (int k = 0;k<nDims;k++){
+					tempindex += gPos[k]*sizeProd[k+1];
+				}
+
+				if(ghostSum>0 && periodic == false && lookupFilled[tempindex] == false){
+					lookupFilled[tempindex] = true;
+					for(long int i=0;i<newParticles;i++){
+						//generate velocity for particle
+						for(int d=0;d<nDims;d++){
+							vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+						}
+
+						// Generate position for particle
+						for(int dd=0;dd<nDims;dd++){
+							pos[dd] = gPos[dd]+ gsl_rng_uniform_pos(rng);
+						}
+
+						pNew(pop,s,pos,vel);
+
+					}
+				}
+			}
+		//}
 		}
 	}
+	//pToLocalFrame(pop,mpiInfo);
+	free(lookupFilled);
+
 	free(velDrift);
 	free(velThermal);
+	free(nParticles);
+	free(L);
 
 	return;
 }
+
+//
+// //Depricated: Not the best way to add a particle flux
+// void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+//
+// 	int nSpecies = pop->nSpecies;
+// 	int nDims = pop->nDims;
+// 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
+// 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+// 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+// 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+// 	//double timeStep = iniGetDouble(ini, "time:timeStep");
+// 	int *L = gGetGlobalSize(ini);
+//
+// 	// Read from mpiInfo
+// 	int *subdomain = mpiInfo->subdomain;
+// 	double *posToSubdomain = mpiInfo->posToSubdomain;
+//
+// 	long int index = 0;
+// 	double pos[nDims];
+// 	double vel[nDims];
+// 	int edge[nDims];
+//
+// 	for(int s=0;s<nSpecies;s++){
+//
+// 		long int iStart = pop->iStart[s];
+// 		long int iStop = pop->iStop[s];
+//
+// 		double velTh = velThermal[s];
+//
+// 		for (int d=0;d<nDims;d++){
+// 			index = (s*nDims)+d;
+//
+// 			//compute edge
+// 			for (int dd=0;dd<nDims;dd++){
+// 				if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
+// 				else edge[dd] = 1;
+// 			}
+//
+//
+// 			// long int globalSizeProd = (( (nGhostLayers[0]+L[0]) )
+// 			// 	*( (nGhostLayers[1]+L[1]))
+// 			// 	*( (nGhostLayers[2]+L[2]) )); //TODO: make nDimensional
+// 			//
+// 			// long int sliceSize = (globalSizeProd/(nGhostLayers[d]+L[d]));
+//
+//
+// 			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
+//
+// 			//printf("L[0]= %i, L[1]= %i, L[2]= %i \n",nGhostLayers[0]+L[0],L[1],L[2]);
+// 			long int sliceSize = (globalSizeProd/(L[d]));
+// 			long int newParticles = ( (sliceSize*nParticles[s]/(L[0]*L[1]*L[2]))*(velDrift[index]+(!edge[d])*(velTh)*velDrift[index]));
+// 				//+(!edge[d])*(1.414*nDims*velDrift[index]*(velTh-velDrift[index]))*(velTh) ) );
+// 			//need check if veldrift is < 0
+// 			//printf("%f,%li \n",velDrift[index],sliceSize);
+// 			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
+// 			//for(long int i=iStart;i<iStop;i++){
+// 			for(long int i=0;i<newParticles;i++){
+// 				//double *vel = &pop->vel[i*nDims];
+//
+// 				for(int d=0;d<nDims;d++){
+// 					//index = (s*nDims)+d;
+// 					vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+// 					//printf("vel[d] = %f, d= %i\n",vel[d],d);
+// 				}
+//
+// 				// Generate position for particle
+// 				for(int dd=0;dd<nDims;dd++){
+// 					pos[dd] = edge[dd]*(L[dd])*gsl_rng_uniform_pos(rng);
+//
+// 					//printf("pos[%i] = %f\n",dd,pos[dd]);
+// 				}
+// 				pos[d] = 1+velDrift[index]*(gsl_rng_uniform_pos(rng)); // pos in local frame
+// 				//printf("pos[%i] = %f\n",d,pos[d]);
+// 				// Count the number of dimensions where the particle resides in
+// 				// the range of this node
+// 				int correctRange = 0;
+// 				for(int dd=0;dd<nDims;dd++)
+// 					correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
+//
+// 				// Add only if particle resides in this sub-domain.
+// 				if(correctRange==nDims){
+// 					//printf("pos[%i] = %f\n",d,pos[d]);
+// 					//printf("%f,%li \n",velDrift[index],sliceSize);
+// 					pNew(pop,s,pos,vel);
+// 				}
+// 			}
+// 		}
+// 	}
+// 	free(velDrift);
+// 	free(velThermal);
+//
+// 	return;
+// }
 
 void pVelSet(Population *pop, const double *vel){
 
@@ -949,7 +1243,7 @@ void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisi
 
 
 
-	return collisionType;
+	//return collisionType;
 }
 
 void pBackscatter(Population *pop){

@@ -49,6 +49,21 @@ void pFree(Population *pop);
  */
 void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo, const gsl_rng *rngSync);
 
+/**
+ * @brief	Assign particles uniformly distributed positions
+ * @param			ini		Dictionary to input file
+ * @param[in,out]	pop		Population of particles
+ * @param			grid	Grid in which the particles are to be distributed
+ * @param			rngSync	Synchronized random number generator
+ * @return			void
+ *
+ * Same as pPosUniform, except particles are uniformly distributed inside a cell
+ * instead of the whole domain.
+ * Each cell thus contains the same number of particles, and density perturbations
+ * are on the same scale as the cell length.
+ */
+void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+
 void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
 
 /**
@@ -112,8 +127,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  */
 void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
 void pPurgeGhost(Population *pop, const Grid *grid);
-void pFillGhost(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
-
+void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
 
 /**
  * @brief	Add new particle to population

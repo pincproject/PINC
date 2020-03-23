@@ -46,9 +46,8 @@ void sFree(SpectralSolver *solver);
  * @param solver  SpectralSolver
  * @param rho     Charge density (source)
  * @param phi     Electric potential (unknown)
- * @param mpiInfo MpiInfo
  */
-void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi, const MpiInfo *mpiInfo);
+void sSolve(const SpectralSolver *solver, Grid *rho, Grid *phi);
 
 funPtr sSolver_set(dictionary *ini);
 
