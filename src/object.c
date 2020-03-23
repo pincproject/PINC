@@ -354,6 +354,9 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
 	double *deltaPhi = obj->deltaPhi;
 	double *rhoCorr = obj->rhoCorr;
 
+  double *bias = obj->bias;
+  int biasOn = obj->biasOn;
+
 
     // Loop over the objects
     for (long int a=0; a<obj->nObjects; a++) {
@@ -394,9 +397,14 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
 		// MPI_Allreduce(MPI_IN_PLACE, &capMatrixSum[a], 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
         // This is phi_c for each object.
-        capMatrixPhiSum = capMatrixPhiSum*capMatrixSum[a];
+        if (biasOn==1){
+          //printf("AKSJDHSKAJDHAK");
+          capMatrixPhiSum = bias[a];
+        } else{
+          capMatrixPhiSum = capMatrixPhiSum*capMatrixSum[a];
+          MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        }
 
-        MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 		//printf("capMatrixSum[a] = %f\n",capMatrixSum[a] );
 		//printf("capMatrixPhiSum = %f\n",capMatrixPhiSum );
         msg(STATUS,"Potential-check for object %ld : %f",a,(units->potential*capMatrixPhiSum));
@@ -666,11 +674,14 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
 
     long int *lookupIntOff = obj->lookupInteriorOffset;
     long int *lookupSurfOff = obj->lookupSurfaceOffset;
+    double *objectCurrent = obj->objectCurrent;
 
     // We might add this to the Object, although probably better  to store the rhoObj for restarts and insulators later on.
     double *chargeCounter = malloc(obj->nObjects*sizeof(*chargeCounter));
+    //double *objectCurrent = malloc(obj->nObjects*(nSpecies)*sizeof(*chargeCounter));
 
     adSetAll(chargeCounter,obj->nObjects,0);//sets charge counter=0 for all objects
+    adSetAll(objectCurrent,nSpecies*obj->nObjects,0);
 
     //long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = obj->capMatrixAllOffsets;//malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
@@ -742,6 +753,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
                 for (long int b=lookupIntOff[a]; b<lookupIntOff[a+1]; b++) {
                     if ((obj->lookupInterior[b])==p) {
                         chargeCounter[a] += charge[s];
+                        objectCurrent[a*nSpecies + s] += charge[s];
 						//printf("adding charge = %f\n",charge[s] );
                         //msg(STATUS,"p, pIndex: %li,%li, %li",p,(pIndex-iStart*nDims),(iStop-iStart));
                         //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
@@ -760,11 +772,18 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj, const MpiI
     }
 
     MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    //printf("cutNumber = %i \n",cutNumber);
+    msg(STATUS,"cutNumber = %i ",cutNumber);
     cutNumber = 0;
 
     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    //MPI_Allreduce(MPI_IN_PLACE, objectCurrent, nSpecies*obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+
+    for (long int a=0; a<obj->nObjects; a++) {
+      for (long int s=0; s<nSpecies; s++) {
+        msg(STATUS,"current for objct %i, and species %i = %f",a,s,objectCurrent[a*nSpecies + s]);
+      }
+    }
 
     //MPI_Allreduce(MPI_IN_PLACE, invNrSurfNod, obj->nObjects, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     // Add the collected charge to the surface nodes on rhoObject.
@@ -1010,12 +1029,25 @@ Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
     //     //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     // }
 
+
+
+  int nSpecies = iniGetInt(ini,"population:nSpecies");
+  double *objectCurrent= malloc(nSpecies*nObjects*sizeof(*objectCurrent));
+  bool biasOn = iniGetInt(ini,"object:biasOn");
+  double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
+
+  adScale(bias, nObjects, 1./units->potential);
+  //printf("bias=%f\n",bias[0] );
+  //exit(0);
+  obj->biasOn = biasOn;
+  obj->bias = bias;
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
 	obj->deltaPhi = deltaPhi;
 	obj->rhoCorr = rhoCorr;
 	obj->invNrSurfNod = invNrSurfNod;
+  obj->objectCurrent= objectCurrent;
 
 
     free(nodCorLoc);
@@ -1037,6 +1069,8 @@ void oFree(Object *obj){
 	free(obj->rhoCorr);
 	free(obj->deltaPhi);
 	free(obj->invNrSurfNod);
+  free(obj->objectCurrent);
+  free(obj->bias);
     free(obj);
 
 }
@@ -1672,6 +1706,8 @@ void oMode(dictionary *ini){
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
+  xyCreateDataset(history,"/current/electrons/dataset");
+  xyCreateDataset(history,"/current/ions/dataset");
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
@@ -1885,6 +1921,8 @@ void oMode(dictionary *ini){
 		// }
 
 		pWriteEnergy(history,pop,(double)n,units);
+    xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
+    xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
 	}
 
 	if(mpiInfo->mpiRank==0) {

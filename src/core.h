@@ -425,6 +425,7 @@ typedef struct{
 	double eField;			///< Electric field
 	double bField;			///< Magnetic flux density
 	double energy;			///< Energy
+  double current;     ///< electric current
 
 } Units;
 /**

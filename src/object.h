@@ -24,6 +24,9 @@ typedef struct{
 	double *deltaPhi;
 	double *rhoCorr;
 	double *invNrSurfNod;
+	double *objectCurrent;		/// Store current to each object per specie
+	double *bias;							/// Fixed bias value for object
+	int biasOn;							/// Turns biasing on or of
 } Object;
 
 

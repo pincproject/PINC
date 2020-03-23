@@ -269,6 +269,7 @@ static void uAddDerivedUnits(Units *units){
 	units->eField        = length*mass/(pow(time,2)*charge);
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
+	units->current			 = charge/time;
 
 	//msg(STATUS, "units->potential = %f",units->potential);
 }

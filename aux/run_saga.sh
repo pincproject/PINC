@@ -37,7 +37,7 @@ echo "compiling"
 make clean
 make
 ## Copy input files to the work directory:
-mkdir $SCRATCH//$SLURM_JOB_ID
+mkdir $SCRATCH/$SLURM_JOB_ID
 cp $SUBMITDIR/pinc $SCRATCH/$SLURM_JOB_ID
 cp $SUBMITDIR/daedalus1.ini $SCRATCH/$SLURM_JOB_ID
 mkdir $SCRATCH/$SLURM_JOB_ID/data
