@@ -51,8 +51,7 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	//msg(STATUS,"PINC completed successfully!"); // Needs MPI
-    msg(STATUS,"All done, now go have a beer!");
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;

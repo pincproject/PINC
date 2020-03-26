@@ -671,7 +671,6 @@ void puDistr3D1(const Population *pop, Grid *rho){
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			val[p] 		+= xcomp*ycomp*zcomp;
 			val[pj]		+= x    *ycomp*zcomp;
 			val[pk]		+= xcomp*y    *zcomp;
@@ -1643,7 +1642,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies,mpiInfo);
 
 	}
-	
+
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
 
 

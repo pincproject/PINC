@@ -1,0 +1,223 @@
+STATUS: PINC 0.1.0-95-g1810-dirty started.
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 0:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 0:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 4:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 4:
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 0:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 4:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+MPI-process 1:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 2:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 2:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 2:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 1:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 1:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 5:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 5:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 5:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 7:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 7:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 7:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 3MPI-process 6:
+:
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+  #000: ../../../src/H5D.c line 296 in H5Dopen2(): unable to open dataset
+    major: Dataset
+    major: Dataset
+    minor: Can't open object
+    minor: Can't open object
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    major: Dataset
+  #001: ../../../src/H5Dint.c line 1463 in H5D__open_name(): not found
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+    major: Dataset
+    major: Symbol table
+    minor: Object not found
+    minor: Object not found
+  #002: ../../../src/H5Gloc.c line 430 in H5G_loc_find(): can't find object
+  #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    major: Symbol table
+    minor: Object not found
+    minor: Callback failed
+  #003: ../../../src/H5Gtraverse.c line 869 in H5G_traverse(): internal path traversal failed
+  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+    major: Symbol table
+    major: Symbol table
+    minor: Object not found
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1)   #004: ../../../src/H5Gtraverse.c line 641 in H5G_traverse_real(): traversal operator failed
+    major: Symbol table
+    minor: Callback failed
+MPI-process 3  #005: ../../../src/H5Gloc.c line 385 in H5G_loc_find_cb(): object 'Object' doesn't exist
+:
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Symbol table
+    major: Invalid arguments to routine
+    minor: Object not found
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 3MPI-process 6:
+:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+  #000: ../../../src/H5Dio.c line 137 in H5Dread(): not a dataset
+    major: Invalid arguments to routine
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.10.0-patch1) MPI-process 6:
+  #000: ../../../src/H5D.c line 334 in H5Dclose(): not a dataset
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+WARNING: Ignoring last element in object:bias
+STATUS: cutNumber = 0 
+STATUS: MG iterations = 18
+STATUS: Computing time-step 1
+STATUS: Nr. of particles s=0 8787997: 
+STATUS: Nr. of particles s=1 8788000: 

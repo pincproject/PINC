@@ -397,7 +397,6 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
 
  	//printf("in gHaloOpDimOpen rank = %i \n",mpiRank);
 
- 	//MPI_Barrier(MPI_COMM_WORLD);
  	//Load
  	int rank = grid->rank;
  	int *size = grid->size;
@@ -435,8 +434,6 @@ void gFinDiff2nd3D(Grid *result, const  Grid *object){
  	// calls to gHaloOpDim(). I'm not quite sure why so this should be
  	// investigated further.
 
-
- 	MPI_Barrier(MPI_COMM_WORLD);
 
  	// Send and recieve upper (tag 1)
  	//printf("exchanging slices");
@@ -1588,7 +1585,6 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 		//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }
@@ -1637,7 +1633,6 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 		//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }

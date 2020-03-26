@@ -252,7 +252,6 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 	//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }
@@ -323,7 +322,6 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 	//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }
@@ -1140,7 +1138,6 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			val[p] 		+= 1.0;//xcomp*ycomp*zcomp;
 			// val[pj]		+= x    *ycomp*zcomp;
 			// val[pk]		+= xcomp*y    *zcomp;
@@ -1235,7 +1232,6 @@ void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *bulkV, Grid *rho)
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			for (int d=0;d<nDims;d++){
 				//printf(" vel[d] = %f, rhoVal[scalarIndex] = %f \n", vel[d], rhoVal[scalarIndex]);
 				double K = vel[d];

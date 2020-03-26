@@ -371,7 +371,6 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj, cons
         long int beginIndex = capMatrixAllOffsets[a*(size+1)+rank];
         long int endIndex = capMatrixAllOffsets[a*(size+1)+rank+1];
 
-        //MPI_Barrier(MPI_COMM_WORLD);
         //double *deltaPhi = malloc(totSNGlob*sizeof(*deltaPhi));
         adSetAll(deltaPhi,totSNGlob,0);
         //double *rhoCorr = malloc(totSNGlob*sizeof(*rhoCorr));
@@ -1301,7 +1300,6 @@ void oReadH5(Object *obj){
 
     // Make sure every core has the complete matrix (needed for BLAS).
     MPI_Allreduce(MPI_IN_PLACE, needCoffeeMatrix, (obj->nObjects*obj->nObjects), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
 
     for (int lll=0; lll<obj->nObjects; lll++) {
         adPrint(&needCoffeeMatrix[lll*obj->nObjects],obj->nObjects);
@@ -1817,11 +1815,10 @@ void oMode(dictionary *ini){
         msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
 		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
 
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
-		MPI_Barrier(MPI_COMM_WORLD);
 
 		tStart(t);
 

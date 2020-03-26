@@ -212,7 +212,7 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 	//12294
 	//printf("p = %li\n",sizeProd[4]);
 	//printf("val[p] = %f\n",val[p]);
-	//MPI_Barrier(MPI_COMM_WORLD);
+
 
 	localDens = val[p];
 	// localDens += 0.125*val[pj];
@@ -1801,7 +1801,7 @@ void mccMode(dictionary *ini){
 	}
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
-	MPI_Barrier(MPI_COMM_WORLD);
+
 
 	/*
 	* FINALIZE PINC VARIABLES
@@ -2137,7 +2137,7 @@ void oCollMode(dictionary *ini){
 		msg(STATUS,"Computing time-step %i",n);
 		//msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
 		//-----------------------------------
@@ -2211,7 +2211,7 @@ void oCollMode(dictionary *ini){
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
 
@@ -2560,7 +2560,7 @@ void neutTest(dictionary *ini){
 	// neInjectParticles((int)(trueSize[0]/2)+1,sliceDim ,multiplyDensBy, ini, neutralPop,
 	// 	rngSync, mpiInfoNeut);
 	//
-	// MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 	// SPH neutrals
 	//neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
@@ -2698,7 +2698,7 @@ void neutTest(dictionary *ini){
 		msg(STATUS,"grid energy = %f",gridEnerg);
 		msg(STATUS,"Vsum = %f",Vsum);
 		msg(STATUS,"rhosum = %f \n",rhosum);
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
         neVelAssertMax(neutralPop,maxVel);
