@@ -1279,12 +1279,17 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 
 	//object variables
 	int nObj = obj->nObjects;
+	long int *emittingNodes = obj->emittingNodes;
+	long int *emittingOff = obj->emittingNodesOffset;
 	long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
 	long int *lookupInt = obj->lookupInterior;
 	long int *lookupIntOff = obj->lookupInteriorOffset;
-	long int nodesThisCore;
-	long int *nodesAllCores = malloc(size * sizeof(*nodesAllCores));
+	long int expNodesThisCore;
+	long int emiNodesThisCore;
+	long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
+	long int *emiNodesAllCores = malloc(size * sizeof(*emiNodesAllCores));
+
 
 	double *flux = malloc(sizeof(obj->radiance));
 	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
@@ -1296,11 +1301,14 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 
 
 	for(int a=0; a<nObj; a++){
-		nodesThisCore = exposedOff[a+1] - exposedOff[a];
-		MPI_Allgather(&nodesThisCore, 1, MPI_LONG, nodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+		expNodesThisCore = exposedOff[a+1] - exposedOff[a];
+		emiNodesThisCore = emittingOff[a+1] - emittingOff[a];
+		MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+		MPI_Allgather(&emiNodesThisCore, 1, MPI_LONG,emiNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
 	}
 
-	long int totExpNodes = alSum(nodesAllCores, size); 
+	long int totExpNodes = alSum(expNodesAllCores, size); 
+	long int totEmiNodes = alSum(emiNodesAllCores, size);
 
 	//specie variables
 	int nSpecie = 0;
@@ -1323,8 +1331,9 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	for(int a=0; a<nObj; a++){
 		//avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
 		//avgEnergy[a] -= workFunc[a]; //COMMENTED OUT FOR DECA'S TESTCASE
-		avgEnergy[a] = 4.807e-19;
-		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
+		//avgEnergy[a] = 4.80653e-19;
+		//avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
+		avgVel[a] = sqrt((34814 * 1.38064852e-23) / 9.10938356e-31);
 		avgVel[a] /= units->velocity;
 		msg(STATUS, "avgVel %f", avgVel[a]);
 	}
@@ -1332,8 +1341,8 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	//scale flux to each core 
 	for(size_t a = 0; a<nObj; a++){
 		flux[a] /= units->weights[nSpecie];
-		flux[a] /= (double)totExpNodes;
-		flux[a] = floor(flux[a]);
+		flux[a] /= (double)totEmiNodes;//(double)totExpNodes;
+		flux[a] = round(flux[a]);
 	}
 
 
@@ -1344,27 +1353,30 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	adSetAll(newPos, pop->nDims, 0.0);
 	adSetAll(vel, pop->nDims, 0.0);
 
-	double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
-	MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	//pToGlobalFrame(pop, mpiInfo);
 	for(int a=0; a < nObj; a++){
 		
 		long int hit = 0; 
-		for(int i = 0; i < nodesThisCore; i++){
-			long int node = exposedNodes[exposedOff[a] + i]; 
-			gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
+		for(long int j=0; j<(long)flux[a]; j++){
+		//for(int i = 0; i < nodesThisCore; i++){
 
-			for(long int j=0; j<(long)flux[a]; j++){
+
+			for(int i = 0; i < emiNodesThisCore; i++){ //for(int i = 0; i < expNodesThisCore; i++){
+			//for(long int j=0; j<(long)flux[a]; j++){
+				//long int node = exposedNodes[exposedOff[a] + i]; 
+				long int node = emittingNodes[emittingOff[a] + i];
+				gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
 				memcpy(newPos, pos, pop->nDims * sizeof(*newPos));
-				vel[0] = avgVel[a] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //
-				//if(j==0) adPrint(vel,3);
-				adRotateRandom3D(vel, rng);
-				//if(i==0) adPrint(vel,3);
-				//int signY = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
-				//int signZ = (gsl_rng_uniform_int(rng,2) == 0) ? -1 : 1;
-				newPos[0] -= vel[0] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[0];
-				newPos[1] += vel[1] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[1];
-				newPos[2] += vel[2] + gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //vel[2];
+				while(vel[0] >= 0.0){
+					vel[0] = gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //
+				}//if(j==0) adPrint(vel,3);
+				//adRotateRandom3D(vel, rng);
+				gsl_ran_bivariate_gaussian(rng, avgVel[a], avgVel[a], 0.0, &vel[1], &vel[2]);
+				//vel[1] = gsl_ran_gaussian_ziggurat(rng,avgVel[a]);
+				//vel[2] = gsl_ran_gaussian_ziggurat(rng,avgVel[a]);
+				newPos[0] -= gsl_rng_uniform_pos(rng);//vel[0];
+				newPos[1] += gsl_rng_uniform_pos(rng);//vel[1];
+				newPos[2] += gsl_rng_uniform_pos(rng);//vel[2];
 
 				pNew(pop, nSpecie, newPos, vel);
 				adSetAll(vel, pop->nDims, 0.0);
@@ -1375,17 +1387,16 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 		}
 
 
-		msg(STATUS, "Number of super particles created in timestep: %f", totPhotoElectrons[a]);
+		//msg(STATUS|ALL, "Number of super particles created in timestep: %li", hit);
 		
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	//pToLocalFrame(pop, mpiInfo);
-	free(nodesAllCores);
+	free(expNodesAllCores);
 	free(flux);
 	free(bandEnergy);
 	free(workFunc);
-	free(totPhotoElectrons);
 	free(pos);
 	free(newPos);
 	free(vel);

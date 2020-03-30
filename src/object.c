@@ -139,7 +139,8 @@ void oFillLookupTables(Object *obj, const MpiInfo *mpiInfo) {
     //obj->nObjects = nObjects;
     obj->lookupInterior = lookupInterior;
     obj->lookupInteriorOffset = lookupInteriorOffset;
-
+    alPrint(lookupInteriorOffset, nObjects+1);
+    alPrint(lookupInterior, lookupInteriorOffset[nObjects]);
     free(index);
 
 
@@ -539,7 +540,8 @@ void oFindObjectSurfaceNodes(Object *obj, const MpiInfo *mpiInfo) {
     }
     //printf("lookup surface done \n");
     // Add to object.
-    //alPrint(lookupSurfaceOffset, obj->nObjects + 1);
+    alPrint(lookupSurfaceOffset, obj->nObjects + 1);
+    alPrint(lookupSurface, lookupSurfaceOffset[obj->nObjects]);
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
 
@@ -805,8 +807,13 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     long int *lookupSurfOff = obj->lookupSurfaceOffset;
     long int *exposedNodes = obj->exposedNodes;
 	long int *exposedOff = obj->exposedNodesOffset;
+    long int *emittingNodes = obj->emittingNodes;
+    long int *emittingOff = obj->emittingNodesOffset;
     long int expNodesThisCore;
+    long int emiNodesThisCore;
     long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
+    long int *emiNodesAllCores = malloc(size * sizeof(*emiNodesAllCores));
+
 
 	double *flux = malloc(sizeof(obj->radiance));
 	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
@@ -819,10 +826,13 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 
     for(int a=0; a<nObj; a++){
 		expNodesThisCore = exposedOff[a+1] - exposedOff[a];
+        emiNodesThisCore = emittingOff[a+1] - emittingOff[a];
         MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+        MPI_Allgather(&emiNodesThisCore, 1, MPI_LONG, emiNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
 	}
 
     long int totExpNodes = alSum(expNodesAllCores, size);
+    long int totEmiNodes = alSum(emiNodesAllCores, size);
 
     for (long int a=0; a<obj->nObjects; a++) {
 
@@ -853,7 +863,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	//scale flux 
 	for(size_t a = 0; a<nObj; a++){
 		flux[a] /= units->weights[nSpecie];
-        flux[a] = floor(flux[a]);
+        flux[a] = round(flux[a]);
 	}
 
     double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
@@ -874,6 +884,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 
     free(bandEnergy);
     free(expNodesAllCores);
+    free(emiNodesAllCores);
     free(invNrSurfNod);
     free(nodCorLoc);
     free(nodCorGlob);
@@ -939,10 +950,16 @@ void oVicinityParticles(Population *pop, Object *obj){
 
 
 //ugly as sin with all the loops, but works
+//finds all exposed nodes, which are used to seed photoelectrons per node
+//It also finds nodes used in filling cells adjacent to the surfaces of the object
+//in exposed sunlight
+
 void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo){
     
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
+    long int *lookUpInt = obj->lookupInterior;
+    long int *lookUpIntOff = obj->lookupInteriorOffset;
     long int *surf = obj->lookupSurface;
     long int *surfOff = obj->lookupSurfaceOffset;
     int *size = obj->domain->size;
@@ -984,9 +1001,8 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
     alSetAll(exposedNodes,exposedNodesOffset[nObjects],0);
 
     long int *index = malloc(nObjects * sizeof(*index));
-        for (long int i=0; i<nObjects; i++) {
+    for (long int i=0; i<nObjects; i++) {
         index[i]=exposedNodesOffset[i];
-
     }
 
     for(long int a = 0; a<nObjects; a++){
@@ -1019,10 +1035,120 @@ void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *
             }
         }
     }
-   
+
+
+    //reset index to find emitting nodes (cell filling method)
+    long int *emittingNodesOffset = malloc((nObjects+1)*sizeof(*emittingNodesOffset));
+    alSetAll(emittingNodesOffset, obj->nObjects+1, 0);
+    
+    msg(STATUS, "filling emittingNodesOffset");
+    for(int a=0; a<nObjects; a++){
+                 
+        for(long int i = surfOff[a]; i<surfOff[a+1]; i++){
+            
+            int nObjNode = 0;
+            int yzPlane = 0;        
+          
+            //neighbouring nodes in -x,+y,+z direction
+            long int p = surf[i];
+            long int pu = p + sizeProd[3];
+            long int plu = p + sizeProd[2] + sizeProd[3];
+            long int pl = p + sizeProd[2]; 
+            long int po = p - sizeProd[1];
+            long int pou = p - sizeProd[1] + sizeProd[3];
+            long int poul = p - sizeProd[1] + sizeProd[3] + sizeProd[2];
+            long int pol = p - sizeProd[1] + sizeProd[2];
+            
+            for(int j=lookUpIntOff[a]; j<lookUpIntOff[a+1]; j++){
+                long int intNode = lookUpInt[j];
+                    if(po==intNode || pou==intNode || poul==intNode || pol==intNode){
+                        nObjNode++;
+                    }
+            }
+            
+            for(int j=surfOff[a]; j<surfOff[a+1]; j++){
+                long int surfNode = surf[j];
+                if(po==surfNode || pou==surfNode || poul==surfNode || pol==surfNode){
+                    nObjNode++;
+                }
+
+                if(p == surfNode || pu == surfNode || plu == surfNode || pl == surfNode){
+                    yzPlane++;
+                }
+            }
+
+
+
+            msg(STATUS, "yzPlane = %i, for surface node %li", yzPlane, p);
+            if(yzPlane==4 && nObjNode<8){
+                emittingNodesOffset[a+1]++;
+                msg(STATUS, "Hit; node for emission: %li", p);
+            }
+
+        msg(STATUS, "surface node %li, nObjNode = %i", p, nObjNode);
+        }
+    }
+
+    alCumSum(emittingNodesOffset+1, emittingNodesOffset, nObjects);
+    long int *emittingNodes = malloc((emittingNodesOffset[nObjects])*sizeof(*emittingNodes));
+    alSetAll(emittingNodes,emittingNodesOffset[nObjects],0);
+    
+    
+    for(long int i=0; i<nObjects; i++){
+        index[i]=emittingNodesOffset[i];
+    }
+
+    for(int a=0; a<nObjects; a++){
+                 
+        for(long int i = surfOff[a]; i<surfOff[a+1]; i++){
+            
+            int nObjNode = 0;
+            int yzPlane = 0;        
+          
+            //left, up, out
+            long int p = surf[i];
+            long int pu = p + sizeProd[3];
+            long int plu = p + sizeProd[2] + sizeProd[3];
+            long int pl = p + sizeProd[2]; 
+            long int po = p - sizeProd[1];
+            long int pou = p - sizeProd[1] + sizeProd[3];
+            long int poul = p - sizeProd[1] + sizeProd[3] + sizeProd[2];
+            long int pol = p - sizeProd[1] + sizeProd[2];
+
+            for(int j=lookUpIntOff[a]; j<lookUpIntOff[a+1]; j++){
+                long int intNode = lookUpInt[j];
+                if(po==intNode || pou==intNode || poul==intNode || pol==intNode){
+                    nObjNode++;
+                }
+            }
+
+            for(int j=surfOff[a]; j<surfOff[a+1]; j++){
+                long int surfNode = surf[j];
+                if(po==surfNode || pou==surfNode || poul==surfNode || pol==surfNode){
+                    nObjNode++;
+                }
+
+                if(p == surfNode || pu == surfNode || plu == surfNode || pl == surfNode){
+                    yzPlane++;
+                }
+            }
+
+            if(yzPlane==4 && nObjNode<8){
+                emittingNodes[index[a]] = p;
+                index[a]++;
+            }
+        }
+    }
+
+    //alPrint(exposedNodesOffset, nObjects);
+    //alPrint(exposedNodes, exposedNodesOffset[nObjects]);
+    alPrint(emittingNodesOffset, nObjects);
+    alPrint(emittingNodes, emittingNodesOffset[nObjects]);
+
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
-    alPrint(exposedNodes, exposedNodesOffset[1]);
+    obj->emittingNodes = emittingNodes;
+    obj->emittingNodesOffset = emittingNodesOffset;
     free(index);
 
 }
@@ -1531,6 +1657,8 @@ void oFree(Object *obj){
     free(obj->lookupSurfaceOffset);
     free(obj->exposedNodes);
     free(obj->exposedNodesOffset);
+    free(obj->emittingNodes);
+    free(obj->emittingNodesOffset);
     free(obj->conductingSurface);
     free(obj->workFunction);
     free(obj->radiance);
@@ -2374,7 +2502,7 @@ void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%6 == 0){//50614
+		if(n%1 == 0){//50614
 		//Write h5 files
 			gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

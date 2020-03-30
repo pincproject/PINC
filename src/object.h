@@ -22,6 +22,8 @@ typedef struct{
   double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
 	long int *exposedNodes; ///< conducting surface nodes of the object exposed to sunlight
   long int *exposedNodesOffset; ///< Offset in the above per object (nObjects+1 elements)
+  long int *emittingNodes; ///< Emitting photoelectron nodes, used in filling adjacent cells (subset of exposed nodes)
+  long int *emittingNodesOffset; ///< Offset in the above per object (nObject+1 elements)
   double *conductingSurface; ///< the total area of conducting surface of each object exposed to the sun
   double *workFunction; ///< work function of the material of each object
   double *radiance; ///< Solar radiance in Photons/timestep
