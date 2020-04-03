@@ -632,7 +632,7 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 		velchange = sqrt( (2.0*(newEkin))/(mass[0] ));
 	}
 
-	anglePhi = 2*PI*R3;
+	anglePhi = 2*PINC_PI*R3;
 	if(vx>0.0){
 		if(vx<0.0000000000000001){vx=0.0000000000000001;}
 		if(vx>0.99999999999999){vx=0.99999999999999;}
@@ -718,7 +718,7 @@ static void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	angleChi =  acos(sqrt(1-R1)); //labframe goes from 0 to pi/2
 	newEkin = Ekin*(cos(angleChi)*cos(angleChi));
 	velchange = sqrt( (2.0*newEkin)/mass[1] );
-	anglePhi = 2*PI*R2;
+	anglePhi = 2*PINC_PI*R2;
 
 	if(vx>0.0){ // debugging, should not be necessary
 		if(vx<0.0000000000000001){vx=0.0000000000000001;}
@@ -1482,7 +1482,7 @@ void mccCollissionsOff(){
 funPtr mccCollissionsOff_set(dictionary *ini){
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
-	collissions = &collissionsOff;
+	collissions = &mccCollissionsOff;
 
 	return collissions;
 }
@@ -1495,7 +1495,6 @@ funPtr mccCollissionsOff_set(dictionary *ini){
 
 // runs used in development.
 
-}
 
 static void mccMode(dictionary *ini){
 
@@ -1839,7 +1838,7 @@ funPtr mccMode_set(dictionary *ini){
 	mccSanity(ini,"mccMode",2);
 	return mccMode;
 
-
+}
 
 
 
@@ -1905,7 +1904,7 @@ static void oCollMode(dictionary *ini){
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 	MccVars *mccVars=mccAlloc(ini,units);
 
-    Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
+    PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -2474,7 +2473,7 @@ static void neutTest(dictionary *ini){
 	gZero(Itilde);
    	gZero(Vtilde);
 
-	Object *obj = oAlloc(ini,mpiInfoNeut,units);              // for capMatrix - objects
+	PincObject *obj =objoAlloc(ini,mpiInfoNeut,units);              // for capMatrix - objects
 
 
     // for SPH neutrals

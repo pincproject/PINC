@@ -161,9 +161,9 @@ void neConvectI(Grid *IE,Grid *Itilde,Grid *dKE,Grid *rhoNeutral,NeutralPopulati
 // Object functions
 //#############################
 
-void neApplyObjI(Object *obj, Grid *IE);
-void neApplyObjVel(Object *obj, Grid *V);
-void neObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj, const MpiInfo *mpiInfo);
-void nuObjectSetVal(Grid *rho,double constant, Object *obj);
-void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj);
+void neApplyObjI(PincObject *obj, Grid *IE);
+void neApplyObjVel(PincObject *obj, Grid *V);
+void neObjectCollide(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj, const MpiInfo *mpiInfo);
+void nuObjectSetVal(Grid *rho,double constant, PincObject *obj);
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj);
 #endif // POPULATION_H

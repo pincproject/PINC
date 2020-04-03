@@ -28,7 +28,7 @@ static void print_gsl_mat(gsl_matrix_view A);
  * @param	obj		Object
  * @return	void
  */
-static void oFillLookupTables(PincObject *objobj);
+static void oFillLookupTables(PincObject *obj);
 
 /**
  * @brief   Find all the object nodes which are part of the object surface.
@@ -36,7 +36,7 @@ static void oFillLookupTables(PincObject *objobj);
  * @param	ini		input settings
  * @return	void
  */
-static void oFindObjectSurfaceNodes(PincObject *objobj);
+static void oFindObjectSurfaceNodes(PincObject *obj);
 
 
 
@@ -65,22 +65,6 @@ static void print_gsl_mat(const gsl_matrix_view A){
 }
 
 
-//Check whether a certain node is a ghost node.
-static bool oIsGhostNode(Grid *grid, long int node) {
-
-    long int *sizeProd = grid->sizeProd;
-    int *trueSize = grid->trueSize;
-    int *nGhostLayers = grid->nGhostLayers;
-    int rank = grid->rank;
-
-    bool ghost = false;
-
-    oGhost(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&ghost);
-
-  return ghost;
-}
-
-
 //delete this
 static void oGhost(long int node, const int *nGhostLayersBefore,
             const int *nGhostLayersAfter, const int *trueSize,
@@ -99,9 +83,25 @@ static void oGhost(long int node, const int *nGhostLayersBefore,
                nGhostLayersAfter-1,trueSize-1,sizeProd-1,ghost);
     }
 }
+//Check whether a certain node is a ghost node.
+static bool oIsGhostNode(Grid *grid, long int node) {
+
+    long int *sizeProd = grid->sizeProd;
+    int *trueSize = grid->trueSize;
+    int *nGhostLayers = grid->nGhostLayers;
+    int rank = grid->rank;
+
+    bool ghost = false;
+
+    oGhost(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&ghost);
+
+  return ghost;
+}
+
+
 
 // Count the number of objects and fill the lookup tables
-static void oFillLookupTables(PincObject *objobj) {
+static void oFillLookupTables(PincObject *obj) {
 
     //printf("oFillLookupTables \n");
     int nObjects = obj->nObjects;
@@ -146,7 +146,7 @@ static void oFillLookupTables(PincObject *objobj) {
 }
 
 
-static long int oGatherSurfaceNodes(PincObject *objobj, long int *nodCorLoc, \
+static long int oGatherSurfaceNodes(PincObject *obj, long int *nodCorLoc, \
   long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo){
 
 
@@ -180,7 +180,7 @@ static long int oGatherSurfaceNodes(PincObject *objobj, long int *nodCorLoc, \
 
 
 // Compute the capacitance matrix for each object.
-void oComputeCapacitanceMatrix(PincObject *objobj, dictionary *ini, const MpiInfo *mpiInfo) {
+void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *mpiInfo) {
 
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -343,7 +343,7 @@ void oComputeCapacitanceMatrix(PincObject *objobj, dictionary *ini, const MpiInf
 }
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *objobj, const MpiInfo *mpiInfo,Units *units){
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, const MpiInfo *mpiInfo,Units *units){
 
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -441,7 +441,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *objob
 }
 
 //Find all the object nodes which are part of the object surface.
-static void oFindObjectSurfaceNodes(PincObject *objobj) {
+static void oFindObjectSurfaceNodes(PincObject *obj) {
 
     //printf("in oFindObjSurf \n");
     long int *sizeProd = obj->domain->sizeProd;
@@ -557,7 +557,7 @@ static void oFindObjectSurfaceNodes(PincObject *objobj) {
     free(index);
 }
 // //Find all the object nodes which are part of the object surface.
-// void oFindObjectSurfaceNodes(PincObject *objobj, const MpiInfo *mpiInfo) {
+// void oFindObjectSurfaceNodes(PincObject *obj, const MpiInfo *mpiInfo) {
 //
 //     long int *sizeProd = obj->domain->sizeProd;
 //     double *val = obj->domain->val;
@@ -660,7 +660,7 @@ static void oFindObjectSurfaceNodes(PincObject *objobj) {
 
 
 // Collect the charge inside each object.
-static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objobj, const MpiInfo *mpiInfo) {
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const MpiInfo *mpiInfo) {
 
 
     //int rank = mpiInfo->mpiRank;
@@ -810,7 +810,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 
 //
 // //stores index of particles that are close to an object at the current timestep
-// void oVicinityParticles(Population *pop, PincObject *objobj){
+// void oVicinityParticles(Population *pop, PincObject *obj){
 //
 // 	double *val = obj->domain->val;
 // 	int nSpecies = pop->nSpecies;
@@ -856,7 +856,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 
 //Relies on a courant number < 1 (otherwise particle might be inside object)
 //checks which particles in object vicinity will collide => overwrites pop->collisions
-// void oFindParticleCollisions(Population *pop, PincObject *objobj){
+// void oFindParticleCollisions(Population *pop, PincObject *obj){
 //
 //     long int *lookupIntOff = obj->lookupInteriorOffset;
 //     long int *sizeProd = obj->domain->sizeProd;
@@ -895,7 +895,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 // }
 
 //Moves a particle according to the type of collision, also creates and removes new particles
-// void oParticleCollision(Population *pop, PincObject *objobj, long int i){
+// void oParticleCollision(Population *pop, PincObject *obj, long int i){
 //
 //     void (*collisionType)(Population *);
 //
@@ -907,7 +907,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 
 //Finds nearest 3 object surface nodes to a specific particle of index p
 //3 object surface nodes needed to compute normal from cross product of surface vectors
-// double *oFindNearestSurfaceNodes(Population *pop, long int particleId, PincObject *objobj){
+// double *oFindNearestSurfaceNodes(Population *pop, long int particleId, PincObject *obj){
 //
 //     double *pos = NULL;
 //     for(int i=0; i<3; i++){
@@ -919,7 +919,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 //
 // }
 //
-// bool oParticleIntersection(Population *pop, long int particleId, PincObject *objobj){
+// bool oParticleIntersection(Population *pop, long int particleId, PincObject *obj){
 //
 //     //find nearest nodes
 //     double *nearest = oFindNearestSurfaceNodes(pop, particleId, obj);
@@ -955,7 +955,7 @@ static void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objo
 //         intersect[0]=Psi[0], intersect[1]=Psi[1], intersect[1]=Psi[1];
 // }
 
-//void oParticleCollision(Population *pop, PincObject *objobj, long int i){
+//void oParticleCollision(Population *pop, PincObject *obj, long int i){
 
     //msg(WARNING, "Collision types not yet implemented!");
 //}
@@ -972,7 +972,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     //int rank = domain->rank;
     gZero(domain);
 
-    PincObject *objobj = malloc(sizeof(*obj));
+    PincObject *obj = malloc(sizeof(*obj));
     obj->domain = domain;
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
@@ -1056,7 +1056,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     return obj;
 }
 
-void oFree(PincObject *objobj){
+void oFree(PincObject *obj){
 
     gFree(obj->domain);
 
@@ -1076,18 +1076,18 @@ void oFree(PincObject *objobj){
 
 }
 
-void oCloseH5(PincObject *objobj){
+void oCloseH5(PincObject *obj){
 
     gCloseH5(obj->domain);
 }
 
-void oOpenH5(const dictionary *ini, PincObject *objobj, const MpiInfo *mpiInfo,
+void oOpenH5(const dictionary *ini, PincObject *obj, const MpiInfo *mpiInfo,
              const Units *units, double denorm, const char *fName){
 
     gOpenH5(ini, obj->domain,   mpiInfo, units, denorm, fName);
 }
 
-void oReadH5(PincObject *objobj){
+void oReadH5(PincObject *obj){
 
     // Identical to gReadH5()
     hid_t fileSpace = obj->domain->h5FileSpace;
@@ -1137,7 +1137,7 @@ void oReadH5(PincObject *objobj){
  *  DEPRECIATED FUNCTION DEFINITIONS
  *****************************************************************************/
 // Compute the capacitance matrix. (one big matrix containing all objects)
-/* void oComputeCapacitanceMatrix_v1(PincObject *objobj, const dictionary *ini, const MpiInfo *mpiInfo) {
+/* void oComputeCapacitanceMatrix_v1(PincObject *obj, const dictionary *ini, const MpiInfo *mpiInfo) {
 
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -1321,7 +1321,7 @@ void oReadH5(PincObject *objobj){
 } */
 
 //Find all the object nodes which are part of the object surface.
-/* void oFindObjectSurfaceNodes(PincObject *objobj, const MpiInfo *mpiInfo) {
+/* void oFindObjectSurfaceNodes(PincObject *obj, const MpiInfo *mpiInfo) {
 
     long int *sizeProd = obj->domain->sizeProd;
     double *val = obj->domain->val;
@@ -1414,7 +1414,7 @@ void oReadH5(PincObject *objobj){
  */
 //
 // //depreciated...
-// void oFindObjectSurfaceNodes_v1(PincObject *objobj) {
+// void oFindObjectSurfaceNodes_v1(PincObject *obj) {
 //
 //     long int *sizeProd = obj->domain->sizeProd;
 //
@@ -1506,7 +1506,7 @@ void oReadH5(PincObject *objobj){
 // }
 
 // Construct and solve equation 5 in Miyake_Usui_PoP_2009
-/* void oApplyCapacitanceMatrixoApplyCapacitanceMatrix_v1(Grid *rho, const Grid *phi, const PincObject *objobj, const MpiInfo *mpiInfo){
+/* void oApplyCapacitanceMatrixoApplyCapacitanceMatrix_v1(Grid *rho, const Grid *phi, const PincObject *obj, const MpiInfo *mpiInfo){
 
     //int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
@@ -1654,7 +1654,7 @@ static void oMode(dictionary *ini){
 
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
-    PincObject *objobj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
+    PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants

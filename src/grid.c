@@ -2230,7 +2230,7 @@ void gFillSin(Grid *grid,int d, const MpiInfo *mpiInfo, int norm){
 	long int nSlicePoints = sizeProd[rank]/size[d];
 
 	//f = sin(x*2pi/L)
-	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+	double coeff = 2*PINC_PI/((trueSize[d])*nSubdomains[d-1]);
 	double coeffNorm;
 
 	//If it should be normalized to give E or phi correct
@@ -2277,7 +2277,7 @@ void gFillSinSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	long int nSlicePoints = sizeProd[rank]/size[d];
 
 	//f = sin(x/2piL)
-	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+	double coeff = 2*PINC_PI/((trueSize[d])*nSubdomains[d-1]);
 
 	int J = subdomain[d-1]*trueSize[d];
 
@@ -2315,7 +2315,7 @@ void gFillSinESol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	long int nSlicePoints = sizeProd[rank]/size[d];
 
 	//f = cos(x/2piL)
-	double coeff = 2*PI/((trueSize[d])*nSubdomains[d-1]);
+	double coeff = 2*PINC_PI/((trueSize[d])*nSubdomains[d-1]);
 
 	int J = subdomain[d-1]*trueSize[d];
 

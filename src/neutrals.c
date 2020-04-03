@@ -2834,7 +2834,7 @@ void neIndexToPos3D(Grid *grid,long int index,long int *pos){
 }
 
 
-void neApplyObjVel(Object *obj, Grid *V){
+void neApplyObjVel(PincObject *obj, Grid *V){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = V->val;
@@ -2954,7 +2954,7 @@ void neApplyObjVel(Object *obj, Grid *V){
 	//exit(0);
 }
 
-void neApplyObjI(Object *obj, Grid *IE){
+void neApplyObjI(PincObject *obj, Grid *IE){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = IE->val;
@@ -3076,7 +3076,7 @@ void neApplyObjI(Object *obj, Grid *IE){
 }
 
 
-void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3153,7 +3153,7 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 }
 
 
-void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
+void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3249,7 +3249,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 }
 
 
-void nuObjectSetVal(Grid *rho,double constant, Object *obj) {
+void nuObjectSetVal(Grid *rho,double constant, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;

@@ -1237,34 +1237,34 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *)){
-
-	msg(WARNING, "Function to determine collision type not yet implemented!");
-
-
-
-	//return collisionType;
-}
-
-void pBackscatter(Population *pop){
-
-	msg(WARNING, "backscatter function not yet implemented!");
-}
-
-void pSecondaryElectron(Population *pop){
-
-	msg(WARNING, "backscatter function not yet implemented!");
-}
-
-void pReflect(Population *pop){
-
-	msg(WARNING, "backscatter function not yet implemented!");
-}
-
-void pAdhere(Population *pop){
-
-	msg(WARNING, "Adhesion function not yet implemented!");
-}
+// void pFindCollisionType(Population *pop, Object *obj, long int n, void (*collisionType)(Population *)){
+//
+// 	msg(WARNING, "Function to determine collision type not yet implemented!");
+//
+//
+//
+// 	//return collisionType;
+// }
+//
+// void pBackscatter(Population *pop){
+//
+// 	msg(WARNING, "backscatter function not yet implemented!");
+// }
+//
+// void pSecondaryElectron(Population *pop){
+//
+// 	msg(WARNING, "backscatter function not yet implemented!");
+// }
+//
+// void pReflect(Population *pop){
+//
+// 	msg(WARNING, "backscatter function not yet implemented!");
+// }
+//
+// void pAdhere(Population *pop){
+//
+// 	msg(WARNING, "Adhesion function not yet implemented!");
+// }
 
 void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	   			const char *fName){
