@@ -1652,7 +1652,6 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
     exchangeNMigrants(mpiInfo);
-    //MPI_Barrier(MPI_COMM_WORLD); //debug
     exchangeMigrants(pop,mpiInfo,grid);
 
 }

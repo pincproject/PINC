@@ -205,7 +205,6 @@ void regular(dictionary *ini){
 		msg(STATUS,"Computing time-step %i",n);
         msg(STATUS, "Nr. of particles %i: ",(pop->iStop[0]- pop->iStart[0]));
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
@@ -510,7 +509,6 @@ void BorisTestMode(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS,"Computing time-step %i ",n);
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);

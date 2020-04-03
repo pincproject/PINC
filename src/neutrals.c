@@ -1,23 +1,19 @@
 /**
-* @file		population.c
-* @brief		Particle handling.
-* @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+* @file		neutrals.c
+* @brief		PIC simulation for neutrals.
+* @author		Steffen Brask <steffen.brask@fys.uio.no>
 *
-* Functions for handling particles: initialization and finalization of
-* particle structs, reading and writing of data and so on.
+* TBD
 */
 
-#define _XOPEN_SOURCE 700
-
-
-#include <math.h>
-#include <mpi.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <hdf5.h>
+//#include <math.h>
+//#include <mpi.h>
+//#include <gsl/gsl_rng.h>
+//#include <gsl/gsl_randist.h>
+//#include <hdf5.h>
 #include "core.h"
-#include "iniparser.h"
-#include "pusher.h"
+//#include "iniparser.h"
+//#include "pusher.h"
 #include "neutrals.h"
 
 

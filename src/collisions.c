@@ -161,7 +161,7 @@ static void mccNormalize(dictionary *ini,const Units *units){
 *	Search functions, can probably use other Functions
 ************************************************/
 
-double mccGetMaxDens(Grid *density){
+static double mccGetMaxDens(Grid *density){
 	long int *sizeProd = density->sizeProd;
 	int rank = density->rank;
 	double *val = density->val;
@@ -174,7 +174,7 @@ double mccGetMaxDens(Grid *density){
 	return newval;
 }
 
-double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
+static double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 
 	long int *sizeProd = rhoNeutral->sizeProd;
 	double *val = rhoNeutral->val;
@@ -240,7 +240,7 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 
 
 
-double mccGetMaxVel(const Population *pop, int species){
+static double mccGetMaxVel(const Population *pop, int species){
 
 	// iterate over pop and keep max velocity
 	double *vel = pop->vel;
@@ -260,7 +260,7 @@ double mccGetMaxVel(const Population *pop, int species){
 	return MaxVelocity;
 }
 
-double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal){
+static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal){
 
 	// iterate over pop and keep max velocity, uses
 	double *vel = pop->vel;
@@ -286,7 +286,7 @@ double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, d
 }
 
 
-double mccGetMinVel(const Population *pop, int species){
+static double mccGetMinVel(const Population *pop, int species){
 
 	// iterate over pop and keep min velocity
 	double *vel = pop->vel;
@@ -311,31 +311,31 @@ double mccGetMinVel(const Population *pop, int species){
 *		Inline functions
 ************************************************/
 
-inline double mccSigmaCEXFunctional(double a,double b,double v){
+static inline double mccSigmaCEXFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	//msg(STATUS,"in mccSigmaCexF a=%f, b=%f, v = %f",a,b,v );
 	return sigma;//2*0.00121875*pow(10,8);//0.5*pow(10,-1);//temp;
 }
-inline double mccSigmaIonElasticFunctional(double a,double b,double v){
+static inline double mccSigmaIonElasticFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	return sigma;
 }
-inline double mccSigmaElectronElasticFunctional(double a,double b,double v){
+static inline double mccSigmaElectronElasticFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	return sigma;
 }
 
-inline double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, double nt){
+static inline double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, double nt){
 	// collision freq given a static (double) cross section
 	// this means nu \propto v
 	double v = sqrt(vx*vx + vy*vy + vz*vz);
 	double MyFreq = v*sigma_T*nt; //multiplied by constant sigma
 	return MyFreq;
 }
-inline double mccGetMyCollFreqFunctional(double (*sigma)(double, double,double),
+static inline double mccGetMyCollFreqFunctional(double (*sigma)(double, double,double),
 						double vx,double vy,double vz,double nt,
 						double a,double b){
 
@@ -429,7 +429,7 @@ void mccFreeVars(MccVars *mccVars){
 *		Max collision probability Functions
 ************************************************/
 
-void mccGetPmaxElectronConstantFrq(const dictionary *ini,
+static void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	MccVars *mccVars,Population *pop,MpiInfo *mpiInfo){
 	//
 	double collFrqElectronElastic = mccVars->collFrqElectronElastic;
@@ -444,7 +444,7 @@ void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
+static void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	Population *pop,MpiInfo *mpiInfo){
 	//
 	double collFrqIonElastic = mccVars->collFrqIonElastic;
@@ -458,7 +458,7 @@ void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	}
 }
 
-void mccGetPmaxIonFunctional(const dictionary *ini,
+static void mccGetPmaxIonFunctional(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo){
 	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
@@ -497,7 +497,7 @@ void mccGetPmaxIonFunctional(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxElectronFunctional(const dictionary *ini,
+static void mccGetPmaxElectronFunctional(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo){
 
@@ -529,7 +529,7 @@ void mccGetPmaxElectronFunctional(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral,
+static void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral,
 	Population *pop, MpiInfo *mpiInfo,const gsl_rng *rng){
 
 	// Faster static version. uses static cross sections
@@ -551,7 +551,7 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral
 	}
 }
 
-void mccGetPmaxElectronStatic(const dictionary *ini,
+static void mccGetPmaxElectronStatic(const dictionary *ini,
 	MccVars *mccVars,Grid *rhoNeutral, Population *pop, MpiInfo *mpiInfo){
 
 	// Faster static version. uses static cross sections
@@ -574,7 +574,7 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
 *		Collision Functions
 ************************************************/
 
-void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
+static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	const gsl_rng *rng, MccVars *mccVars, Population *pop){
 
 	double artificialLoss = mccVars->artificialLoss;
@@ -672,7 +672,7 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 }
 
-void scatterIon(double *vx_point, double *vy_point,double *vz_point,
+static void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vxMW, double vyMW, double vzMW,
 	const gsl_rng *rng, Population *pop){
 
@@ -1422,7 +1422,7 @@ void mccCollideConstantCrossect(const dictionary *ini,Grid *rhoNeutral, Populati
 	mccCollideElectronStatic(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 }
 
-funPtr constCrossect_set(dictionary *ini){
+funPtr mccConstCrossect_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
@@ -1444,7 +1444,7 @@ void mccCollideConstantFreq(const dictionary *ini,Grid *rhoNeutral, Population *
 	mccCollideElectronConstantFrq(ini,rhoNeutral, pop,mccVars, rng,mpiInfo);
 }
 
-funPtr constFreq_set(dictionary *ini){
+funPtr mccConstFreq_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
@@ -1464,7 +1464,7 @@ void mccCollideFunctional(const dictionary *ini,Grid *rhoNeutral, Population *po
 	mccCollideElectronFunctional(ini,rhoNeutral, pop,mccVars, rng,mpiInfo);
 }
 
-funPtr functionalCrossect_set(dictionary *ini){
+funPtr mccFunctionalCrossect_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
@@ -1474,12 +1474,12 @@ funPtr functionalCrossect_set(dictionary *ini){
 	return collissions;
 }
 
-void collissionsOff(){
+void mccCollissionsOff(){
 	//does nothing to turn off all collisions.
 	NULL;
 }
 
-funPtr collissionsOff_set(dictionary *ini){
+funPtr mccCollissionsOff_set(dictionary *ini){
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
 	collissions = &collissionsOff;
@@ -1495,13 +1495,9 @@ funPtr collissionsOff_set(dictionary *ini){
 
 // runs used in development.
 
-funPtr mccMode_set(dictionary *ini){
-	//test sanity here!
-	mccSanity(ini,"mccMode",2);
-	return mccMode;
 }
 
-void mccMode(dictionary *ini){
+static void mccMode(dictionary *ini){
 
 	msg(STATUS, "start mcc Test Mode");
 
@@ -1532,10 +1528,10 @@ void mccMode(dictionary *ini){
 												);
 
 	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+									mccCollissionsOff_set,
+									mccConstCrossect_set,
+									mccConstFreq_set,
+									mccFunctionalCrossect_set);
 
 	//
 	void (*solve)() = NULL;
@@ -1838,14 +1834,16 @@ void mccMode(dictionary *ini){
 
 }
 
+funPtr mccMode_set(dictionary *ini){
+	//test sanity here!
+	mccSanity(ini,"mccMode",2);
+	return mccMode;
 
 
-funPtr oCollMode_set(){ //dictionary *ini
-	 // TODO: sanity
-	return oCollMode;
-}
 
-void oCollMode(dictionary *ini){
+
+
+static void oCollMode(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
@@ -1867,10 +1865,10 @@ void oCollMode(dictionary *ini){
 
 
 	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+									mccCollissionsOff_set,
+									mccConstCrossect_set,
+									mccConstFreq_set,
+									mccFunctionalCrossect_set);
 
 
 	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
@@ -2398,12 +2396,12 @@ void oCollMode(dictionary *ini){
 }
 
 
-funPtr neutTest_set(){ //dictionary *ini
-	// TODO: sanity
-	return neutTest;
+funPtr oCollMode_set(){ //dictionary *ini
+	 // TODO: sanity
+	return oCollMode;
 }
 
-void neutTest(dictionary *ini){
+static void neutTest(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
@@ -2845,4 +2843,10 @@ void neutTest(dictionary *ini){
 	gsl_rng_free(rng);
 
 
+}
+
+
+funPtr neutTest_set(){ //dictionary *ini
+	// TODO: sanity
+	return neutTest;
 }

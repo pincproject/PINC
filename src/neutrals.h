@@ -4,8 +4,8 @@
  * @author		Sigvald Marholm <sigvaldm@fys.uio.no>,
  */
 
-#ifndef NEUTRALS_H
-#define NEUTRALS_H
+#ifndef PINC_NEUTRALS_H
+#define PINC_NEUTRALS_H
 
 
 

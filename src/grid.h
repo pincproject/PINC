@@ -639,7 +639,7 @@ void gInsertHalo(Grid *grid, const int *nGhostLayers);
  * available
  */
 
- #define PI 3.14159265
+ //#define PI 3.14159265
 
 void gFillHeavi(Grid *grid, int dim,const MpiInfo *mpiInfo);
 void gFillHeaviSol(Grid *grid, int rank, const MpiInfo *mpiInfo);
