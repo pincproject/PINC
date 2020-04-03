@@ -14,11 +14,11 @@
 #include "object.h"
 #include "collisions.h"
 
-void regular(dictionary *ini);
+static void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
 
 //delete BorisTest in final Version
-void BorisTestMode(dictionary *ini);
+static void BorisTestMode(dictionary *ini);
 funPtr BorisTestMode_set(dictionary *ini){ return BorisTestMode; }
 
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void regular(dictionary *ini){
+static void regular(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
