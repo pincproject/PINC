@@ -5,7 +5,7 @@
 ##
 
 CC		= mpicc
-COPT	= -O3 -Wall -Wextra
+COPT	= -O3 -Wall 
 DOPT 	= -O0
 
 CLOCAL = 	-Ilib/iniparser/src\

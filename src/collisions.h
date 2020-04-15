@@ -240,7 +240,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral, Population 
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo);
 
@@ -259,7 +259,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Popul
  * this call. In practice only a call to collide() should be necessary in the
  * main time loop, and the rest is defined in the input file.
  */
-void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo);
 
 

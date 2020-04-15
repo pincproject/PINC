@@ -1295,7 +1295,7 @@ long int gTotTruesize(const Grid *grid, const MpiInfo *mpiInfo){
 	return totTruesize;
 }
 
-void gAssertNeutralGrid(const Grid *rho, const MpiInfo *mpiInfo){
+void gAssertNeutralGrid(const Grid *rho){
 
 	double sum = gSumTruegrid(rho);
 	double totSum = 1.;
@@ -1362,7 +1362,7 @@ static void gPeriodic(Grid *phi, const  MpiInfo *mpiInfo){
 	return;
 }
 
-void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
+static void gDirichlet(Grid *grid, const int boundary){
 
 	//msg(STATUS, "Hello from Dirichlet");
 
@@ -1396,44 +1396,44 @@ void gDirichlet(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
 
 }
 
+//
+// static void gDirichletE(Grid *grid, const int boundary){
+//
+// 	//msg(STATUS, "Hello from Dirichlet");
+//
+// 	//Load data
+// 	int rank = grid->rank;
+// 	int *size = grid->size;
+// 	long int *sizeProd = grid->sizeProd;
+// 	double *bndSlice = grid->bndSlice;
+//
+// 	//Compute dimensions and size of slice
+// 	int d = boundary%rank;
+// 	int offset = 1 + (boundary>rank)*(size[d]-3);
+//
+// 	//Number of elements in slice
+// 	long int nSliceMax = 0;
+// 	for(int d=1;d<rank;d++){
+// 		long int nSlice = 1;
+// 		for(int dd=0;dd<rank;dd++){
+// 			if(dd!=d) nSlice *= size[dd]*sizeProd[1];
+// 		}
+// 		if(nSlice>nSliceMax) nSliceMax = nSlice;
+// 	}
+// 	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
+// 	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
+// 	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
+// 	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
+//
+// 	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
+//
+// 	return;
+//
+// }
 
-void gDirichletE(Grid *grid, const int boundary,  const  MpiInfo *mpiInfo){
-
-	//msg(STATUS, "Hello from Dirichlet");
-
-	//Load data
-	int rank = grid->rank;
-	int *size = grid->size;
-	long int *sizeProd = grid->sizeProd;
-	double *bndSlice = grid->bndSlice;
-
-	//Compute dimensions and size of slice
-	int d = boundary%rank;
-	int offset = 1 + (boundary>rank)*(size[d]-3);
-
-	//Number of elements in slice
-	long int nSliceMax = 0;
-	for(int d=1;d<rank;d++){
-		long int nSlice = 1;
-		for(int dd=0;dd<rank;dd++){
-			if(dd!=d) nSlice *= size[dd]*sizeProd[1];
-		}
-		if(nSlice>nSliceMax) nSliceMax = nSlice;
-	}
-	//msg(STATUS,"offset. eg. index to set slice in perp. direction %i",offset);
-	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset); //edge before halo
-	setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset - 1 + (boundary>rank)*2); //halo
-	//setSlice(&bndSlice[boundary*nSliceMax], grid, d, offset + 1 - (boundary>rank)*2); //edge before edge
-
-	//adPrint(&bndSlice[(boundary)*nSliceMax], nSliceMax);
-
-	return;
-
-}
 
 
-
-void gNeumann(Grid *grid, const int boundary, const MpiInfo *mpiInfo){
+void gNeumann(Grid *grid, const int boundary){
 
 	//msg(STATUS, "Hello from NEUMANN");
 
@@ -1563,12 +1563,12 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 		if(subdomain[d-1] == 0){
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
-				gDirichlet(grid, d, mpiInfo);
+				gDirichlet(grid, d);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				gNeumann(grid, d, mpiInfo);
+				gNeumann(grid, d);
 			}
 		}
 	}
@@ -1576,8 +1576,8 @@ void gBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gDirichlet(grid, d, mpiInfo);
-			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gDirichlet(grid, d);
+			if(bnd[d] == NEUMANN)	gNeumann(grid, d);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -1611,12 +1611,12 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 			if(bnd[d] == DIRICHLET){
 				//msg(STATUS,"bnd[d] = DIRICHLET, giving d = %i, rank = %i",d,rank);
 				//gDirichletE(grid, d, mpiInfo);
-				gNeumann(grid, d, mpiInfo);
+				gNeumann(grid, d);
 				//msg(STATUS,"bnd[d] = DIRICHLET, d = %i",d);
 			}
 			else if(bnd[d] == NEUMANN){
 				//msg(STATUS,"bnd[d] = NEUMANN, d = %i",d);
-				gNeumann(grid, d, mpiInfo);
+				gNeumann(grid, d);
 			}
 		}
 	}
@@ -1624,8 +1624,8 @@ void gBndE(Grid *grid, const MpiInfo *mpiInfo){
 	//Higher edge
 	for(int d = rank+1; d < 2*rank; d++){
 		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
-			if(bnd[d] == DIRICHLET) gNeumann(grid, d, mpiInfo);//gDirichletE(grid, d, mpiInfo);
-			if(bnd[d] == NEUMANN)	gNeumann(grid, d, mpiInfo);
+			if(bnd[d] == DIRICHLET) gNeumann(grid, d);//gDirichletE(grid, d, mpiInfo);
+			if(bnd[d] == NEUMANN)	gNeumann(grid, d);
 		}
 	}
 	//printf("after boundary cond, rank %i\n",mpiInfo->mpiRank);
@@ -1832,7 +1832,7 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n){
 	H5Pclose(pList);
 }
 
-void gReadH5(Grid *grid, const MpiInfo *mpiInfo, double n){
+void gReadH5(Grid *grid, double n){
 
 	hid_t fileSpace = grid->h5FileSpace;
 	hid_t memSpace = grid->h5MemSpace;
@@ -2123,7 +2123,7 @@ void gFillHeaviSol(Grid *grid, int d ,const MpiInfo *mpiInfo){
    return;
 }
 
-void gFillPolynomial(Grid *grid , const MpiInfo *mpiInfo){
+void gFillPolynomial(Grid *grid){
 
    int *size = grid->size;
    long int *sizeProd = grid->sizeProd;
@@ -2340,7 +2340,7 @@ void gFillSinESol(Grid *grid, int d ,const MpiInfo *mpiInfo){
 	free(sol);
 }
 
-void gFillExp(Grid *grid, const MpiInfo *mpiInfo){
+void gFillExp(Grid *grid){
 
    //Load Mpi
    // int *subdomain = mpiInfo->subdomain;
@@ -2373,7 +2373,7 @@ void gFillExp(Grid *grid, const MpiInfo *mpiInfo){
    return;
 }
 
-void gFillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
+void gFillRng(Grid *grid, const gsl_rng *rng){
 
    //Load
    double *val = grid->val;
@@ -2384,7 +2384,7 @@ void gFillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng){
    return;
 }
 
-void gFillCst(Grid *grid, const MpiInfo *mpiInfo){
+void gFillCst(Grid *grid){
 
    int rank = grid->rank;
    long int *sizeProd = grid->sizeProd;

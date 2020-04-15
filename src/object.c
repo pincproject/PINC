@@ -16,13 +16,13 @@
 /******************************************************************************
  *  LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/
-/**
- * @brief   Object debug functions
- * @param	obj		Object
- * @param	ini		input settings
- * @return	void
- */
-static void print_gsl_mat(gsl_matrix_view A);
+// /**
+//  * @brief   Object debug functions
+//  * @param	obj		Object
+//  * @param	ini		input settings
+//  * @return	void
+//  */
+// static void print_gsl_mat(gsl_matrix_view A);
 /**
  * @brief   Count the number of objects and fills the lookup tables.
  * @param	obj		Object
@@ -43,26 +43,26 @@ static void oFindObjectSurfaceNodes(PincObject *obj);
 /******************************************************************************
  *  LOCAL FUNCTION DEFINITIONS
  *****************************************************************************/
-
-static void print_gsl_mat(const gsl_matrix_view A){
-
-    FILE *f;
-    f = fopen("matrix.txt", "w");
-
-    const gsl_matrix *mat = &A.matrix;
-    double element;
-
-    for(size_t i=0; i<mat->size1; i++){
-
-        for(size_t j=0; j<mat->size2; j++){
-            element = gsl_matrix_get(mat, i, j);
-            fprintf(f, "%.2g\t", element);
-        }
-        fprintf(f, "\n");
-    }
-
-    fclose(f);
-}
+//
+// static void print_gsl_mat(const gsl_matrix_view A){
+//
+//     FILE *f;
+//     f = fopen("matrix.txt", "w");
+//
+//     const gsl_matrix *mat = &A.matrix;
+//     double element;
+//
+//     for(size_t i=0; i<mat->size1; i++){
+//
+//         for(size_t j=0; j<mat->size2; j++){
+//             element = gsl_matrix_get(mat, i, j);
+//             fprintf(f, "%.2g\t", element);
+//         }
+//         fprintf(f, "\n");
+//     }
+//
+//     fclose(f);
+// }
 
 
 //delete this
@@ -1420,7 +1420,7 @@ void oReadH5(PincObject *obj){
 //
 //     //if(oIsGhostNode(obj->domain, 10439)) printf("test\n");
 //
-//     long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*\
+//     long int *lookupSurfaceOffset = malloc((obj->nObjects+1)*\//
 //                                            sizeof(*lookupSurfaceOffset));
 //     for (long int i=0; i<obj->nObjects+1; i++) {
 //         lookupSurfaceOffset[i] = 0;
@@ -1460,7 +1460,7 @@ void oReadH5(PincObject *obj){
 //
 //
 //     //Second go through to fill the table.
-//     long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*\
+//     long int *lookupSurface = malloc((lookupSurfaceOffset[obj->nObjects])*\//
 //                                      sizeof(*lookupSurface));
 //     for (long int i=0; i<lookupSurfaceOffset[obj->nObjects]+1; i++) {
 //         lookupSurface[i]=0;
@@ -1719,7 +1719,7 @@ static void oMode(dictionary *ini){
 	// Initalize particles
 	//pPosUniform(ini, pop, mpiInfo, rngSync);
 	//pPosLattice(ini, pop, mpiInfo);
-	pPosUniformCell(ini,rho,pop,rng,mpiInfo);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pVelZero(pop);
 	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
@@ -1738,7 +1738,7 @@ static void oMode(dictionary *ini){
 	extractEmigrants(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
-	pFillGhost(ini,rho,pop,rng,mpiInfo);
+	pFillGhost(ini,rho,pop,rng);
 
 
 
@@ -1832,7 +1832,7 @@ static void oMode(dictionary *ini){
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-		pFillGhost(ini,rho,pop,rng,mpiInfo);
+		pFillGhost(ini,rho,pop,rng);
 
 
 		// Check that no particle resides out-of-bounds (just for debugging)

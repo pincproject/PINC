@@ -442,7 +442,7 @@ void BorisTestMode(dictionary *ini){
 	//pVelZero(pop);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	//msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
-	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
+	//pVelConstant(pop, velThermal[0], velThermal[1]); //constant values for vel.
 	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 

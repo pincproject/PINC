@@ -762,7 +762,7 @@ void pIndexToPos3D(Grid *grid,long int index,long int *pos){
 
 }
 
-void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
@@ -906,7 +906,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 
 
 
-void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
@@ -1163,7 +1163,7 @@ void pVelZero(Population *pop){
 	}
 }
 
-void pVelConstant(const dictionary *ini, Population *pop, double constant1, double constant2){
+void pVelConstant( Population *pop, double constant1, double constant2){
 
 	//test function. takes only two species
 	int nDims = pop->nDims;

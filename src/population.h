@@ -62,7 +62,7 @@ void pPosUniform(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo,
  * Each cell thus contains the same number of particles, and density perturbations
  * are on the same scale as the cell length.
  */
-void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng);
 
 void pPosLattice(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo);
 
@@ -91,8 +91,7 @@ void pPosPerturb(const dictionary *ini, Population *pop, const MpiInfo *mpiInfo)
 void pVelSet(Population *pop, const double *vel);
 
 void pVelZero(Population *pop);
-void pVelConstant(const dictionary *ini, Population *pop, double constant1, \
-   double constant2);
+void pVelConstant( Population *pop, double constant1,double constant2);
 
 void pPosAssertInLocalFrame(const Population *pop, const Grid *grid);
 void pVelAssertMax(const Population *pop, double max);
@@ -127,7 +126,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng);
  */
 void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
 void pPurgeGhost(Population *pop, const Grid *grid);
-void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo);
+void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng);
 
 /**
  * @brief	Add new particle to population
@@ -299,6 +298,6 @@ Interact code
 // void pAdhere(Population *pop);
 
 
-void pInteractWithObject(Population *pop);
+//void pInteractWithObject(Population *pop);
 
 #endif // POPULATION_H

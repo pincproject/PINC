@@ -8,12 +8,12 @@
 
 //#include <math.h>
 //#include <mpi.h>
-//#include <gsl/gsl_rng.h>
-//#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 //#include <hdf5.h>
 #include "core.h"
 //#include "iniparser.h"
-//#include "pusher.h"
+#include "pusher.h"
 #include "neutrals.h"
 
 

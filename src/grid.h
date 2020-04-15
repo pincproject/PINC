@@ -446,7 +446,7 @@ void gSubFrom(Grid *result, const Grid *subtraction);
 double gSumTruegrid(const Grid *grid);
 
 
-void gAssertNeutralGrid(const Grid *rho, const MpiInfo *mpiInfo);
+void gAssertNeutralGrid(const Grid *rho);
 
 /**
  * @brief Applies boundary conditions to edge
@@ -536,7 +536,7 @@ void gWriteH5(const Grid *grid, const MpiInfo *mpiInfo, double n);
  * The function will fail ungracefully if trying to read from a non-existing
  * dataset (testing omitted for performance reasons).
  */
-void gReadH5(Grid *grid, const MpiInfo *mpiInfo, double n);
+void gReadH5(Grid *grid, double n);
 
 /**
  * @brief	Closes .grid.h5-file
@@ -648,10 +648,10 @@ void gFillPointSol(Grid *grid, const MpiInfo *mpiInfo);
 void gFillSin(Grid *grid, int d, const MpiInfo *mpiInfo, int norm);
 void gFillSinSol(Grid *grid, int d, const MpiInfo *mpiInfo);
 void gFillSinESol(Grid *grid, int d ,const MpiInfo *mpiInfo);
-void gFillExp(Grid *grid, const MpiInfo *mpiInfo);
-void gFillRng(Grid *grid, const MpiInfo *mpiInfo, const gsl_rng *rng);
-void gFillCst(Grid *grid, const MpiInfo *mpiInfo);
-void gFillPolynomial(Grid *grid , const MpiInfo *mpiInfo);
+void gFillExp(Grid *grid);
+void gFillRng(Grid *grid, const gsl_rng *rng);
+void gFillCst(Grid *grid);
+void gFillPolynomial(Grid *grid );
 
 
 #endif // GRID_H

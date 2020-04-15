@@ -285,26 +285,26 @@ static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng 
 	return MaxVelocity;
 }
 
-
-static double mccGetMinVel(const Population *pop, int species){
-
-	// iterate over pop and keep min velocity
-	double *vel = pop->vel;
-	double MinVelocity = 100000000000000;
-	double NewVelocity = 0;
-	int nDims = pop->nDims;
-
-	long int iStart = pop->iStart[species];
-	long int iStop  = pop->iStop[species];
-	for(int i=iStart; i<iStop; i++){
-		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
-			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
-		if(NewVelocity<MinVelocity){
-			MinVelocity=NewVelocity;
-		}
-	}
-	return MinVelocity;
-}
+//
+// static double mccGetMinVel(const Population *pop, int species){
+//
+// 	// iterate over pop and keep min velocity
+// 	double *vel = pop->vel;
+// 	double MinVelocity = 100000000000000;
+// 	double NewVelocity = 0;
+// 	int nDims = pop->nDims;
+//
+// 	long int iStart = pop->iStart[species];
+// 	long int iStop  = pop->iStop[species];
+// 	for(int i=iStart; i<iStop; i++){
+// 		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\ //
+// 			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+// 		if(NewVelocity<MinVelocity){
+// 			MinVelocity=NewVelocity;
+// 		}
+// 	}
+// 	return MinVelocity;
+// }
 
 
 /*************************************************
@@ -1228,7 +1228,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 	}
 }
 
-void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo){
 
@@ -1290,7 +1290,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Popul
 	}
 }
 
-void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo){
 
 	// uses constant collfreq fixed number of colls per dt
@@ -1440,8 +1440,8 @@ void mccCollideConstantFreq(const dictionary *ini,Grid *rhoNeutral, Population *
 		fMsg(ini, "collision", "\n Computing time-step \n");
 	}
 
-	mccCollideIonConstantFrq(ini,rhoNeutral, pop,mccVars,rng,mpiInfo);
-	mccCollideElectronConstantFrq(ini,rhoNeutral, pop,mccVars, rng,mpiInfo);
+	mccCollideIonConstantFrq(ini, pop,mccVars,rng,mpiInfo);
+	mccCollideElectronConstantFrq(ini, pop,mccVars, rng,mpiInfo);
 }
 
 funPtr mccConstFreq_set(dictionary *ini){
@@ -1621,11 +1621,12 @@ static void mccMode(dictionary *ini){
 	//msg(STATUS, "constants = %f, %f", velThermal[0], velThermal[1]);
 	// Initalize particles
 	//pPosLattice(ini, pop, mpiInfo);
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pVelZero(pop);
 	//double *thermalVelocity = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 
-	//pVelConstant(ini, pop,(thermalVelocity[0]),(thermalVelocity[1]) ); //constant values for vel.
+	//pVelConstant( pop,(thermalVelocity[0]),(thermalVelocity[1]) ); //constant values for vel.
 	pVelMaxwell(ini, pop, rng);
 	//double maxVel = iniGetDouble(ini,"population:maxVel");
 
@@ -1673,7 +1674,7 @@ static void mccMode(dictionary *ini){
 	//pWriteH5(pop, mpiInfo, 0.0, 0.5,1);
 	pWriteTemperature(temperature,pop,0.0,units,ini);
 	pWriteEnergy(history,pop,0.0,units);
-	xyzWriteProbe(probe, phi,0.0,mpiInfo);
+	xyzWriteProbe(probe, phi,mpiInfo);
 
 	//msg(STATUS, "Pmax for Electrons is %f",PmaxElectron);
 	//msg(STATUS, "Pmax for Ions is %f",PmaxIon);
@@ -1789,7 +1790,7 @@ static void mccMode(dictionary *ini){
 		//gWriteH5(phi, mpiInfo, (double) n);
 		pWriteTemperature(temperature,pop,(double)n,units,ini);
 		//fillGridIndexes(phi);
-		xyzWriteProbe(probe, phi,(double)n,mpiInfo);
+		xyzWriteProbe(probe, phi,mpiInfo);
 		pWriteEnergy(history,pop,(double)n,units);
 		//gWriteH5(phi, mpiInfo, (double) n);
 
@@ -1968,7 +1969,8 @@ static void oCollMode(dictionary *ini){
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
@@ -1983,7 +1985,7 @@ static void oCollMode(dictionary *ini){
 
 	//add influx of new particles on boundary
 	pPurgeGhost(pop, rho);
-	pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
+	pFillGhost(ini,rho,pop,rng);
 
 
 
@@ -2214,7 +2216,7 @@ static void oCollMode(dictionary *ini){
 
         //add influx of new particles on boundary
         pPurgeGhost(pop, rho);
-        pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
+        pFillGhost(ini,rho,pop,rng);
 
 
 
