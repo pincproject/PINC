@@ -400,8 +400,8 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	//TODO: We are assuming one Ion species here, this should be extended to
 	// several species
 	mccVars->mccSigmaElectronElastic = mccVars->collFrqElectronElastic/(mccVars->nt*sqrt(3)*(thermalVelocity[0]) );//iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	mccVars->mccSigmaCEX= mccVars->collFrqCex/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) );//iniGetDouble(ini,"collisions:sigmaCEX");
-	mccVars->mccSigmaIonElastic = mccVars->collFrqIonElastic/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) );//iniGetDouble(ini,"collisions:sigmaIonElastic");
+	mccVars->mccSigmaCEX= 2*(mccVars->collFrqCex/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaCEX");
+	mccVars->mccSigmaIonElastic = 2*(mccVars->collFrqIonElastic/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaIonElastic");
 
 	mccVars->CEX_a = iniGetDouble(ini,"collisions:CEX_a");
 	mccVars->CEX_b = iniGetDouble(ini,"collisions:CEX_b");
