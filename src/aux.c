@@ -331,8 +331,8 @@ void adReflect(const double *ray, const double *a, const double *b, double *res)
 
 void adRotateRandom3D(double *a, const gsl_rng *r){
 
-	double beta = PI/2 * gsl_rng_uniform_pos(r);
-	double gamma = PI/2 * gsl_rng_uniform_pos(r);
+	double beta = M_PI/2 * gsl_rng_uniform_pos(r);
+	double gamma = M_PI/2 * gsl_rng_uniform_pos(r);
 	int signSB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
 	int signSG = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
 	int signCB = (gsl_rng_uniform_int(r, 2) == 0) ? -1 : 1;
