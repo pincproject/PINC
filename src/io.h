@@ -450,7 +450,7 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op);
  */
 void xyCreateDataset(hid_t h5, const char *name);
 
-void xyzWriteProbe(hid_t xyz, Grid *grid,double timestep,MpiInfo *mpiInfo);
+void xyzWriteProbe(hid_t xyz, Grid *grid,MpiInfo *mpiInfo);
 
 void arrCreateDataset(hid_t h5, const char *name, const int arrSize);
 

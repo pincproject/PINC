@@ -186,7 +186,7 @@ double adMax(const double *a, long int n);
 ///@brief Helper function to rotate about y and z axis, used by photoelectron module
 void adRotateRandom3D(double *a, const gsl_rng *r);
 ///@brief Returns unit normal vector. Assumes 3D eucledian vector
-void adNormal(const double *a, const double *b, double *res, long int n);
+void adNormal(const double *a, const double *b, double *res);
 ///@brief Returns vector reflected by an arbitrary plane
 void adReflect(const double *ray, const double *a, const double *b, double *res);
 ///@brief Returns maximum value in an array

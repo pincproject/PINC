@@ -444,7 +444,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 	int nDims = pop->nDims;
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	long int index = 0;
+
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -458,7 +458,6 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
-				index = (s*nDims)+d;
 				vel[d] = gsl_ran_gaussian_ziggurat(rng,velTh); //velDrift[index] +
 			}
 		}
@@ -765,26 +764,27 @@ void pIndexToPos3D(Grid *grid,long int index,long int *pos){
 
 }
 
-void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 	bndType *bnd = pop->bnd;
 	long int *sizeProd = rho->sizeProd;
+	int *size = rho->size;
 	int *trueSize = rho->trueSize;//iniGetIntArr(ini,"grid:trueSize",nDims);
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
-	int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	//int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
 	int rank = nDims+1;
 
 	// Read from mpiInfo
-	int *subdomain = mpiInfo->subdomain;
-	double *posToSubdomain = mpiInfo->posToSubdomain;
+	// int *subdomain = mpiInfo->subdomain;
+	// double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
 	// int edge[nDims];
@@ -807,8 +807,8 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 			lookupFilled[q] = false;
 		}
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		// long int iStart = pop->iStart[s];
+		// long int iStop = pop->iStop[s];
 
 		//double velTh = velThermal[s];
 
@@ -873,11 +873,22 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 
 						// Generate position for particle
 						for(int dd=0;dd<nDims;dd++){
-							pos[dd] = gPos[dd]+ gsl_rng_uniform_pos(rng);
+							pos[dd] = gPos[dd] + gsl_rng_uniform_pos(rng);
 						}
+						bool outOfBounds = false;
+						for(int dd=0; dd<nDims; dd++){ // mostly for debug
+							if(pos[dd]>=size[dd+1]-1 || pos[dd]<=0){
+								msg(WARNING,"generated particle has position \
+								out of bounds in pFillGhost, generating new");
+								outOfBounds = true;
+							}
 
-						pNew(pop,s,pos,vel);
-
+						}
+						if(outOfBounds){
+							newParticles ++;
+						} else {
+							pNew(pop,s,pos,vel);
+						}
 					}
 				}
 			}
@@ -897,7 +908,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 
 
 
-void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng *rng){
 
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
@@ -907,16 +918,16 @@ void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
-	int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+	//int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
 	int rank = nDims+1;
 
 	// Read from mpiInfo
-	int *subdomain = mpiInfo->subdomain;
-	double *posToSubdomain = mpiInfo->posToSubdomain;
+	//int *subdomain = mpiInfo->subdomain;
+	//double *posToSubdomain = mpiInfo->posToSubdomain;
 
-	long int index = 0;
+	//long int index = 0;
 	double pos[nDims];
 	double vel[nDims];
 	// int edge[nDims];
@@ -939,16 +950,16 @@ void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl
 			lookupFilled[q] = false;
 		}
 
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
+		// long int iStart = pop->iStart[s];
+		// long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
 
 		for (long int gIndex=0;gIndex<sizeProd[rank];gIndex++){
-			bool outerGhost[nDims];
-			for (int k = 0;k<nDims;k++){
-				outerGhost[k] = false;
-			}
+			// bool outerGhost[nDims];
+			// for (int k = 0;k<nDims;k++){
+			// 	outerGhost[k] = false;
+			// }
 			long int gPos[nDims];
 			pIndexToPos3D(rho,gIndex,gPos);
 			bool fillNode = false;
@@ -963,17 +974,17 @@ void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl
 			if(fillNode){
 				for (int k = 0;k<nDims;k++){
 					if(gPos[k]<1){
-						outerGhost[k] = true;
+						//outerGhost[k] = true;
 						if(bnd[k+1]==PERIODIC){
-							outerGhost[k] = false;
+							//outerGhost[k] = false;
 							periodic = true;
 						}
 					}
 					if(gPos[k]>trueSize[k+1]){
-						outerGhost[k] = true;
+						//outerGhost[k] = true;
 						//gPos[k] -=1;
 						if(bnd[k+rank+1]==PERIODIC){
-							outerGhost[k] = false;
+							//outerGhost[k] = false;
 							periodic = true;
 						}
 					}
@@ -1024,99 +1035,99 @@ void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl
 	return;
 }
 
-
-//Depricated: Not the best way to add a particle flux
-void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
-
-	int nSpecies = pop->nSpecies;
-	int nDims = pop->nDims;
-	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
-	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
-	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
-	//double timeStep = iniGetDouble(ini, "time:timeStep");
-	int *L = gGetGlobalSize(ini);
-
-	// Read from mpiInfo
-	int *subdomain = mpiInfo->subdomain;
-	double *posToSubdomain = mpiInfo->posToSubdomain;
-
-	long int index = 0;
-	double pos[nDims];
-	double vel[nDims];
-	int edge[nDims];
-
-	for(int s=0;s<nSpecies;s++){
-
-		long int iStart = pop->iStart[s];
-		long int iStop = pop->iStop[s];
-
-		double velTh = velThermal[s];
-
-		for (int d=0;d<nDims;d++){
-			index = (s*nDims)+d;
-
-			//compute edge
-			for (int dd=0;dd<nDims;dd++){
-				if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
-				else edge[dd] = 1;
-			}
-
-
-			// long int globalSizeProd = (( (nGhostLayers[0]+L[0]) )
-			// 	*( (nGhostLayers[1]+L[1]))
-			// 	*( (nGhostLayers[2]+L[2]) )); //TODO: make nDimensional
-			//
-			// long int sliceSize = (globalSizeProd/(nGhostLayers[d]+L[d]));
-
-
-			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
-
-			//printf("L[0]= %i, L[1]= %i, L[2]= %i \n",nGhostLayers[0]+L[0],L[1],L[2]);
-			long int sliceSize = (globalSizeProd/(L[d]));
-			long int newParticles = ( (sliceSize*nParticles[s]/(L[0]*L[1]*L[2]))*(velDrift[index]+(!edge[d])*(velTh)*velDrift[index]));
-				//+(!edge[d])*(1.414*nDims*velDrift[index]*(velTh-velDrift[index]))*(velTh) ) );
-			//need check if veldrift is < 0
-			//printf("%f,%li \n",velDrift[index],sliceSize);
-			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
-			//for(long int i=iStart;i<iStop;i++){
-			for(long int i=0;i<newParticles;i++){
-				//double *vel = &pop->vel[i*nDims];
-
-				for(int d=0;d<nDims;d++){
-					//index = (s*nDims)+d;
-					vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
-					//printf("vel[d] = %f, d= %i\n",vel[d],d);
-				}
-
-				// Generate position for particle
-				for(int dd=0;dd<nDims;dd++){
-					pos[dd] = edge[dd]*(L[dd])*gsl_rng_uniform_pos(rng);
-
-					//printf("pos[%i] = %f\n",dd,pos[dd]);
-				}
-				pos[d] = 1+velDrift[index]*(gsl_rng_uniform_pos(rng)); // pos in local frame
-				//printf("pos[%i] = %f\n",d,pos[d]);
-				// Count the number of dimensions where the particle resides in
-				// the range of this node
-				int correctRange = 0;
-				for(int dd=0;dd<nDims;dd++)
-					correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
-
-				// Add only if particle resides in this sub-domain.
-				if(correctRange==nDims){
-					//printf("pos[%i] = %f\n",d,pos[d]);
-					//printf("%f,%li \n",velDrift[index],sliceSize);
-					pNew(pop,s,pos,vel);
-				}
-			}
-		}
-	}
-	free(velDrift);
-	free(velThermal);
-
-	return;
-}
+//
+// //Depricated: Not the best way to add a particle flux
+// void pInfluxDrift(const dictionary *ini, Population *pop, const gsl_rng *rng, const MpiInfo *mpiInfo){
+//
+// 	int nSpecies = pop->nSpecies;
+// 	int nDims = pop->nDims;
+// 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
+// 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
+// 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+// 	int *nGhostLayers = iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
+// 	//double timeStep = iniGetDouble(ini, "time:timeStep");
+// 	int *L = gGetGlobalSize(ini);
+//
+// 	// Read from mpiInfo
+// 	int *subdomain = mpiInfo->subdomain;
+// 	double *posToSubdomain = mpiInfo->posToSubdomain;
+//
+// 	long int index = 0;
+// 	double pos[nDims];
+// 	double vel[nDims];
+// 	int edge[nDims];
+//
+// 	for(int s=0;s<nSpecies;s++){
+//
+// 		long int iStart = pop->iStart[s];
+// 		long int iStop = pop->iStop[s];
+//
+// 		double velTh = velThermal[s];
+//
+// 		for (int d=0;d<nDims;d++){
+// 			index = (s*nDims)+d;
+//
+// 			//compute edge
+// 			for (int dd=0;dd<nDims;dd++){
+// 				if (velDrift[index]/velDrift[dd] == 1) edge[dd] = 0;
+// 				else edge[dd] = 1;
+// 			}
+//
+//
+// 			// long int globalSizeProd = (( (nGhostLayers[0]+L[0]) )
+// 			// 	*( (nGhostLayers[1]+L[1]))
+// 			// 	*( (nGhostLayers[2]+L[2]) )); //TODO: make nDimensional
+// 			//
+// 			// long int sliceSize = (globalSizeProd/(nGhostLayers[d]+L[d]));
+//
+//
+// 			long int globalSizeProd = (L[0]*L[1]*L[2]); //TODO: make nDimensional
+//
+// 			//printf("L[0]= %i, L[1]= %i, L[2]= %i \n",nGhostLayers[0]+L[0],L[1],L[2]);
+// 			long int sliceSize = (globalSizeProd/(L[d]));
+// 			long int newParticles = ( (sliceSize*nParticles[s]/(L[0]*L[1]*L[2]))*(velDrift[index]+(!edge[d])*(velTh)*velDrift[index]));
+// 				//+(!edge[d])*(1.414*nDims*velDrift[index]*(velTh-velDrift[index]))*(velTh) ) );
+// 			//need check if veldrift is < 0
+// 			//printf("%f,%li \n",velDrift[index],sliceSize);
+// 			//printf("generating %li particles for specie %i, velTh = %f \n \n",newParticles,s,velTh);
+// 			//for(long int i=iStart;i<iStop;i++){
+// 			for(long int i=0;i<newParticles;i++){
+// 				//double *vel = &pop->vel[i*nDims];
+//
+// 				for(int d=0;d<nDims;d++){
+// 					//index = (s*nDims)+d;
+// 					vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+// 					//printf("vel[d] = %f, d= %i\n",vel[d],d);
+// 				}
+//
+// 				// Generate position for particle
+// 				for(int dd=0;dd<nDims;dd++){
+// 					pos[dd] = edge[dd]*(L[dd])*gsl_rng_uniform_pos(rng);
+//
+// 					//printf("pos[%i] = %f\n",dd,pos[dd]);
+// 				}
+// 				pos[d] = 1+velDrift[index]*(gsl_rng_uniform_pos(rng)); // pos in local frame
+// 				//printf("pos[%i] = %f\n",d,pos[d]);
+// 				// Count the number of dimensions where the particle resides in
+// 				// the range of this node
+// 				int correctRange = 0;
+// 				for(int dd=0;dd<nDims;dd++)
+// 					correctRange += (subdomain[dd] == (int)(posToSubdomain[dd]*pos[dd]));
+//
+// 				// Add only if particle resides in this sub-domain.
+// 				if(correctRange==nDims){
+// 					//printf("pos[%i] = %f\n",d,pos[d]);
+// 					//printf("%f,%li \n",velDrift[index],sliceSize);
+// 					pNew(pop,s,pos,vel);
+// 				}
+// 			}
+// 		}
+// 	}
+// 	free(velDrift);
+// 	free(velThermal);
+//
+// 	return;
+// }
 
 void pVelSet(Population *pop, const double *vel){
 
@@ -1154,7 +1165,7 @@ void pVelZero(Population *pop){
 	}
 }
 
-void pVelConstant(const dictionary *ini, Population *pop, double constant1, double constant2){
+void pVelConstant( Population *pop, double constant1, double constant2){
 
 	//test function. takes only two species
 	int nDims = pop->nDims;
@@ -1229,13 +1240,13 @@ void pCut(Population *pop, int s, long int p, double *pos, double *vel){
 
 }
 
-funPtr pFindCollisionType(Population *pop, Object *obj, long int n){
+/* funPtr pFindCollisionType(Population *pop, PincObject *obj, long int n){
 
 	msg(WARNING, "Function to determine collision type not yet implemented!");
 	return NULL;
 }
 
-void pBackscatter(Population *pop, const Object *obj, long int n){
+void pBackscatter(Population *pop, const PincObject *obj, long int n){
 
 	msg(WARNING, "backscatter function not yet implemented!");
 	msg(STATUS, "particle %i backscattered an electron \n", n);
@@ -1243,14 +1254,14 @@ void pBackscatter(Population *pop, const Object *obj, long int n){
 	//return collisionType;
 }
 
-void pSecondaryElectron(Population *pop, const Object *obj, long int n){
+void pSecondaryElectron(Population *pop, const PincObject *obj, long int n){
 
 	msg(WARNING, "Secondary Electron function not yet implemented!");
 	msg(STATUS, "particle %i created a secondary electron \n", n);
 
 }
 
-void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpiInfo){
+void pReflect(Population *pop, const PincObject *obj, long int n, const MpiInfo	*mpiInfo){
 	
 	double *newVel;
 	double *surfNodes;
@@ -1268,9 +1279,9 @@ void pReflect(Population *pop, const Object *obj, long int n, const MpiInfo	*mpi
 	msg(WARNING, "Reflection function not yet implemented!");
 	msg(STATUS, "particle %i Reflected off an object \n", n);
 
-}
+} */
 
-void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
+void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
  					const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
 	
 	//mpi
@@ -1402,7 +1413,7 @@ void pPhotoElectrons(Population *pop, Object *obj, Grid *phi,
 	free(vel);
 }
 
-void pAdhere(Population *pop, const Object *obj, long int n){
+void pAdhere(Population *pop, const PincObject *obj, long int n){
 
 	msg(WARNING, "Adhesion function not yet implemented!");
 	msg(STATUS, "particle %i adhered to an object \n", n);

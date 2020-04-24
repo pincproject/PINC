@@ -14,11 +14,11 @@
 #include "object.h"
 #include "collisions.h"
 
-void regular(dictionary *ini);
+static void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
 
 //delete BorisTest in final Version
-void BorisTestMode(dictionary *ini);
+static void BorisTestMode(dictionary *ini);
 funPtr BorisTestMode_set(dictionary *ini){ return BorisTestMode; }
 
 
@@ -51,14 +51,13 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	//msg(STATUS,"PINC completed successfully!"); // Needs MPI
-    msg(STATUS,"All done, now go have a beer!");
+	msg(STATUS,"PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;
 }
 
-void regular(dictionary *ini){
+static void regular(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
@@ -206,7 +205,6 @@ void regular(dictionary *ini){
 		msg(STATUS,"Computing time-step %i",n);
         msg(STATUS, "Nr. of particles %i: ",(pop->iStop[0]- pop->iStart[0]));
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
@@ -444,7 +442,7 @@ void BorisTestMode(dictionary *ini){
 	//pVelZero(pop);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	//msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
-	//pVelConstant(ini, pop, velThermal[0], velThermal[1]); //constant values for vel.
+	//pVelConstant(pop, velThermal[0], velThermal[1]); //constant values for vel.
 	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
@@ -511,7 +509,6 @@ void BorisTestMode(dictionary *ini){
 	for(int n = 1; n <= nTimeSteps; n++){
 
 		msg(STATUS,"Computing time-step %i ",n);
-		//MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);

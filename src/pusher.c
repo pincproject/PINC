@@ -671,7 +671,6 @@ void puDistr3D1(const Population *pop, Grid *rho){
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			val[p] 		+= xcomp*ycomp*zcomp;
 			val[pj]		+= x    *ycomp*zcomp;
 			val[pk]		+= xcomp*y    *zcomp;
@@ -1172,7 +1171,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
-	int *subdomain = mpiInfo->subdomain;
+	//int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
 	//int rank = mpiInfo->mpiRank;
 
@@ -1523,6 +1522,8 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 	// Send number of emigrants and receive number of immigrants.
 	// Order of reception is not necessarily as determined by the for-loop since
 	// we're using non-blocking send/receive.
+
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
@@ -1543,6 +1544,7 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
 	MPI_Waitall(nNeighbors,recv,MPI_STATUS_IGNORE);
+
 
 }
 
@@ -1573,12 +1575,14 @@ static inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 }
 
 // Works
-static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
+static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies,MpiInfo *mpiInfo){
 
 	int nDims = pop->nDims;
 	long int *iStop = pop->iStop;
 
 	for(int s=0;s<nSpecies;s++){
+
+		puAssertImmigrantsAlloc(nParticles[s],mpiInfo);
 
 		double *pos = &pop->pos[nDims*iStop[s]];
 		double *vel = &pop->vel[nDims*iStop[s]];
@@ -1605,6 +1609,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	long int *nImmigrants = mpiInfo->nImmigrants;
 	MPI_Request *send = mpiInfo->send;
 
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
@@ -1618,21 +1623,28 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	// Since "immigrants" is reused for every receive operation MPI_Irecv cannot
 	// be used. However, in order to receive and process whichever comes first
 	// MPI_ANY_SOURCE is used.
+
+
+
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
-		adSetAll(immigrants,2*nDims*nImmigrantsAlloc,0.0);
+		//2*nSpecies*nDims*nImmigrantsAlloc
+		adSetAll(immigrants,2*nSpecies*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
+		//PINC still chrashes in puMigrate under certain conditions
 		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
 		// adPrint(mpiInfo->immigrants,6);
 		shiftImmigrants(mpiInfo,grid,ne);
 		// adPrint(mpiInfo->immigrants,6);
-		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies);
+
+		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies,mpiInfo);
 
 	}
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
+
 
 }
 
@@ -1640,16 +1652,15 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
     exchangeNMigrants(mpiInfo);
-    //MPI_Barrier(MPI_COMM_WORLD); //debug
     exchangeMigrants(pop,mpiInfo,grid);
 
 }
 
-void puReflect(){
-
-
-
-}
+// void puReflect(){
+//
+//
+//
+// }
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS

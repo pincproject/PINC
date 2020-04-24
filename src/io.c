@@ -196,7 +196,7 @@ void msg(msgKind kind, const char* restrict format,...){
 
 	// Parse and assemble message
 	int rank;
-	char msg[bufferSize], buffer[bufferSize];
+	char msg[bufferSize*2], buffer[bufferSize*2];
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	vsnprintf(msg,bufferSize,format,args);
 	if((kind&ALL)){
@@ -785,7 +785,7 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 
 }
 
-void arrWrite(hid_t h5, const char* name, double timestep, Grid *grid,int dim,
+static void arrWrite(hid_t h5, const char* name, Grid *grid,int dim,
 	MpiInfo *mpiInfo){
 
 		// writes line along edge of box. This should be adjustable, but is not
@@ -907,18 +907,18 @@ void arrWrite(hid_t h5, const char* name, double timestep, Grid *grid,int dim,
 
 }
 
-void xyzWriteProbe(hid_t xyz, Grid *grid,double timestep,MpiInfo *mpiInfo){
+void xyzWriteProbe(hid_t xyz, Grid *grid,MpiInfo *mpiInfo){
 
 	char name[64];
 
 	sprintf(name,"/X");
-	arrWrite(xyz,name,timestep,grid,0,mpiInfo);
+	arrWrite(xyz,name,grid,0,mpiInfo);
 
 	sprintf(name,"/Y");
-	arrWrite(xyz,name,timestep,grid,1,mpiInfo);
+	arrWrite(xyz,name,grid,1,mpiInfo);
 
 	sprintf(name,"/Z");
-	arrWrite(xyz,name,timestep,grid,2,mpiInfo);
+	arrWrite(xyz,name,grid,2,mpiInfo);
 
 }
 

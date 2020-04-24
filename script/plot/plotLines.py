@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
@@ -27,7 +27,7 @@ cmap = 'jet'
 line = 'X' # Y, Z
 
 
-save_figs = True
+save_figs = False#True
 
 ########################
 
@@ -84,8 +84,8 @@ DATA = np.array(DATA)
 
 
 print(DATA.shape)
-plt.plot(DATA[1,:])
-plt.title("timestep = %03d"%((timesteps[1])))
+plt.plot(DATA[0,:])
+plt.title("timestep = %03d"%((timesteps[0])))
 if (line == 'X'):
 	plt.xlabel("X (m)")
 	plt.ylabel(file_name)

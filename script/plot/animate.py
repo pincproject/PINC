@@ -27,10 +27,10 @@ interval = 0.1#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 1 #(1 = all of negative values)
+restr_min = 0.1 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XY' # XY, XZ, YZ
+plane = 'XZ' # XY, XZ, YZ
 
 show_anim = True 
 
@@ -105,8 +105,12 @@ cax = div.append_axes('right', '5%', '5%')
 print("dx = %f"%dimen)
 print("denorm = %e"%denorm )
 
-x= np.linspace(0,dimen*(len(DATA[0,:,0])-1),len(DATA[0,:,0]))
-y= np.linspace(0,dimen*(len(DATA[0,0,:])-1),len(DATA[0,:,0]))
+
+x= np.linspace(0,dimen*(len(DATA[0,0,:])-1),len(DATA[0,0,:]))
+y= np.linspace(0,dimen*(len(DATA[0,:,0])-1),len(DATA[0,:,0]))
+
+
+
 
 X,Y = np.meshgrid(x,y) # not necessarily actual x, y dimensions
 

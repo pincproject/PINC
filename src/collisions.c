@@ -53,40 +53,40 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	iniSetDouble(ini,"collisions:collFrqIonElastic",collFrqIonElastic);
 	iniSetDouble(ini,"collisions:collFrqCEX",collFrqCEX);
 
-	// //numberdensityneutrals given as numberofparticles/m^3
-	// double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
-	//
-    // printf("nt = %e \n",nt);
-	// nt /= units->density; // assumes same for elecron and ion
-	// nt /= units->weights[0];
-	//
-    // printf("nt = %f \n",nt);
-	// //we use computational particles that contain many real particles.
-	// iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
+	//numberdensityneutrals given as numberofparticles/m^3
+	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
+
+    printf("nt = %e \n",nt);
+	nt /= units->density; // assumes same for elecron and ion
+	nt /= units->weights[1];
+
+    printf("nt = %f \n",nt);
+	//we use computational particles that contain many real particles.
+	iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
 
 	// in m/s
-	// TODO: shoulb be per Neutral specie
+	// TODO: should be per Neutral specie
 	double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
 	NvelThermal /= units->velocity;//(units->length/units->time);
 	iniSetDouble(ini,"collisions:thermalVelocityNeutrals",NvelThermal);
 
 	// cross sections given in m^2
-	double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
-	double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
-	double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-
-	StaticSigmaCEX /= (units->length*units->length);
-	StaticSigmaIonElastic /= (units->length*units->length);
-	StaticSigmaElectronElastic /= (units->length*units->length);
-
-	//cross section for computational particles
-	StaticSigmaCEX *= units->weights[1];
-	StaticSigmaIonElastic *= units->weights[1];
-	StaticSigmaElectronElastic *= units->weights[1];
-
-	iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
-	iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
-	iniSetDouble(ini,"collisions:sigmaElectronElastic",StaticSigmaElectronElastic);
+	// double StaticSigmaCEX = iniGetDouble(ini,"collisions:sigmaCEX");
+	// double StaticSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
+	// double StaticSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
+	//
+	// StaticSigmaCEX /= (units->length*units->length);
+	// StaticSigmaIonElastic /= (units->length*units->length);
+	// StaticSigmaElectronElastic /= (units->length*units->length);
+	//
+	// //cross section for computational particles
+	// StaticSigmaCEX *= units->weights[1];
+	// StaticSigmaIonElastic *= units->weights[1];
+	// StaticSigmaElectronElastic *= units->weights[1];
+	//
+	// iniSetDouble(ini,"collisions:sigmaCEX",StaticSigmaCEX);
+	// iniSetDouble(ini,"collisions:sigmaIonElastic",StaticSigmaIonElastic);
+	// iniSetDouble(ini,"collisions:sigmaElectronElastic",StaticSigmaElectronElastic);
 
 	// "a" parameter is max crossect (m^2)
 	// "b" parameter decides velocity to center about.
@@ -161,7 +161,7 @@ static void mccNormalize(dictionary *ini,const Units *units){
 *	Search functions, can probably use other Functions
 ************************************************/
 
-double mccGetMaxDens(Grid *density){
+static double mccGetMaxDens(Grid *density){
 	long int *sizeProd = density->sizeProd;
 	int rank = density->rank;
 	double *val = density->val;
@@ -174,7 +174,7 @@ double mccGetMaxDens(Grid *density){
 	return newval;
 }
 
-double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
+static double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 
 	long int *sizeProd = rhoNeutral->sizeProd;
 	double *val = rhoNeutral->val;
@@ -212,7 +212,7 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 	//12294
 	//printf("p = %li\n",sizeProd[4]);
 	//printf("val[p] = %f\n",val[p]);
-	//MPI_Barrier(MPI_COMM_WORLD);
+
 
 	localDens = val[p];
 	// localDens += 0.125*val[pj];
@@ -240,7 +240,7 @@ double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral){
 
 
 
-double mccGetMaxVel(const Population *pop, int species){
+static double mccGetMaxVel(const Population *pop, int species){
 
 	// iterate over pop and keep max velocity
 	double *vel = pop->vel;
@@ -260,7 +260,7 @@ double mccGetMaxVel(const Population *pop, int species){
 	return MaxVelocity;
 }
 
-double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal){
+static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal){
 
 	// iterate over pop and keep max velocity, uses
 	double *vel = pop->vel;
@@ -285,57 +285,57 @@ double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, d
 	return MaxVelocity;
 }
 
-
-double mccGetMinVel(const Population *pop, int species){
-
-	// iterate over pop and keep min velocity
-	double *vel = pop->vel;
-	double MinVelocity = 100000000000000;
-	double NewVelocity = 0;
-	int nDims = pop->nDims;
-
-	long int iStart = pop->iStart[species];
-	long int iStop  = pop->iStop[species];
-	for(int i=iStart; i<iStop; i++){
-		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
-			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
-		if(NewVelocity<MinVelocity){
-			MinVelocity=NewVelocity;
-		}
-	}
-	return MinVelocity;
-}
+//
+// static double mccGetMinVel(const Population *pop, int species){
+//
+// 	// iterate over pop and keep min velocity
+// 	double *vel = pop->vel;
+// 	double MinVelocity = 100000000000000;
+// 	double NewVelocity = 0;
+// 	int nDims = pop->nDims;
+//
+// 	long int iStart = pop->iStart[species];
+// 	long int iStop  = pop->iStop[species];
+// 	for(int i=iStart; i<iStop; i++){
+// 		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\ //
+// 			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+// 		if(NewVelocity<MinVelocity){
+// 			MinVelocity=NewVelocity;
+// 		}
+// 	}
+// 	return MinVelocity;
+// }
 
 
 /*************************************************
 *		Inline functions
 ************************************************/
 
-inline double mccSigmaCEXFunctional(double a,double b,double v){
+static inline double mccSigmaCEXFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	//msg(STATUS,"in mccSigmaCexF a=%f, b=%f, v = %f",a,b,v );
 	return sigma;//2*0.00121875*pow(10,8);//0.5*pow(10,-1);//temp;
 }
-inline double mccSigmaIonElasticFunctional(double a,double b,double v){
+static inline double mccSigmaIonElasticFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	return sigma;
 }
-inline double mccSigmaElectronElasticFunctional(double a,double b,double v){
+static inline double mccSigmaElectronElasticFunctional(double a,double b,double v){
 	// educated guess on funtional form
 	double sigma = a*exp(-b*v*v);
 	return sigma;
 }
 
-inline double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, double nt){
+static inline double mccGetMyCollFreqStatic(double sigma_T, double vx,double vy,double vz, double nt){
 	// collision freq given a static (double) cross section
 	// this means nu \propto v
 	double v = sqrt(vx*vx + vy*vy + vz*vz);
 	double MyFreq = v*sigma_T*nt; //multiplied by constant sigma
 	return MyFreq;
 }
-inline double mccGetMyCollFreqFunctional(double (*sigma)(double, double,double),
+static inline double mccGetMyCollFreqFunctional(double (*sigma)(double, double,double),
 						double vx,double vy,double vz,double nt,
 						double a,double b){
 
@@ -379,28 +379,29 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	mccVars->pMaxIon = pMaxIon;
 	mccVars->maxFreqIon = maxFreqIon;
 	mccVars->artificialLoss = iniGetDouble(ini,"collisions:artificialLoss");
-	// double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
-	// double NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	// double mccSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	// mccVars->nt = nt;
-	// mccVars->NvelThermal = NvelThermal;
-	// mccVars->mccSigmaElectronElastic = mccSigmaElectronElastic;
+
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
+	int nSpeciesNeutral = iniGetInt(ini, "collisions:nSpeciesNeutral");
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
-	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpecies);
+	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpeciesNeutral);
+	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity",nSpecies);
 	electronMassRatio = mass[0]*units->mass/units->weights[0];
 	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
 	mccVars->neutralDrift = neutralDrift,
 	mccVars->nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	mccVars->NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
-	mccVars->mccSigmaElectronElastic = iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	mccVars->mccSigmaCEX= iniGetDouble(ini,"collisions:sigmaCEX");
-	mccVars->mccSigmaIonElastic = iniGetDouble(ini,"collisions:sigmaIonElastic");
+
 	mccVars->energyConvFactor = (units->energy/6.24150913*pow(10,18)); //J/(J/eV)
 
 	mccVars->collFrqCex = iniGetDouble(ini,"collisions:collFrqCex");
 	mccVars->collFrqIonElastic = iniGetDouble(ini,"collisions:collFrqIonElastic");
 	mccVars->collFrqElectronElastic = iniGetDouble(ini,"collisions:collFrqElectronElastic");
+
+	//TODO: We are assuming one Ion species here, this should be extended to
+	// several species
+	mccVars->mccSigmaElectronElastic = mccVars->collFrqElectronElastic/(mccVars->nt*sqrt(3)*(thermalVelocity[0]) );//iniGetDouble(ini,"collisions:sigmaElectronElastic");
+	mccVars->mccSigmaCEX= 2*(mccVars->collFrqCex/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaCEX");
+	mccVars->mccSigmaIonElastic = 2*(mccVars->collFrqIonElastic/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaIonElastic");
 
 	mccVars->CEX_a = iniGetDouble(ini,"collisions:CEX_a");
 	mccVars->CEX_b = iniGetDouble(ini,"collisions:CEX_b");
@@ -428,7 +429,7 @@ void mccFreeVars(MccVars *mccVars){
 *		Max collision probability Functions
 ************************************************/
 
-void mccGetPmaxElectronConstantFrq(const dictionary *ini,
+static void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	MccVars *mccVars,Population *pop,MpiInfo *mpiInfo){
 	//
 	double collFrqElectronElastic = mccVars->collFrqElectronElastic;
@@ -443,7 +444,7 @@ void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
+static void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	Population *pop,MpiInfo *mpiInfo){
 	//
 	double collFrqIonElastic = mccVars->collFrqIonElastic;
@@ -457,7 +458,7 @@ void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	}
 }
 
-void mccGetPmaxIonFunctional(const dictionary *ini,
+static void mccGetPmaxIonFunctional(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo){
 	// determine max local number desity / max_x(n_t(x_i)) (for target species, neutrals)
@@ -496,7 +497,7 @@ void mccGetPmaxIonFunctional(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxElectronFunctional(const dictionary *ini,
+static void mccGetPmaxElectronFunctional(const dictionary *ini,
 	MccVars *mccVars, Population *pop,
 	MpiInfo *mpiInfo){
 
@@ -528,14 +529,14 @@ void mccGetPmaxElectronFunctional(const dictionary *ini,
 	}
 }
 
-void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral,
+static void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral,
 	Population *pop, MpiInfo *mpiInfo,const gsl_rng *rng){
 
 	// Faster static version. uses static cross sections
 	// to determine maximum collision probability
 
 	double NvelThermal = mccVars->NvelThermal;
-	double nt = 12.;//mccGetMaxDens(rhoNeutral);//mccVars->nt;
+	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;
 	double StaticSigmaCEX = mccVars->mccSigmaCEX;
 	double StaticSigmaIonElastic = mccVars->mccSigmaIonElastic;
 	double max_v = mccGetMaxVelTran(pop,0,rng,NvelThermal);
@@ -550,7 +551,7 @@ void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rhoNeutral
 	}
 }
 
-void mccGetPmaxElectronStatic(const dictionary *ini,
+static void mccGetPmaxElectronStatic(const dictionary *ini,
 	MccVars *mccVars,Grid *rhoNeutral, Population *pop, MpiInfo *mpiInfo){
 
 	// Faster static version. uses static cross sections
@@ -559,13 +560,13 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
 	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;//iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	double StaticSigmaElectronElastic = mccVars->mccSigmaElectronElastic;//iniGetDouble(ini,"collisions:sigmaElectronElastic");
 	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
-	double min_v = mccGetMinVel(pop,0);
+	//double min_v = mccGetMinVel(pop,0);
 	mccVars->maxFreqElectron=StaticSigmaElectronElastic*max_v*nt;
 	mccVars->pMaxElectron = 1-exp(-(mccVars->maxFreqElectron));
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision","getPmax electron =  %f \n", mccVars->pMaxElectron);
 		fMsg(ini, "collision", "max velocity electron = %f \n", max_v);
-		fMsg(ini, "collision", "min velocity electron = %f \n", min_v);
+		//fMsg(ini, "collision", "min velocity electron = %f \n", min_v);
 	}
 }
 
@@ -573,7 +574,7 @@ void mccGetPmaxElectronStatic(const dictionary *ini,
 *		Collision Functions
 ************************************************/
 
-void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
+static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	const gsl_rng *rng, MccVars *mccVars, Population *pop){
 
 	double artificialLoss = mccVars->artificialLoss;
@@ -631,7 +632,7 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 		velchange = sqrt( (2.0*(newEkin))/(mass[0] ));
 	}
 
-	anglePhi = 2*PI*R3;
+	anglePhi = 2*PINC_PI*R3;
 	if(vx>0.0){
 		if(vx<0.0000000000000001){vx=0.0000000000000001;}
 		if(vx>0.99999999999999){vx=0.99999999999999;}
@@ -671,13 +672,12 @@ void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 }
 
-void scatterIon(double *vx_point, double *vy_point,double *vz_point,
+static void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vxMW, double vyMW, double vzMW,
-	const gsl_rng *rng, MccVars *mccVars, Population *pop){
+	const gsl_rng *rng, Population *pop){
 
 
 	double *mass = pop->mass;
-	//double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
@@ -696,14 +696,6 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	double vz_=0;
 	double R1 = gsl_rng_uniform_pos(rng);
 	double R2 = gsl_rng_uniform_pos(rng);
-
-
-	//vxMW = vxMW;
-	//vyMW = vyMW;
-	//vzMW = vzMW;
-	//printf("drift = %f, %f, %f \n",drift[3],drift[4],drift[5] );
-	//printf("vxMW = %f, %f, %f \n",vxMW,vyMW,vzMW );
-	//printf("vx = %f, %f, %f \n",vx,vy,vz );
 
 	//The scattering happens in netral rest frame
 	//transfer to neutral stationary frame
@@ -726,7 +718,7 @@ void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	angleChi =  acos(sqrt(1-R1)); //labframe goes from 0 to pi/2
 	newEkin = Ekin*(cos(angleChi)*cos(angleChi));
 	velchange = sqrt( (2.0*newEkin)/mass[1] );
-	anglePhi = 2*PI*R2;
+	anglePhi = 2*PINC_PI*R2;
 
 	if(vx>0.0){ // debugging, should not be necessary
 		if(vx<0.0000000000000001){vx=0.0000000000000001;}
@@ -788,7 +780,7 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 
 	mccGetPmaxElectronStatic(ini,mccVars,rhoNeutral,pop,mpiInfo);
 
-	double nt = mccVars->nt;
+	double nt = 0;//mccVars->nt;
 	double mccSigmaElectronElastic = mccVars->mccSigmaElectronElastic;
 	double maxfreqElectron = mccVars->maxFreqElectron;
 	double Pmax = mccVars->pMaxElectron;
@@ -879,7 +871,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	mccGetPmaxIonStatic(ini,mccVars,rhoNeutral,pop,mpiInfo,rng);
 
 	//printf("pmax = %f\n",mccVars->pMaxIon );
-	double nt = mccVars->nt;
+	double nt = 0;//mccVars->nt;
 	double NvelThermal = mccVars->NvelThermal;
 	double mccSigmaCEX= mccVars->mccSigmaCEX;
 	double mccSigmaIonElastic = mccVars->mccSigmaIonElastic;
@@ -954,7 +946,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 				vx = &vel[q];
 				vy = &vel[q+1];
 				vz = &vel[q+2];
-				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 			}else{
 				errorcounter += 1;
 				errorcounter1 += 1;
@@ -998,7 +990,7 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 			vx = &vel[q];
 			vy = &vel[q+1];
 			vz = &vel[q+2];
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			// Charge exchange:
 			// flip ion and neutral. Neutral is new ion.
@@ -1174,7 +1166,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 				vx = &vel[q];
 				vy = &vel[q+1];
 				vz = &vel[q+2];
-				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+				scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 			}else{
 				errorcounter += 1;
 				errorcounter1 += 1;
@@ -1219,7 +1211,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 			vy = &vel[q+1];
 			vz = &vel[q+2];
 
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			// Charge exchange:
 			// flip ion and neutral. Neutral is new ion.
@@ -1236,7 +1228,7 @@ void mccCollideIonFunctional(const dictionary *ini,Grid *rhoNeutral,Population *
 	}
 }
 
-void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideElectronConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng,
 	MpiInfo *mpiInfo){
 
@@ -1298,7 +1290,7 @@ void mccCollideElectronConstantFrq(const dictionary *ini,Grid *rhoNeutral, Popul
 	}
 }
 
-void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population *pop,
+void mccCollideIonConstantFrq(const dictionary *ini, Population *pop,
 	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo){
 
 	// uses constant collfreq fixed number of colls per dt
@@ -1364,7 +1356,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 			vy = &vel[q+1];
 			vz = &vel[q+2];
 
-			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+			scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 		}else{
 			errorcounter += 1;
 			errorcounter1 += 1;
@@ -1394,7 +1386,7 @@ void mccCollideIonConstantFrq(const dictionary *ini,Grid *rhoNeutral, Population
 		vy = &vel[q+1];
 		vz = &vel[q+2];
 
-		scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,mccVars,pop);
+		scatterIon(vx,vy,vz,vxMW,vyMW,vzMW,rng,pop);
 	}else{
 		// Charge exchange:
 		// flip ion and neutral. Neutral is new ion.
@@ -1425,14 +1417,16 @@ void mccCollideConstantCrossect(const dictionary *ini,Grid *rhoNeutral, Populati
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision", "\n Computing time-step \n");
 	}
+
 	mccCollideIonStatic(ini,rhoNeutral, pop, mccVars, rng, mpiInfo);
 	mccCollideElectronStatic(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 }
 
-funPtr constCrossect_set(dictionary *ini){
+funPtr mccConstCrossect_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
+
 	//point to function that calls both collision functions.. or more
 	collissions = &mccCollideConstantCrossect;
 
@@ -1446,11 +1440,11 @@ void mccCollideConstantFreq(const dictionary *ini,Grid *rhoNeutral, Population *
 		fMsg(ini, "collision", "\n Computing time-step \n");
 	}
 
-	mccCollideIonConstantFrq(ini,rhoNeutral, pop,mccVars,rng,mpiInfo);
-	mccCollideElectronConstantFrq(ini,rhoNeutral, pop,mccVars, rng,mpiInfo);
+	mccCollideIonConstantFrq(ini, pop,mccVars,rng,mpiInfo);
+	mccCollideElectronConstantFrq(ini, pop,mccVars, rng,mpiInfo);
 }
 
-funPtr constFreq_set(dictionary *ini){
+funPtr mccConstFreq_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
@@ -1470,7 +1464,7 @@ void mccCollideFunctional(const dictionary *ini,Grid *rhoNeutral, Population *po
 	mccCollideElectronFunctional(ini,rhoNeutral, pop,mccVars, rng,mpiInfo);
 }
 
-funPtr functionalCrossect_set(dictionary *ini){
+funPtr mccFunctionalCrossect_set(dictionary *ini){
 
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
@@ -1480,16 +1474,15 @@ funPtr functionalCrossect_set(dictionary *ini){
 	return collissions;
 }
 
-void collissionsOff(const dictionary *ini, Population *pop,
-	MccVars *mccVars, const gsl_rng *rng, MpiInfo *mpiInfo){
+void mccCollissionsOff(){
 	//does nothing to turn off all collisions.
 	NULL;
 }
 
-funPtr collissionsOff_set(dictionary *ini){
+funPtr mccCollissionsOff_set(dictionary *ini){
 	mccSanity(ini,"mccMode",2);
 	funPtr collissions;
-	collissions = &collissionsOff;
+	collissions = &mccCollissionsOff;
 
 	return collissions;
 }
@@ -1502,13 +1495,8 @@ funPtr collissionsOff_set(dictionary *ini){
 
 // runs used in development.
 
-funPtr mccMode_set(dictionary *ini){
-	//test sanity here!
-	mccSanity(ini,"mccMode",2);
-	return mccMode;
-}
 
-void mccMode(dictionary *ini){
+static void mccMode(dictionary *ini){
 
 	msg(STATUS, "start mcc Test Mode");
 
@@ -1539,10 +1527,10 @@ void mccMode(dictionary *ini){
 												);
 
 	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+									mccCollissionsOff_set,
+									mccConstCrossect_set,
+									mccConstFreq_set,
+									mccFunctionalCrossect_set);
 
 	//
 	void (*solve)() = NULL;
@@ -1582,6 +1570,10 @@ void mccMode(dictionary *ini){
 	int nSpecies = pop->nSpecies;
 	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
 	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
+
+	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfo);
+	gZero(rhoNeutral);
+	gAdd(rhoNeutral,mccVars->nt);
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -1629,11 +1621,12 @@ void mccMode(dictionary *ini){
 	//msg(STATUS, "constants = %f, %f", velThermal[0], velThermal[1]);
 	// Initalize particles
 	//pPosLattice(ini, pop, mpiInfo);
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pVelZero(pop);
 	//double *thermalVelocity = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 
-	//pVelConstant(ini, pop,(thermalVelocity[0]),(thermalVelocity[1]) ); //constant values for vel.
+	//pVelConstant( pop,(thermalVelocity[0]),(thermalVelocity[1]) ); //constant values for vel.
 	pVelMaxwell(ini, pop, rng);
 	//double maxVel = iniGetDouble(ini,"population:maxVel");
 
@@ -1681,7 +1674,7 @@ void mccMode(dictionary *ini){
 	//pWriteH5(pop, mpiInfo, 0.0, 0.5,1);
 	pWriteTemperature(temperature,pop,0.0,units,ini);
 	pWriteEnergy(history,pop,0.0,units);
-	xyzWriteProbe(probe, phi,0.0,mpiInfo);
+	xyzWriteProbe(probe, phi,mpiInfo);
 
 	//msg(STATUS, "Pmax for Electrons is %f",PmaxElectron);
 	//msg(STATUS, "Pmax for Ions is %f",PmaxIon);
@@ -1714,7 +1707,7 @@ void mccMode(dictionary *ini){
 		/*
 		*   Collisions
 		*/
-		collide(ini, pop, mccVars, rng,mpiInfo);
+		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho);
@@ -1797,14 +1790,14 @@ void mccMode(dictionary *ini){
 		//gWriteH5(phi, mpiInfo, (double) n);
 		pWriteTemperature(temperature,pop,(double)n,units,ini);
 		//fillGridIndexes(phi);
-		xyzWriteProbe(probe, phi,(double)n,mpiInfo);
+		xyzWriteProbe(probe, phi,mpiInfo);
 		pWriteEnergy(history,pop,(double)n,units);
 		//gWriteH5(phi, mpiInfo, (double) n);
 
 	}
 
 	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
-	MPI_Barrier(MPI_COMM_WORLD);
+
 
 	/*
 	* FINALIZE PINC VARIABLES
@@ -1841,13 +1834,16 @@ void mccMode(dictionary *ini){
 
 }
 
+funPtr mccMode_set(dictionary *ini){
+	//test sanity here!
+	mccSanity(ini,"mccMode",2);
+	return mccMode;
 
-
-funPtr oCollMode_set(dictionary *ini){
-	return oCollMode;
 }
 
-void oCollMode(dictionary *ini){
+
+
+static void oCollMode(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
@@ -1869,10 +1865,10 @@ void oCollMode(dictionary *ini){
 
 
 	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+									mccCollissionsOff_set,
+									mccConstCrossect_set,
+									mccConstFreq_set,
+									mccFunctionalCrossect_set);
 
 
 	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
@@ -1909,7 +1905,7 @@ void oCollMode(dictionary *ini){
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 	MccVars *mccVars=mccAlloc(ini,units);
 
-    Object *obj = oAlloc(ini,mpiInfo,units);              // for capMatrix - objects
+    PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
 //TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -1958,6 +1954,8 @@ void oCollMode(dictionary *ini){
 
 	hid_t history = xyOpenH5(ini,"history");
 	pCreateEnergyDatasets(history,pop);
+	xyCreateDataset(history,"/current/electrons/dataset");
+	xyCreateDataset(history,"/current/ions/dataset");
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
@@ -1971,7 +1969,8 @@ void oCollMode(dictionary *ini){
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
@@ -1986,7 +1985,7 @@ void oCollMode(dictionary *ini){
 
 	//add influx of new particles on boundary
 	pPurgeGhost(pop, rho);
-	pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
+	pFillGhost(ini,rho,pop,rng);
 
 
 
@@ -2047,68 +2046,73 @@ void oCollMode(dictionary *ini){
 	//- NEUTRALS - initialization
 	//-----------------------------------
 
-	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
-	Grid *V   = gAlloc(ini, VECTOR,mpiInfoNeut);
-	Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *dKE   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *IE   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *Vtilde   = gAlloc(ini, VECTOR,mpiInfoNeut);
-	Grid *Itilde   = gAlloc(ini, SCALAR,mpiInfoNeut);
-	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfoNeut);
 
+	Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfo);
 	gZero(rhoNeutral);
-   	gZero(P);
-	gZero(dKE);
-	gZero(IE);
-   	gZero(V);
-	gZero(Itilde);
-   	gZero(Vtilde);
-
-	gCreateNeighborhood(ini, mpiInfoNeut, rhoNeutral);
-
-	neSetBndSlices(ini, IE, mpiInfoNeut);
-	neSetBndSlicesVel(ini, V, mpiInfoNeut);
-
-	/*
-	 * PREPARE FILES FOR WRITING
-	 */
-
-    gOpenH5(ini, rhoNeutral, mpiInfoNeut, units, 1, "rhoNeutral");
-    gOpenH5(ini, P,   mpiInfoNeut, units, 1, "P");
-	gOpenH5(ini, IE,   mpiInfoNeut, units, 1, "IE");
-	gOpenH5(ini, V,   mpiInfoNeut, units, units->velocity, "V");
-
-	nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
-	//nePosLattice(ini, neutralPop, mpiInfoNeut);
-	//neVelMaxwell(ini, neutralPop, rng);
-	neVelDrift(ini, neutralPop);
-	//double maxVel = iniGetDouble(ini,"population:maxVel");
-
-	nePurgeGhost(neutralPop, rhoNeutral);
-	neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
-
-
-	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
-
-    NeutralDistr3D1(neutralPop, rhoNeutral);
-	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-	gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
-	NeutralDistr3D1Vector(neutralPop,V,rhoNeutral);
-	gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
-	nuGBndVel(V,mpiInfoNeut);
-	gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
-
-	neSetI(IE,V,rhoNeutral,neutralPop,ini);
-	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
-	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
-
-	neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-	neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
-
-	gWriteH5(rhoNeutral, mpiInfoNeut, (double) 0);
-	gWriteH5(IE, mpiInfoNeut, (double) 0);
-	gWriteH5(P, mpiInfoNeut, (double) 0);
-	gWriteH5(V, mpiInfoNeut, (double) 0);
+	gAdd(rhoNeutral,mccVars->nt);
+	//
+	// NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
+	// Grid *V   = gAlloc(ini, VECTOR,mpiInfoNeut);
+	// Grid *P   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	// Grid *dKE   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	// Grid *IE   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	// Grid *Vtilde   = gAlloc(ini, VECTOR,mpiInfoNeut);
+	// Grid *Itilde   = gAlloc(ini, SCALAR,mpiInfoNeut);
+	// Grid *rhoNeutral = gAlloc(ini, SCALAR,mpiInfoNeut);
+	//
+	// gZero(rhoNeutral);
+  //  	gZero(P);
+	// gZero(dKE);
+	// gZero(IE);
+  //  	gZero(V);
+	// gZero(Itilde);
+  //  	gZero(Vtilde);
+	//
+	// gCreateNeighborhood(ini, mpiInfoNeut, rhoNeutral);
+	//
+	// neSetBndSlices( IE, mpiInfoNeut);
+	// neSetBndSlicesVel(ini, V, mpiInfoNeut);
+	//
+	// /*
+	//  * PREPARE FILES FOR WRITING
+	//  */
+	//
+  //   gOpenH5(ini, rhoNeutral, mpiInfoNeut, units, 1, "rhoNeutral");
+  //   gOpenH5(ini, P,   mpiInfoNeut, units, 1, "P");
+	// gOpenH5(ini, IE,   mpiInfoNeut, units, 1, "IE");
+	// gOpenH5(ini, V,   mpiInfoNeut, units, units->velocity, "V");
+	//
+	// nePosUniform(ini, neutralPop, mpiInfoNeut, rngSync);
+	// //nePosLattice(ini, neutralPop, mpiInfoNeut);
+	// //neVelMaxwell(ini, neutralPop, rng);
+	// neVelDrift(ini, neutralPop);
+	// //double maxVel = iniGetDouble(ini,"population:maxVel");
+	//
+	// nePurgeGhost(neutralPop, rhoNeutral);
+	// neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+	//
+	//
+	// nuObjectpurge(neutralPop,rhoObj,obj);
+	//
+  //   NeutralDistr3D1(neutralPop, rhoNeutral);
+	// gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+	// gHaloOp(setSlice, rhoNeutral, mpiInfoNeut, TOHALO);
+	// NeutralDistr3D1Vector(neutralPop,V,rhoNeutral);
+	// gHaloOp(addSlice, V, mpiInfoNeut, FROMHALO);
+	// nuGBndVel(V,mpiInfoNeut);
+	// gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+	//
+	// neSetI(IE,V,rhoNeutral,ini);
+	// neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
+	// gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
+	//
+	// neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
+	// neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+	//
+	// gWriteH5(rhoNeutral, mpiInfoNeut, (double) 0);
+	// gWriteH5(IE, mpiInfoNeut, (double) 0);
+	// gWriteH5(P, mpiInfoNeut, (double) 0);
+	// gWriteH5(V, mpiInfoNeut, (double) 0);
 
 	//-----------------------------------
 	//- NEUTRALS - initialization - end
@@ -2130,60 +2134,60 @@ void oCollMode(dictionary *ini){
 		tStart(t);
 
 		msg(STATUS,"Computing time-step %i",n);
-		msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
+		//msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
 		//-----------------------------------
 		//- NEUTRALS
 		//-----------------------------------
 
-
-		neVelAssertMax(neutralPop,maxVel);
-		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
-		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, P,neutralPop );
-		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
-
-		neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
-		gHaloOp(setSlice, Vtilde, mpiInfoNeut, TOHALO);
-
-		neAdvectI(IE,Itilde,P,V,rhoNeutral,neutralPop);
-		gHaloOp(setSlice, Itilde, mpiInfoNeut, TOHALO);
-
-		//neApplyObjVel(obj,V,neutralPop);
-		neMove(neutralPop,V,Vtilde);
-		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
-		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
-
-		neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
-		neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
-
-
-		neConvectKE(dKE,Vtilde,rhoNeutral, neutralPop);
-		gHaloOp(setSlice, dKE, mpiInfoNeut, TOHALO);
-
-		neConvectV(V,Vtilde,rhoNeutral,neutralPop );
-		gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
-
-		nuGBndVel(V,mpiInfoNeut);
-
-		nePurgeGhost(neutralPop, rhoNeutral);
-		neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
-		NeutralDistr3D1(neutralPop, rhoNeutral);
-		gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
-
-		neConvectI(IE,Itilde,dKE,rhoNeutral,neutralPop );
-
-		neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
-		nuGBnd(IE,mpiInfoNeut);
-		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
-
-		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, IE,neutralPop );
-
-		neApplyObjVel(obj,V,neutralPop);
+		//
+		// neVelAssertMax(neutralPop,maxVel);
+		// nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
+		// nuObjectSetVal(P,0.,obj);
+		// neApplyObjI(obj, P );
+		// gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
+		//
+		// neAdvectV(V,Vtilde,P,rhoNeutral,neutralPop);
+		// gHaloOp(setSlice, Vtilde, mpiInfoNeut, TOHALO);
+		//
+		// neAdvectI(IE,Itilde,P,V,rhoNeutral,neutralPop);
+		// gHaloOp(setSlice, Itilde, mpiInfoNeut, TOHALO);
+		//
+		// //neApplyObjVel(obj,V,neutralPop);
+		// neMove(neutralPop,V);
+		// //nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+		// //nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
+		//
+		// neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
+		// neMigrate(neutralPop, mpiInfoNeut, rhoNeutral);
+		//
+		//
+		// neConvectKE(dKE,Vtilde,rhoNeutral, neutralPop);
+		// gHaloOp(setSlice, dKE, mpiInfoNeut, TOHALO);
+		//
+		// neConvectV(V,Vtilde,rhoNeutral,neutralPop );
+		// gHaloOp(setSlice, V, mpiInfoNeut, TOHALO);
+		//
+		// nuGBndVel(V,mpiInfoNeut);
+		//
+		// nePurgeGhost(neutralPop, rhoNeutral);
+		// neFillGhost(ini,neutralPop,rngSync,mpiInfoNeut);
+		// NeutralDistr3D1(neutralPop, rhoNeutral);
+		// gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
+		//
+		// neConvectI(IE,Itilde,dKE,rhoNeutral,neutralPop );
+		//
+		// neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
+		// nuGBnd(IE,mpiInfoNeut);
+		// gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
+		//
+		// nuObjectSetVal(IE,0.,obj);
+		// neApplyObjI(obj, IE );
+		//
+		// neApplyObjVel(obj,V);
 
 		//-----------------------------------
 		//- NEUTRALS end
@@ -2206,13 +2210,13 @@ void oCollMode(dictionary *ini){
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
 
         //add influx of new particles on boundary
         pPurgeGhost(pop, rho);
-        pFillGhost(ini,rho,pop,rng,mpiInfoNeut);
+        pFillGhost(ini,rho,pop,rng);
 
 
 
@@ -2252,12 +2256,12 @@ void oCollMode(dictionary *ini){
         //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 		//gZero(P);
-        nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
+        //nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
 		//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
 
 
         // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo);    // for capMatrix - objects
+        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);   // for capMatrix - objects
 
 
     //gBnd(phi, mpiInfo);
@@ -2293,7 +2297,7 @@ void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%10 == 0 || n>29950){//50614
+		if(n%1000 == 0 || n>29950){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2304,13 +2308,15 @@ void oCollMode(dictionary *ini){
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
 
-			gWriteH5(V, mpiInfoNeut, (double) n);
-			gWriteH5(rhoNeutral, mpiInfoNeut, (double) n);
+			//gWriteH5(V, mpiInfoNeut, (double) n);
+			//gWriteH5(rhoNeutral, mpiInfoNeut, (double) n);
 			//gWriteH5(P, mpiInfoNeut, (double) n);
-			gWriteH5(IE, mpiInfoNeut, (double) n);
+			//gWriteH5(IE, mpiInfoNeut, (double) n);
 		}
 
 		pWriteEnergy(history,pop,(double)n,units);
+		xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
+		xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
 	}
 
 	if(mpiInfo->mpiRank==0) {
@@ -2329,17 +2335,17 @@ void oCollMode(dictionary *ini){
 	 gFreeMpi(mpiInfoNeut);
 
 	 // Close h5 files
-	 gCloseH5(rhoNeutral);
-	  gCloseH5(P);
-	 gCloseH5(IE);
-	 gCloseH5(V);
-
-	gFree(rhoNeutral);
-	gFree(P);
-	gFree(IE);
-	gFree(V);
-	gFree(Itilde);
-	gFree(Vtilde);
+	//  gCloseH5(rhoNeutral);
+	//   gCloseH5(P);
+	//  gCloseH5(IE);
+	//  gCloseH5(V);
+	//
+	// gFree(rhoNeutral);
+	// gFree(P);
+	// gFree(IE);
+	// gFree(V);
+	// gFree(Itilde);
+	// gFree(Vtilde);
 	//-----------------
 	// Neutrals
 	// -----------------
@@ -2391,42 +2397,43 @@ void oCollMode(dictionary *ini){
 }
 
 
-funPtr neutTest_set(dictionary *ini){
-	return neutTest;
+funPtr oCollMode_set(){ //dictionary *ini
+	 // TODO: sanity
+	return oCollMode;
 }
 
-void neutTest(dictionary *ini){
+static void neutTest(dictionary *ini){
 
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   			= select(ini,	"methods:acc",
-												puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set,
-                        puBoris3D1KETEST_set);
+	// void (*acc)()   			= select(ini,	"methods:acc",
+	// 											puAcc3D1_set,
+	// 											puAcc3D1KE_set,
+	// 											puAccND1_set,
+	// 											puAccND1KE_set,
+	// 											puAccND0_set,
+	// 											puAccND0KE_set,
+    //                     puBoris3D1KETEST_set);
 
-	void (*distr)() 			= select(ini,	"methods:distr",
-												puDistr3D1split_set,
-												puDistr3D1_set,
-												puDistrND1_set,
-												puDistrND0_set);
-
-
-	void (*collide)() = select(ini,	"methods:mcc",
-									collissionsOff_set,
-									constCrossect_set,
-									constFreq_set,
-									functionalCrossect_set);
+	// void (*distr)() 			= select(ini,	"methods:distr",
+	// 											puDistr3D1split_set,
+	// 											puDistr3D1_set,
+	// 											puDistrND1_set,
+	// 											puDistrND0_set);
 
 
-	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
-												puExtractEmigrants3D_set,
-												puExtractEmigrantsND_set,
-                        						puExtractEmigrants3DOpen_set);
+	// void (*collide)() = select(ini,	"methods:mcc",
+	// 								collissionsOff_set,
+	// 								constCrossect_set,
+	// 								constFreq_set,
+	// 								functionalCrossect_set);
+
+
+	// void (*extractEmigrants)()	= select(ini,	"methods:migrate",
+	// 											puExtractEmigrants3D_set,
+	// 											puExtractEmigrantsND_set,
+    //                     						puExtractEmigrants3DOpen_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set
@@ -2447,7 +2454,7 @@ void neutTest(dictionary *ini){
 
 	MpiInfo *mpiInfoNeut = gAllocMpi(ini);
 
-	MccVars *mccVars=mccAlloc(ini,units);
+	//MccVars *mccVars=mccAlloc(ini,units);
 
 	// For SPH neutral particles
 	NeutralPopulation *neutralPop = pNeutralAlloc(ini,mpiInfoNeut);
@@ -2468,7 +2475,7 @@ void neutTest(dictionary *ini){
 	gZero(Itilde);
    	gZero(Vtilde);
 
-	Object *obj = oAlloc(ini,mpiInfoNeut,units);              // for capMatrix - objects
+	PincObject *obj =objoAlloc(ini,mpiInfoNeut,units);              // for capMatrix - objects
 
 
     // for SPH neutrals
@@ -2478,7 +2485,7 @@ void neutTest(dictionary *ini){
 
     // need for SPH neutrals a function
 
-	neSetBndSlices(ini, IE, mpiInfoNeut);
+	neSetBndSlices( IE, mpiInfoNeut);
 	neSetBndSlicesVel(ini, V, mpiInfoNeut);
 
 
@@ -2552,7 +2559,7 @@ void neutTest(dictionary *ini){
 	// neInjectParticles((int)(trueSize[0]/2)+1,sliceDim ,multiplyDensBy, ini, neutralPop,
 	// 	rngSync, mpiInfoNeut);
 	//
-	// MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 	// SPH neutrals
 	//neExtractEmigrants3DOpen(neutralPop, mpiInfoNeut);
@@ -2567,7 +2574,7 @@ void neutTest(dictionary *ini){
 	 */
 
 
-	nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
+	nuObjectpurge(neutralPop,rhoObj,obj);
 
     NeutralDistr3D1(neutralPop, rhoNeutral);
 	gHaloOp(addSlice, rhoNeutral, mpiInfoNeut, FROMHALO);
@@ -2595,7 +2602,7 @@ void neutTest(dictionary *ini){
 	////nuGBnd(P, mpiInfoNeut);
 
 	//neSetV(V,neutralPop,ini);
-	neSetI(IE,V,rhoNeutral,neutralPop,ini);
+	neSetI(IE,V,rhoNeutral,ini);
 	neSetBndSlicesEnerg(ini,IE,rhoNeutral,mpiInfoNeut);
 	gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",3);
@@ -2683,23 +2690,23 @@ void neutTest(dictionary *ini){
 
 		//printf("\n");
 		msg(STATUS," Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
+    msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 		double gridEnerg = gSumTruegrid(IE);
 		double Vsum = gSumTruegrid(V);
 		double rhosum = gSumTruegrid(rhoNeutral);
 		msg(STATUS,"grid energy = %f",gridEnerg);
 		msg(STATUS,"Vsum = %f",Vsum);
 		msg(STATUS,"rhosum = %f \n",rhosum);
-		MPI_Barrier(MPI_COMM_WORLD);	// Temporary, shouldn't be necessary
+
 
 
         neVelAssertMax(neutralPop,maxVel);
 
 		tStart(t);
 
-		nePressureSolve3D(P,IE,rhoNeutral,neutralPop, mpiInfoNeut);
-		nuObjectSetVal(P,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, P,neutralPop );
+		nePressureSolve3D(P,IE,rhoNeutral,neutralPop);
+		nuObjectSetVal(P,0.,obj);
+		neApplyObjI(obj, P );
 		//gHaloOp(addSlice, P, mpiInfoNeut, FROMHALO);
 		gHaloOp(setSlice, P, mpiInfoNeut, TOHALO);
 		//nuGBnd(P,mpiInfoNeut);
@@ -2724,7 +2731,7 @@ void neutTest(dictionary *ini){
 		//nuGBndVel(Itilde,mpiInfoNeut);
 
 		//neApplyObjVel(obj,V,neutralPop);
-		neMove(neutralPop,V,Vtilde);
+		neMove(neutralPop,V);
 		//nuObjectpurge(neutralPop,rhoObj,obj,mpiInfoNeut);
 		//nuObjectCollide(neutralPop,rhoObj,obj,mpiInfoNeut);
 
@@ -2765,11 +2772,11 @@ void neutTest(dictionary *ini){
 		gHaloOp(setSlice, IE, mpiInfoNeut, TOHALO);
 		//gHaloOp(setSlice, IE, mpiInfoNeut, FROMHALO);
 		//gHaloOp(addSliceAvg, IE, mpiInfoNeut, TOHALO);
-		nuObjectSetVal(IE,rhoObj,0.,obj,mpiInfoNeut);
-		neApplyObjI(obj, IE,neutralPop );
+		nuObjectSetVal(IE,0.,obj);
+		neApplyObjI(obj, IE );
 
 		//nuGBndVel(IE,mpiInfoNeut);
-		neApplyObjVel(obj,V,neutralPop);
+		neApplyObjVel(obj,V);
 
 
 
@@ -2837,4 +2844,10 @@ void neutTest(dictionary *ini){
 	gsl_rng_free(rng);
 
 
+}
+
+
+funPtr neutTest_set(){ //dictionary *ini
+	// TODO: sanity
+	return neutTest;
 }

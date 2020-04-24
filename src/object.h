@@ -5,8 +5,8 @@
  * @date		19.10.16
  */
 
-#ifndef OBJECT_H
-#define OBJECT_H
+#ifndef PINC_OBJECT_H
+#define PINC_OBJECT_H
 
 /**
  * @brief Represents an object
@@ -32,7 +32,10 @@ typedef struct{
 	double *deltaPhi;
 	double *rhoCorr;
 	double *invNrSurfNod;
-} Object;
+	double *objectCurrent;		/// Store current to each object per specie
+	double *bias;							/// Fixed bias value for object
+	int biasOn;							/// Turns biasing on or of
+} PincObject;
 
 
 /**
@@ -48,8 +51,8 @@ typedef struct{
  *
  *
  */
-void oMode(dictionary *ini);
-funPtr oMode_set(dictionary *ini);
+//void oMode(dictionary *ini);
+funPtr oMode_set();
 
 /**
  * @brief Allocates an Object object
@@ -60,14 +63,14 @@ funPtr oMode_set(dictionary *ini);
  *
  * NB! Assumes 1 ghost point on all edges for now.
  */
-Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units);
+PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units);
 
 /**
  * @brief Frees allocated object
  * @param	obj     Object
  * @return	void
  */
-void oFree(Object *obj);
+void oFree(PincObject *objobj);
 
 /**
  * @brief	Opens .grid.h5-file to read in object
@@ -83,25 +86,24 @@ void oFree(Object *obj);
  * Remember to call oCloseH5().
  *
  */
-void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
+void oOpenH5(const dictionary *ini, PincObject *objobj, const MpiInfo *mpiInfo,
              const Units *units, double denorm, const char *fName);
 /**
  * @brief	Closes .grid.h5-file
  * @param	obj     Object
  * @return	void
  */
-void oCloseH5(Object *obj);
+void oCloseH5(PincObject *objobj);
 
 /**
  * @brief	Read values from .grid.h5-field to Object
  * @param	obj             Object
- * @param	mpiInfo			MpiInfo
  * @return	void
  * @see gReadH5()
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Object *obj, const MpiInfo *mpiInfo);
+void oReadH5(PincObject *objobj);
 
 /**
  * @brief   Compute the capacitance matrix. (one big matrix containing all objects)
@@ -119,10 +121,10 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo);
   * @param	obj		test
   * TODO:
   */
- long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
+ //long int oGatherSurfaceNodes(PincObject *objobj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
 
 
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
+void oComputeCapacitanceMatrix(PincObject *objobj, dictionary *ini,
                                const MpiInfo *mpiInfo);
 
 /**
@@ -135,8 +137,8 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
  *
  * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
  */
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
-                             const MpiInfo *mpiInfo);
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *objobj,
+                             const MpiInfo *mpiInfo,Units *units);
 
 /**
  * @brief	Collect the charge inside each object
@@ -148,15 +150,15 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
  *
  * Collect the charge inside each object.
  */
-void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objobj,
                           const MpiInfo *mpiInfo);
 
 
 //Set the the object nodes of a grid to some value
-void oSetObjectValues(Object *obj, Grid *grid, int nthObj, double value);
+void oSetObjectValues(PincObject *obj, Grid *grid, int nthObj, double value);
 
 void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
-                                Object *obj, const MpiInfo *MpiInfo, const Units *units);
+                                PincObject *obj, const MpiInfo *MpiInfo, const Units *units);
 
 /**
  * TO IMPLEMENT!
@@ -170,13 +172,13 @@ particles that will not intersect object next timestep
 pop->vicinity contains index of particles that are close
 to the object
 */
-void oVicinityParticles(Population *pop, Object *obj);
+void oVicinityParticles(Population *pop, PincObject *obj);
 
 //"collides" all particles based on collision type
-void oParticleCollision(Population *pop, const Object *obj);
+void oParticleCollision(Population *pop, const PincObject *obj);
 
 //Populates pop->collisions
-void oFindParticleCollisions(Population *pop, Object *obj);
+void oFindParticleCollisions(Population *pop, PincObject *obj);
 
 /**
  * @brief	Computes the local point a nearby particle with collide with an object
@@ -188,31 +190,31 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  *
  * Computes the local point a nearby particle with collide with an object
  */
-double *oFindIntersectPoint(Population *pop, long int id, Object *obj, 
-                           const MpiInfo *mpiInfo);
+/* double *oFindIntersectPoint(Population *pop, long int id, PincObject *obj, 
+                           const MpiInfo *mpiInfo); */
 
 
-double *oFindNearestSurfaceNodes(Population *pop, Object *obj, long int particleId);
+double *oFindNearestSurfaceNodes(Population *pop, PincObject *obj, long int particleId);
 
 
-void oSolFacingSurfaceNodes2(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo);
+void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInfo *mpiInfo);
 
 //find nodes on obj tagged as metal, that directly face sunlight (direction of drift)
-void oSolFacingSurfaceNodes(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo);
+void oPhotoElectronNodeFill(const dictionary *ini, PincObject *obj, const MpiInfo *mpiInfo);
 
 
 /*
 Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
-void oPlanckPhotonIntegral(dictionary *ini, const Units *units, Object *obj, Grid *phi);
+void oPlanckPhotonIntegral(dictionary *ini, const Units *units, PincObject *obj, Grid *phi);
 
 
 /*
 Integral of radiance for specific wavenumber to infinity, finds
 total energy in Joule in the band per timetep
 */
-void oPlanckEnergyIntegral(dictionary *ini, const Units *units, Object *obj);
+void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj);
 
 
 /*
@@ -220,16 +222,16 @@ Alternative to calculating the electron flux from the blackbody integrals. Uses 
 value for the photoelectrons current density from the ini file to calculate total flux of 
 real (non-computational) electrons per timestep
 */
-void oPhotoElectronCurrent(dictionary *ini, const Units *units, Object *obj);
+void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj);
 /**
  * @brief   Check whether a certain node is a ghost node.
  * @param	grid	Grid
  * @param	node	long int
  * @return	bool
  */
-bool isGhostNode(Grid *grid, long int node);
-void oGhost(long int node, const int *nGhostLayersBefore,
-            const int *nGhostLayersAfter, const int *trueSize,
-            const long int *sizeProd, bool *ghost);
-			
+//bool oIsGhostNode(Grid *grid, long int node);
+//void oGhost(long int node, const int *nGhostLayersBefore,
+//            const int *nGhostLayersAfter, const int *trueSize,
+//            const long int *sizeProd, bool *ghost);
+
 #endif // OBJECT_H
