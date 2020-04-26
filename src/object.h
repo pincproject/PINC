@@ -28,6 +28,7 @@ typedef struct{
   double *workFunction; ///< work function of the material of each object
   double *radiance; ///< Solar radiance in Photons/timestep
   double *bandEnergy;     ///< Energy in frequency band above work function energy of object
+  double *reflectance; ///< Amount of light reflected from the object material as a percentage
   int nObjects;					///< Number of objects
 	double *deltaPhi;
 	double *rhoCorr;
@@ -207,7 +208,7 @@ void oPhotoElectronNodeFill(const dictionary *ini, PincObject *obj, const MpiInf
 Integral of radiance for specific wavenumber to infinity, finds
 number of photons that cause electrons to be emitted per timestep
 */
-void oPlanckPhotonIntegral(dictionary *ini, const Units *units, PincObject *obj, Grid *phi);
+void oPlanckPhotonIntegral(dictionary *ini, const Units *units, PincObject *obj);
 
 
 /*
