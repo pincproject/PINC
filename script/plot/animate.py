@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 

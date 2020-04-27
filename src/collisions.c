@@ -1894,26 +1894,26 @@ static void oCollMode(dictionary *ini){
 	mccNormalize(ini,units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	MpiInfo *mpiInfoNeut = gAllocMpi(ini);
+	//MpiInfo *mpiInfoNeut = gAllocMpi(ini);
 	Population *pop = pAlloc(ini,mpiInfo);
 	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
 	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
 	Grid *rho_e = gAlloc(ini, SCALAR, mpiInfo);
 	Grid *rho_i = gAlloc(ini, SCALAR, mpiInfo);
-    Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
+    	Grid *rhoObj = gAlloc(ini, SCALAR,mpiInfo);     // for capMatrix - objects
 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 	MccVars *mccVars=mccAlloc(ini,units);
 
-    PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
-//TODO: look into multigrid E,rho,rhoObj
+    	PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
+	//TODO: look into multigrid E,rho,rhoObj
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
 
-  // Setting Boundary slices
-  gSetBndSlices(ini, phi, mpiInfo);
-
+	// Setting Boundary slices
+	gSetBndSlices(ini, phi, mpiInfo);
+	gSetBndSlicesE(ini, E, mpiInfo);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
@@ -1927,8 +1927,8 @@ static void oCollMode(dictionary *ini){
 	pOpenH5(ini, pop, units, "pop");
 	//double denorm = units->potential;
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
-	//gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
-	//gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
+	gOpenH5(ini, rho_e, mpiInfo, units, units->chargeDensity, "rho_e");
+	gOpenH5(ini, rho_i, mpiInfo, units, units->chargeDensity, "rho_i");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
 	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
   // oOpenH5(ini, obj, mpiInfo, units, 1, "test");
@@ -1964,27 +1964,28 @@ static void oCollMode(dictionary *ini){
 	 * INITIAL CONDITIONS
 	 */
 
-    //Compute capacitance matrix
-    //msg(STATUS, "com cap matrix");
-    oComputeCapacitanceMatrix(obj, ini, mpiInfo);
+    	//Compute capacitance matrix
+    	//msg(STATUS, "com cap matrix");
+    	oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	// Initalize particles
 	//pPosUniform(ini, pop, mpiInfo, rngSync);
 	pPosUniformCell(ini,rho,pop,rng);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
-	pVelMaxwell(ini, pop, rng);
+	//pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
 
+	//add influx of new particles on boundary
+	pPurgeGhost(pop, rho);
+
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
 	puMigrate(pop, mpiInfo, rho);
 
-	//add influx of new particles on boundary
-	pPurgeGhost(pop, rho);
 	pFillGhost(ini,rho,pop,rng);
 
 
@@ -2018,6 +2019,7 @@ static void oCollMode(dictionary *ini){
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
+	gBnd(E, mpiInfo);
 
   //Boris parameters
   int nSpecies = pop->nSpecies;
@@ -2206,28 +2208,31 @@ static void oCollMode(dictionary *ini){
     // not work in other run modes!
 	    //neMove(neutralPop); // SPH neutrals
 
+	        //add influx of new particles on boundary
+	        pPurgeGhost(pop, rho);
+
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-
-
-
-
-        //add influx of new particles on boundary
-        pPurgeGhost(pop, rho);
-        pFillGhost(ini,rho,pop,rng);
+	        pFillGhost(ini,rho,pop,rng);
 
 
 
 		// Check that no particle resides out-of-bounds (just for debugging)
-		pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
+		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
 
         // Collect the charges on the objects.
         oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
 
 
+
+		/*
+		*   Collisions
+		*   Changes velocity component of some particles, not position.
+		*/
+		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 
 
 
@@ -2242,11 +2247,6 @@ static void oCollMode(dictionary *ini){
         // Keep writing Rho here.
 
 
-		/*
-		*   Collisions
-		*   Changes velocity component of some particles, not position.
-		*/
-		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
 
 
 
@@ -2273,6 +2273,7 @@ static void oCollMode(dictionary *ini){
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
+		gBnd(E, mpiInfo);
 
 
 		//gAssertNeutralGrid(E, mpiInfo);
@@ -2297,12 +2298,12 @@ static void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || n>29950){//50614
+		if(n%1000 == 0 || (n>9500 && n%10==0) ){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
-			//gWriteH5(rho_e, mpiInfo, (double) n);
-			//gWriteH5(rho_i, mpiInfo, (double) n);
+			gWriteH5(rho_e, mpiInfo, (double) n);
+			gWriteH5(rho_i, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
 			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
@@ -2332,7 +2333,7 @@ static void oCollMode(dictionary *ini){
 	 // Neutrals
 	 // -----------------
 
-	 gFreeMpi(mpiInfoNeut);
+	 //gFreeMpi(mpiInfoNeut);
 
 	 // Close h5 files
 	//  gCloseH5(rhoNeutral);
@@ -2356,8 +2357,8 @@ static void oCollMode(dictionary *ini){
 	// Close h5 files
 	pCloseH5(pop);
 	gCloseH5(rho);
-	//gCloseH5(rho_e);
-	//gCloseH5(rho_i);
+	gCloseH5(rho_e);
+	gCloseH5(rho_i);
 
 	gCloseH5(phi);
 	gCloseH5(E);

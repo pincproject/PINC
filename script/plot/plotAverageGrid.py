@@ -15,7 +15,7 @@ file_name = "phi"#"rhoNeutral" #"P"
 ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-start = 59500# # Must exist in dataset
+start = 9500# # Must exist in dataset
 #step = 1
 
 # Plot:
