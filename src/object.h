@@ -5,8 +5,8 @@
  * @date		19.10.16
  */
 
-#ifndef OBJECT_H
-#define OBJECT_H
+#ifndef PINC_OBJECT_H
+#define PINC_OBJECT_H
 
 /**
  * @brief Represents an object
@@ -27,7 +27,7 @@ typedef struct{
 	double *objectCurrent;		/// Store current to each object per specie
 	double *bias;							/// Fixed bias value for object
 	int biasOn;							/// Turns biasing on or of
-} Object;
+} PincObject;
 
 
 /**
@@ -43,7 +43,7 @@ typedef struct{
  *
  *
  */
-void oMode(dictionary *ini);
+//void oMode(dictionary *ini);
 funPtr oMode_set();
 
 /**
@@ -55,14 +55,14 @@ funPtr oMode_set();
  *
  * NB! Assumes 1 ghost point on all edges for now.
  */
-Object *oAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units);
+PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units);
 
 /**
  * @brief Frees allocated object
  * @param	obj     Object
  * @return	void
  */
-void oFree(Object *obj);
+void oFree(PincObject *objobj);
 
 /**
  * @brief	Opens .grid.h5-file to read in object
@@ -78,14 +78,14 @@ void oFree(Object *obj);
  * Remember to call oCloseH5().
  *
  */
-void oOpenH5(const dictionary *ini, Object *obj, const MpiInfo *mpiInfo,
+void oOpenH5(const dictionary *ini, PincObject *objobj, const MpiInfo *mpiInfo,
              const Units *units, double denorm, const char *fName);
 /**
  * @brief	Closes .grid.h5-file
  * @param	obj     Object
  * @return	void
  */
-void oCloseH5(Object *obj);
+void oCloseH5(PincObject *objobj);
 
 /**
  * @brief	Read values from .grid.h5-field to Object
@@ -95,7 +95,7 @@ void oCloseH5(Object *obj);
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Object *obj);
+void oReadH5(PincObject *objobj);
 
 /**
  * @brief   Compute the capacitance matrix. (one big matrix containing all objects)
@@ -113,10 +113,10 @@ void oReadH5(Object *obj);
   * @param	obj		test
   * TODO:
   */
- long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
+ //long int oGatherSurfaceNodes(PincObject *objobj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
 
 
-void oComputeCapacitanceMatrix(Object *obj, dictionary *ini,
+void oComputeCapacitanceMatrix(PincObject *objobj, dictionary *ini,
                                const MpiInfo *mpiInfo);
 
 /**
@@ -129,7 +129,7 @@ void oComputeCapacitanceMatrix(Object *obj, dictionary *ini,
  *
  * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
  */
-void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
+void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *objobj,
                              const MpiInfo *mpiInfo,Units *units);
 
 /**
@@ -142,45 +142,45 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
  *
  * Collect the charge inside each object.
  */
-void oCollectObjectCharge(Population *pop, Grid *rhoObj, Object *obj,
+void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objobj,
                           const MpiInfo *mpiInfo);
-
-/**
- * TO IMPLEMENT!
- *
- */
-
-
-/*
-Finding particles in population close to object, discards
-particles that will not intersect object next timestep
-pop->vicinity contains index of particles that are close
-to the object
-*/
-void oVicinityParticles(Population *pop, Object *obj);
-
-//determines if particle will collide
-bool oParticleIntersection(Population *pop, long int particleId, Object *obj);
-
-//"collides" a single particle based on collision type
-void oParticleCollision(Population *pop, Object *obj, long int i);
-
-//determines collision type, then moves particle accordingly
-void oFindParticleCollisions(Population *pop, Object *obj);
-
-/**
- * @brief	Computes the local point a nearby particle with collide with an object
- * @param   pos         Position (population->)
- * @param   rhoObj      Grid
- * @param	obj         Object
- * @param	mpiInfo		MpiInfo
- * @return	void
- *
- * Computes the local point a nearby particle with collide with an object
- */
-void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
-                        double *surfPoint, double *intersection);
-
+//
+// /**
+//  * TO IMPLEMENT!
+//  *
+//  */
+//
+//
+// /*
+// Finding particles in population close to object, discards
+// particles that will not intersect object next timestep
+// pop->vicinity contains index of particles that are close
+// to the object
+// */
+// void oVicinityParticles(Population *pop, PincObject *objobj);
+//
+// //determines if particle will collide
+// bool oParticleIntersection(Population *pop, long int particleId, PincObject *objobj);
+//
+// //"collides" a single particle based on collision type
+// void oParticleCollision(Population *pop, PincObject *objobj, long int i);
+//
+// //determines collision type, then moves particle accordingly
+// void oFindParticleCollisions(Population *pop, PincObject *objobj);
+//
+// /**
+//  * @brief	Computes the local point a nearby particle with collide with an object
+//  * @param   pos         Position (population->)
+//  * @param   rhoObj      Grid
+//  * @param	obj         Object
+//  * @param	mpiInfo		MpiInfo
+//  * @return	void
+//  *
+//  * Computes the local point a nearby particle with collide with an object
+//  */
+// void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
+//                         double *surfPoint, double *intersection);
+//
 
 
 /**
@@ -189,9 +189,9 @@ void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
  * @param	node	long int
  * @return	bool
  */
-bool isGhostNode(Grid *grid, long int node);
-void oGhost(long int node, const int *nGhostLayersBefore,
-            const int *nGhostLayersAfter, const int *trueSize,
-            const long int *sizeProd, bool *ghost);
+//bool oIsGhostNode(Grid *grid, long int node);
+//void oGhost(long int node, const int *nGhostLayersBefore,
+//            const int *nGhostLayersAfter, const int *trueSize,
+//            const long int *sizeProd, bool *ghost);
 
 #endif // OBJECT_H

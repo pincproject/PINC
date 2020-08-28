@@ -10,21 +10,24 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho_e"#"rhoNeutral" #"P"
 
 ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-start = 59500# # Must exist in dataset
+start = 99000#29000# # Must exist in dataset
 #step = 1
 
 # Plot:
 levels = 500 ## granularity of contourf
 interval = 0.1#in seconds
 
-#Restrict data values (can be values from 0-1):
-restr_max = 1 # (0.5 = half of positive values)
-restr_min = 1 #(1 = all of negative values)
+#set to true and decide min value on color scale 
+scale_max=False
+restr_max = 3000 # (0.5 = half of positive values)
+#set to true and decide max value on color scale 
+scale_min=False
+restr_min = -1 #(1 = all of negative values)
 
 cmap = 'jet'
 plane = 'XZ' # XY, XZ, YZ
@@ -47,7 +50,7 @@ save_anim = False ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../data3/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
@@ -98,9 +101,17 @@ avgData /= len(DATA)
 print("max value = %f"%np.amax(DATA))
 print("min value = %f"%np.amin(DATA))
 
+vMin=np.amin(DATA)
+vMax=np.amax(DATA)
 
-vMin=restr_min*np.amin(DATA)
-vMax=restr_max*np.amax(DATA)
+#vMin=restr_min*np.amin(DATA)
+#vMax=restr_max*np.amax(DATA)
+
+if scale_min==True:
+	vMin=restr_min
+if scale_max==True:
+	vMax=restr_max
+
 
 print("restricting values to %f, %f"%(vMin,vMax))
 
@@ -148,8 +159,11 @@ if("phi" in file_name ):
 fig.colorbar(mesh,cax=cax)
 
 
-if(save_figs == True): 
-    plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+".png")
+if(save_figs == True):
+    if(scale_max==True or scale_min==True): 
+        plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+"(%.1f,%.1f)"%(restr_min,restr_max)+".png")
+    else:
+        plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+".png")
 
 if (show_plot == True):
     plt.show()

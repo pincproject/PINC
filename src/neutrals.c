@@ -1,22 +1,18 @@
 /**
-* @file		population.c
-* @brief		Particle handling.
-* @author		Sigvald Marholm <sigvaldm@fys.uio.no>
+* @file		neutrals.c
+* @brief		PIC simulation for neutrals.
+* @author		Steffen Brask <steffen.brask@fys.uio.no>
 *
-* Functions for handling particles: initialization and finalization of
-* particle structs, reading and writing of data and so on.
+* TBD
 */
 
-#define _XOPEN_SOURCE 700
-
-
-#include <math.h>
-#include <mpi.h>
+//#include <math.h>
+//#include <mpi.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-#include <hdf5.h>
+//#include <hdf5.h>
 #include "core.h"
-#include "iniparser.h"
+//#include "iniparser.h"
 #include "pusher.h"
 #include "neutrals.h"
 
@@ -252,7 +248,6 @@ void nuGBnd(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 	//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }
@@ -323,7 +318,6 @@ void nuGBndVel(Grid *grid, const MpiInfo *mpiInfo){
 	//if (mpiInfo->mpiRank == 7){
 	//adPrint(grid->val,grid->sizeProd[4] );
 	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
 	//exit(1);
 	return;
 }
@@ -1140,7 +1134,6 @@ void NeutralDistr3D1(const NeutralPopulation *pop, Grid *rho){
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			val[p] 		+= 1.0;//xcomp*ycomp*zcomp;
 			// val[pj]		+= x    *ycomp*zcomp;
 			// val[pk]		+= xcomp*y    *zcomp;
@@ -1235,7 +1228,6 @@ void NeutralDistr3D1Vector(const NeutralPopulation *pop, Grid *bulkV, Grid *rho)
 			//12294
 			//printf("p = %li\n",sizeProd[4]);
 			//printf("val[p] = %f\n",val[p]);
-			//MPI_Barrier(MPI_COMM_WORLD);
 			for (int d=0;d<nDims;d++){
 				//printf(" vel[d] = %f, rhoVal[scalarIndex] = %f \n", vel[d], rhoVal[scalarIndex]);
 				double K = vel[d];
@@ -2842,7 +2834,7 @@ void neIndexToPos3D(Grid *grid,long int index,long int *pos){
 }
 
 
-void neApplyObjVel(Object *obj, Grid *V){
+void neApplyObjVel(PincObject *obj, Grid *V){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = V->val;
@@ -2962,7 +2954,7 @@ void neApplyObjVel(Object *obj, Grid *V){
 	//exit(0);
 }
 
-void neApplyObjI(Object *obj, Grid *IE){
+void neApplyObjI(PincObject *obj, Grid *IE){
 
 	// neInternalEnergySolve(IE,P,bulkV,rhoNeutral,neutralPop);
 	double *val = IE->val;
@@ -3084,7 +3076,7 @@ void neApplyObjI(Object *obj, Grid *IE){
 }
 
 
-void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
+void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3161,7 +3153,7 @@ void nuObjectpurge(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 }
 
 
-void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
+void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;
@@ -3257,7 +3249,7 @@ void nuObjectCollide(NeutralPopulation *pop, Grid *rhoObj, Object *obj) {
 }
 
 
-void nuObjectSetVal(Grid *rho,double constant, Object *obj) {
+void nuObjectSetVal(Grid *rho,double constant, PincObject *obj) {
 
 
 	//int rank = mpiInfo->mpiRank;

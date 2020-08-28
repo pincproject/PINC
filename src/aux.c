@@ -301,7 +301,9 @@ int alDotProd(const long int *a, const long int *b, long int n){
 	return res;
 }
 
-void adNormal(const double *a, const double *b, double *res, long int n){
+void adNormal(const double *a, const double *b, double *res){
+
+	// Assumes 3D
 
 	double length = 1.;
 
@@ -315,8 +317,10 @@ void adNormal(const double *a, const double *b, double *res, long int n){
 //w = v - 2(v . n)n where n=norm, v=ray, w=res, surface points a and b (x,y,z) locations
 void adReflect(const double *ray, const double *a, const double *b, double *res){
 
+	// Assumes 3D
+
 	double *norm = NULL;
-	adNormal(a,b,norm,3);
+	adNormal(a,b,norm);
     int ray_dot_n = adDotProd(ray,norm,3);
 
     for(int i=0;i<3;i++) res[i] = ray[i] - 2 * ray_dot_n * norm[i];
