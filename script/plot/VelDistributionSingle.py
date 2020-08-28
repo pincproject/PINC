@@ -15,8 +15,7 @@ test = file['/pos/specie 0']
 Nt = len(test) # timesteps
 print(test)
 
-n0 = 10000.5
-
+n0 = 100.5
 
 #print('%.1f, %.1f, %.1f, %.1f'% (n0, n1, n2, n3))
 #pos = file['/pos/specie 1/n=%.1f' % n0]
@@ -48,7 +47,7 @@ for i in range(Np):
 v = linspace(0,1,100)
 v2 = linspace(-2,2,100)
 vUnit = file.attrs.__getitem__("Velocity denormalization factor")
-vth = 123113./vUnit
+vth = 92867./vUnit
 dv = 1
 if Nd==2: dv = 2*pi*v
 if Nd==3: dv = 4*pi*(v**2)
@@ -158,7 +157,7 @@ for i in range(Np):
 v = linspace(0,0.05,100)
 v2 = linspace(-0.1,0.1,100)
 vUnit = file.attrs.__getitem__("Velocity denormalization factor")
-vth = 5505./vUnit
+vth = 2150./vUnit
 dv = 1
 if Nd==2: dv = 2*pi*v
 if Nd==3: dv = 4*pi*(v**2)

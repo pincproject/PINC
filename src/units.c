@@ -257,6 +257,10 @@ static void uAddDerivedUnits(Units *units){
 	double mass = units->mass;
 	double length = units->length;
 	double time = units->time;
+	//printf("units->weights[0]=%f \n",units->weights[0]);
+        //printf("charge=%e \n",charge);
+        //printf("time=%e \n",time);
+        //exit(0);
 
 	units->hyperArea     = pow(length,nDims-1);
 	units->hyperVolume   = pow(length,nDims);
@@ -269,7 +273,7 @@ static void uAddDerivedUnits(Units *units){
 	units->eField        = length*mass/(pow(time,2)*charge);
 	units->bField        = mass/(time*charge);
 	units->energy        = mass*pow(length/time,2);
-	units->current			 = charge/time;
+	units->current       = charge/time;
 
 	//msg(STATUS, "units->potential = %f",units->potential);
 }

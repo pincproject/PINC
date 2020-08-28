@@ -35,4 +35,10 @@ run_abel.sh
 CollisionDump.txt
 FB-5/
 script/plot/anim_output/*
+run_several*
+object.grid.h5
+PINC*.out
+object_files/**
+script/plot/lobes/**
+script/plot/anim_output*
 

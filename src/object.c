@@ -210,16 +210,17 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 
     //msg(STATUS,"in oComputeCapacitanceMatrix");
     //exit(0);
-    // for(int r=0; r<2*phiCap->rank; r++){
-    //   rhoCap->bnd[r] = DIRICHLET;
-    //   phiCap->bnd[r] = DIRICHLET;
-    // }
+    //for(int r=0; r<2*phiCap->rank; r++){
+    //    rhoCap->bnd[r] = DIRICHLET;
+    //    phiCap->bnd[r] = DIRICHLET;
+    //}
     //aiPrint(phiCap->bnd,2*phiCap->rank);
 
     // Set Rho to zero.
     gZero(rhoCap);
 	gZero(phiCap);
-
+	double rhoSumTest = 0.0; // Delete this, debug
+	double phiSumTest = 0.0;
 	//gSetBndSlices(ini, phiCap, mpiInfo);
 
     // Find the number of surface nodes for each object.
@@ -246,7 +247,13 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 
         // Loop over the nodes and fill the matrix
         for (long int i=0; i<totSNGlob; i++) {
-			//gZero(phiCap);
+
+            // The MG solver is remembering "something" leading to a buildup.
+	    // It is possible we need to zeroize this in some way...?
+	    // As of now it seems to be working ...
+
+	    //gZero(phiCap);
+	    gZero(rhoCap);
             msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
                 i+1,totSNGlob,a+1,obj->nObjects);
 
@@ -257,9 +264,20 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 
             // Set the surface node to 1 charge.
             if (rank==j) {
-                rhoCap->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
-                //printf("adding 1 rho to node %li \n",lookupSurf[lookupSurfOff[a] + inode]);
+		if(lookupSurf[inode]>rhoCap->sizeProd[4]){
+		    msg(ERROR,"Index out of bounds in oComputeCapacitanceMatrix");
+		}
+                rhoCap->val[lookupSurf[inode]]=1;//rhoCap->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
+                printf("adding 1 rho to node %li \n",lookupSurf[inode]);
             }
+
+	    //rhoSumTest = gSumTruegrid(rhoCap);
+	    //MPI_Allreduce(MPI_IN_PLACE, &rhoSumTest, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    //msg(STATUS,"total charge = %f",(rhoSumTest));
+	    //phiSumTest=0;
+	    //phiSumTest = gSumTruegrid(phiCap);
+	    //MPI_Allreduce(MPI_IN_PLACE, &phiSumTest, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    //msg(STATUS,"total pot = %f",(phiSumTest));
 
             // Solve for the potential.
             solve(solver, rhoCap, phiCap, mpiInfo);
@@ -270,8 +288,19 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
         		//	}
             // Set the surface node back to zero.
             if (rank==j) {
-                rhoCap->val[lookupSurf[inode]] = 0;
+                rhoCap->val[lookupSurf[inode]] = 0;//rhoCap->val[lookupSurf[inode]] = 0;
+		printf("removing 1 rho from node %li \n",lookupSurf[inode]);
             }
+
+	    //rhoSumTest = gSumTruegrid(rhoCap);
+	    //MPI_Allreduce(MPI_IN_PLACE, &rhoSumTest, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    //msg(STATUS,"total charge = %f",(rhoSumTest));
+	    //phiSumTest=0;
+	    //phiSumTest = gSumTruegrid(phiCap);
+	    //MPI_Allreduce(MPI_IN_PLACE, &phiSumTest, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    //msg(STATUS,"total pot = %f \n",(phiSumTest));
+
+
             // Fill column i of the capacitance matrix.
             for (int k=beginIndex; k<endIndex; k++) {
                 capMatrix[totSNGlob*k + i] = phiCap->val[lookupSurf[lookupSurfOff[a] + k-beginIndex]];
@@ -356,8 +385,12 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
 	double *deltaPhi = obj->deltaPhi;
 	double *rhoCorr = obj->rhoCorr;
 
-  double *bias = obj->bias;
-  int biasOn = obj->biasOn;
+    double *bias = obj->bias;
+    int biasOn = obj->biasOn;
+    //double *objectCurrent = obj->objectCurrent;
+    //double totObjCharge = 0;
+    int nSpecies = 2;//pop->nSpecies;
+
 
 
     // Loop over the objects
@@ -365,6 +398,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
 
         // This number is in fact the correct potential of the object.
         double capMatrixPhiSum = 0;
+        //totObjCharge=0;
 
         // total number of surface nodes
         long int totSNGlob = capMatrixAllOffsets[a*(size+1)+size];
@@ -422,6 +456,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
         for (long int i=0; i<totSNGlob; i++) {
             for (long int j=beginIndex; j<endIndex; j++) {
                 rhoCorr[i] += capMatrixAll[a*totSNGlob*totSNGlob+totSNGlob*j+i]*deltaPhi[j];
+                
             }
         }
 
@@ -430,8 +465,15 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
         // Add the charge corrections.
         for (long int j=beginIndex; j<endIndex; j++) {
             rho->val[lookupSurf[lookupSurfOff[a] + j-beginIndex]] += rhoCorr[j];
+            //totObjCharge += rho->val[lookupSurf[lookupSurfOff[a] + j-beginIndex]];
 
         }
+
+        //MPI_Allreduce(MPI_IN_PLACE, &totObjCharge, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        //for (long int s=0; s<nSpecies; s++) {
+	    //objectCurrent[a*nSpecies + s] += totObjCharge ;
+        //}
 
         //free(deltaPhi);
         //free(rhoCorr);
@@ -778,13 +820,15 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
 
     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     //MPI_Allreduce(MPI_IN_PLACE, objectCurrent, nSpecies*obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    // current is summed when written
 
 
-    for (long int a=0; a<obj->nObjects; a++) {
-      for (long int s=0; s<nSpecies; s++) {
-        msg(STATUS,"current for objct %i, and species %i = %f",a,s,objectCurrent[a*nSpecies + s]);
-      }
-    }
+    //for (long int a=0; a<obj->nObjects; a++) {
+    //  for (long int s=0; s<nSpecies; s++) {
+    //    msg(STATUS,"current for objct %i, and species %i = %f",a,s,objectCurrent[a*nSpecies + s]);
+
+    //  }
+    //}
 
     //MPI_Allreduce(MPI_IN_PLACE, invNrSurfNod, obj->nObjects, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     // Add the collected charge to the surface nodes on rhoObject.
@@ -1901,7 +1945,7 @@ static void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>29500 && n%10==0)){//n>122700){//50614
+		if(n%10 == 0 || (n>29500 && n%10==0)){//n>122700){//50614
 		//Write h5 files
 			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

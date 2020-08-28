@@ -1805,7 +1805,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			//exit(0);
 			//adPrint(mgPhi->grids[0]->val,mgPhi->grids[0]->sizeProd[4]);
 			iterations += 1;
-			if (iterations > ( 100+mpiSize -(1/mpiSize)) ){
+			if (iterations > ( 1000+10*mpiSize -(1/mpiSize)) ){
 				msg(WARNING,"MGsolver did not converge, continuing with residual= %e",barRes);
 				barRes = 0.0;
 			}

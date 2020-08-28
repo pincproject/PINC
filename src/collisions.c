@@ -240,7 +240,7 @@ static double mccGetLocalDens(double xIn,double yIn,double zIn,Grid *rhoNeutral)
 
 
 
-static double mccGetMaxVel(const Population *pop, int species){
+static double mccGetMaxVel(const Population *pop, int species,MccVars *mccVars){
 
 	// iterate over pop and keep max velocity
 	double *vel = pop->vel;
@@ -248,11 +248,13 @@ static double mccGetMaxVel(const Population *pop, int species){
 	double NewVelocity = 0;
 	int nDims = pop->nDims;
 
+	double *drift = mccVars->neutralDrift;
+
 	long int iStart = pop->iStart[species];
 	long int iStop  = pop->iStop[species];
 	for(int i=iStart; i<iStop; i++){
-		NewVelocity = sqrt(vel[i*nDims]*vel[i*nDims]+vel[i*nDims+1]\
-			*vel[i*nDims+1]+vel[i*nDims+2]*vel[i*nDims+2]);
+		NewVelocity = sqrt((vel[i*nDims]-drift[0])*(vel[i*nDims]-drift[0])+(vel[i*nDims+1]-drift[1])\
+			*(vel[i*nDims+1]-drift[1])+(vel[i*nDims+2]-drift[2])*(vel[i*nDims+2]-drift[2]));
 		if(NewVelocity>MaxVelocity){
 			MaxVelocity=NewVelocity;
 		}
@@ -260,7 +262,7 @@ static double mccGetMaxVel(const Population *pop, int species){
 	return MaxVelocity;
 }
 
-static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal){
+static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng *rng, double NvelThermal,MccVars *mccVars){
 
 	// iterate over pop and keep max velocity, uses
 	double *vel = pop->vel;
@@ -269,12 +271,14 @@ static double mccGetMaxVelTran(const Population *pop, int species,const gsl_rng 
 	int nDims = pop->nDims;
 	double vxMW, vyMW, vzMW;
 
+	double *drift = mccVars->neutralDrift;
+
 	long int iStart = pop->iStart[species];
 	long int iStop  = pop->iStop[species];
 	for(int i=iStart; i<iStop; i++){
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //maxwellian dist?
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); //yes, gaussian in 3 dim
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal); // is maxwellian
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0]; //maxwellian dist?
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1]; //yes, gaussian in 3 dim
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2]; // is maxwellian
 
 		NewVelocity = sqrt((vel[i*nDims]-vxMW)*(vel[i*nDims]-vxMW)+(vel[i*nDims+1]-vyMW)\
 			*(vel[i*nDims+1]-vyMW)+(vel[i*nDims+2]-vzMW)*(vel[i*nDims+2]-vzMW));
@@ -399,9 +403,9 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 
 	//TODO: We are assuming one Ion species here, this should be extended to
 	// several species
-	mccVars->mccSigmaElectronElastic = mccVars->collFrqElectronElastic/(mccVars->nt*sqrt(3)*(thermalVelocity[0]) );//iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	mccVars->mccSigmaCEX= 2*(mccVars->collFrqCex/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaCEX");
-	mccVars->mccSigmaIonElastic = 2*(mccVars->collFrqIonElastic/(mccVars->nt*sqrt(2)*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaIonElastic");
+	mccVars->mccSigmaElectronElastic = mccVars->collFrqElectronElastic/(mccVars->nt*sqrt(2)*(thermalVelocity[0]) );//iniGetDouble(ini,"collisions:sigmaElectronElastic");
+	mccVars->mccSigmaCEX= (mccVars->collFrqCex/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaCEX");
+	mccVars->mccSigmaIonElastic = (mccVars->collFrqIonElastic/(mccVars->nt*(mccVars->NvelThermal+thermalVelocity[1]) ));//iniGetDouble(ini,"collisions:sigmaIonElastic");
 
 	mccVars->CEX_a = iniGetDouble(ini,"collisions:CEX_a");
 	mccVars->CEX_b = iniGetDouble(ini,"collisions:CEX_b");
@@ -411,6 +415,7 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	mccVars->electron_b = iniGetDouble(ini,"collisions:electron_b");
 	//msg(STATUS,"weigh = %.29f",electronMassRatio);
 	//msg(STATUS,"factor = %f",mccVars->energyConvFactor);
+	mccVars->electronEnergyMethod = iniGetStr(ini, "collisions:electronEnergyMethod");
 
 	free(mass);
 	return mccVars;
@@ -434,7 +439,7 @@ static void mccGetPmaxElectronConstantFrq(const dictionary *ini,
 	//
 	double collFrqElectronElastic = mccVars->collFrqElectronElastic;
 
-	double max_v = mccGetMaxVel(pop,0); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
+	double max_v = mccGetMaxVel(pop,0,mccVars); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
 	//msg(STATUS,"maxVelocity Electron =  %f", max_v);
 	mccVars->pMaxElectron = 1-exp(-((collFrqElectronElastic)));
 	if(mpiInfo->mpiRank==0){
@@ -449,7 +454,7 @@ static void mccGetPmaxIonConstantFrq(const dictionary *ini,MccVars *mccVars,
 	//
 	double collFrqIonElastic = mccVars->collFrqIonElastic;
 	double collFrqCEX = mccVars->collFrqCex;
-	double max_v = mccGetMaxVel(pop,1); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
+	double max_v = mccGetMaxVel(pop,1,mccVars); //2.71828*thermalVel; // e*thermalVel, needs to be max_velocity function
 	//msg(STATUS,"maxVelocity Ion =  %f", max_v);
 	mccVars->pMaxIon = 1-exp(-((collFrqIonElastic+collFrqCEX)));
 	if(mpiInfo->mpiRank==0){
@@ -472,7 +477,7 @@ static void mccGetPmaxIonFunctional(const dictionary *ini,
 	double elastic_a = mccVars->ion_elastic_a;
 	double elastic_b = mccVars->ion_elastic_b;
 
-	double max_v = mccGetMaxVel(pop,1);
+	double max_v = mccGetMaxVel(pop,1,mccVars);
 
 	double *vel = pop->vel;
 	double NewFreq = 0;
@@ -507,7 +512,7 @@ static void mccGetPmaxElectronFunctional(const dictionary *ini,
 	double a = mccVars->electron_a;
 	double b = mccVars->electron_b;
 
-	double max_v = mccGetMaxVel(pop,0);
+	double max_v = mccGetMaxVel(pop,0,mccVars);
 	double *vel = pop->vel;
 	double NewFreq = 0;
 	double NewVelocity = 0;
@@ -539,7 +544,7 @@ static void mccGetPmaxIonStatic(const dictionary *ini,MccVars *mccVars,Grid *rho
 	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;
 	double StaticSigmaCEX = mccVars->mccSigmaCEX;
 	double StaticSigmaIonElastic = mccVars->mccSigmaIonElastic;
-	double max_v = mccGetMaxVelTran(pop,0,rng,NvelThermal);
+	double max_v = mccGetMaxVelTran(pop,1,rng,NvelThermal,mccVars);
 	//printf("StaticSigmaCEX = %f \n",StaticSigmaCEX);
 	//double max_v = mccGetMaxVel(pop,1);
 	mccVars->maxFreqIon = (StaticSigmaCEX +StaticSigmaIonElastic)*max_v*nt;
@@ -558,8 +563,9 @@ static void mccGetPmaxElectronStatic(const dictionary *ini,
 	// to determine maximum collision probability
 
 	double nt = mccGetMaxDens(rhoNeutral);//mccVars->nt;//iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
+
 	double StaticSigmaElectronElastic = mccVars->mccSigmaElectronElastic;//iniGetDouble(ini,"collisions:sigmaElectronElastic");
-	double max_v = mccGetMaxVel(pop,0);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
+	double max_v = mccGetMaxVel(pop,0,mccVars);//2.71828*thermalVel; // e*thermalVel, needs to be max_velocity
 	//double min_v = mccGetMinVel(pop,0);
 	mccVars->maxFreqElectron=StaticSigmaElectronElastic*max_v*nt;
 	mccVars->pMaxElectron = 1-exp(-(mccVars->maxFreqElectron));
@@ -579,31 +585,44 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 	double artificialLoss = mccVars->artificialLoss;
 	double *mass = pop->mass;
-	double *drift = mccVars->neutralDrift;
+	//double *drift = mccVars->neutralDrift;
 
 	double angleChi = 0; //scattering angle in x, y
 	double anglePhi = 0; //scattering angle in j
 	double angleTheta = 0;
 	double A = 0; //scaling Factor used for precomputing (speedup)
 	double B = 0;
-	double Ekin, newEkin;
+	double Ekin;
+	double newEkin = 0.0;
 	double R2 = gsl_rng_uniform_pos(rng);
 	double R3 = gsl_rng_uniform_pos(rng);
 
+
+	//double NvelThermal=mccVars->NvelThermal
+	//double vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
+	//double vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
+	//double vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
+
 	// let colls happen in frame comoving with drift
-	double vx = *vx_point-drift[0];
-	double vy = *vy_point-drift[1];
-	double vz = *vz_point-drift[2];
+	//msg(STATUS,"drift=%f, %f, %f",drift[0],drift[1],drift[2]);
+	//printf("\n vel before: %f  \n",sqrt(*vx_point* *vx_point+*vy_point* *vy_point+*vz_point* *vz_point));
+	double vx = *vx_point;//-drift[0];
+	double vy = *vy_point;//-drift[1]; //drift should not be computed here
+	double vz = *vz_point;//-drift[2];	// Drift needs to go into the calculation of collision prob.
 	double vx_,vy_,vz_;
 
 	// unit velocities
 	double velchange = 0.0;// change of energy incident particle
 	double velsquare = sqrt(vx*vx+vy*vy+vz*vz);
+
 	if(velsquare<0.0000000000000001){ // safety, mostly for debugging
 		velsquare = 0.0000000000000001;
 	}
 
-	Ekin = mccVars->energyConvFactor*0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; //eV
+	Ekin = mccVars->energyConvFactor*0.5*(vx*vx + vy*vy + vz*vz)*mass[0];//0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; //eV
+		//mccVars->energyConvFactor*0.5*(vx*vx + vy*vy + vz*vz)*mass[0]; //eV
+	//printf("vx=%f, vy=%f, vz=%f \n",vx,vy,vz);
+	//printf("mass[0] = %f, mass[1] = %f",mass[0],mass[1]);
 
 	//make unit vector
 	vx = vx/velsquare;
@@ -611,20 +630,35 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	vz = vz/velsquare;
 
 	// angles
-	double argument = (2+Ekin-2*pow((1+Ekin),R2))/(Ekin);
+	double argument = (2+Ekin-2*pow((1+Ekin),R2))/(Ekin); // from -1 to 1
+	//printf("Ekin=%f \n",Ekin);
 	Ekin = Ekin/(mccVars->energyConvFactor); //energy in eV
 
-	if(sqrt(argument*argument)>1.0){
+	if(sqrt(argument*argument)>1.0){ // Debug Code
 		double newargument = sqrt(argument*argument)/argument;
 		msg(WARNING,"old argument acos = %.32f new arg = %.64f, R = %.32f",
 		argument, newargument,R2);
 		argument = newargument;
 	}
 	angleChi =  acos(argument); // gives nan value if abs(argument) > 1
-	newEkin = Ekin*(1-((2.0*mass[0])/(artificialLoss*mass[1]))
-	*(1-(cos(angleChi))));
+	//printf("Scattering angle =%f \n",angleChi);
 
-	if(((2.0*(newEkin))/(mass[0]))<0.0){
+	// Choise of energy method. This decides the temperature of electrons after
+	// a "Long" time.
+	
+	if(strcmp(mccVars->electronEnergyMethod,"VS")){
+		newEkin = Ekin*(1-((2.0*mass[0])/(artificialLoss*mass[1]))
+		*(1-(cos(angleChi))));
+	}
+	else if(strcmp(mccVars->electronEnergyMethod,"conservative")){
+		newEkin = Ekin;
+	}else{
+		msg(ERROR, "Invalid collision energy method");
+	}
+
+
+
+	if(((2.0*(newEkin))/(mass[0]))<0.0){  //debug. this should not be possible, but is chrashes if it happens.
 		velchange = sqrt( abs((2.0*(newEkin))/(mass[0])));
 		msg(STATUS, "corrected velchange = %.32f",velchange);
 		msg(STATUS, "Ekin = %f,newEkin = %f",Ekin,newEkin);
@@ -656,19 +690,23 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	vy_ *= velchange;
 	vz_ *= velchange;
 
-	*vx_point=vx_+drift[0];
-	*vy_point=vy_+drift[1];
-	*vz_point=vz_+drift[2];
+
+
+	*vx_point=vx_;//+drift[0];
+	*vy_point=vy_;//+drift[1];
+	*vz_point=vz_;//+drift[2];
+
+	//printf("vel after: %f \n \n",sqrt(*vx_point* *vx_point+*vy_point* *vy_point+*vz_point* *vz_point));
 
 	// unittest
-	double energydiffexpr = Ekin*(((2.0*mass[0])/(artificialLoss*mass[1]))*(1-(cos(angleChi))));
-	double energydiff = Ekin-0.5*(vx_*vx_ + vy_*vy_ + vz_*vz_)*mass[0];
-	if(abs(energydiffexpr-energydiff)>1e-31){
-		msg(WARNING,"too large energy error in collide electrons");
-	}
-	if(Ekin<newEkin){
-		msg(WARNING,"energy increased in electron collission!");
-	}
+	//double energydiffexpr = Ekin*(((2.0*mass[0])/(artificialLoss*mass[1]))*(1-(cos(angleChi))));
+	//double energydiff = Ekin-0.5*(vx_*vx_ + vy_*vy_ + vz_*vz_)*mass[0];
+	//if(abs(energydiffexpr-energydiff)>1e-31){
+	//	msg(WARNING,"too large energy error in collide electrons");
+	//}
+	//if(Ekin<newEkin){
+	//	msg(WARNING,"energy increased in electron collission!");
+	//}
 
 }
 
@@ -784,6 +822,7 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 	double mccSigmaElectronElastic = mccVars->mccSigmaElectronElastic;
 	double maxfreqElectron = mccVars->maxFreqElectron;
 	double Pmax = mccVars->pMaxElectron;
+	double *drift = mccVars->neutralDrift;
 	int nDims = pop->nDims;
 	double *vel = pop->vel;
 	double *pos = pop->pos;
@@ -824,6 +863,10 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 		z = pos[q+2];
 		nt = mccGetLocalDens(x,y,z,rhoNeutral);
 
+		vel[q]=vel[q]-drift[0]; // transform frames here
+		vel[q+1]=vel[q+1]-drift[1]; // to get correct collision frequency
+		vel[q+2]=vel[q+2]-drift[2];
+
 		vx = &vel[q];
 		vy = &vel[q+1];
 		vz = &vel[q+2];
@@ -838,6 +881,10 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 			scatterElectron(vx,vy,vz,rng,mccVars,pop);
 		}
 		last_i = i;
+
+		vel[q]=vel[q]+drift[0]; // transform frames here
+		vel[q+1]=vel[q+1]+drift[1]; // to get correct collision frequency
+		vel[q+2]=vel[q+2]+drift[2];
 	}
 	// Special handling of last box to let every particle have posibillity
 	// to collide
@@ -845,9 +892,15 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 	R = gsl_rng_uniform_pos(rng); // New random number per particle.
 	Rp = gsl_rng_uniform_pos(rng); // separate rand num. for prob.
 	q = ( (last_i) + floor(R*(((iStop)-last_i))) )*nDims; // particle q collides
+
+	vel[q]=vel[q]-drift[0]; // transform frames here
+	vel[q+1]=vel[q+1]-drift[1]; // to get correct collision frequency
+	vel[q+2]=vel[q+2]-drift[2];
+
 	vx = &vel[q];
 	vy = &vel[q+1];
 	vz = &vel[q+2];
+
 
 	double MyCollFreq = mccGetMyCollFreqStatic(mccSigmaElectronElastic,  \
 		vel[q],vel[q+1],vel[q+2],nt);
@@ -857,6 +910,11 @@ void mccCollideElectronStatic(const dictionary *ini,Grid *rhoNeutral, Population
 		scatterElectron(vx,vy,vz,rng,mccVars,pop);
 
 	}
+
+	vel[q]=vel[q]+drift[0]; // transform frames here
+	vel[q+1]=vel[q+1]+drift[1]; // to get correct collision frequency
+	vel[q+2]=vel[q+2]+drift[2];
+
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision",
 		"counted  %i Electron collisions on one MPI node \n",  errorcounter);
@@ -912,13 +970,19 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 
 
 
-		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
-		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
-		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
+		vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+		vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
 
 		Rp = gsl_rng_uniform_pos(rng); //decides type of coll.
 		Rq = gsl_rng_uniform_pos(rng);
 		q = (i + floor(Rq*mccStepSize))*nDims; // particle q collides
+
+		// Remove drift
+		vel[q]=vel[q]-drift[0];
+		vel[q+1]=vel[q+1]-drift[1];
+		vel[q+2]=vel[q+2]-drift[2];
+
 
 		// get local density at particle
 		x = pos[q];
@@ -958,6 +1022,11 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 			}
 		}
 		last_i = i;
+
+		vel[q]=vel[q]+drift[0];
+		vel[q+1]=vel[q+1]+drift[1];
+		vel[q+2]=vel[q+2]+drift[2];
+
 	}
 
 	// Special handling of last box to let every particle
@@ -967,14 +1036,26 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 	Rq = gsl_rng_uniform_pos(rng);
 	q = ( (last_i) + floor(Rq*(((iStop)-last_i))) )*nDims; //particle q collides
 
-	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[0];
-	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[1];
-	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal)+drift[2];
+	vxMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vyMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+	vzMW = gsl_ran_gaussian_ziggurat(rng,NvelThermal);
+
+
+	// Remove drift
+	vel[q]=vel[q]-drift[0];
+	vel[q+1]=vel[q+1]-drift[1];
+	vel[q+2]=vel[q+2]-drift[2];
 
 	//transfer to neutral stationary frame
 	double vxTran = vel[q]-vxMW;
 	double vyTran = vel[q+1]-vyMW;
 	double vzTran = vel[q+2]-vzMW;
+
+	// get local density at particle
+	x = pos[q];
+	y = pos[q+1];
+	z = pos[q+2];
+	nt = mccGetLocalDens(x,y,z,rhoNeutral);
 
 	double MyCollFreq1 = mccGetMyCollFreqStatic(mccSigmaIonElastic,vxTran,
 		vyTran,vzTran, nt);
@@ -1002,6 +1083,12 @@ void mccCollideIonStatic(const dictionary *ini,Grid *rhoNeutral, Population *pop
 
 		}
 	}
+
+	// Transfer back to moving frame
+	vel[q]=vel[q]+drift[0];
+	vel[q+1]=vel[q+1]+drift[1];
+	vel[q+2]=vel[q+2]+drift[2];
+
 	if(mpiInfo->mpiRank==0){
 		fMsg(ini, "collision",
 		"counted  %i ION collisions on one MPI node, %i as CEX \n"
@@ -2135,7 +2222,13 @@ static void oCollMode(dictionary *ini){
 
 		tStart(t);
 
+		long int totPs0 = (pop->iStop[0]- pop->iStart[0]); //debug
+		long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
+		MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		msg(STATUS,"Computing time-step %i",n);
+        	msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
+		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
 		//msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
 
@@ -2208,6 +2301,12 @@ static void oCollMode(dictionary *ini){
     // not work in other run modes!
 	    //neMove(neutralPop); // SPH neutrals
 
+		/*
+		*   Collisions
+		*   Changes velocity component of some particles, not position.
+		*/
+		//collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
+
 	        //add influx of new particles on boundary
 	        pPurgeGhost(pop, rho);
 
@@ -2227,12 +2326,13 @@ static void oCollMode(dictionary *ini){
 
 
 
-
+		// Original
 		/*
 		*   Collisions
 		*   Changes velocity component of some particles, not position.
 		*/
 		collide(ini,rhoNeutral, pop, mccVars, rng,mpiInfo);
+
 
 
 
@@ -2298,7 +2398,7 @@ static void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>29500 && n%10==0) ){//50614
+		if(n%1000 == 0 || (n>99000 && n%10==0) ){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2314,6 +2414,10 @@ static void oCollMode(dictionary *ini){
 			//gWriteH5(P, mpiInfoNeut, (double) n);
 			//gWriteH5(IE, mpiInfoNeut, (double) n);
 		}
+		if(n==1000){//50614
+			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		}
+
 
 		pWriteEnergy(history,pop,(double)n,units);
 		xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);

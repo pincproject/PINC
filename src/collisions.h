@@ -35,7 +35,7 @@ typedef struct{
 	double electron_b;
 	double energyConvFactor; // convert from PINC to eV
 	double *neutralDrift;
-
+	char *electronEnergyMethod;
 
 } MccVars;
 

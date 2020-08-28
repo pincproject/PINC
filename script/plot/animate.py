@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho_e"#"rhoNeutral" #"P"
 
 ppc = 12 # particle per cell (for rho plots)
 
@@ -31,7 +31,7 @@ plane = 'XZ' # XY, XZ, YZ
 
 show_anim = True 
 
-save_figs = True
+save_figs = False#True
 
 
 ## Needs ffmpeg codec

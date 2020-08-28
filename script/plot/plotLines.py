@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho"#"rhoNeutral" #"P"
+file_name = "rho_e"#"rhoNeutral" #"P"
 
-ppc = 12 # particle per cell (for rho plots)
+ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-timestep = 1000#50600 #4950#50713#45715 # Must exist in dataset
+timestep = 100000#100000#29000#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -29,7 +29,7 @@ cmap = 'jet'
 line = 'X' # Y, Z
 
 
-save_figs = False#True
+save_figs = True
 
 ########################
 
@@ -56,7 +56,7 @@ timesteps = np.sort(timesteps)
 
 for i in range(len(timesteps)):
     if (timestep==timesteps[i]):
-        start_index=i
+        start_index=i+1
 
 timesteps = timesteps[start_index-1:] # should include an offset +- for averaging over n timesteps
 DATA = []
@@ -70,11 +70,20 @@ for q in range(len(timesteps)):
 	#print(data.shape)
 	data = np.transpose(data)
 	if (line == 'X'):
+		print("using pos %f in Y"%( int(len(data[0,0,:])/2)*dimen ))
+		print("using pos %f in Z"%( int(len(data[0,0,:])/2)*dimen ))
 		data = np.transpose((data[:,int(len(data[0,0,:])/2),int(len(data[0,0,:])/2) ]))*denorm #int(len(data[0,0,:])/2)
+
 	if (line == 'Y'):
+		print("using pos %f in X"%( int(len(data[0,0,:])/2)*dimen ))
+		print("using pos %f in Z"%( int(len(data[0,0,:])/2)*dimen ))
 		data = np.transpose((data[int(len(data[0,0,:])/2),:,int(len(data[0,0,:])/2)]))*denorm #int(len(data[0,0,:])/2)
+
 	if (line == 'Z'):
+		print("using pos %f in X"%( int(len(data[0,0,:])/2)*dimen ))
+		print("using pos %f in Y"%( int(len(data[0,0,:])/2)*dimen ))
 		data = np.transpose((data[int(len(data[0,0,:])/2),int(len(data[0,0,:])/2),:]))*denorm #int(len(data[0,0,:])/2)
+
 	if("rho" in file_name ):
 		if("rho_e" in file_name ):
 			data = -1*data
@@ -82,12 +91,19 @@ for q in range(len(timesteps)):
 	#data = np.transpose(np.average(data,axis=2))*denorm 
 	#print(data[0,0])
 	DATA.append(data)
+
+
 DATA = np.array(DATA)
-
-
 print(DATA.shape)
-plt.plot(DATA[0,:])
-plt.title("timestep = %03d"%((timesteps[0])))
+avgData = DATA[0]
+for i in range(1,len(DATA)):
+	avgData += DATA[i]
+avgData /= len(DATA)
+
+
+print(avgData.shape)
+plt.plot(range(len(avgData))*dimen, avgData)
+plt.title("avg_last_%03d_dt_dim-"%(timesteps[-1]-timesteps[0])+line )
 if (line == 'X'):
 	plt.xlabel("X (m)")
 	plt.ylabel(file_name)
@@ -98,7 +114,7 @@ if (line == 'Z'):
 	plt.xlabel("X (m)")
 	plt.ylabel(file_name)
 if(save_figs == True): 
-            plt.savefig("anim_output/"+file_name+"_timestep_%03d"%(timesteps[1])+".png")
+            plt.savefig("anim_output/"+file_name+"_avg_last_%03d_dt_dim-"%(timesteps[-1]-timesteps[0])+line+".png")
 plt.show()
 
 
