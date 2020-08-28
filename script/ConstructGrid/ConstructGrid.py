@@ -34,14 +34,14 @@ transfo = [0,0,0,0,0,0,1,1,1]*100 # initialise default
 ####################
 
 # Define up the grid: xmin,xmax,ymin,ymax,zmin,zmax,nnx,nny,nnz
-gridpar = [0,64,0,64,0,64,64,64,64]
+gridpar = [0,16,0,16,0,16,16,16,16]
 #gridpar = [0,0.19634*32,0,0.19634*32,0,0.19634*32,32,32,32]
 
 # List if object files. (VTK tetrahedralized unstructered grid, i.e., bunch of triangles)
 infile = ["sphere"]
 #infile = ["box", "box"]
 # Outputfiles and comment.
-outfile = ["cylinder_64.grid.h5", "cylinder_64"]
+outfile = ["cylinder_16.grid.h5", "cylinder_16"]
 boundaryFile = ["bound.grid.h5", "bounding box"]
 # Object file contents. Provide one entry for each file in "infile".
 # [nr. of objects in file, tuple/coordinates of internal seed for each object before transformation (as much as needed), integer
@@ -54,7 +54,7 @@ content[0] = [1, (0,0,0),1]
 
 # Define the transformation. Provide one entry for each file in "infile".
 # Translate x,y,z; Rotate x,y,z (in degrees); Scale x,y,z
-transfo[0] = [32,32,16,0,0,0,15.,15.,15.]
+transfo[0] = [8,8,4,0,0,0,15.,15.,15.]
 #transfo[1] = [-1.5,-1.5,-1.5,45,45,45,0.5,0.5,0.5]
 #transfo[1] = [2.6,2.6,2.6,0,0,0,1,1,1]
 #transfo[3] = [0.75,0.75,-0.75,45,-45,-45,2,5,5]

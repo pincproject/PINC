@@ -21,6 +21,12 @@ typedef struct{
   long int *capMatrixAllOffsets;         ///< Array holding the total sum of capMatrix elements (nObjects elements)
   double *capMatrixSum;    ///< total sum of elements in the capacitance matrix
 	int nObjects;					///< Number of objects
+	double *deltaPhi;
+	double *rhoCorr;
+	double *invNrSurfNod;
+	double *objectCurrent;		/// Store current to each object per specie
+	double *bias;							/// Fixed bias value for object
+	int biasOn;							/// Turns biasing on or of
 } Object;
 
 
@@ -38,7 +44,7 @@ typedef struct{
  *
  */
 void oMode(dictionary *ini);
-funPtr oMode_set(dictionary *ini);
+funPtr oMode_set();
 
 /**
  * @brief Allocates an Object object
@@ -84,13 +90,12 @@ void oCloseH5(Object *obj);
 /**
  * @brief	Read values from .grid.h5-field to Object
  * @param	obj             Object
- * @param	mpiInfo			MpiInfo
  * @return	void
  * @see gReadH5()
  *
  * Reads the input objects and creates the various lookup tables needed.
  */
-void oReadH5(Object *obj, const MpiInfo *mpiInfo);
+void oReadH5(Object *obj);
 
 /**
  * @brief   Compute the capacitance matrix. (one big matrix containing all objects)
@@ -111,7 +116,7 @@ void oReadH5(Object *obj, const MpiInfo *mpiInfo);
  long int oGatherSurfaceNodes(Object *obj, long int *nodCorLoc,long int *nodCorGlob,long int *lookupSurfOff, const MpiInfo *mpiInfo);
 
 
-void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
+void oComputeCapacitanceMatrix(Object *obj, dictionary *ini,
                                const MpiInfo *mpiInfo);
 
 /**
@@ -125,7 +130,7 @@ void oComputeCapacitanceMatrix(Object *obj, const dictionary *ini,
  * Construct and solve equation 5 in Miyake_Usui_PoP_2009.
  */
 void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const Object *obj,
-                             const MpiInfo *mpiInfo);
+                             const MpiInfo *mpiInfo,Units *units);
 
 /**
  * @brief	Collect the charge inside each object
@@ -175,4 +180,18 @@ void oFindParticleCollisions(Population *pop, Object *obj);
  */
 void oFindIntersectPoint(const Population *pop, long int id, double *surfNormal,
                         double *surfPoint, double *intersection);
+
+
+
+/**
+ * @brief   Check whether a certain node is a ghost node.
+ * @param	grid	Grid
+ * @param	node	long int
+ * @return	bool
+ */
+bool isGhostNode(Grid *grid, long int node);
+void oGhost(long int node, const int *nGhostLayersBefore,
+            const int *nGhostLayersAfter, const int *trueSize,
+            const long int *sizeProd, bool *ghost);
+
 #endif // OBJECT_H

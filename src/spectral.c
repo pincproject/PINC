@@ -90,7 +90,7 @@ funPtr sSolver_set(dictionary *ini){
 }
 
 void sSolve(const SpectralSolver *solver,
-	Grid *rho, Grid *phi, const MpiInfo *mpiInfo){
+	Grid *rho, Grid *phi){
 
 	int rank = rho->rank;
 	int *nGhostLayers = (int *)malloc(2*rank*sizeof(*nGhostLayers));
@@ -128,8 +128,8 @@ void sMode(dictionary *ini){
 
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Grid *phi = gAlloc(ini, SCALAR);
-	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
 
 	SpectralSolver *solver = sAlloc(ini, rho, phi);
 
@@ -142,7 +142,7 @@ void sMode(dictionary *ini){
 	}
 
 	adPrint(rhoValStart, trueSize[1]);
-	sSolve(solver, rho, phi, mpiInfo);
+	sSolve(solver, rho, phi);
 	adPrint(phiValStart, trueSize[1]);
 
 	sFree(solver);

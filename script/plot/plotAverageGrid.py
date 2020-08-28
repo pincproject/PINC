@@ -12,10 +12,10 @@ import matplotlib.animation as animation
 
 file_name = "phi"#"rhoNeutral" #"P"
 
-ppc = 12 # particle per cell (for rho plots)
+ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-start = 100#50600 #4950#50713#45715 # Must exist in dataset
+start = 59500# # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -29,7 +29,7 @@ restr_min = 1 #(1 = all of negative values)
 cmap = 'jet'
 plane = 'XZ' # XY, XZ, YZ
 
-show_anim = True 
+show_plot = True 
 
 save_figs = True
 
@@ -57,7 +57,12 @@ for item in h5:
 	timesteps.append(item.split("=")[-1])
 timesteps = np.array(timesteps,dtype =float)
 timesteps = np.sort(timesteps)
-#print(timesteps)
+end = timesteps[-1]
+
+for i in range(len(timesteps)):
+	if timesteps[i] == start:
+		timesteps = timesteps[i:]
+		break
 
 
 DATA = []
@@ -77,11 +82,19 @@ for i in timesteps:
 	if("rho" in file_name ):
 		if("rho_e" in file_name ):
 			data = -1*data
-		data = (data/denorm)/ppc # Number density
+		if("rho" == file_name ):
+			data = (data/denorm)/(ppc) # Number density
+		else: data = (data/denorm)/(ppc)
 	#data = np.transpose(np.average(data,axis=2))*denorm 
 	#print(data[0,0])
 	DATA.append(data)
 DATA = np.array(DATA)
+avgData = DATA[0]
+for i in range(1,len(DATA)):
+	avgData += DATA[i]
+avgData /= len(DATA)
+
+
 print("max value = %f"%np.amax(DATA))
 print("min value = %f"%np.amin(DATA))
 
@@ -92,7 +105,7 @@ vMax=restr_max*np.amax(DATA)
 print("restricting values to %f, %f"%(vMin,vMax))
 
 fig,ax = plt.subplots()
-
+ax.set_aspect('equal')
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 div = make_axes_locatable(ax)
@@ -111,57 +124,35 @@ y= np.linspace(0,dimen*(len(DATA[0,:,0])-1),len(DATA[0,:,0]))
 
 X,Y = np.meshgrid(x,y) # not necessarily actual x, y dimensions
 
-def animate(i):
-        #if('cbar' in locals()):
+cax.cla()
+#ax.clear()
+img = ax.contourf(X, Y, avgData ,cmap = cmap , levels=levels, vmin=vMin,vmax=vMax)#,cmap = 'RdYlBu'
 
-        cax.cla()
-        #ax.clear()
-        img = ax.contourf(X, Y, DATA[i,:,:],cmap = cmap , levels=levels, vmin=vMin,vmax=vMax)#,cmap = 'RdYlBu'
-        #img = ax.imshow(DATA[i,:,:],extent=[0,x[-1],0,y[-1]],cmap = cmap, vmin=vMin,vmax=vMax) 
-        ax.set_title(file_name+' Timestep: %03d'%(timesteps[i]) )
-        if (plane == 'XY'):
-                ax.set_xlabel("X (m)")
-                ax.set_ylabel("Y (m)")
-        if (plane == 'YZ'):
-                ax.set_xlabel("Y (m)")
-                ax.set_ylabel("Z (m)")
-        if (plane == 'XZ'):
-                ax.set_xlabel("X (m)")
-                ax.set_ylabel("Z (m)")
-        mesh = cax.pcolormesh(data, cmap = cmap)
-        mesh.set_clim(vMin,vMax)
-        if("rho" in file_name ):
-            cax.set_title('n/n0' )
-        if("phi" in file_name ):
-            cax.set_title('V' )
-        fig.colorbar(mesh,cax=cax)
+#img = ax.imshow(DATA[i,:,:],extent=[0,x[-1],0,y[-1]],cmap = cmap, vmin=vMin,vmax=vMax) 
+ax.set_title(file_name+' Averaged over %03d timesteps'%(end-start) )
+if (plane == 'XY'):
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+if (plane == 'YZ'):
+        ax.set_xlabel("Y (m)")
+        ax.set_ylabel("Z (m)")
+if (plane == 'XZ'):
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Z (m)")
+mesh = cax.pcolormesh(data, cmap = cmap)
+mesh.set_clim(vMin,vMax)
+if("rho" in file_name ):
+    cax.set_title('n/n0' )
+if("phi" in file_name ):
+    cax.set_title('V' )
+fig.colorbar(mesh,cax=cax)
 
-        if(save_figs == True): 
-            plt.savefig("anim_output/"+file_name+"_timestep_%03d"%(timesteps[i])+".png")
-    
-for i in range(len(DATA[:,0,0])):
-    if (start==timesteps[i]):
-        start_index=i
 
-DATA = DATA[start_index:,:,:]
-timesteps = timesteps[start_index:]
-ani = animation.FuncAnimation(fig,animate,len(DATA[:,0,0]),interval=interval*1e+3,blit=False)
+if(save_figs == True): 
+    plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+".png")
 
-if(save_anim == True):
-    try:
-        Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=(1/interval), metadata=dict(artist='Me'), bitrate=1800)
-    except RuntimeError:
-        print("ffmpeg not available trying ImageMagickWriter")
-        writer = animation.ImageMagickWriter(fps=(1/interval))
-
-    ani.save('animation.mp4')
-else:
-    if (show_anim == True):
-        plt.show()
-    else:
-        for i in range(len(DATA[:,0,0])):
-            animate(i)
+if (show_plot == True):
+    plt.show()
 
 
 

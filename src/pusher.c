@@ -79,6 +79,7 @@ static inline void addCross(const double *a, const double *b, double *res);
  */
 static void puSanity(dictionary *ini, const char* name, int dim, int order);
 
+
 /******************************************************************************
  * DEFINING GLOBAL FUNCTIONS
  *****************************************************************************/
@@ -1077,7 +1078,7 @@ void puBndIdMigrants3D(Population *pop, MpiInfo *mpiInfo){
 	for(int neigh=0;neigh<nNeighbors;neigh++){
 		migrants[neigh] = mpiInfo->migrants[neigh];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1126,7 +1127,7 @@ void puBndIdMigrantsND(Population *pop, MpiInfo *mpiInfo){
 	for(int neigh=0;neigh<nNeighbors;neigh++){
 		migrants[neigh] = mpiInfo->migrants[neigh];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1171,7 +1172,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	int *trueSize = mpiInfo->trueSize;
 	int *nSubdomainsProd = mpiInfo->nSubdomainsProd;
 	int *nSubdomains = malloc(3*sizeof(*nSubdomains));
-	int *subdomain = mpiInfo->subdomain;
+	//int *subdomain = mpiInfo->subdomain;
 	bndType *bnd = pop->bnd;
 	//int rank = mpiInfo->mpiRank;
 
@@ -1197,7 +1198,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1354,6 +1356,8 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				p -= 3;
 				pop->iStop[s]--;
 
+
+
 				}
 
 			}
@@ -1362,6 +1366,10 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 	}
 	free(nSubdomains);
 }
+
+
+
+
 
 // Works
 // TODO: Add fault-handling in case of too small "emigrants" buffer
@@ -1388,7 +1396,7 @@ void puExtractEmigrants3D(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	double lx = thresholds[0];
 	double ly = thresholds[1];
@@ -1471,7 +1479,7 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 	for(int ne=0;ne<nNeighbors;ne++){
 		emigrants[ne] = mpiInfo->emigrants[ne];
 	}
-	alSetAll(nEmigrants,nSpecies*nNeighbors,0);
+	alSetAll(nEmigrants,(nSpecies+1)*nNeighbors,0);
 
 	for(int s=0;s<nSpecies;s++){
 
@@ -1505,7 +1513,6 @@ void puExtractEmigrantsND(Population *pop, MpiInfo *mpiInfo){
 }
 
 // Works
-// TODO: Add fault-handling in case of too small Population struct
 static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 
 	int nSpecies = mpiInfo->nSpecies;
@@ -1516,23 +1523,29 @@ static inline void exchangeNMigrants(MpiInfo *mpiInfo){
 	// Send number of emigrants and receive number of immigrants.
 	// Order of reception is not necessarily as determined by the for-loop since
 	// we're using non-blocking send/receive.
+
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
 			int reciprocal = puNeighborToReciprocal(ne,mpiInfo->nDims);
-			//msg(STATUS,"ne =%i, rank = %i, reciprocal = %i",ne,rank,reciprocal);
 			long int *nEmigrants  = &mpiInfo->nEmigrants[nSpecies*ne];
 			long int *nImmigrants = &mpiInfo->nImmigrants[nSpecies*ne];
-			// We get segfault on large simulation systems, as a safety measure we can
-			// try to use a different tag here than in exchangeMigrants()
-			// hence the "2*nNeighbors"
-			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal+2*nNeighbors,MPI_COMM_WORLD,&send[ne]);
-			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne+2*nNeighbors        ,MPI_COMM_WORLD,&recv[ne]);
+			// sometimes on larger runs nImmigrants ends up uninitialized
+			// after the exchange. Zeroing it seems to help this.
+			alSetAll(nImmigrants,nSpecies,0);
+			MPI_Isend(nEmigrants ,nSpecies,MPI_LONG,rank,reciprocal,MPI_COMM_WORLD,&send[ne]);
+			MPI_Irecv(nImmigrants,nSpecies,MPI_LONG,rank,ne        ,MPI_COMM_WORLD,&recv[ne]);
+			for(int s=0;s<nSpecies;s++){
+				puAssertEmigrantsAlloc(mpiInfo->nEmigrants[nSpecies*ne+s],ne,mpiInfo);
+				puAssertImmigrantsAlloc(mpiInfo->nImmigrants[nSpecies*ne+s],mpiInfo);
+			}
 		}
 	}
 
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
 	MPI_Waitall(nNeighbors,recv,MPI_STATUS_IGNORE);
+
 
 }
 
@@ -1563,12 +1576,14 @@ static inline void shiftImmigrants(MpiInfo *mpiInfo, Grid *grid, int ne){
 }
 
 // Works
-static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies){
+static inline void importParticles(Population *pop, double *particles, long int *nParticles, int nSpecies,MpiInfo *mpiInfo){
 
 	int nDims = pop->nDims;
 	long int *iStop = pop->iStop;
 
 	for(int s=0;s<nSpecies;s++){
+
+		puAssertImmigrantsAlloc(nParticles[s],mpiInfo);
 
 		double *pos = &pop->pos[nDims*iStop[s]];
 		double *vel = &pop->vel[nDims*iStop[s]];
@@ -1595,6 +1610,7 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	long int *nImmigrants = mpiInfo->nImmigrants;
 	MPI_Request *send = mpiInfo->send;
 
+
 	for(int ne=0;ne<nNeighbors;ne++){
 		if(ne!=mpiInfo->neighborhoodCenter){
 			int rank = puNeighborToRank(mpiInfo,ne);
@@ -1608,42 +1624,67 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 	// Since "immigrants" is reused for every receive operation MPI_Irecv cannot
 	// be used. However, in order to receive and process whichever comes first
 	// MPI_ANY_SOURCE is used.
+
+
+
 	for(int a=0;a<nNeighbors-1;a++){
 
 		MPI_Status status;
-		MPI_Recv(immigrants,nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+		//2*nSpecies*nDims*nImmigrantsAlloc
+		adSetAll(immigrants,2*nSpecies*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
+		//PINC still chrashes in puMigrate under certain conditions
+		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
 		// adPrint(mpiInfo->immigrants,6);
 		shiftImmigrants(mpiInfo,grid,ne);
 		// adPrint(mpiInfo->immigrants,6);
-		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies);
+
+		importParticles(pop,immigrants,&nImmigrants[ne*nSpecies],nSpecies,mpiInfo);
 
 	}
-
+	
 	MPI_Waitall(nNeighbors,send,MPI_STATUS_IGNORE);
+
 
 }
 
 // Works
 void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
-	exchangeNMigrants(mpiInfo);
-  MPI_Barrier(MPI_COMM_WORLD); //debug
-  exchangeMigrants(pop,mpiInfo,grid);
-  MPI_Barrier(MPI_COMM_WORLD);
+    exchangeNMigrants(mpiInfo);
+    //MPI_Barrier(MPI_COMM_WORLD); //debug
+    exchangeMigrants(pop,mpiInfo,grid);
 
 }
 
-void puReflect(){
-
-
-
-}
+// void puReflect(){
+//
+//
+//
+// }
 
 /******************************************************************************
  * DEFINING LOCAL FUNCTIONS
  *****************************************************************************/
+
+void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo){
+	long int *nEmigrantsAlloc = mpiInfo->nEmigrantsAlloc;
+	//printf("On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+	if (count > nEmigrantsAlloc[ne]){//2*mpiInfo->nDims*
+		msg(STATUS,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
+	}
+}
+
+void puAssertImmigrantsAlloc(long int count, MpiInfo *mpiInfo){
+	long int nImmigrantsAlloc = mpiInfo->nImmigrantsAlloc;
+	//printf("On proc = %i, count = %li,  nImmigrantsAlloc  = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
+	if (count > nImmigrantsAlloc){
+		msg(STATUS,"On proc = %i, count = %li,  nImigrantsAlloc = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
+		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
+	}
+}
 
 static void puSanity(dictionary *ini, const char* name, int dim, int order){
 

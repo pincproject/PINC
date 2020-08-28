@@ -40,5 +40,5 @@ object.grid.h5
 PINC*.out
 object_files/**
 script/plot/lobes/**
-script/plot/anim_output*
+
 

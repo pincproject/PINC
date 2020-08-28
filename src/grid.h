@@ -39,7 +39,7 @@ typedef enum{
  * NB! Assumes 1 ghost point on all edges for now.
  */
 
-Grid *gAlloc(const dictionary *ini, int nValues);
+Grid *gAlloc(const dictionary *ini, int nValues, const MpiInfo *mpiInfo);
 
 /**
  * @brief Frees allocated grid
@@ -64,6 +64,8 @@ void gFree(Grid *grid);
  */
 
 void gSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
+
+void gSetBndSlicesE(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo);
 
 /**
  * @brief Allocates the memory for an MpiInfo struct according to input file
@@ -272,6 +274,8 @@ void setSlice(const double *slice, Grid *grid, int d, int offset);
  */
 void addSlice(const double *slice, Grid *grid, int d, int offset);
 
+void addSliceAvg(const double *slice, Grid *grid, int d, int offset);
+
 
 /**
  * @brief Set all values in grid to zero
@@ -399,6 +403,26 @@ void gNeutralizeGrid(Grid *rho, const MpiInfo *mpiInfo);
 *
 */
 void gAddTo(Grid *result, Grid *addition);
+
+/**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+* multiplies one grid to another item wise. result = result * addition
+*
+*/
+void gMulTo(Grid *result, Grid *addition);
+
+/**
+* @brief Adds a grid to another.
+* @param	result		Grid added to
+* @param	addition	Grid that is added to the other
+*
+* Divides one grid to another item wise. result = result / addition
+*
+*/
+void gDivTo(Grid *result, Grid *addition);
 
 /**
 * @brief Subtracts a grid from another.
