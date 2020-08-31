@@ -34,7 +34,7 @@ nx, ny, nz = 32, 32, 32
 lx, ly, lz = 0.05, 0.05, 0.05
 dx, dy, dz = lx/nx, ly/ny, lz/nz
 
-h5 = h5py.File('data1/'+file_name+'.grid.h5','r') # Edit the directory as per your need
+h5 = h5py.File('../../data/'+file_name+'.grid.h5','r') # Edit the directory as per your need
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
