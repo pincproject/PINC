@@ -1,5 +1,13 @@
 #!/usr/bin/python
-#Object Creation Using HDF5
+
+"""
+** PINC Object Creation Using HDF5 **
+
+@file                PINC_Object_HDF5.py
+@author              Sayan Adhikari <sayan.adhikari@fys.uio.no>
+@date                31.08.2020
+
+"""
 
 import h5py
 import numpy as np
@@ -84,7 +92,7 @@ else:
     None
 ##############################################################
 # Open HDF5 file for writing
-hf = h5py.File('data.grid.h5', 'w')
+hf = h5py.File('object.grid.h5', 'w')
 # Create a dataset named Object and write the domain data
 hf.create_dataset('Object', data=domain)
 # Close the HDF5 file
