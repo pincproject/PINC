@@ -15,7 +15,7 @@ file_name = "rho_e"#"rhoNeutral" #"P"
 ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-start = 99000#29000# # Must exist in dataset
+start = 9000#29000# # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -50,7 +50,7 @@ save_anim = False ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data3/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]

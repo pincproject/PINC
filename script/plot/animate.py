@@ -12,7 +12,7 @@ import matplotlib.animation as animation
 
 file_name = "rho_e"#"rhoNeutral" #"P"
 
-ppc = 12 # particle per cell (for rho plots)
+ppc = 32 #64 # particle per cell (for rho plots)
 
 # timesteps:
 start = 1000#50600 #4950#50713#45715 # Must exist in dataset
@@ -27,7 +27,7 @@ restr_max = 1 # (0.5 = half of positive values)
 restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XZ' # XY, XZ, YZ
+plane = 'XY' # XY, XZ, YZ
 
 show_anim = True 
 
@@ -47,7 +47,7 @@ save_anim = False ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../data0/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
@@ -92,6 +92,7 @@ vMax=restr_max*np.amax(DATA)
 print("restricting values to %f, %f"%(vMin,vMax))
 
 fig,ax = plt.subplots()
+ax.set_aspect('equal')
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 

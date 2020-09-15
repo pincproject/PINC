@@ -364,6 +364,201 @@ void mgFree(Multigrid *multigrid){
 	return;
 }
 
+
+
+
+
+
+
+// TEST, move later =========
+void mgSetBndSlices(const dictionary *ini, Grid *grid,const MpiInfo *mpiInfo,int level){
+
+	int rank = grid->rank;
+	int *size = grid->size;
+	bndType *bnd = grid->bnd;
+	double *bndSlice = grid->bndSlice;
+	int *nGhostLayers = grid->nGhostLayers;
+	//double *bndSolution = grid->bndSolution;
+	int *subdomain = mpiInfo->subdomain;
+	int *nSubdomains = mpiInfo->nSubdomains;
+	int nDims = mpiInfo->nDims;
+
+	// using ini is slow, but setting boundary slices is likely only done once.
+	int nSpecies = iniGetInt(ini,"population:nSpecies");
+	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
+	double *B = iniGetDoubleArr(ini,"fields:BExt",nDims);
+
+	double veld[nDims];
+
+	for (int s=0;s<nSpecies;s++){
+		for (int d = 0;d<nDims;d++){
+			//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
+			veld[d] += (1./nSpecies)*velDrift[d+s*nDims];
+			}
+	}
+
+	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veld[0],veld[1],veld[2]);
+
+    //double B[3] = {1., 0., 0.};
+	//double veld[3] = {0., 1., 1.};
+	double veldCrossB[3] = {0., 0., 0.};
+	adCrossProd(veld, B, veldCrossB);
+
+	//printf("B[0] = %f, B[1] = %f, B[2] = %f \n",B[0],B[1],B[2]);
+	//printf("veld[0] = %f, veld[1] = %f, veld[2] = %f \n",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
+	//printf("veldCrossB = %f,%f,%f",veldCrossB[0],veldCrossB[1],veldCrossB[2]);
+
+
+	//Number of elements in slice
+	long int nSliceMax = 0;
+	for(int d=1;d<rank;d++){
+		long int nSlice = 1;
+		for(int dd=0;dd<rank;dd++){
+			if(dd!=d) nSlice *= size[dd];
+		}
+		if(nSlice>nSliceMax) nSliceMax = nSlice;
+	}
+
+	//double constant1 = 0.; //Dirichlet
+	double constant2 = 0.; // solution to bnd cond = 0.
+
+	// The dirichlet part in this function ended up realy ugly. I am sorry for
+	// that, but it works.
+
+	// indices are indices of slice perp to d
+	long int indices[rank];
+	long int edge[rank]; //tells us what dimensions are perp (slice)
+
+	//Lower edge
+	for(int d = 1; d < rank; d++){
+		for(long int q = 0;q<rank-1;q++){
+			//initiallize
+			//indices[q] = size[q+1]*subdomain[q];
+			edge[q] = (q!=(d-1));
+			//printf("q = %li, indices[q] = %li \n",q,indices[q]);
+		}
+		if(subdomain[d-1] == 0){
+			if(bnd[d] == DIRICHLET){
+				for(long int q = 0;q<rank-1;q++){
+					//set dim perp to slice indice to fixed val
+					if(!edge[q]){
+						indices[q] = nGhostLayers[q+1];
+					} else{
+						// start indices at minimum local indice
+						indices[q] = 0;//
+					}
+				}
+				for(int s = 0; s < nSliceMax; s++){
+
+					for(long int q = 0;q<rank-1;q++){
+						//set dim perp to slice indice to fixed val
+						if(!edge[q]){
+							indices[q] = nGhostLayers[q+1];
+						}
+					}
+
+					bndSlice[s + (nSliceMax * d)] = 0;
+					for(int dd = 0;dd<rank-1;dd++){ //dot prod of VxB and indices
+						// grid indices (i,j,k) are computed locally, so we need to
+						// cast them to global frame in the dot product
+						bndSlice[s + (nSliceMax * d)] += veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1]*(1+2*level))-(2*subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*(1+2*level)*nSubdomains[dd];
+						//																veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])+(!edge[dd])*(subdomain[dd]+(nSubdomains[dd]-1))+0.5-3*edge[dd]*subdomain[dd]) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
+						//printf("subdomain[%i] = %i, nSubdomains[%i] = %i \n",dd,subdomain[dd],dd,nSubdomains[dd]);
+						if(veldCrossB[dd]*indices[dd]*edge[dd]!=0){
+						}
+					}
+					// counter to increment only in the slice dims, and not the
+					// dim perp to slice
+					bool incremented = false;
+					for(int dd = 0;dd<rank;dd++){
+						//runs up to 34-1 for 32x32x32 domain
+						if(indices[dd]<(size[dd+1])-1 && edge[dd]==1 && incremented == false){
+							indices[dd]++;
+							incremented = true;
+						}else if(incremented == false){
+							// reset
+							indices[dd] = 0;//nGhostLayers[dd+1];
+						}
+					}
+					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+				}
+			}
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+
+					// initialize.
+					bndSlice[s + (nSliceMax * d)] = constant2;
+
+					//Solution to equation. constant for now
+
+				}
+			}
+		}
+	}
+
+	//Upper edge
+	for(int d = rank+1; d < 2*rank; d++){
+		for(long int q = 0;q<rank-1;q++){
+			//initiallize
+			//indices[q] = size[q+1]*subdomain[q];
+			edge[q] = (q!=(d-rank-1));
+			//printf("d = %i, edge[q] = %li \n",d,edge[q]);
+		}
+		if(subdomain[d-rank-1]==nSubdomains[d-rank-1]-1){
+			if(bnd[d] == DIRICHLET){
+				for(long int q = 0;q<rank-1;q++){
+					//set dim perp to slice indice to fixed val
+					if(!edge[q]){
+						indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
+						//printf("nSubdomains = %i\n",nSubdomains[q]);
+					} else{
+						// start indices at minimum
+						indices[q] = 0;
+					}
+				}
+				for(int s = 0; s < nSliceMax; s++){
+					for(long int q = 0;q<rank-1;q++){
+						//set dim perp to slice indice to fixed val
+						if(!edge[q]){
+							indices[q] = (size[q+1]-2*nGhostLayers[q+1]); //-nGhostLayers[q]
+							//printf("nSubdomains = %i\n",nSubdomains[q]);
+						}
+					}
+					bndSlice[s + (nSliceMax * (d))] = 0;
+					for(int dd = 0;dd<rank-1;dd++){
+						bndSlice[s + (nSliceMax * (d))] +=  veldCrossB[dd]*((indices[dd])+(subdomain[dd]*size[dd+1]*(1+2*level))-(subdomain[dd])-(subdomain[dd]-(nSubdomains[dd]-1))) -0.5*veldCrossB[dd]*size[dd+1]*(1+2*level)*nSubdomains[dd];
+																								//veldCrossB[dd]*(indices[dd]+(subdomain[dd]*size[dd+1])+0.5-(subdomain[dd])) -0.5*veldCrossB[dd]*size[dd+1]*nSubdomains[dd];
+					}
+					bool incremented = false;
+					for(int dd = 0;dd<rank;dd++){
+						//runs up to 34-1 for 32x32x32 local domain
+						if(indices[dd]<(size[dd+1]-1) && edge[dd]==1 && incremented == false){
+							indices[dd]++;
+							incremented = true;
+						}else if(incremented == false){
+							// reset
+							indices[dd] = 0;//(size[dd+1]-nGhostLayers[dd]);
+						}
+					}
+					//printf("indices[0] = %li,indices[1] = %li,indices[2] = %li \n",indices[0],indices[1],indices[2]);
+				}
+			}
+
+			if(bnd[d] == NEUMANN){
+				for(int s = 0; s < nSliceMax; s++){
+					bndSlice[s + (nSliceMax * d)] = constant2;
+				}
+			}
+		}
+	}
+
+	//msg(STATUS,"nSliceMax = %li",nSliceMax);
+	//adPrint(&bndSlice[nSliceMax], nSliceMax*(rank));
+	free(velDrift);
+	//free(B);
+	return;
+}
+// ==========================
 MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi, const MpiInfo *mpiInfo){
 
 	MultigridSolver *solver = (MultigridSolver *)malloc(sizeof(*solver));
@@ -372,6 +567,13 @@ MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi, cons
 	Multigrid *mgRho = mgAlloc(ini, rho);
 	Multigrid *mgRes = mgAlloc(ini, res);
 	Multigrid *mgPhi = mgAlloc(ini, phi);
+
+	//int nLevels = iniGetInt(ini, "multigrid:mgLevels");
+	//for(int level = 0; level < nLevels; level ++){
+	//	mgSetBndSlices(ini, mgPhi->grids[level], mpiInfo, level);
+	//	mgSetBndSlices(ini, mgPhi->grids[level], mpiInfo, level);
+	//}
+
 
 	funPtr mgAlgo = getMgAlgo(ini);
 
@@ -1547,11 +1749,53 @@ void mgCompError(const Grid *numerical,const Grid *analytical, Grid *error){
 	return;
 }
 
-double mgSumTrueSquared(Grid *error){
+static double mgSumTrueSquareInner(const double **val, const int *nGhostLayersBefore,
+								const int *nGhostLayersAfter, const int *trueSize,
+								const long int *sizeProd){
 
-	//Square and sum
-	gSquare(error);
-	double sum = gSumTruegrid(error);
+	double sum = 0;
+
+	if(*sizeProd==1){
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++){
+			//printf("*val = %f \n",**val);
+			sum += (*(*val))*(*(*val));
+			(*val)++;
+		}
+
+
+		*val += *sizeProd**nGhostLayersAfter;
+
+	} else {
+
+		*val += *sizeProd**nGhostLayersBefore;
+
+		for(int j=0;j<*trueSize;j++)
+			sum += mgSumTrueSquareInner(val,nGhostLayersBefore-1,
+									nGhostLayersAfter-1,trueSize-1,sizeProd-1);
+
+		*val += *sizeProd**nGhostLayersAfter;
+	}
+	//exit(0);
+
+	return sum;
+}
+
+double mgSumTrueSquared(Grid *grid){
+
+	//Load
+	const double *val = grid->val;
+	long int *sizeProd = grid->sizeProd;
+	int *trueSize = grid->trueSize;
+	int *nGhostLayers = grid->nGhostLayers;
+	int rank = grid->rank;
+
+	double sum = mgSumTrueSquareInner(&val,&nGhostLayers[rank-1],
+					&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1]);
+
+
 
 	//Reduce
 	MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -1781,26 +2025,38 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	//gZero(mgPhi->grids[0]);
 	double tol = mgRho->tol;//1.E-3; //1.E-10;
 	double barRes = 2.;
+	double normRho = 2.;
 
 	//gBnd(mgPhi->grids[0], mpiInfo);
 	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
 
 
+	normRho = mgSumTrueSquared(mgRho->grids[0]); // does total grid not "true" grid
+	normRho = sqrt(normRho);
+	//msg(STATUS, "normRho = %f", normRho);
+
 	int iterations = 0;
 	if(nLevels >1){
-		while(barRes > tol){
+		while(barRes > normRho*tol && barRes > 1e-50){
 		//for(int c = 0; c < nMGCycles; c++){
 			//gBnd(mgRes->grids[0],mpiInfo);
 			//gBnd(mgRho->grids[0],mpiInfo);
 			//gBnd(mgPhi->grids[0],mpiInfo);
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
-
+			//gBnd(mgRes->grids[0],mpiInfo);
 			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
 			//gBnd(mgPhi->grids[0], mpiInfo);
-			barRes = mgSumTrueSquared(mgRes->grids[0]);
-			barRes /= gTotTruesize(mgRho->grids[0],mpiInfo);
+			barRes = mgSumTrueSquared(mgRes->grids[0]); // does total grid not "true" grid
 			barRes = sqrt(barRes);
+			//barRes /= (gTotTruesize(mgRho->grids[0],mpiInfo)*mpiSize);
+			
+
+			
+			//barRes = sqrt(barRes);
+
+
+			//msg(STATUS, "normRho*tol = %f", normRho*tol);
 			//msg(STATUS, "barRes = %f", barRes);
 			//exit(0);
 			//adPrint(mgPhi->grids[0]->val,mgPhi->grids[0]->sizeProd[4]);

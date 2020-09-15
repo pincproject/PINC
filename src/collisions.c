@@ -645,7 +645,7 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 	// Choise of energy method. This decides the temperature of electrons after
 	// a "Long" time.
-	
+
 	if(strcmp(mccVars->electronEnergyMethod,"VS")){
 		newEkin = Ekin*(1-((2.0*mass[0])/(artificialLoss*mass[1]))
 		*(1-(cos(angleChi))));
@@ -667,6 +667,7 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 	}
 
 	anglePhi = 2*PINC_PI*R3;
+	//----debugging code --------
 	if(vx>0.0){
 		if(vx<0.0000000000000001){vx=0.0000000000000001;}
 		if(vx>0.99999999999999){vx=0.99999999999999;}
@@ -675,6 +676,7 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 		if(vx>-0.0000000000000001){vx=-0.0000000000000001;}
 		if(vx<-0.99999999999999){vx=-0.99999999999999;}
 	}
+	//-----------------------
 	angleTheta = acos(vx);
 
 	// inc - scat vector relation
@@ -2398,7 +2400,7 @@ static void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>99000 && n%10==0) ){//50614
+		if(n%1000 == 0 || (n>19000 && n%10==0) ){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);

@@ -456,7 +456,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
         for (long int i=0; i<totSNGlob; i++) {
             for (long int j=beginIndex; j<endIndex; j++) {
                 rhoCorr[i] += capMatrixAll[a*totSNGlob*totSNGlob+totSNGlob*j+i]*deltaPhi[j];
-                
+
             }
         }
 
@@ -1706,6 +1706,7 @@ static void oMode(dictionary *ini){
 
   	// Setting Boundary slices
   	gSetBndSlices(ini, phi, mpiInfo);
+	//gSetBndSlices(ini, solver->res, mpiInfo); 
 	//gSetBndSlices(ini, rho, mpiInfo);
 	gSetBndSlicesE(ini, E, mpiInfo);
 
@@ -1945,7 +1946,7 @@ static void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%10 == 0 || (n>29500 && n%10==0)){//n>122700){//50614
+		if(n%1000 == 0 || (n>9000 && n%10==0)){//n>122700){//50614
 		//Write h5 files
 			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
