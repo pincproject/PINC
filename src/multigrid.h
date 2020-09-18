@@ -91,6 +91,17 @@ typedef struct {
 
 Multigrid *mgAlloc(const dictionary *ini, Grid *grid);
 
+
+ /**
+  * @brief 	Allocates grids, and sets up the Multigrid Solver.
+  * @param 	ini	Dictionary
+  * @param 	rho	Charge grid
+  * @param 	phi	Potential grid
+  * @param 	mpiInfo	MpiInfo struct containing subdomain information
+  *
+  * Called by the solver interface if multigrid is selected as poisson solver in the input file.
+  */
+
 MultigridSolver* mgAllocSolver(const dictionary *ini, Grid *rho, Grid *phi,const MpiInfo *mpiInfo);
 void mgFreeSolver(MultigridSolver *solver);
 void mgSolve(const MultigridSolver *solver,	const Grid *rho, const Grid *phi, const MpiInfo* mpiInfo);
@@ -421,8 +432,6 @@ double	mgAvgError(Grid *phi,Grid *sol,Grid *error);
  * @param  error               Difference between solutions
  * @return error
  *
- *  WARNING!    Stores the squared values on the original grid
- *              Recompute error if needed
  */
 double mgSumTrueSquared(Grid *error);
 

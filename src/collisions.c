@@ -2045,6 +2045,7 @@ static void oCollMode(dictionary *ini){
 	pCreateEnergyDatasets(history,pop);
 	xyCreateDataset(history,"/current/electrons/dataset");
 	xyCreateDataset(history,"/current/ions/dataset");
+	xyCreateDataset(history,"/potential/dataset");
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
@@ -2363,6 +2364,7 @@ static void oCollMode(dictionary *ini){
 
 
         // Second run with solver to account for charges
+		oSweepBiasSin( obj, n );
         oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);   // for capMatrix - objects
 
 
@@ -2400,7 +2402,7 @@ static void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>19000 && n%10==0) ){//50614
+		if(n%10 == 0 || (n>24000 && n%100==0) ){//50614
 		//Write h5 files
 		//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -2424,6 +2426,7 @@ static void oCollMode(dictionary *ini){
 		pWriteEnergy(history,pop,(double)n,units);
 		xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
 		xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
+		xyWrite(history,"/potential/dataset",(double)n,units->potential*(*obj->bias),MPI_MAX);
 	}
 
 	if(mpiInfo->mpiRank==0) {

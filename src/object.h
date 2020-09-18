@@ -25,8 +25,16 @@ typedef struct{
 	double *rhoCorr;
 	double *invNrSurfNod;
 	double *objectCurrent;		/// Store current to each object per specie
-	double *bias;							/// Fixed bias value for object
+	double *bias;							/// bias value for object, can vary in sweep
+	double *origBias;							/// Fixed bias value for object
 	int biasOn;							/// Turns biasing on or of
+	int sweepOn;
+	double sweepTime;
+	double sweepRange;
+	double sweepOffset;
+	double sweepStart;
+	//double sweepEnd;
+	int sweepSteps;
 } PincObject;
 
 
@@ -144,6 +152,11 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *objob
  */
 void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *objobj,
                           const MpiInfo *mpiInfo);
+
+void oSweepBiasSin( PincObject *obj, int nt );
+
+
+
 //
 // /**
 //  * TO IMPLEMENT!

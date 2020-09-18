@@ -2037,6 +2037,14 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 
 	int iterations = 0;
 	if(nLevels >1){
+		for(int i =0;i<5;i++){// min iters
+			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
+			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
+			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
+			barRes = mgSumTrueSquared(mgRes->grids[0]); // does total grid not "true" grid
+			barRes = sqrt(barRes);
+			iterations += 1;
+		}
 		while(barRes > normRho*tol && barRes > 1e-50){
 		//for(int c = 0; c < nMGCycles; c++){
 			//gBnd(mgRes->grids[0],mpiInfo);
@@ -2050,9 +2058,9 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			barRes = mgSumTrueSquared(mgRes->grids[0]); // does total grid not "true" grid
 			barRes = sqrt(barRes);
 			//barRes /= (gTotTruesize(mgRho->grids[0],mpiInfo)*mpiSize);
-			
 
-			
+
+
 			//barRes = sqrt(barRes);
 
 

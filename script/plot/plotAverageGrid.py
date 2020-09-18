@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho_e"#"rhoNeutral" #"P"
+file_name = "phi"#"rhoNeutral" #"P"
 
 ppc = 32 # particle per cell (for rho plots)
 
 # timesteps:
-start = 9000#29000# # Must exist in dataset
+start = 24000#29000# # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -30,11 +30,11 @@ scale_min=False
 restr_min = -1 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XZ' # XY, XZ, YZ
+plane = 'XY' # XY, XZ, YZ
 
 show_plot = True 
 
-save_figs = True
+save_figs = True#False#
 
 
 ## Needs ffmpeg codec

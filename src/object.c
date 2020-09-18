@@ -12,6 +12,7 @@
 #include "spectral.h"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
+#include <gsl/gsl_sf_trig.h>
 
 /******************************************************************************
  *  LOCAL FUNCTION DECLARATIONS
@@ -219,6 +220,8 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
     // Set Rho to zero.
     gZero(rhoCap);
 	gZero(phiCap);
+	gAdd(phiCap, realTol); // for large grids if the whole phi grid is zero the
+	// MG solver converges in one iteration. This fixes this issue.
 	double rhoSumTest = 0.0; // Delete this, debug
 	double phiSumTest = 0.0;
 	//gSetBndSlices(ini, phiCap, mpiInfo);
@@ -851,6 +854,36 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
 
 }
 
+void oSweepBiasSin( PincObject *obj, int nt ){
+
+	// nt is at timestep number nt
+	double sweepAmp = obj->sweepRange;
+	double sweepTime = obj->sweepTime;
+	double sweepOffset = obj->sweepOffset;
+	double sweepStart = obj->sweepStart;
+	int nSteps=obj->sweepSteps;
+	//double sweepEnd = obj->sweepEnd;
+	//double bias = *obj->bias;
+	int sweepLength = (int)(sweepStart+sweepTime)-(int)sweepStart;
+	int stepLength = sweepLength/nSteps;
+	for (long int a=0; a<obj->nObjects; a++){
+		if (obj->sweepOn == 1){
+			if (nt>(int)sweepStart && nt<(int)(sweepStart+sweepTime) ){
+				if(nt%stepLength==0){
+					//msg(STATUS,"nt-(int)sweepStart = %i",(nt-(int)sweepStart));
+					//msg(STATUS,"nt-(int)sweepStart = %i",(nt-(int)sweepStart));
+					//msg(STATUS,"(sweepAmp/sweepTime) = %f",((sweepAmp/sweepTime) ));
+					obj->bias[a] = sweepOffset+sweepAmp/2 -((sweepAmp/sweepTime)*((nt-(int)sweepStart)));
+					//obj->bias[a] = sweepOffset+sweepAmp*gsl_sf_cos(sweepTime*(nt-(int)sweepStart));
+				}
+			}else{
+				obj->bias[a] = obj->origBias[a];
+			}
+		}
+	}
+	//msg(STATUS,"sweepStart = %f",sweepStart);
+	//msg(STATUS,"sweepEnd = %f",(sweepStart+sweepTime));
+}
 
 //
 // //stores index of particles that are close to an object at the current timestep
@@ -1079,13 +1112,29 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
   int nSpecies = iniGetInt(ini,"population:nSpecies");
   double *objectCurrent= malloc(nSpecies*nObjects*sizeof(*objectCurrent));
   bool biasOn = iniGetInt(ini,"object:biasOn");
+  bool sweepOn = iniGetInt(ini,"object:sweepOn");
   double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
-
   adScale(bias, nObjects, 1./units->potential);
+  double *origBias = iniGetDoubleArr(ini,"object:bias",nObjects);
+  adScale(origBias, nObjects, 1./units->potential);
+  double sweepTime = iniGetDouble(ini,"object:sweepTime");
+  sweepTime = sweepTime/units->time;
+  double sweepRange= iniGetDouble(ini,"object:sweepRange");
+  sweepRange /= units->potential;
+  //sweepRange /= 2;
+  double sweepOffset= iniGetDouble(ini,"object:sweepOffset");
+  sweepOffset /= units->potential;
+  double sweepStart = iniGetDouble(ini,"object:sweepStart");
+  sweepStart /= units->time;
+  double sweepSteps = iniGetInt(ini,"object:sweepSteps");
+  //double sweepEnd = iniGetDouble(ini,"object:sweepEnd");
+  //sweepEnd /= units->time;
   //printf("bias=%f\n",bias[0] );
   //exit(0);
   obj->biasOn = biasOn;
+  obj->sweepOn = sweepOn;
   obj->bias = bias;
+  obj->origBias = origBias;
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
@@ -1093,6 +1142,12 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
 	obj->rhoCorr = rhoCorr;
 	obj->invNrSurfNod = invNrSurfNod;
   obj->objectCurrent= objectCurrent;
+  obj->sweepTime=sweepTime;
+  obj->sweepRange=sweepRange;
+  obj->sweepOffset=sweepOffset;
+  //obj->sweepEnd=sweepEnd;
+  obj->sweepStart=sweepStart;
+  obj->sweepSteps=sweepSteps;
 
 
     free(nodCorLoc);
@@ -1706,7 +1761,7 @@ static void oMode(dictionary *ini){
 
   	// Setting Boundary slices
   	gSetBndSlices(ini, phi, mpiInfo);
-	//gSetBndSlices(ini, solver->res, mpiInfo); 
+	//gSetBndSlices(ini, solver->res, mpiInfo);
 	//gSetBndSlices(ini, rho, mpiInfo);
 	gSetBndSlicesE(ini, E, mpiInfo);
 
@@ -1750,6 +1805,7 @@ static void oMode(dictionary *ini){
 	pCreateEnergyDatasets(history,pop);
   xyCreateDataset(history,"/current/electrons/dataset");
   xyCreateDataset(history,"/current/ions/dataset");
+  xyCreateDataset(history,"/potential/dataset");
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
@@ -1904,7 +1960,8 @@ static void oMode(dictionary *ini){
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
         // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
+		oSweepBiasSin( obj, n );
+		oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
 
 		//gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
@@ -1946,7 +2003,7 @@ static void oMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>9000 && n%10==0)){//n>122700){//50614
+		if(n%10 == 0 || (n>19500 && n%10==0)){//n>122700){//50614
 		//Write h5 files
 			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
@@ -1964,6 +2021,7 @@ static void oMode(dictionary *ini){
 		pWriteEnergy(history,pop,(double)n,units);
     xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
     xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
+	xyWrite(history,"/potential/dataset",(double)n,units->potential*(*obj->bias),MPI_MAX);
 	}
 
 	if(mpiInfo->mpiRank==0) {
