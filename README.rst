@@ -15,5 +15,5 @@ Authors:
 - Vigdis Holta (see separate branch): Neumann boundaries, blob instability for tokamak simulations
 - Steffen Brask (see separate branch): Collision module, Farley-Buneman instability
 - Jan Deca (see separate branches): Capacitance matrix method for plasma-object interactions
-- Trym Erik Nielsen (see seperate branch): Object/Particle collision mechanisms
+- Trym Erik Nielsen (see seperate branch): Photoelectric emission
 .. _`Sigvald Marholm`: mailto:sigvald@marebakken.com
