@@ -36,6 +36,7 @@ typedef struct{
 	double *objectCurrent;		/// Store current to each object per specie
 	double *bias;							/// Fixed bias value for object
 	int biasOn;							/// Turns biasing on or of
+  int phCurrentOn; /// Selects for photoelectron functions where the photoelectric current is known
 } PincObject;
 
 

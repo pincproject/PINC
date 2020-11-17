@@ -1290,6 +1290,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 
 	//object variables
 	int nObj = obj->nObjects;
+	bool phCurrentOn = obj->phCurrentOn;
 	long int *emittingNodes = obj->emittingNodes;
 	long int *emittingOff = obj->emittingNodesOffset;
 	long int *exposedNodes = obj->exposedNodes;
@@ -1328,11 +1329,14 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 	nSpecie = (pop->charge[0] < 0.) ? 0 : 1;
 	pSpecie = (nSpecie == 0) ? 1 : 0;
 
-	//convert wavenumber to workfunction energy
-	for(int a = 0; a<nObj; a++){
-		workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
-		workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules) 
+	//convert wavenumber to workfunction energy if planck integrals used
+	if(phCurrentOn == 0){
+		for(int a = 0; a<nObj; a++){
+			workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
+			workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules) 
+		}		
 	}
+
 
 	//average energy and velocity of emitted superparticle
 	double avgEnergy[nObj];
@@ -1341,18 +1345,24 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
-		avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
-		avgEnergy[a] -= (workFunc[a] * 6.626070e-34 * 299792458.0); //convert work function to Joule
-		//avgEnergy[a] = 4.80653e-19;
+		if(phCurrentOn == 0){
+			avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
+			avgEnergy[a] -= (workFunc[a] * 6.626070e-34 * 299792458.0); //convert work function to Joule
+		}
+		else{
+			avgEnergy[a] = bandEnergy[a];
+		}
 		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
-		//avgVel[a] = sqrt((34814 * 1.38064852e-23) / 9.10938356e-31);
+
 		avgVel[a] /= units->velocity;
 		msg(STATUS, "avgVel %f", avgVel[a]);
 	}
 
 	//scale flux to each core 
 	for(size_t a = 0; a<nObj; a++){
-		flux[a] *= phYield * (1.0 - reflectance); // TODO: Make the reflectance an input parameter
+		if(phCurrentOn == 0){
+			flux[a] *= phYield * (1.0 - reflectance); // TODO: Make the reflectance an input parameter
+		}
 		flux[a] /= units->weights[nSpecie];
 		flux[a] /= (double)totEmiNodes;//(double)totExpNodes;
 		flux[a] = round(flux[a]);
@@ -1382,7 +1392,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 				memcpy(newPos, pos, pop->nDims * sizeof(*newPos));
 				while(vel[0] >= 0.0){
 					vel[0] = gsl_ran_gaussian_ziggurat(rng,avgVel[a]); //
-				}//if(j==0) adPrint(vel,3);
+				}
 				//adRotateRandom3D(vel, rng);
 				gsl_ran_bivariate_gaussian(rng, avgVel[a], avgVel[a], 0.0, &vel[1], &vel[2]);
 				//vel[1] = gsl_ran_gaussian_ziggurat(rng,avgVel[a]);

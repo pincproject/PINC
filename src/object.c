@@ -1516,11 +1516,12 @@ void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj)
     
     int nObj = obj->nObjects;
     double *flux = obj->radiance;
+    double *bandEnergy = obj->bandEnergy;
     double *area = obj->conductingSurface;
     double jNormalize = 1.60217662e-19 / units->time / units->hyperArea;
 
     double *currentDensity = iniGetDoubleArr(ini, "object:currentDensity", nObj);
-
+    bandEnergy = iniGetDoubleArr(ini, "object:averageEnergyPH", nObj);
     //Q = j * A * t
     for(int a = 0; a<nObj; a++){
         //don't need to divide by timestep, we want flux in terms of timestep anyway 
@@ -1622,12 +1623,12 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
   obj->objectCurrent= objectCurrent;
 
 
-    
+    bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
+    obj->phCurrentOn = phCurrentOn;
 	obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
     obj->conductingSurface = iniGetDoubleArr(ini, "object:ConductingSurface", nObjects);
     obj->reflectance = iniGetDoubleArr(ini, "object:reflectance", nObjects);
-    //oPlanckPhotonIntegral(ini, units, obj);
-    //oPlanckEnergyIntegral(ini, units, obj);
+
     double *radiance = malloc(obj->nObjects * sizeof(*radiance));
     double *bandEnergy = malloc(obj->nObjects * sizeof(*bandEnergy));
 
@@ -1636,8 +1637,13 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->radiance = radiance;
     obj->bandEnergy = bandEnergy;
 
-    oPlanckPhotonIntegral(ini, units, obj);
-    oPlanckEnergyIntegral(ini, units, obj);
+    //Uncomment next line when ph current and avg. photoelectron energy is know
+    //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
+    oPhotoElectronCurrent(ini, units, obj);
+    
+    //Uncomment next two lines if distance from sun is known
+    //oPlanckPhotonIntegral(ini, units, obj);
+    //oPlanckEnergyIntegral(ini, units, obj);
 
 
     free(nodCorLoc);
@@ -1667,8 +1673,8 @@ void oFree(PincObject *obj){
 	free(obj->rhoCorr);
 	free(obj->deltaPhi);
 	free(obj->invNrSurfNod);
-  free(obj->objectCurrent);
-  free(obj->bias);
+    free(obj->objectCurrent);
+    free(obj->bias);
     free(obj);
 
 }
@@ -2413,10 +2419,9 @@ static void oMode(dictionary *ini){
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
         
-/*         if(n==1){
-            oPlanckPhotonIntegral(ini, units, obj);
-            //oPhotoElectronCurrent(ini, units, obj);//5.0625e8 //J=1.6e-2 A/m^2, deca et al.
-        } */
+        /*if(n==1){
+            oPhotoElectronCurrent(ini, units, obj);//5.0625e8 //J=1.6e-2 A/m^2, deca et al.
+        }*/
 
 		tStart(t);
 
