@@ -8,14 +8,14 @@ Test case input file: decaetal.ini based on the work by [Deca et al., *Physics o
 
 
 3. IF current density and average energy of ph electron is known:
-	3a. Set currentDensity under "Object" in .ini file (amp/m^2) for each object
-	3b. Set phCurrentOn switch to 1 under "Object" in .ini file
-	3c. Set averageEnergyPH under "Object" in .ini file (Joule) for each object
-	3d. Make sure the following two lines are commented out in the objoAlloc function:
-		oPlanckPhotonIntegral(ini, units, obj);
-    		oPlanckEnergyIntegral(ini, units, obj);
-   	3e. Make sure the following line in the objoAlloc function is un-commented:
-   		oPhotoElectronCurrent(ini, units, obj);
+  3a. Set currentDensity under "Object" in .ini file (amp/m^2) for each object
+  3b. Set phCurrentOn switch to 1 under "Object" in .ini file
+  3c. Set averageEnergyPH under "Object" in .ini file (Joule) for each object
+  3d. Make sure the following two lines are commented out in the objoAlloc function:
+    oPlanckPhotonIntegral(ini, units, obj);
+    oPlanckEnergyIntegral(ini, units, obj);
+  3e. Make sure the following line in the objoAlloc function is un-commented:
+    oPhotoElectronCurrent(ini, units, obj);
 
 
 4. IF only distance from the sun is known (not ph electron temp or ph current density)
