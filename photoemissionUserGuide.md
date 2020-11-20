@@ -19,15 +19,15 @@ Test case input file: decaetal.ini based on the work by [Deca et al., *Physics o
 
 
 4. IF only distance from the sun is known (not ph electron temp or ph current density)
-	4a. Set distance from sun under "Object" in .ini file (m) for each object
-	4b. Set phCurrentOn switch to 0 under "Object" in .ini file
-	4c. Set workFunction under "Object" in .ini file (Joule) for material of each object
-	4d. Make sure the following two lines are un-commented in the objoAlloc function:
-		oPlanckPhotonIntegral(ini, units, obj);
-    		oPlanckEnergyIntegral(ini, units, obj);
-   	4e. Make sure the following line in the objoAlloc function is commented:
-   		oPhotoElectronCurrent(ini, units, obj);
-   	4f. In the function pPhotoElectrons in population.c, set (the parameters in the .ini file haven't been coded yet..)
+    4a. Set distance from sun under "Object" in .ini file (m) for each object
+    4b. Set phCurrentOn switch to 0 under "Object" in .ini file
+    4c. Set workFunction under "Object" in .ini file (Joule) for material of each object
+    4d. Make sure the following two lines are un-commented in the objoAlloc function:
+        - oPlanckPhotonIntegral(ini, units, obj);
+    	- oPlanckEnergyIntegral(ini, units, obj);
+    4e. Make sure the following line in the objoAlloc function is commented:
+   	- oPhotoElectronCurrent(ini, units, obj);
+    4f. In the function pPhotoElectrons in population.c, set (the parameters in the .ini file haven't been coded yet..)
    		the phYield (# of outgoing ph.electrons per incoming photon)
    		the reflectance (average reflectance of bandwidth as a %)
 
