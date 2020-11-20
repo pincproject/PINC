@@ -13,8 +13,17 @@
 #include "spectral.h"
 #include "object.h"
 
+/**
+ * @brief Regular PIC simulation
+ */
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
+
+/**
+ * @brief Do a pure Poisson solve
+ */
+void poisson(dictionary *ini);
+funPtr poisson_set(dictionary *ini){ return poisson; }
 
 int main(int argc, char *argv[]){
 
@@ -30,6 +39,7 @@ int main(int argc, char *argv[]){
 	 * CHOOSE PINC RUN MODE
 	 */
 	void (*run)() = select(ini,"methods:mode",	regular_set,
+                                                poisson_set,
 												mgMode_set,
 												mgModeErrorScaling_set,
 												sMode_set);
@@ -231,7 +241,7 @@ void regular(dictionary *ini){
 		//Write h5 files
 		// gWriteH5(E, mpiInfo, (double) n);
 		// gWriteH5(rho, mpiInfo, (double) n);
-		// gWriteH5(phi, mpiInfo, (double) n);
+		gWriteH5(phi, mpiInfo, (double) n);
 		// pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		pWriteEnergy(history,pop,(double)n);
 
@@ -266,4 +276,72 @@ void regular(dictionary *ini){
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
 
+}
+
+void poisson(dictionary *ini){
+
+	void (*solverInterface)()	= select(ini,	"methods:poisson",
+												mgSolver_set,
+												sSolver_set);
+
+	void (*solve)() = NULL;
+	void *(*solverAlloc)() = NULL;
+	void (*solverFree)() = NULL;
+	solverInterface(&solve, &solverAlloc, &solverFree);
+
+	/*
+	 * INITIALIZE PINC VARIABLES
+	 */
+	Units *units=uAlloc(ini);
+	uNormalize(ini, units);
+
+	MpiInfo *mpiInfo = gAllocMpi(ini);
+	Grid *rho = gAlloc(ini, SCALAR);
+	Grid *phi = gAlloc(ini, SCALAR);
+	void *solver = solverAlloc(ini, rho, phi);
+
+	// Setting Boundary slices 
+	gSetBndSlices(phi, mpiInfo);
+
+	/*
+	 * PREPARE FILES FOR WRITING
+	 */
+	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
+	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
+
+    /* gReadH5(rho, mpiInfo, 0.); */
+    gFillSin(rho, 1, mpiInfo, 0);
+    gWriteH5(rho, mpiInfo, 0.);
+    /* adPrint(rho->val, rho->sizeProd[rho->rank]); */
+    adPrint(rho->val, 10);
+
+	Timer *t = tAlloc(mpiInfo->mpiRank);
+
+    tStart(t);
+
+    gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
+    solve(solver, rho, phi, mpiInfo);
+    gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
+
+    tStop(t);
+
+    adPrint(phi->val, 10);
+    gWriteH5(phi, mpiInfo, 0.);
+
+	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+
+	/*
+	 * FINALIZE PINC VARIABLES
+	 */
+	gFreeMpi(mpiInfo);
+
+	// Close h5 files
+	gCloseH5(rho);
+	gCloseH5(phi);
+
+	// Free memory
+	solverFree(solver);
+	gFree(rho);
+	gFree(phi);
+	uFree(units);
 }
