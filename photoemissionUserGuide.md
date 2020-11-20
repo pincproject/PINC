@@ -1,6 +1,6 @@
 Procedure for photoemission experiments 
 ========================================
-Test case input file: decaetal.ini based on the work [Deca et al., *Physics of Plasmas* **20**, 102902 (2013)](https://doi.org/10.1063/1.4826951).
+Test case input file: decaetal.ini based on the work by [Deca et al., *Physics of Plasmas* **20**, 102902 (2013)](https://doi.org/10.1063/1.4826951).
 
 1. Git pull trymen/photoemission branch (up to date now)
 
@@ -12,12 +12,10 @@ Test case input file: decaetal.ini based on the work [Deca et al., *Physics of P
 	3b. Set phCurrentOn switch to 1 under "Object" in .ini file
 	3c. Set averageEnergyPH under "Object" in .ini file (Joule) for each object
 	3d. Make sure the following two lines are commented out in the objoAlloc function:
-		```C
 		oPlanckPhotonIntegral(ini, units, obj);
     		oPlanckEnergyIntegral(ini, units, obj);
-		```
    	3e. Make sure the following line in the objoAlloc function is un-commented:
-   			oPhotoElectronCurrent(ini, units, obj);
+   		oPhotoElectronCurrent(ini, units, obj);
 
 
 4. IF only distance from the sun is known (not ph electron temp or ph current density)
