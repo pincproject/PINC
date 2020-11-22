@@ -1516,17 +1516,18 @@ void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj)
     
     int nObj = obj->nObjects;
     double *flux = obj->radiance;
-    double *bandEnergy = obj->bandEnergy;
+    //double *bandEnergy = obj->bandEnergy;
     double *area = obj->conductingSurface;
     double jNormalize = 1.60217662e-19 / units->time / units->hyperArea;
 
     double *currentDensity = iniGetDoubleArr(ini, "object:currentDensity", nObj);
-    bandEnergy = iniGetDoubleArr(ini, "object:averageEnergyPH", nObj);
+    obj->bandEnergy = iniGetDoubleArr(ini, "object:averageEnergyPH", nObj);
     //Q = j * A * t
     for(int a = 0; a<nObj; a++){
         //don't need to divide by timestep, we want flux in terms of timestep anyway 
         flux[a] = currentDensity[a]/jNormalize * area[a]/units->hyperArea;
         msg(STATUS, "real photoelectron flux: %.10e", flux[a]); 
+        msg(STATUS, "Avg energy of photoelectron in Joule:%.10e", obj->bandEnergy[a]);
     }
 
 
@@ -1640,7 +1641,6 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     //Uncomment next line when ph current and avg. photoelectron energy is know
     //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
     oPhotoElectronCurrent(ini, units, obj);
-    
     //Uncomment next two lines if distance from sun is known
     //oPlanckPhotonIntegral(ini, units, obj);
     //oPlanckEnergyIntegral(ini, units, obj);
@@ -2439,8 +2439,8 @@ static void oMode(dictionary *ini){
 
 		pFillGhost(ini,rho,pop,rng);
 
-        	pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
-        	extractEmigrants(pop, mpiInfo);
+        pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
+        extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
