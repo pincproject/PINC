@@ -13,6 +13,7 @@ import h5py
 import numpy as np
 import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
 ##################### INPUT ###########################
 # PINC DOMAIN
@@ -23,7 +24,7 @@ domainSizeZ = 16  #Domain Size in Z (Number of Cells)
 # PINC OBJECT
 OBJ = "box"    #Enter object type (sphere or box)
 # OBJECT Visualization
-visualization = 1
+visualization = 0
 
 # OBJECT LOCATION (Center for Sphere, Origin for Box)
 ObjLocX  = 20 #14 Dirichlet #0: Periodic
@@ -97,3 +98,4 @@ hf = h5py.File('object.grid.h5', 'w')
 hf.create_dataset('Object', data=domain)
 # Close the HDF5 file
 hf.close()
+os.system('cp object.grid.h5 data/')

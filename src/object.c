@@ -95,7 +95,7 @@ static bool oIsGhostNode(Grid *grid, long int node) {
 
     oGhost(node,&nGhostLayers[rank-1],&nGhostLayers[2*rank-1],&trueSize[rank-1],&sizeProd[rank-1],&ghost);
 
-  return ghost;
+    return ghost;
 }
 
 
@@ -205,12 +205,12 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
     Grid *rhoCap = gAlloc(ini, SCALAR,mpiInfo);
     Grid *phiCap = gAlloc(ini, SCALAR,mpiInfo);
 
-	double realTol = iniGetDouble(ini, "multigrid:tol");
-	double objTol = iniGetDouble(ini, "multigrid:objTol");
-	iniSetDouble(ini, "multigrid:tol", objTol);
+    double realTol = iniGetDouble(ini, "multigrid:tol");
+    double objTol = iniGetDouble(ini, "multigrid:objTol");
+    iniSetDouble(ini, "multigrid:tol", objTol);
     void *solver = solverAlloc(ini, rhoCap, phiCap, mpiInfo);
-	iniSetDouble(ini, "multigrid:tol", realTol);//1e-6;
-	//setting tol for residual only for cap matrix
+    iniSetDouble(ini, "multigrid:tol", realTol);//1e-6;
+    //setting tol for residual only for cap matrix
 
     //msg(STATUS,"in oComputeCapacitanceMatrix");
     //exit(0);
@@ -222,20 +222,16 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 
     // Set Rho to zero.
     gZero(rhoCap);
-	gZero(phiCap);
+    gZero(phiCap);
 
-	//gSetBndSlices(ini, phiCap, mpiInfo);
+    //gSetBndSlices(ini, phiCap, mpiInfo);
 
     // Find the number of surface nodes for each object.
-
-
-
 
     // Compute the actual capacitance matrix for each object.
     for (long int a=0; a<obj->nObjects; a++) {
         long int j = 0; // Keep track of the rank
         long int inode = 0; // Keep track of the node number
-
 
         long int totSNGlob = nodCorGlob[a*(size+1)+size];
         long int beginIndex = nodCorGlob[a*(size+1)+rank];
@@ -250,20 +246,20 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 
         // Loop over the nodes and fill the matrix
         for (long int i=0; i<totSNGlob; i++) {
-			//gZero(phiCap);
-            //msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
+          //gZero(phiCap);
+          //msg(STATUS,"Solving capacitance matrix for node %ld of %ld for object %ld of %ld.", \
                 i+1,totSNGlob,a+1,obj->nObjects);
 
-            // Don't loop over cores who do not have any surface nodes.
-            while ((nodCorGlob[a*(size+1)+j+1]-nodCorGlob[a*(size+1)+j])==0) {
+          // Don't loop over cores who do not have any surface nodes.
+          while ((nodCorGlob[a*(size+1)+j+1]-nodCorGlob[a*(size+1)+j])==0) {
                 j++;
-            }
+              }
 
             // Set the surface node to 1 charge.
-            if (rank==j) {
+          if (rank==j) {
                 rhoCap->val[lookupSurf[lookupSurfOff[a] + inode]] = 1;
                 //printf("adding 1 rho to node %li \n",lookupSurf[lookupSurfOff[a] + inode]);
-            }
+              }
 
             // Solve for the potential.
             solve(solver, rhoCap, phiCap, mpiInfo);
@@ -359,11 +355,11 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
     double *capMatrixAll = obj->capMatrixAll;
     long int *capMatrixAllOffsets = obj->capMatrixAllOffsets;
     double *capMatrixSum = obj->capMatrixSum;
-	double *deltaPhi = obj->deltaPhi;
-	double *rhoCorr = obj->rhoCorr;
+    double *deltaPhi = obj->deltaPhi;
+    double *rhoCorr = obj->rhoCorr;
 
-  double *bias = obj->bias;
-  int biasOn = obj->biasOn;
+    double *bias = obj->bias;
+    int biasOn = obj->biasOn;
 
 
     // Loop over the objects
@@ -412,8 +408,8 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
           MPI_Allreduce(MPI_IN_PLACE, &capMatrixPhiSum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         }
 
-		//printf("capMatrixSum[a] = %f\n",capMatrixSum[a] );
-		//printf("capMatrixPhiSum = %f\n",capMatrixPhiSum );
+        //printf("capMatrixSum[a] = %f\n",capMatrixSum[a] );
+        //printf("capMatrixPhiSum = %f\n",capMatrixPhiSum );
         msg(STATUS,"Potential-check for object %ld : %f",a,(units->potential*capMatrixPhiSum));
         //capMatrixPhiSum=0.03;
 
@@ -1549,7 +1545,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->domain = domain;
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
-	oReadH5(obj);
+    oReadH5(obj);
     //oCloseH5(obj);
     //Communicate the boundary nodes
     gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
@@ -1594,10 +1590,9 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
 
 	//this is an unneccessary large array, because
 	// we only evaluate one obj at a time.
-	double *deltaPhi = malloc(capMatrixAllSize*sizeof(*deltaPhi));
-	double *rhoCorr = malloc(capMatrixAllSize*sizeof(*rhoCorr));
-
-	double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
+    double *deltaPhi = malloc(capMatrixAllSize*sizeof(*deltaPhi));
+    double *rhoCorr = malloc(capMatrixAllSize*sizeof(*rhoCorr));
+    double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
     // for (long int a=0; a<obj->nObjects; a++) {
     //     invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
     //     //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
@@ -1605,29 +1600,30 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
 
 
 
-  int nSpecies = iniGetInt(ini,"population:nSpecies");
-  double *objectCurrent= malloc(nSpecies*nObjects*sizeof(*objectCurrent));
-  bool biasOn = iniGetInt(ini,"object:biasOn");
-  double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
+    int nSpecies = iniGetInt(ini,"population:nSpecies");
+    double *objectCurrent= malloc(nSpecies*nObjects*sizeof(*objectCurrent));
+    bool biasOn = iniGetInt(ini,"object:biasOn");
+    double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
 
-  adScale(bias, nObjects, 1./units->potential);
-  //printf("bias=%f\n",bias[0] );
-  //exit(0);
-  obj->biasOn = biasOn;
-  obj->bias = bias;
+    adScale(bias, nObjects, 1./units->potential);
+    //printf("bias=%f\n",bias[0] );
+    //exit(0);
+    obj->biasOn = biasOn;
+    obj->bias = bias;
     obj->capMatrixAll = capMatrixAll;
     obj->capMatrixAllOffsets = nodCorGlob;
     obj->capMatrixSum = capMatrixSum;
-	obj->deltaPhi = deltaPhi;
-	obj->rhoCorr = rhoCorr;
-	obj->invNrSurfNod = invNrSurfNod;
-  obj->objectCurrent= objectCurrent;
-
-
+    obj->deltaPhi = deltaPhi;
+    obj->rhoCorr = rhoCorr;
+    obj->invNrSurfNod = invNrSurfNod;
+    obj->objectCurrent= objectCurrent;
+    bool photoEmission = iniGetInt(ini,"object:photoEmissionOn");
+    if(photoEmission==1){
+      msg(STATUS, "Photo Emission Status: ON");
+    }
     bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
-    msg(STATUS, "Photo current status %d",phCurrentOn);
     obj->phCurrentOn = phCurrentOn;
-	obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
+    obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
     obj->conductingSurface = iniGetDoubleArr(ini, "object:ConductingSurface", nObjects);
     obj->reflectance = iniGetDoubleArr(ini, "object:reflectance", nObjects);
 
@@ -1639,14 +1635,18 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->radiance = radiance;
     obj->bandEnergy = bandEnergy;
 
+    if(photoEmission==1){
     //Uncomment next line when ph current and avg. photoelectron energy is know
     //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
-    if(phCurrentOn==1){
-      oPhotoElectronCurrent(ini, units, obj);
+      if(phCurrentOn==1){
+        oPhotoElectronCurrent(ini, units, obj);
+      }
+      else{
+        //Uncomment next two lines if distance from sun is known
+        oPlanckPhotonIntegral(ini, units, obj);
+        oPlanckEnergyIntegral(ini, units, obj);
+      }
     }
-    //Uncomment next two lines if distance from sun is known
-    //oPlanckPhotonIntegral(ini, units, obj);
-    //oPlanckEnergyIntegral(ini, units, obj);
 
 
     free(nodCorLoc);

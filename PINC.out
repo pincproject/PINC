@@ -1,0 +1,75 @@
+STATUS: PINC 0.1.0-166-g6bae started.
+PRINT(1): weights(1:1:2) = 
+  [122070 122070]
+PRINT(0): weights(1:1:2) = 
+  [122070 122070]
+STATUS: units->potential = 0.003534
+STATUS: Allocating Pinc Object..
+STATUS: Finding photoemission nodes..
+STATUS: Computation of photoemission nodes completed!
+STATUS: Pinc object allocation completed!
+STATUS: Computing capacitance matrix..
+STATUS: Computing capacitance matrix per object
+STATUS: Capacitance matrix computed!
+STATUS: cutNumber = 160 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: ====================================================
+STATUS: Computing time-step 1
+STATUS: Nr. of particles s=0 163760: 
+STATUS: Nr. of particles s=1 163760: 
+STATUS: avgVel 0.000000
+STATUS: cutNumber = 6 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: Potential-check for object 0 : -0.003040
+STATUS: total charge = -5.859842 PINC values
+STATUS: Object charge = -1.173469e-13 C
+STATUS: ====================================================
+STATUS: Computing time-step 2
+STATUS: Nr. of particles s=0 163693: 
+STATUS: Nr. of particles s=1 163767: 
+STATUS: avgVel 0.000000
+STATUS: cutNumber = 9 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: Potential-check for object 0 : -0.003124
+STATUS: total charge = -0.512398 PINC values
+STATUS: Object charge = -2.542517e-13 C
+STATUS: ====================================================
+STATUS: Computing time-step 3
+STATUS: Nr. of particles s=0 163622: 
+STATUS: Nr. of particles s=1 163761: 
+STATUS: avgVel 0.000000
+STATUS: cutNumber = 6 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: Potential-check for object 0 : -0.003171
+STATUS: total charge = 7.457560 PINC values
+STATUS: Object charge = -2.933673e-13 C
+STATUS: ====================================================
+STATUS: Computing time-step 4
+STATUS: Nr. of particles s=0 163582: 
+STATUS: Nr. of particles s=1 163775: 
+STATUS: avgVel 0.000000
+STATUS: cutNumber = 5 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: Potential-check for object 0 : -0.003218
+STATUS: total charge = 15.780802 PINC values
+STATUS: Object charge = -3.520408e-13 C
+STATUS: ====================================================
+STATUS: Computing time-step 5
+STATUS: Nr. of particles s=0 163558: 
+STATUS: Nr. of particles s=1 163791: 
+STATUS: avgVel 0.000000
+STATUS: cutNumber = 6 
+STATUS: current for objct 0, and species 0 = 0.000000
+STATUS: current for objct 0, and species 1 = 0.000000
+STATUS: Potential-check for object 0 : -0.003255
+STATUS: total charge = 24.504868 PINC values
+STATUS: Object charge = -4.302720e-13 C
+STATUS: ====================================================
+STATUS: Computing time-step 6
+STATUS: Nr. of particles s=0 163528: 
+STATUS: Nr. of particles s=1 163781: 
