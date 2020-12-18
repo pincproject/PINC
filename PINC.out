@@ -1,4 +1,4 @@
-STATUS: PINC 0.1.0-166-g6bae started.
+STATUS: PINC 0.1.0-173-gd755-dirty started.
 PRINT(1): weights(1:1:2) = 
   [122070 122070]
 PRINT(0): weights(1:1:2) = 
@@ -73,3 +73,4 @@ STATUS: ====================================================
 STATUS: Computing time-step 6
 STATUS: Nr. of particles s=0 163528: 
 STATUS: Nr. of particles s=1 163781: 
+STATUS: avgVel 0.000000
