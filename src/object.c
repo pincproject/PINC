@@ -2594,3 +2594,4 @@ funPtr oMode_set(){ // dictionary *ini
 	  // TODO: sanity
 	return oMode;
 }
+	
