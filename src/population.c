@@ -1760,4 +1760,4 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
 		}
 	}
-}
+}			
