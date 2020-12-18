@@ -775,6 +775,7 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 	double *velDrift = iniGetDoubleArr(ini,"population:drift",nDims*nSpecies);
 	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
 	long int *nParticles = iniGetLongIntArr(ini,"population:nParticles",nSpecies);
+	int *inject = iniGetIntArr(ini,"grid:injection",2); // injectionflag for Dirichlet boundary
 	//int *nGhostLayers = rho->nGhostLayers;//iniGetIntArr(ini,"grid:nGhostLayers",2*nDims);
 	//double timeStep = iniGetDouble(ini, "time:timeStep");
 	int *L = gGetGlobalSize(ini);
@@ -836,6 +837,10 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 							outerGhost[k] = false;
 							periodic = true;
 						}
+						// Switch Off injection at Lower Boundary of Dirichlet type
+						if(bnd[k+1]==DIRICHLET && inject[0]==0){
+							outerGhost[k] = false;
+						}
 					}
 					if(gPos[k]>trueSize[k+1]){
 						outerGhost[k] = true;
@@ -843,6 +848,10 @@ void pFillGhost(const dictionary *ini, Grid *rho,Population *pop, const gsl_rng 
 						if(bnd[k+rank+1]==PERIODIC){
 							outerGhost[k] = false;
 							periodic = true;
+						}
+						// Switch Off injection at upper Boundary of Dirichlet type
+						if(bnd[k+rank+1]==DIRICHLET && inject[1]==0){
+							outerGhost[k] = false;
 						}
 					}
 				}
@@ -1262,7 +1271,7 @@ void pSecondaryElectron(Population *pop, const PincObject *obj, long int n){
 }
 
 void pReflect(Population *pop, const PincObject *obj, long int n, const MpiInfo	*mpiInfo){
-	
+
 	double *newVel;
 	double *surfNodes;
 	double *norm;
@@ -1281,10 +1290,7 @@ void pReflect(Population *pop, const PincObject *obj, long int n, const MpiInfo	
 
 } */
 
-void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
- 					const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
-	
-	//mpi
+void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *units, const gsl_rng *rng, const MpiInfo *mpiInfo){
 	int size = mpiInfo->mpiSize;
 	int rank = mpiInfo->mpiRank;
 
@@ -1320,7 +1326,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 		MPI_Allgather(&emiNodesThisCore, 1, MPI_LONG,emiNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
 	}
 
-	long int totExpNodes = alSum(expNodesAllCores, size); 
+	long int totExpNodes = alSum(expNodesAllCores, size);
 	long int totEmiNodes = alSum(emiNodesAllCores, size);
 
 	//specie variables
@@ -1333,8 +1339,8 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 	if(phCurrentOn == 0){
 		for(int a = 0; a<nObj; a++){
 			workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
-			workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules) 
-		}		
+			workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules)
+		}
 	}
 
 
@@ -1358,7 +1364,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 		msg(STATUS, "avgVel %f", avgVel[a]);
 	}
 
-	//scale flux to each core 
+	//scale flux to each core
 	for(size_t a = 0; a<nObj; a++){
 		if(phCurrentOn == 0){
 			flux[a] *= phYield * (1.0 - reflectance); // TODO: Make the reflectance an input parameter
@@ -1378,15 +1384,15 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 
 	//pToGlobalFrame(pop, mpiInfo);
 	for(int a=0; a < nObj; a++){
-		
-		long int hit = 0; 
+
+		long int hit = 0;
 		for(long int j=0; j<(long)flux[a]; j++){
 		//for(int i = 0; i < nodesThisCore; i++){
 
 
 			for(int i = 0; i < emiNodesThisCore; i++){ //for(int i = 0; i < expNodesThisCore; i++){
 			//for(long int j=0; j<(long)flux[a]; j++){
-				//long int node = exposedNodes[exposedOff[a] + i]; 
+				//long int node = exposedNodes[exposedOff[a] + i];
 				long int node = emittingNodes[emittingOff[a] + i];
 				gNodeToGrid3D(obj->domain, mpiInfo, node, pos);
 				memcpy(newPos, pos, pop->nDims * sizeof(*newPos));
@@ -1411,7 +1417,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi,
 
 
 		//msg(STATUS|ALL, "Number of super particles created in timestep: %li", hit);
-		
+
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);

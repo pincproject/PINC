@@ -4,7 +4,7 @@
 ## @author		Sigvald Marholm <sigvaldm@fys.uio.no>
 ##
 
-CC		= mpicc
+CC	= mpicc
 COPT	= -O3 -Wall 
 DOPT 	= -O0
 

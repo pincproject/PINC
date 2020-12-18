@@ -818,7 +818,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
 
 void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
                                 PincObject *obj, const MpiInfo *mpiInfo, const Units *units){
-    
+
     int rank = mpiInfo->mpiRank;
     int size = mpiInfo->mpiSize;
 
@@ -838,7 +838,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     long int emiNodesThisCore;
     long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
     long int *emiNodesAllCores = malloc(size * sizeof(*emiNodesAllCores));
-	
+
 	double phYield = 1e-3;
 	double reflectance = 0.0;
 	double *flux = malloc(sizeof(obj->radiance));
@@ -886,7 +886,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     //find which specie has positive and negative charge. Assumes two species.
 	nSpecie = (charge[0] < 0.) ? 0 : 1;
 
-	//scale flux 
+	//scale flux
 	for(size_t a = 0; a<nObj; a++){
         flux[a] *= phYield * (1.0 - reflectance); //TODO: make the reflectance an input parameter
 		flux[a] /= units->weights[nSpecie];
@@ -894,9 +894,9 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	}
 
 /*     double *totPhotoElectrons = malloc(nObj * sizeof(*totPhotoElectrons));
-    
+
     MPI_Allreduce(flux, totPhotoElectrons, nObj, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); */
-    
+
 /*     for(int a=0; a<nObj; a++){
         msg(STATUS, "Added %f charges to rhoObj", totPhotoElectrons[a]);
     } */
@@ -930,7 +930,7 @@ void oSetObjectValues(PincObject *obj, Grid *grid, int nthObj, double value){
     }
 }
 
-//sets true or false for pop->objVicinity[i] depending on whether particle i is close or not 
+//sets true or false for pop->objVicinity[i] depending on whether particle i is close or not
 void oVicinityParticles(Population *pop, PincObject *obj){
 
 	double *val = obj->domain->val;
@@ -982,7 +982,7 @@ void oVicinityParticles(Population *pop, PincObject *obj){
 //in exposed sunlight
 
 void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInfo *mpiInfo){
-    
+
     int nObjects = obj->nObjects;
     long int *sizeProd = obj->domain->sizeProd;
     long int *lookUpInt = obj->lookupInterior;
@@ -996,12 +996,12 @@ void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInf
 
     for(long int a = 0; a<nObjects; a++){
         for(int k=0; k<size[3]; k++){
-            for(int j=0; j<size[2]; j++){ 
-                
+            for(int j=0; j<size[2]; j++){
+
                 //need flag to break out of i loop, otherwise all surface nodes selected
                 int flag = 0;
                 for(int i=0; i<size[1]; i++){
-                    
+
                     long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
                     int surfNode = 0;
 
@@ -1033,11 +1033,11 @@ void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInf
     }
 
     for(long int a = 0; a<nObjects; a++){
-        
+
         long int counter = 0;
 
         for(int k=0; k<size[3]; k++){
-            for(int j=0; j<size[2]; j++){ 
+            for(int j=0; j<size[2]; j++){
 
                 int flag = 0;
                 for(int i=0; i<size[1]; i++){
@@ -1067,32 +1067,32 @@ void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInf
     //reset index to find emitting nodes (cell filling method)
     long int *emittingNodesOffset = malloc((nObjects+1)*sizeof(*emittingNodesOffset));
     alSetAll(emittingNodesOffset, obj->nObjects+1, 0);
-    
+
     //msg(STATUS, "filling emittingNodesOffset");
     for(int a=0; a<nObjects; a++){
-                 
+
         for(long int i = surfOff[a]; i<surfOff[a+1]; i++){
-            
+
             int nObjNode = 0;
-            int yzPlane = 0;        
-          
+            int yzPlane = 0;
+
             //neighbouring nodes in -x,+y,+z direction
             long int p = surf[i];
             long int pu = p + sizeProd[3];
             long int plu = p + sizeProd[2] + sizeProd[3];
-            long int pl = p + sizeProd[2]; 
+            long int pl = p + sizeProd[2];
             long int po = p - sizeProd[1];
             long int pou = p - sizeProd[1] + sizeProd[3];
             long int poul = p - sizeProd[1] + sizeProd[3] + sizeProd[2];
             long int pol = p - sizeProd[1] + sizeProd[2];
-            
+
             for(int j=lookUpIntOff[a]; j<lookUpIntOff[a+1]; j++){
                 long int intNode = lookUpInt[j];
                     if(po==intNode || pou==intNode || poul==intNode || pol==intNode){
                         nObjNode++;
                     }
             }
-            
+
             for(int j=surfOff[a]; j<surfOff[a+1]; j++){
                 long int surfNode = surf[j];
                 if(po==surfNode || pou==surfNode || poul==surfNode || pol==surfNode){
@@ -1119,24 +1119,24 @@ void oPhotoElectronCellFill(const dictionary *ini, PincObject *obj, const MpiInf
     alCumSum(emittingNodesOffset+1, emittingNodesOffset, nObjects);
     long int *emittingNodes = malloc((emittingNodesOffset[nObjects])*sizeof(*emittingNodes));
     alSetAll(emittingNodes,emittingNodesOffset[nObjects],0);
-    
-    
+
+
     for(long int i=0; i<nObjects; i++){
         index[i]=emittingNodesOffset[i];
     }
 
     for(int a=0; a<nObjects; a++){
-                 
+
         for(long int i = surfOff[a]; i<surfOff[a+1]; i++){
-            
+
             int nObjNode = 0;
-            int yzPlane = 0;        
-          
+            int yzPlane = 0;
+
             //left, up, out
             long int p = surf[i];
             long int pu = p + sizeProd[3];
             long int plu = p + sizeProd[2] + sizeProd[3];
-            long int pl = p + sizeProd[2]; 
+            long int pl = p + sizeProd[2];
             long int po = p - sizeProd[1];
             long int pou = p - sizeProd[1] + sizeProd[3];
             long int poul = p - sizeProd[1] + sizeProd[3] + sizeProd[2];
@@ -1194,12 +1194,12 @@ void oPhotoElectronNodeFill(const dictionary *ini, PincObject *obj, const MpiInf
 
     for(long int a = 0; a<nObjects; a++){
         for(int k=0; k<size[3]; k++){
-            for(int j=0; j<size[2]; j++){ 
-                
+            for(int j=0; j<size[2]; j++){
+
                 //need flag to break out of i loop, otherwise all surface nodes selected
                 int flag = 0;
                 for(int i=0; i<size[1]; i++){
-                    
+
                     long int p = i*sizeProd[1] + j*sizeProd[2] + k*sizeProd[3];
                     int surfNode = 0;
 
@@ -1232,11 +1232,11 @@ void oPhotoElectronNodeFill(const dictionary *ini, PincObject *obj, const MpiInf
     }
 
     for(long int a = 0; a<nObjects; a++){
-        
+
         long int counter = 0;
 
         for(int k=0; k<size[3]; k++){
-            for(int j=0; j<size[2]; j++){ 
+            for(int j=0; j<size[2]; j++){
 
                 int flag = 0;
                 for(int i=0; i<size[1]; i++){
@@ -1261,7 +1261,7 @@ void oPhotoElectronNodeFill(const dictionary *ini, PincObject *obj, const MpiInf
             }
         }
     }
-   
+
     obj->exposedNodes = exposedNodes;
     obj->exposedNodesOffset = exposedNodesOffset;
     //alPrint(exposedNodes, exposedNodesOffset[1]);
@@ -1283,7 +1283,7 @@ void oFindParticleCollisions(Population *pop, PincObject *obj){
 
     for(int i=0;i<nParticles;i++){
 
-        if(vicinity[i] == true){          
+        if(vicinity[i] == true){
             double *pos = &pop->pos[3*i];
             double *vel = &pop->vel[3*i];
             double *nextPos;
@@ -1334,7 +1334,7 @@ void oObjectParticleInteraction(Population *pop, const PincObject *obj){
             }
             else{
                 pos[p] += vel[p];
-            }  
+            }
         }
     }
 }
@@ -1359,7 +1359,7 @@ double *oFindNearestSurfaceNodes(Population *pop, PincObject *obj, long int part
 //pos_new = pos_old + vel*delta_t
 //try http://geomalgorithms.com/a05-_intersect-1.html algorithm
 //implementation based on https://rosettacode.org/wiki/Find_the_intersection_of_a_line_with_a_plane#C
-/* double *oFindIntersectPoint(Population *pop, long int id, PincObject *obj, 
+/* double *oFindIntersectPoint(Population *pop, long int id, PincObject *obj,
                            const MpiInfo *mpiInfo){
 
         double *w;
@@ -1386,7 +1386,7 @@ double *oFindNearestSurfaceNodes(Population *pop, PincObject *obj, long int part
         if(ndotu < epsilon){
             msg(WARNING, "Particle %i, will not collide with any object next timestep!", id);
         }
-        
+
         adSub(pos, nearest, w, 3);
 
         //Compute intersection
@@ -1462,7 +1462,7 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj)
 	// follows Widger and Woodall, Bulletin of the American Meteorological
 	// Society, Vol. 57, No. 10, pp. 1217
 	double time = units->time;
-	
+
 	// constants
 	double Planck = 6.6260693e-34;
 	double Boltzmann = 1.380658e-23;
@@ -1476,8 +1476,8 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj)
     int nObj = obj->nObjects;
 	double *area = obj->conductingSurface;
 	double *bandEnergy = obj->bandEnergy;
-	
-	
+
+
     double *sigma = obj->workFunction;
 
 
@@ -1499,7 +1499,7 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj)
 			double dn = 1.0/n ;
 			sum += exp(-n*x)*(x3 + (3.0 * x2 + 6.0*(x+dn)*dn)*dn)*dn;
 		}
-		
+
         // result, in units of W/m2/sr, convert to joule/timestep
         double solidAngle = (double)area[a] / pow(distFromSun,2.);
 		bandEnergy[a] = (2.0*Planck*speedOfLight_sq);
@@ -1513,7 +1513,7 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj)
 }
 
 void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj){
-    
+
     int nObj = obj->nObjects;
     double *flux = obj->radiance;
     //double *bandEnergy = obj->bandEnergy;
@@ -1524,9 +1524,9 @@ void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj)
     obj->bandEnergy = iniGetDoubleArr(ini, "object:averageEnergyPH", nObj);
     //Q = j * A * t
     for(int a = 0; a<nObj; a++){
-        //don't need to divide by timestep, we want flux in terms of timestep anyway 
+        //don't need to divide by timestep, we want flux in terms of timestep anyway
         flux[a] = currentDensity[a]/jNormalize * area[a]/units->hyperArea;
-        msg(STATUS, "real photoelectron flux: %.10e", flux[a]); 
+        msg(STATUS, "real photoelectron flux: %.10e", flux[a]);
         msg(STATUS, "Avg energy of photoelectron in Joule:%.10e", obj->bandEnergy[a]);
     }
 
@@ -1559,7 +1559,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     int nObjects = 0;
     for (int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
         if (obj->domain->val[i]>nObjects) {
-            
+
             //nObjects = (int)(floor(obj->domain->val[i])); // .5 will be used for dielectric objects
             nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
                 //the number of objects, but rather the identifier of the object with the highest number.
@@ -1625,6 +1625,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
 
 
     bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
+    msg(STATUS, "Photo current status %d",phCurrentOn);
     obj->phCurrentOn = phCurrentOn;
 	obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
     obj->conductingSurface = iniGetDoubleArr(ini, "object:ConductingSurface", nObjects);
@@ -1633,14 +1634,16 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     double *radiance = malloc(obj->nObjects * sizeof(*radiance));
     double *bandEnergy = malloc(obj->nObjects * sizeof(*bandEnergy));
 
-    adSetAll(radiance, (long)obj->nObjects, 0.0);	
+    adSetAll(radiance, (long)obj->nObjects, 0.0);
     adSetAll(bandEnergy, (long)obj->nObjects, 0.0);
     obj->radiance = radiance;
     obj->bandEnergy = bandEnergy;
 
     //Uncomment next line when ph current and avg. photoelectron energy is know
     //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
-    oPhotoElectronCurrent(ini, units, obj);
+    if(phCurrentOn==1){
+      oPhotoElectronCurrent(ini, units, obj);
+    }
     //Uncomment next two lines if distance from sun is known
     //oPlanckPhotonIntegral(ini, units, obj);
     //oPlanckEnergyIntegral(ini, units, obj);
@@ -2278,6 +2281,10 @@ static void oMode(dictionary *ini){
 	 * PREPARE FILES FOR WRITING
 	 */
 
+
+  // Load the particle data diagnotics flag
+  int particleData = iniGetInt(ini,"diagnostics:particleData");
+
 	pOpenH5(ini, pop, units, "pop");
 	//double denorm = units->potential;
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
@@ -2333,7 +2340,6 @@ static void oMode(dictionary *ini){
 
 	// Perturb particles
 	//pPosPerturb(ini, pop, mpiInfo);
-
 
 	//add influx of new particles on boundary
 	pPurgeGhost(pop, rho);
@@ -2418,7 +2424,7 @@ static void oMode(dictionary *ini){
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
 		pVelAssertMax(pop,maxVel);
-        
+
         /*if(n==1){
             oPhotoElectronCurrent(ini, units, obj);//5.0625e8 //J=1.6e-2 A/m^2, deca et al.
         }*/
@@ -2516,12 +2522,16 @@ static void oMode(dictionary *ini){
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+      //Turn on the particle data writing each 100 timesteps;
+      if(particleData == 1){
+			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+    }
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
-		if(n == 100){
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		}
+
+		// if(n == 100){
+		// 	pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		// }
 
 		pWriteEnergy(history,pop,(double)n,units);
     //xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
