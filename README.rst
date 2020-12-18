@@ -16,5 +16,6 @@ Authors:
 - Steffen Brask (see separate branch): Collision module, Farley-Buneman instability
 - Jan Deca (see separate branches): Capacitance matrix method for plasma-object interactions
 - Trym Erik Nielsen (see seperate branch): Photoelectric emission
-- Sayan Adhikari (see seperate branch): Photoelectric emission
+- `Sayan Adhikari`_ (see seperate branch): Photoelectric emission
 .. _`Sigvald Marholm`: mailto:sigvald@marebakken.com
+.. _`Sayan Adhikari`: mailto:sayan.adhikari@fys.uio.no
