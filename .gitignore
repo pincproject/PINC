@@ -4,6 +4,9 @@
 **.so.*
 **.lo
 **.la
+**.vtr
+**.vtu
+**.vtk
 pinc
 parsedump.txt
 **.sublime*
