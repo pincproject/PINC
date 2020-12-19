@@ -98,4 +98,4 @@ hf = h5py.File('object.grid.h5', 'w')
 hf.create_dataset('Object', data=domain)
 # Close the HDF5 file
 hf.close()
-os.system('cp object.grid.h5 data/')
+os.system('mv object.grid.h5 data/')
