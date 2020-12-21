@@ -1297,6 +1297,7 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 	//object variables
 	int nObj = obj->nObjects;
 	int phCurrentOn = obj->phCurrentOn;
+	int photoEmission = obj->photoEmission;
 	long int *emittingNodes = obj->emittingNodes;
 	long int *emittingOff = obj->emittingNodesOffset;
 	long int *exposedNodes = obj->exposedNodes;
