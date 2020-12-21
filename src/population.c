@@ -1354,15 +1354,16 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
-		if(phCurrentOn == 0){
-			avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
-			avgEnergy[a] -= (workFunc[a] * 6.626070e-34 * 299792458.0); //convert work function to Joule
-		}
-		else{
-			avgEnergy[a] = bandEnergy[a];
+		if(photoEmission==1){
+			if(phCurrentOn == 0){
+				avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
+				avgEnergy[a] -= (workFunc[a] * 6.626070e-34 * 299792458.0); //convert work function to Joule
+			}
+			else{
+				avgEnergy[a] = bandEnergy[a];
+			}
 		}
 		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
-
 		avgVel[a] /= units->velocity;
 		msg(STATUS, "avgVel %f", avgVel[a]);
 	}

@@ -1622,6 +1622,9 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     if(photoEmission==1){
       msg(STATUS, "Photo Emission Status: ON");
     }
+    else{
+      msg(STATUS, "Photo Emission Status: OFF");
+    }
     bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
     obj->phCurrentOn = phCurrentOn;
     obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
