@@ -2415,9 +2415,9 @@ static void oMode(dictionary *ini){
 		long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
 		MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-        msg(STATUS, "====================================================");
+        	msg(STATUS, "====================================================");
 		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
+        	msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
 		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
 
 
@@ -2445,15 +2445,15 @@ static void oMode(dictionary *ini){
 
 		pFillGhost(ini,rho,pop,rng);
 
-        pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
-        extractEmigrants(pop, mpiInfo);
+        	pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
+        	extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
 
-        // Collect the charges on the objects.
-        oCollectPhotoelectronCharge(pop, rhoObj, phi, obj, mpiInfo, units);
-        oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
+        	// Collect the charges on the objects.
+        	oCollectPhotoelectronCharge(pop, rhoObj, phi, obj, mpiInfo, units);
+        	oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
 
 		// Compute charge density
@@ -2463,17 +2463,17 @@ static void oMode(dictionary *ini){
 		gHaloOp(addSlice, rho_i, mpiInfo, FROMHALO);
 
 
-        // Keep writing Rho here.
+        	// Keep writing Rho here.
 
-        // Add object charge to rho.
+        	// Add object charge to rho.
 		gAddTo(rho, rhoObj);
 
-        //gBnd(phi, mpiInfo);
-        solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
+        	//gBnd(phi, mpiInfo);
+        	solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
-        // Second run with solver to account for charges
-        oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
+        	// Second run with solver to account for charges
+        	oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
 
 		//gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
@@ -2522,10 +2522,10 @@ static void oMode(dictionary *ini){
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);
-      //Turn on the particle data writing each 100 timesteps;
-      if(particleData == 1){
+      		//Turn on the particle data writing each 100 timesteps;
+      		if(particleData == 1){
 			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-    }
+		}
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 
@@ -2534,13 +2534,13 @@ static void oMode(dictionary *ini){
 		// }
 
 		pWriteEnergy(history,pop,(double)n,units);
-    //xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
-    //xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
+    		xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);
+    		xyWrite(history,"/current/ions/dataset",(double)n,units->current*obj->objectCurrent[1],MPI_SUM);
 	}
 
 	if(mpiInfo->mpiRank==0) {
-    tMsg(t->total, "Time spent: ");
-}
+		tMsg(t->total, "Time spent: ");
+	}
 
 	/*
 	 * FINALIZE PINC VARIABLES
@@ -2556,30 +2556,30 @@ static void oMode(dictionary *ini){
 
 	gCloseH5(phi);
 	gCloseH5(E);
-    gCloseH5(rhoObj);       // for capMatrix - objects
-    msg(STATUS, "Closing object h5 file..");
-    oCloseH5(obj);          // for capMatrix - objects
+    	gCloseH5(rhoObj);       // for capMatrix - objects
+    	msg(STATUS, "Closing object h5 file..");
+    	oCloseH5(obj);          // for capMatrix - objects
     // 11.10.19 segfault seems to link to oClose(), as calling this
     // alters the segfault.
 
 	xyCloseH5(history);
 
-  // Free memory
-  // sFree(solver);
-  // mgFreeSolver(solver);
-    solverFree(solver);
-    gFree(rho);
-    gFree(rho_e);
-    gFree(rho_i);
-    gFree(phi);
-    free(S);
-    free(T);
+  	// Free memory
+  	// sFree(solver);
+  	// mgFreeSolver(solver);
+   	 solverFree(solver);
+    	gFree(rho);
+    	gFree(rho_e);
+    	gFree(rho_i);
+    	gFree(phi);
+    	free(S);
+    	free(T);
 
-    gFree(E);
-    pFree(pop);
-    uFree(units);
-    gFree(rhoObj);          // for capMatrix - objects
-    oFree(obj);             // for capMatrix - objects
+    	gFree(E);
+    	pFree(pop);
+    	uFree(units);
+    	gFree(rhoObj);          // for capMatrix - objects
+    	oFree(obj);             // for capMatrix - objects
 
 
 
