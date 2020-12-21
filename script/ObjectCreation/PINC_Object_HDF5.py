@@ -99,3 +99,5 @@ hf.create_dataset('Object', data=domain)
 # Close the HDF5 file
 hf.close()
 os.system('mv object.grid.h5 data/')
+print('Object data copied to data/ \nContents of data directory:')
+os.system('ls -lh data/')
