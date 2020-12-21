@@ -1337,10 +1337,12 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 	pSpecie = (nSpecie == 0) ? 1 : 0;
 
 	//convert wavenumber to workfunction energy if planck integrals used
-	if(phCurrentOn == 0){
-		for(int a = 0; a<nObj; a++){
-			workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
-			workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules)
+	if(photoEmission==1){
+		if(phCurrentOn == 0){
+			for(int a = 0; a<nObj; a++){
+				workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
+				workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules)
+			}
 		}
 	}
 
@@ -1761,4 +1763,4 @@ void pToGlobalFrame(Population *pop, const MpiInfo *mpiInfo){
 			for(int d=0;d<nDims;d++) pos[d] += offset[d];
 		}
 	}
-}			
+}

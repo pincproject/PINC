@@ -1618,6 +1618,7 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->invNrSurfNod = invNrSurfNod;
     obj->objectCurrent= objectCurrent;
     bool photoEmission = iniGetInt(ini,"object:photoEmissionOn");
+    obj->photoEmission = photoEmission;
     if(photoEmission==1){
       msg(STATUS, "Photo Emission Status: ON");
     }
@@ -2594,4 +2595,3 @@ funPtr oMode_set(){ // dictionary *ini
 	  // TODO: sanity
 	return oMode;
 }
-	

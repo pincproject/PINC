@@ -37,6 +37,7 @@ typedef struct{
 	double *bias;							/// Fixed bias value for object
 	int biasOn;							/// Turns biasing on or of
   int phCurrentOn; /// Selects for photoelectron functions where the photoelectric current is known
+	int photoEmission;
 } PincObject;
 
 
@@ -192,7 +193,7 @@ void oFindParticleCollisions(Population *pop, PincObject *obj);
  *
  * Computes the local point a nearby particle with collide with an object
  */
-/* double *oFindIntersectPoint(Population *pop, long int id, PincObject *obj, 
+/* double *oFindIntersectPoint(Population *pop, long int id, PincObject *obj,
                            const MpiInfo *mpiInfo); */
 
 
@@ -221,7 +222,7 @@ void oPlanckEnergyIntegral(dictionary *ini, const Units *units, PincObject *obj)
 
 /*
 Alternative to calculating the electron flux from the blackbody integrals. Uses a constant
-value for the photoelectrons current density from the ini file to calculate total flux of 
+value for the photoelectrons current density from the ini file to calculate total flux of
 real (non-computational) electrons per timestep
 */
 void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj);
