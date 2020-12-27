@@ -42,3 +42,4 @@ FB-5/
 script/plot/anim_output/*
 script/ObjectCreation/*
 input/lunarSheath.ini
+run_wop*
