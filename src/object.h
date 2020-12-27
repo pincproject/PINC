@@ -57,6 +57,9 @@ typedef struct{
 //void oMode(dictionary *ini);
 funPtr oMode_set();
 
+//void oPhotoMode(dictionary *ini);
+funPtr oPhotoMode_set();
+
 /**
  * @brief Allocates an Object object
  * @param	ini			Input file
