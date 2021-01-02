@@ -827,7 +827,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     long int *lookUpSurf = obj->lookupSurface;
     long int *lookupSurfOff = obj->lookupSurfaceOffset;
     long int *exposedNodes = obj->exposedNodes;
-	long int *exposedOff = obj->exposedNodesOffset;
+    long int *exposedOff = obj->exposedNodesOffset;
     long int *emittingNodes = obj->emittingNodes;
     long int *emittingOff = obj->emittingNodesOffset;
     long int expNodesThisCore;
@@ -835,22 +835,22 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
     long int *emiNodesAllCores = malloc(size * sizeof(*emiNodesAllCores));
 
-	double phYield = 1e-3;
-	double reflectance = 0.0;
-	double *flux = malloc(sizeof(obj->radiance));
-	double *bandEnergy = malloc(sizeof(obj->bandEnergy));
-	memcpy(flux, obj->radiance, sizeof(*(obj->radiance)) * nObj);
-	memcpy(bandEnergy, obj->bandEnergy, sizeof(*(obj->bandEnergy)) * nObj);
+    double phYield = 1e-3;
+    double reflectance = 0.0;
+    double *flux = malloc(sizeof(obj->radiance));
+    double *bandEnergy = malloc(sizeof(obj->bandEnergy));
+    memcpy(flux, obj->radiance, sizeof(*(obj->radiance)) * nObj);
+    memcpy(bandEnergy, obj->bandEnergy, sizeof(*(obj->bandEnergy)) * nObj);
 
     long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
     long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
 
 
     for(int a=0; a<nObj; a++){
-		expNodesThisCore = exposedOff[a+1] - exposedOff[a];
-        emiNodesThisCore = emittingOff[a+1] - emittingOff[a];
-        MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
-        MPI_Allgather(&emiNodesThisCore, 1, MPI_LONG, emiNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+      expNodesThisCore = exposedOff[a+1] - exposedOff[a];
+      emiNodesThisCore = emittingOff[a+1] - emittingOff[a];
+      MPI_Allgather(&expNodesThisCore, 1, MPI_LONG, expNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
+      MPI_Allgather(&emiNodesThisCore, 1, MPI_LONG, emiNodesAllCores, 1, MPI_LONG, MPI_COMM_WORLD);
 	}
 
     long int totExpNodes = alSum(expNodesAllCores, size);
@@ -880,11 +880,14 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	int nSpecie = 0; //negative charge specie
 
     //find which specie has positive and negative charge. Assumes two species.
-	nSpecie = (charge[0] < 0.) ? 0 : 1; //sayan , > instead of <
+	nSpecie = (charge[0] < 0.) ? 0 : 1;
 
+  int phCurrentOn = obj->phCurrentOn;
 	//scale flux
 	for(size_t a = 0; a<nObj; a++){
-        // flux[a] *= phYield * (1.0 - reflectance); //TODO: make the reflectance an input parameter //sayan
+    if(phCurrentOn == 0){
+      flux[a] *= phYield * (1.0 - reflectance); //TODO: make the reflectance an input parameter //sayan
+    }
 		flux[a] /= units->weights[nSpecie];
         flux[a] = round(flux[a]);
 	}
@@ -904,6 +907,7 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
             val[obj->lookupSurface[b]] += flux[a]*invNrSurfNod[a];// * invNrExpNod[a];
         }
     }
+    rhoObj->val = val;
 
     free(bandEnergy);
     free(expNodesAllCores);
@@ -1526,6 +1530,7 @@ void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj)
         msg(STATUS, "Avg energy of photoelectron in Joule:%.10e", obj->bandEnergy[a]);
     }
     obj->radiance = flux; //Sayan
+    // msg(STATUS, "Radiance IN: %e", flux[0]);
 
 
 }
@@ -1670,7 +1675,7 @@ PincObject *objPhotooAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units 
 
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
     oReadH5(obj);
-    
+
     //Communicate the boundary nodes
     gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
 
@@ -1730,8 +1735,7 @@ PincObject *objPhotooAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units 
     double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
 
     adScale(bias, nObjects, 1./units->potential);
-    //printf("bias=%f\n",bias[0] );
-    //exit(0);
+
     obj->biasOn = biasOn;
     obj->bias = bias;
     obj->capMatrixAll = capMatrixAll;
@@ -1767,7 +1771,7 @@ PincObject *objPhotooAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units 
     //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
       if(phCurrentOn==1){
         oPhotoElectronCurrent(ini, units, obj);
-        msg(STATUS, "Radiance: %e",obj->radiance);
+        msg(STATUS, "Radiance: %e",obj->radiance[0]);
       }
       else{
         //Uncomment next two lines if distance from sun is known
