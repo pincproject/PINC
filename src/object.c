@@ -880,11 +880,11 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
 	int nSpecie = 0; //negative charge specie
 
     //find which specie has positive and negative charge. Assumes two species.
-	nSpecie = (charge[0] < 0.) ? 0 : 1;
+	nSpecie = (charge[0] < 0.) ? 0 : 1; //sayan , > instead of <
 
 	//scale flux
 	for(size_t a = 0; a<nObj; a++){
-        flux[a] *= phYield * (1.0 - reflectance); //TODO: make the reflectance an input parameter
+        // flux[a] *= phYield * (1.0 - reflectance); //TODO: make the reflectance an input parameter //sayan
 		flux[a] /= units->weights[nSpecie];
         flux[a] = round(flux[a]);
 	}
@@ -1525,6 +1525,7 @@ void oPhotoElectronCurrent(dictionary *ini, const Units *units, PincObject *obj)
         msg(STATUS, "real photoelectron flux: %.10e", flux[a]);
         msg(STATUS, "Avg energy of photoelectron in Joule:%.10e", obj->bandEnergy[a]);
     }
+    obj->radiance = flux; //Sayan
 
 
 }
@@ -1547,6 +1548,129 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
     oReadH5(obj);
     //oCloseH5(obj);
+    //Communicate the boundary nodes
+    gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
+
+
+    // Find the number of objects in the input file
+    int nObjects = 0;
+    for (int i=0; i<obj->domain->sizeProd[obj->domain->rank]; i++) {
+        if (obj->domain->val[i]>nObjects) {
+
+            //nObjects = (int)(floor(obj->domain->val[i])); // .5 will be used for dielectric objects
+            nObjects = (int)(obj->domain->val[i]+0.5); // Note, this is not necessarily
+                //the number of objects, but rather the identifier of the object with the highest number.
+                //Feel free to implement something more fancy here...
+        }
+    }
+    // Make sure each process knows the total number of objects.
+    MPI_Allreduce(MPI_IN_PLACE, &nObjects, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    //msg(WARNING|ALL,"nObjects: %i",nObjects);
+
+    obj->nObjects = nObjects;
+
+    oFillLookupTables(obj);
+
+    oFindObjectSurfaceNodes(obj);
+    // msg(STATUS, "Finding photoemission nodes..");
+    // oPhotoElectronCellFill(ini, obj, mpiInfo);
+    // msg(STATUS, "Computation of photoemission nodes completed!");
+    long int *nodCorLoc = malloc((size+1)*sizeof(*nodCorLoc));
+    long int *nodCorGlob = malloc(obj->nObjects*(size+1)*sizeof(*nodCorGlob));
+
+	for (int i=0;i<size+1;i++){ // AD-HOC sol, initialize manually for safety.
+		nodCorLoc[i] = 0;
+	}
+
+    double *capMatrixSum = malloc(obj->nObjects*sizeof(*capMatrixSum));
+    //long int *capMatrixAllOffsets = malloc(obj->nObjects*(size+1)*sizeof(*capMatrixAllOffsets));
+
+    long int capMatrixAllSize = oGatherSurfaceNodes(obj,nodCorLoc,nodCorGlob,obj->lookupSurfaceOffset,mpiInfo);
+
+    double *capMatrixAll = malloc( (capMatrixAllSize*(capMatrixAllSize))*sizeof(*capMatrixAll) );
+
+	//this is an unneccessary large array, because
+	// we only evaluate one obj at a time.
+    double *deltaPhi = malloc(capMatrixAllSize*sizeof(*deltaPhi));
+    double *rhoCorr = malloc(capMatrixAllSize*sizeof(*rhoCorr));
+    double *invNrSurfNod = malloc(obj->nObjects*sizeof(*invNrSurfNod));
+    // for (long int a=0; a<obj->nObjects; a++) {
+    //     invNrSurfNod[a] = 1.0/(nodCorGlob[(a+1)*(size)]);
+    //     //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
+    // }
+
+
+
+    int nSpecies = iniGetInt(ini,"population:nSpecies");
+    double *objectCurrent= malloc(nSpecies*nObjects*sizeof(*objectCurrent));
+    bool biasOn = iniGetInt(ini,"object:biasOn");
+    double *bias = iniGetDoubleArr(ini,"object:bias",nObjects);
+
+    adScale(bias, nObjects, 1./units->potential);
+    //printf("bias=%f\n",bias[0] );
+    //exit(0);
+    obj->biasOn = biasOn;
+    obj->bias = bias;
+    obj->capMatrixAll = capMatrixAll;
+    obj->capMatrixAllOffsets = nodCorGlob;
+    obj->capMatrixSum = capMatrixSum;
+    obj->deltaPhi = deltaPhi;
+    obj->rhoCorr = rhoCorr;
+    obj->invNrSurfNod = invNrSurfNod;
+    obj->objectCurrent= objectCurrent;
+
+    // bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
+    // obj->phCurrentOn = phCurrentOn;
+    //
+    // if(phCurrentOn==1){
+    //   msg(STATUS, "Photo Current Status: ON");
+    // }
+    // else{
+    //   msg(STATUS, "Photo Current Status: OFF");
+    // }
+    // obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
+    // obj->conductingSurface = iniGetDoubleArr(ini, "object:ConductingSurface", nObjects);
+    // obj->reflectance = iniGetDoubleArr(ini, "object:reflectance", nObjects);
+
+    // double *radiance = malloc(obj->nObjects * sizeof(*radiance));
+    // double *bandEnergy = malloc(obj->nObjects * sizeof(*bandEnergy));
+    //
+    // adSetAll(radiance, (long)obj->nObjects, 0.0);
+    // adSetAll(bandEnergy, (long)obj->nObjects, 0.0);
+    // obj->radiance = radiance;
+    // obj->bandEnergy = bandEnergy;
+    //
+    // //Uncomment next line when ph current and avg. photoelectron energy is know
+    // //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
+    //   if(phCurrentOn==1){
+    //     oPhotoElectronCurrent(ini, units, obj);
+    //   }
+    //   else{
+    //     //Uncomment next two lines if distance from sun is known
+    //     oPlanckPhotonIntegral(ini, units, obj);
+    //     oPlanckEnergyIntegral(ini, units, obj);
+      // }
+
+
+    free(nodCorLoc);
+
+    return obj;
+}
+
+PincObject *objPhotooAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *units){
+
+    int size = mpiInfo->mpiSize;
+    //int mpiRank = mpiInfo->mpiRank;
+    Grid *domain = gAlloc(ini, SCALAR,mpiInfo);
+    //int rank = domain->rank;
+    gZero(domain);
+
+    PincObject *obj = malloc(sizeof(*obj));
+    obj->domain = domain;
+
+    oOpenH5(ini, obj, mpiInfo, units, units->chargeDensity, "object");          // for capMatrix - objects
+    oReadH5(obj);
+    
     //Communicate the boundary nodes
     gHaloOp(setSlice, obj->domain, mpiInfo, TOHALO);
 
@@ -1617,16 +1741,16 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->rhoCorr = rhoCorr;
     obj->invNrSurfNod = invNrSurfNod;
     obj->objectCurrent= objectCurrent;
-    bool photoEmission = iniGetInt(ini,"object:photoEmissionOn");
-    obj->photoEmission = photoEmission;
-    if(photoEmission==1){
-      msg(STATUS, "Photo Emission Status: ON");
-    }
-    else{
-      msg(STATUS, "Photo Emission Status: OFF");
-    }
+
     bool phCurrentOn = iniGetInt(ini,"object:phCurrentOn");
     obj->phCurrentOn = phCurrentOn;
+
+    if(phCurrentOn==1){
+      msg(STATUS, "Photo Current Status: ON");
+    }
+    else{
+      msg(STATUS, "Photo Current Status: OFF");
+    }
     obj->workFunction = iniGetDoubleArr(ini,"object:workFunction", nObjects);
     obj->conductingSurface = iniGetDoubleArr(ini, "object:ConductingSurface", nObjects);
     obj->reflectance = iniGetDoubleArr(ini, "object:reflectance", nObjects);
@@ -1639,24 +1763,24 @@ PincObject *objoAlloc(const dictionary *ini, const MpiInfo *mpiInfo, Units *unit
     obj->radiance = radiance;
     obj->bandEnergy = bandEnergy;
 
-    if(photoEmission==1){
     //Uncomment next line when ph current and avg. photoelectron energy is know
     //leave commented out if distance from sun is known (flux/energy computed from Planck integral)
       if(phCurrentOn==1){
         oPhotoElectronCurrent(ini, units, obj);
+        msg(STATUS, "Radiance: %e",obj->radiance);
       }
       else{
         //Uncomment next two lines if distance from sun is known
         oPlanckPhotonIntegral(ini, units, obj);
         oPlanckEnergyIntegral(ini, units, obj);
       }
-    }
 
 
     free(nodCorLoc);
 
     return obj;
 }
+
 
 void oFree(PincObject *obj){
 
@@ -2449,15 +2573,15 @@ static void oMode(dictionary *ini){
 
 		pFillGhost(ini,rho,pop,rng);
 
-        	pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
-        	extractEmigrants(pop, mpiInfo);
+    // pPhotoElectrons(pop, obj, phi, units, rng, mpiInfo);
+    extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 		// Check that no particle resides out-of-bounds (just for debugging)
 		//pPosAssertInLocalFrame(pop, rho); //gives error with open boundary
 
-        	// Collect the charges on the objects.
-        	oCollectPhotoelectronCharge(pop, rhoObj, phi, obj, mpiInfo, units);
-        	oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
+    // Collect the charges on the objects.
+    // oCollectPhotoelectronCharge(pop, rhoObj, phi, obj, mpiInfo, units);
+    oCollectObjectCharge(pop, rhoObj, obj, mpiInfo);    // for capMatrix - objects
 
 
 		// Compute charge density
@@ -2472,12 +2596,12 @@ static void oMode(dictionary *ini){
         	// Add object charge to rho.
 		gAddTo(rho, rhoObj);
 
-        	//gBnd(phi, mpiInfo);
-        	solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
+    //gBnd(phi, mpiInfo);
+    solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
-        	// Second run with solver to account for charges
-        	oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
+    // Second run with solver to account for charges
+    oApplyCapacitanceMatrix(rho, phi, obj, mpiInfo, units);    // for capMatrix - objects
 
 		//gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
@@ -2527,9 +2651,9 @@ static void oMode(dictionary *ini){
 			gWriteH5(rho_i, mpiInfo, (double) n);
 			gWriteH5(phi, mpiInfo, (double) n);
       		//Turn on the particle data writing each 100 timesteps;
-      		if(particleData == 1){
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		}
+      if(particleData == 1){
+        pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+      }
 			//gWriteH5(rhoObj, mpiInfo, (double) n);
 		}
 
@@ -2560,9 +2684,9 @@ static void oMode(dictionary *ini){
 
 	gCloseH5(phi);
 	gCloseH5(E);
-    	gCloseH5(rhoObj);       // for capMatrix - objects
-    	msg(STATUS, "Closing object h5 file..");
-    	oCloseH5(obj);          // for capMatrix - objects
+  gCloseH5(rhoObj);       // for capMatrix - objects
+  msg(STATUS, "Closing object h5 file..");
+  oCloseH5(obj);          // for capMatrix - objects
     // 11.10.19 segfault seems to link to oClose(), as calling this
     // alters the segfault.
 
@@ -2654,7 +2778,7 @@ static void oPhotoMode(dictionary *ini){
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
   msg(STATUS, "Allocating Pinc Object..");
-  PincObject *obj = objoAlloc(ini,mpiInfo,units);              // for capMatrix - objects
+  PincObject *obj = objPhotooAlloc(ini,mpiInfo,units);              // for capMatrix - objects objPhotooAlloc
   msg(STATUS, "Pinc object allocation completed!");
   //TODO: look into multigrid E,rho,rhoObj
 	// Creating a neighbourhood in the rho to handle migrants

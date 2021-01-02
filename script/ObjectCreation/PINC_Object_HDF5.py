@@ -17,7 +17,7 @@ import os
 
 ##################### INPUT ###########################
 # PINC DOMAIN
-domainSizeX = 64  #Domain Size in X (Number of Cells)
+domainSizeX = 32  #Domain Size in X (Number of Cells)
 domainSizeY = 16  #Domain Size in Y (Number of Cells)
 domainSizeZ = 16  #Domain Size in Z (Number of Cells)
 
@@ -27,18 +27,18 @@ OBJ = "box"    #Enter object type (sphere or box)
 visualization = 0
 
 # OBJECT LOCATION (Center for Sphere, Origin for Box)
-ObjLocX  = 40 #60 #14 Dirichlet #0: Periodic
-ObjLocY  = 0  #1 Dirichlet #0: Periodic
-ObjLocZ  = 0  #1 Dirichlet #0: Periodic
+ObjLocX  = 20 #60 #14 Dirichlet #0: Periodic
+ObjLocY  = 7  #1 Dirichlet #0: Periodic
+ObjLocZ  = 7  #1 Dirichlet #0: Periodic
 
 
 
 if OBJ=="sphere":
     ObjR = 6      #Object radius (Number of Cells)
 elif OBJ=="box":
-    ObjSizeX = 2#2 #1  #Object size in X (Number of Cells)  #1: Dirichlet  #1: Periodic
-    ObjSizeY = 2#15 #61  #Object size in Y (Number of Cells) #1: Dirichlet #31: Periodic
-    ObjSizeZ = 2#15 #61  #Object size in Z (Number of Cells) #1: Dirichlet #31: Periodic
+    ObjSizeX = 4#2 #1  #Object size in X (Number of Cells)  #1: Dirichlet  #1: Periodic
+    ObjSizeY = 4#15 #61  #Object size in Y (Number of Cells) #1: Dirichlet #31: Periodic
+    ObjSizeZ = 4#15 #61  #Object size in Z (Number of Cells) #1: Dirichlet #31: Periodic
 else:
     raise Exception("Error in input DATA TYPE")
 

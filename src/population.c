@@ -1297,7 +1297,6 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 	//object variables
 	int nObj = obj->nObjects;
 	int phCurrentOn = obj->phCurrentOn;
-	int photoEmission = obj->photoEmission;
 	long int *emittingNodes = obj->emittingNodes;
 	long int *emittingOff = obj->emittingNodesOffset;
 	long int *exposedNodes = obj->exposedNodes;
@@ -1337,14 +1336,12 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 	pSpecie = (nSpecie == 0) ? 1 : 0;
 
 	//convert wavenumber to workfunction energy if planck integrals used
-	if(photoEmission==1){
 		if(phCurrentOn == 0){
 			for(int a = 0; a<nObj; a++){
 				workFunc[a] = (1 / workFunc[a]) / 100; //workfunction as wavelength (m)
 				workFunc[a] = (299792458.0 * 6.62607015e-34) / workFunc[a]; //workfunction as energy (Joules)
 			}
 		}
-	}
 
 
 	//average energy and velocity of emitted superparticle
@@ -1354,7 +1351,6 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 
 	//compute average velocity of emitted PINC photoelectrons (divide by units->weights)
 	for(int a=0; a<nObj; a++){
-		if(photoEmission==1){
 			if(phCurrentOn == 0){
 				avgEnergy[a] = bandEnergy[a] / flux[a];// / units->weights[specie];
 				avgEnergy[a] -= (workFunc[a] * 6.626070e-34 * 299792458.0); //convert work function to Joule
@@ -1362,7 +1358,6 @@ void pPhotoElectrons(Population *pop, PincObject *obj, Grid *phi, const Units *u
 			else{
 				avgEnergy[a] = bandEnergy[a];
 			}
-		}
 		avgVel[a] = 1. * sqrt(2*avgEnergy[a] /  9.10938356e-31);//9.10938356e-31
 		avgVel[a] /= units->velocity;
 		msg(STATUS, "avgVel %f", avgVel[a]);

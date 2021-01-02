@@ -40,3 +40,6 @@ CollisionDump.txt
 FB-5/
 script/plot/anim_output/*
 script/ObjectCreation/*
+input/lunarSheath*
+PINC_run*
+run*
