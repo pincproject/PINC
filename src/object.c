@@ -551,10 +551,11 @@ static void oFindObjectSurfaceNodes(PincObject *obj) {
     }
     //printf("lookup surface done \n");
     // Add to object.
-    //alPrint(lookupSurfaceOffset, obj->nObjects + 1);
-    //alPrint(lookupSurface, lookupSurfaceOffset[obj->nObjects]);
+    // alPrint(lookupSurfaceOffset, obj->nObjects + 1);
+    // alPrint(lookupSurface, lookupSurfaceOffset[obj->nObjects]);
     obj->lookupSurface = lookupSurface;
     obj->lookupSurfaceOffset = lookupSurfaceOffset;
+    // printf("********* lookupSurfaceOffset = %li\n",lookupSurfaceOffset[1]);
 
     free(myNB);
     free(index);
@@ -796,7 +797,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
     for (long int a=0; a<obj->nObjects; a++) {
 
 	  //printf("chargeCounter[a] = %f\n",chargeCounter[a]);
-      //printf("invNrSurfNod[a] = %f\n",invNrSurfNod[a]);
+      // printf("lookupSurfOff[a] = %li\n",lookupSurfOff[a]);
 	  	//int testcounter = 0;
         for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
             val[obj->lookupSurface[b]] += chargeCounter[a]*invNrSurfNod[a];
@@ -834,7 +835,6 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
     long int emiNodesThisCore;
     long int *expNodesAllCores = malloc(size * sizeof(*expNodesAllCores));
     long int *emiNodesAllCores = malloc(size * sizeof(*emiNodesAllCores));
-
     double phYield = 1e-3;
     double reflectance = 0.0;
     double *flux = malloc(sizeof(obj->radiance));
@@ -900,14 +900,14 @@ void oCollectPhotoelectronCharge(Population *pop, Grid *rhoObj, Grid *phi,
         msg(STATUS, "Added %f charges to rhoObj", totPhotoElectrons[a]);
     } */
 
-
+    // printf(STATUS, "######Number of Objects %d", nObj);
     //Add the collected charge to the exposed nodes on rhoObject.
     for (long int a=0; a<nObj; a++) {
+        // printf("loop no. %d lookup surf off %li\n",a , lookupSurfOff[a]);
         for (long int b=lookupSurfOff[a]; b<lookupSurfOff[a+1]; b++) {
             val[obj->lookupSurface[b]] += flux[a]*invNrSurfNod[a];// * invNrExpNod[a];
         }
     }
-    rhoObj->val = val;
 
     free(bandEnergy);
     free(expNodesAllCores);
