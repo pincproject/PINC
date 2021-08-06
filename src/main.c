@@ -13,6 +13,7 @@
 #include "spectral.h"
 #include "object.h"
 #include "collisions.h"
+#include "hyprepoisson.h"
 
 void regular(dictionary *ini);
 funPtr regular_set(dictionary *ini){ return regular; }
@@ -83,7 +84,8 @@ void regular(dictionary *ini){
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set,
-												sSolver_set);
+												sSolver_set,
+												hSolver_set);
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
