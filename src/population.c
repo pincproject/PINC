@@ -456,7 +456,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 
 			double *vel = &pop->vel[i*nDims];
 			for(int d=0;d<nDims;d++){
-				vel[d] = gsl_ran_gaussian_ziggurat(rng,velTh); //velDrift[index] +
+				vel[d] = velDrift[d] + gsl_ran_gaussian_ziggurat(rng,velTh); //velDrift[index] +
 			}
 		}
 	}

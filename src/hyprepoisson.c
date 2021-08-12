@@ -245,6 +245,7 @@
 
  	gInsertHalo(rho, nGhostLayers);
  	gInsertHalo(phi, nGhostLayers);
+  
   free(nGhostLayers);
 
  }

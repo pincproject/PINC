@@ -138,16 +138,16 @@ void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	//pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosLattice(ini, pop, mpiInfo);
-	pVelZero(pop);
-	//pVelMaxwell(ini, pop, rng);
+	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosLattice(ini, pop, mpiInfo);
+	//pVelZero(pop);
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 
 
 	// Perturb particles
-	pPosPerturb(ini, pop, mpiInfo);
+	//pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
@@ -180,6 +180,7 @@ void regular(dictionary *ini){
 	//gBnd(rho, mpiInfo);
 
 	solve(solver, rho, phi, mpiInfo);
+	gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve,hSolve but not mgSolve
 	//gBnd(phi, mpiInfo);
 
 	gFinDiff1st(phi, E);
@@ -242,16 +243,9 @@ void regular(dictionary *ini){
 
 
 		solve(solver, rho, phi, mpiInfo);
-		gBnd(phi, mpiInfo); // Needed by mgSolve, but will be enforced
+		//gBnd(phi, mpiInfo); // Needed by mgSolve, but will be enforced
 		// inside solver for hSolve
-
-
-		//msg(STATUS,"phi size = %i",phi->sizeProd[4]);
-		//for (long int q = 0; q<phi->rank;q++){
-			//adPrint(phi->val,phi->sizeProd[4] );
-			//}
-		//exit(0);
-		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve,hSolve but not mgSolve
+		gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve,hSolve but not mgSolve
 
 		// Compute E-field
 		gFinDiff1st(phi, E);

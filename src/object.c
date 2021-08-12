@@ -10,6 +10,7 @@
 #include "pusher.h"
 #include "multigrid.h"
 #include "spectral.h"
+#include "hyprepoisson.h"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
 
@@ -192,7 +193,7 @@ void oComputeCapacitanceMatrix(Object *obj, dictionary *ini, const MpiInfo *mpiI
     double *capMatrixSum = obj->capMatrixSum;
 
     // Allocate and initialise the structures to run the potential solver.
-    void (*solverInterface)() = select(ini, "methods:poisson", mgSolver_set, sSolver_set);
+    void (*solverInterface)() = select(ini, "methods:poisson", mgSolver_set, sSolver_set,hSolver_set);
     void (*solve)() = NULL;
     void *(*solverAlloc)() = NULL;
     void (*solverFree)() = NULL;
@@ -1633,7 +1634,8 @@ void oMode(dictionary *ini){
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set,
-												sSolver_set);
+												sSolver_set,
+                        hSolver_set);
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
@@ -1726,7 +1728,7 @@ void oMode(dictionary *ini){
 	//pPosLattice(ini, pop, mpiInfo);
 	pPosUniformCell(ini,rho,pop,rng,mpiInfo);
 	//pVelZero(pop);
-	//pVelMaxwell(ini, pop, rng);
+	pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 
@@ -1770,6 +1772,7 @@ void oMode(dictionary *ini){
 
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
+  gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 	//gNeutralizeGrid(phi, mpiInfo);
 	//gBnd(phi, mpiInfo);
     //gWriteH5(phi, mpiInfo, (double) 0);
@@ -1862,6 +1865,7 @@ void oMode(dictionary *ini){
 
         //gBnd(phi, mpiInfo);
         solve(solver, rho, phi, mpiInfo);                   // for capMatrix - objects
+        gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve,hSolve but not mgSolve
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
         // Second run with solver to account for charges
@@ -1869,6 +1873,7 @@ void oMode(dictionary *ini){
 
 		//gBnd(phi, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
+    gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve,hSolve but not mgSolve
 		//gNeutralizeGrid(phi, mpiInfo);
 		//gBnd(phi, mpiInfo);
 		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve

@@ -21,6 +21,7 @@
 #include "multigrid.h"
 #include "pusher.h"
 #include "neutrals.h"
+#include "hyprepoisson.h"
 
 static void mccSanity(dictionary *ini, const char* name, int nSpecies){
 	// check error, see vahedi + surendra p 181
@@ -1527,7 +1528,8 @@ void mccMode(dictionary *ini){
 	puExtractEmigrantsND_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set
+												mgSolver_set,
+												hSolver_set
 												//sSolver_set
 												);
 
@@ -1879,7 +1881,8 @@ void oCollMode(dictionary *ini){
                         						puExtractEmigrants3DOpen_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set
+												mgSolver_set,
+												hSolver_set
 												//sSolver_set
 											);
 
@@ -1971,7 +1974,8 @@ void oCollMode(dictionary *ini){
     oComputeCapacitanceMatrix(obj, ini, mpiInfo);
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	//pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng,mpiInfo);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
 	pVelMaxwell(ini, pop, rng);
@@ -2012,6 +2016,7 @@ void oCollMode(dictionary *ini){
 
   //gBnd(phi, mpiInfo);
 	solve(solver, rho, phi, mpiInfo);
+  gHaloOp(setSlice, phi, mpiInfo, TOHALO);
 
     //gWriteH5(phi, mpiInfo, (double) 0);
     //pWriteH5(pop, mpiInfo, (double) 0, (double)0+0.5);
@@ -2437,7 +2442,8 @@ void neutTest(dictionary *ini){
     //                     						puExtractEmigrants3DOpen_set);
 
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set
+												mgSolver_set,
+												hSolver_set
 												//sSolver_set
 											);
 
