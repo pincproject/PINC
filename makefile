@@ -9,9 +9,9 @@ COPT	= -O3
 DOPT 	= -O0
 
 CLOCAL = 	-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 -lfftw3
+			-lm -lgsl -lblas -lhdf5 -lfftw3 -lHYPRE 
 LLOCAL =	-Ilib/iniparser/src\
-			-lm -lgsl -lblas -lhdf5 -lfftw3
+			-lm -lgsl -lblas -lhdf5 -lfftw3 -lHYPRE 
 
 -include local.mk
 

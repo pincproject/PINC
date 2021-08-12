@@ -10,6 +10,8 @@
 #ifndef HYPREPOISSON_H
 #define HYPREPOISSON_H
 
+#include <HYPRE_struct_ls.h>
+//#include <HYPRE_krylov.h>
 
 /**
  * @brief ..
@@ -26,7 +28,18 @@
  */
 typedef struct {
 	//HYPRE stuff here
-  double* testnum;
+  HYPRE_StructGrid     grid;
+  HYPRE_StructStencil  stencil;
+  HYPRE_StructMatrix   A;
+  HYPRE_StructVector   b;
+  HYPRE_StructVector   x;
+
+  HYPRE_StructSolver   solver;
+  HYPRE_StructSolver   precond;
+
+  int *ilower;
+  int *iupper;
+
 } HypreSolver;
 
 //DEFINE allocators destructors
