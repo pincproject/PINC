@@ -2402,9 +2402,10 @@ static void oCollMode(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%1000 == 0 || (n>24000 && n%100==0) ){//50614
-		//Write h5 files
-		//gWriteH5(E, mpiInfo, (double) n);
+		if(n >= nTimeSteps-1000 && n%100 == 0 ){//|| (n>24000 && n%100==0) 
+			//if(n == nTimeSteps ){//50614
+			//Write h5 files
+			//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 			gWriteH5(rho_e, mpiInfo, (double) n);
 			gWriteH5(rho_i, mpiInfo, (double) n);
@@ -2418,10 +2419,6 @@ static void oCollMode(dictionary *ini){
 			//gWriteH5(P, mpiInfoNeut, (double) n);
 			//gWriteH5(IE, mpiInfoNeut, (double) n);
 		}
-		if(n==1000){//50614
-			//pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-		}
-
 
 		pWriteEnergy(history,pop,(double)n,units);
 		xyWrite(history,"/current/electrons/dataset",(double)n,units->current*obj->objectCurrent[0],MPI_SUM);

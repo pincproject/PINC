@@ -10,28 +10,28 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "rho_e"#"rhoNeutral" #"P"
+file_name = "phi"#"rhoNeutral" #"P"
 
-ppc = 32 #64 # particle per cell (for rho plots)
+ppc = 6 #64 # particle per cell (for rho plots)
 
 # timesteps:
-start = 1000#50600 #4950#50713#45715 # Must exist in dataset
+start = 100#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
 levels = 500 ## granularity of contourf
-interval = 0.1#in seconds
+interval = 0.01#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 1 #(1 = all of negative values)
+restr_min = 0.01 #(1 = all of negative values)
 
 cmap = 'jet'
 plane = 'XY' # XY, XZ, YZ
 
-show_anim = True 
+show_anim = False#True 
 
-save_figs = False#True
+save_figs = True
 
 
 ## Needs ffmpeg codec
@@ -47,7 +47,7 @@ save_anim = False ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data0/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
@@ -147,6 +147,9 @@ for i in range(len(DATA[:,0,0])):
 DATA = DATA[start_index:,:,:]
 timesteps = timesteps[start_index:]
 ani = animation.FuncAnimation(fig,animate,len(DATA[:,0,0]),interval=interval*1e+3,blit=False)
+
+if(save_figs == True):
+    print("Writing to anim_output/")
 
 if(save_anim == True):
     try:

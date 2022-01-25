@@ -12,10 +12,10 @@ import matplotlib.animation as animation
 
 file_name = "phi"#"rhoNeutral" #"P"
 
-ppc = 32 # particle per cell (for rho plots)
+ppc = 6 # particle per cell (for rho plots)
 
 # timesteps:
-start = 24000#29000# # Must exist in dataset
+start = 2000#29000# # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -23,11 +23,11 @@ levels = 500 ## granularity of contourf
 interval = 0.1#in seconds
 
 #set to true and decide min value on color scale 
-scale_max=False
-restr_max = 3000 # (0.5 = half of positive values)
+scale_max=True
+restr_max = 0.5 # (0.5 = half of positive values)
 #set to true and decide max value on color scale 
-scale_min=False
-restr_min = -1 #(1 = all of negative values)
+scale_min=True
+restr_min = "neg_max" #(set a value, or set to "neg_max" to set the negative max value  )
 
 cmap = 'jet'
 plane = 'XY' # XY, XZ, YZ
@@ -67,7 +67,8 @@ for i in range(len(timesteps)):
 		timesteps = timesteps[i:]
 		break
 
-
+print("using timesteps:")
+print(timesteps)
 DATA = []
 for i in timesteps:
 	dataset = h5["/n=%.1f"%i]
@@ -108,9 +109,12 @@ vMax=np.amax(DATA)
 #vMax=restr_max*np.amax(DATA)
 
 if scale_min==True:
-	vMin=restr_min
+	if  restr_min=="neg_max":
+		vMin=-restr_max*np.amax(DATA)
+	else:
+		vMin=restr_min
 if scale_max==True:
-	vMax=restr_max
+	vMax=restr_max*np.amax(DATA)
 
 
 print("restricting values to %f, %f"%(vMin,vMax))
@@ -161,7 +165,7 @@ fig.colorbar(mesh,cax=cax)
 
 if(save_figs == True):
     if(scale_max==True or scale_min==True): 
-        plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+"(%.1f,%.1f)"%(restr_min,restr_max)+".png")
+        plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+"(%.1f,%.1f)"%(vMin,vMax)+".png")
     else:
         plt.savefig("anim_output/"+file_name+"_Averaged_over_%03d_timesteps"%(end-start)+".png")
 

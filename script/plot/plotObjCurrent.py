@@ -16,9 +16,8 @@ def calc_EMA(array,S_val,N_val):
 
     return new_array
 
-data= '-LBC2'
 
-hist = h5py.File('../../4V/data'+data+'/history.xy.h5','r')
+hist = h5py.File('../../data/history.xy.h5','r')
 curr1 = hist['/current/electrons/dataset']
 curr2 = hist['/current/ions/dataset']
 
@@ -55,6 +54,6 @@ plt.plot(curr2,label='ion current')
 plt.legend(loc='lower right')
 plt.ylabel("I [A]")
 plt.xlabel("timesteps")
-plt.savefig("current_plots/currents4V"+data+"both.png")
+#plt.savefig("data/currents_both.png")
 plt.show()
 
