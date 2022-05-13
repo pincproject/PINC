@@ -44,8 +44,9 @@ int main(int argc, char *argv[]){
 												oMode_set,
 											    oCollMode_set,
 												neutTest_set);
+    printf("We are here.");
 	run(ini);
-
+    printf("We are here too.");
 	/*
 	 * FINALIZE PINC
 	 */
@@ -92,6 +93,7 @@ static void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+   
 	Units *units=uAlloc(ini);
 	uNormalize(ini, units);
 
