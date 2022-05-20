@@ -114,10 +114,12 @@ char **strArrExpand(char **strArr, int nElements);
 
 funPtr selectInner(const dictionary *ini, const char *key, const char *list,...){
 
-	va_list args;
+    
+    va_list args;
 	va_start(args,list);
 
 	char *value = iniGetStr(ini,key);
+    //printf("%s\n", value);
 	funPtr (*setFunction)() = NULL;
 
 	// "list" is all variadic arguments stringified by select() macro, e.g.
@@ -137,7 +139,7 @@ funPtr selectInner(const dictionary *ini, const char *key, const char *list,...)
 			setFunction = fun;
 		}
 	}
-
+    
 	/*
 	 * ERROR HANDLING (Print list of valid values in case of error)
 	 */
@@ -163,7 +165,7 @@ funPtr selectInner(const dictionary *ini, const char *key, const char *list,...)
 	freeStrArr(strArr);
 	free(value);
 	va_end(args);
-
+ 
 	return setFunction(ini);
 }
 
@@ -370,13 +372,14 @@ char* iniGetStr(const dictionary *ini, const char *key){
 
 int* iniGetIntArr(const dictionary *ini, const char *key, int nElements){
 
+    //printf("iniGetIntArr before\n");
 	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
 
 	int *result = malloc(nElements*sizeof(*result));
 	for(int i=0;i<nElements;i++) result[i] = (int)atof(strArr[i]);
 
 	freeStrArr(strArr);
-
+    //printf("iniGetIntArr after, %i\n", result[0]);
 	return result;
 
 }
@@ -396,8 +399,9 @@ long int* iniGetLongIntArr(const dictionary *ini, const char *key, int nElements
 
 double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements){
 
+    //printf("no bueno\n");
 	char **strArr = iniGetStrArr(ini,key,nElements); // asserts existence
-
+    //printf("no bueno\n");
 	double *result = malloc(nElements*sizeof(double));
 	for(int i=0;i<nElements;i++) result[i] = atof(strArr[i]);
 
@@ -409,12 +413,13 @@ double* iniGetDoubleArr(const dictionary *ini, const char *key, int nElements){
 
 char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 
+    //printf("iniGetStrArr before\n");
 	iniAssertExistence(ini,key);
-
+    //printf("iniGetStrArr before\n");
 	char *list = iniparser_getstring((dictionary*)ini,key,"");	// don't free
-
+    //printf("iniGetStrArr after, %s\n", list);
 	int nListElements = listGetNElements(list);
-
+    //printf("iniGetStrArr after, %i, %i\n", nListElements, nElements);
 	if(nElements<nListElements){
 		int nIgnored = nListElements - nElements;
 		if(nIgnored==1){
@@ -423,11 +428,13 @@ char** iniGetStrArr(const dictionary *ini, const char *key, int nElements){
 			msg(WARNING, "Ignoring last %d elements in %s",nIgnored,key);
 		}
 	}
-
+    
 	char **strArr = listToStrArr(list);
+    //printf("List to str array survived, %s, %s\n", strArr[0], strArr[1]);
 	char **strArrExpanded = strArrExpand(strArr,nElements);
+    //printf("got here, %s\n", *strArrExpanded);
 	freeStrArr(strArr);
-
+    
 	return strArrExpanded;
 
 }
@@ -535,28 +542,46 @@ void iniScaleLongInt(dictionary *ini, const char *key, double factor){
 
 void iniApplySuffix(dictionary *ini, const char *key,
 					const char *suffix, const double *mul, int mulLen){
-
+//    printf("iniApplySuffix before\n");
 	int nElements = iniGetNElements(ini,key);
+//    printf("%s\n", key);
 	char **strArr = iniGetStrArr(ini,key,nElements);
-
+    
+//    char **test = malloc((1+1)*sizeof(test));
+//    int len = 5;
+//    test[0] = malloc((len+1)*sizeof(char));
+//    printf("...\n");
+//    strcpy(test[0],"16 pc");
+//    test[1] = NULL;
+//
+//    char **strArr = test;
+//
 	const int listSize=1024;
 	const int numSize=32;
 	char num[numSize];
 	char list[listSize];
 	num[0] = '\0';
 	list[0] = '\0';
-
+    
 	double *arr = malloc(nElements*sizeof(*arr));
+//    printf("iniGetStrArr done\n");
 	for(int i=0;i<nElements;i++){
 		double val = atof(strArr[i]); // ignores suffix
+ //       printf("val %f\n", val);
 		if(strstr(strArr[i],suffix)) val *= mul[i%mulLen];
+ //       printf("val %f\n", val);
 		snprintf(num,numSize,",%a",val);
+ //       printf("num %s\n", num);
 		strcat(list,num);
+ //       printf("test again\n");
+        //printf("%s", list);
+        
 	}
+//    printf("%s - %s\n", key, &list[1]);
 	iniparser_set(ini,key,&list[1]);
-
+    //iniparser_set(ini,key, "16");
 	freeStrArr(strArr);
-
+    //printf("iniApplySuffix done...\n");
 }
 
 /******************************************************************************
@@ -1001,7 +1026,7 @@ static char** listToStrArr(const char* restrict list){
 	}
 
 	result[nElements]=NULL;
-
+    //printf("listtostrarr, %s\n", *result);
 	return result;
 
 }
@@ -1015,22 +1040,30 @@ int strArrLen(char **strArr){
 }
 
 char **strArrExpand(char **strArr, int nElements){
-
+    
+    //printf("strArrExpand before, %s\n", *strArr);
 	int nElementsOld = strArrLen(strArr);
-
-	char **result = malloc((nElements+1)*sizeof(result));
-
+    //printf("nElementsOld and nElements, %i, %i\n", nElementsOld, nElements);
+	//char **result = malloc((nElements+1)*sizeof(result));
+    char **test = malloc((nElements+1)*sizeof(test));
+    //printf("here\n");
 	for(int i=0;i<nElements;i++){
 
 		int len = strlen(strArr[i%nElementsOld]);
-		result[i] = malloc((len+1)*sizeof(char));
-		strcpy(result[i],strArr[i%nElementsOld]);
+       // printf("len %i, %i\n", len, i);
+       // printf("oi, %s, %i\n", strArr[i%nElementsOld], i%nElementsOld);
+        test[i] = malloc((len+1)*sizeof(char));
+       // printf("test 1\n");
+		//result[i] = malloc((len+1)*sizeof(char));
+        //printf("test 2\n");
+		strcpy(test[i],strArr[i%nElementsOld]);
+      //  printf("result, %s, %i\n", test[i], i);
 
 	}
-
-	result[nElements]=NULL;
-
-	return result;
+    
+	test[nElements]=NULL;
+    //printf("strArrExpand after\n");
+	return test;
 
 }
 

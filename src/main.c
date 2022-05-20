@@ -44,9 +44,9 @@ int main(int argc, char *argv[]){
 												oMode_set,
 											    oCollMode_set,
 												neutTest_set);
-    printf("We are here.");
+    //printf("We are here.\n");
 	run(ini);
-    printf("We are here too.");
+    //printf("We are here too.\n");
 	/*
 	 * FINALIZE PINC
 	 */
@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
 
 static void regular(dictionary *ini){
 
+    printf("testbefore");
 	/*
 	 * SELECT METHODS
 	 */
@@ -84,7 +85,7 @@ static void regular(dictionary *ini){
 	void (*solverInterface)()	= select(ini,	"methods:poisson",
 												mgSolver_set,
 												sSolver_set);
-
+    printf("testafter");
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
 	void (*solverFree)() = NULL;
@@ -93,7 +94,7 @@ static void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-   
+    
 	Units *units=uAlloc(ini);
 	uNormalize(ini, units);
 
@@ -329,7 +330,7 @@ static void regular(dictionary *ini){
 
 void BorisTestMode(dictionary *ini){
 
-
+    printf("testBorisbefore");
 	/*
 	 * SELECT METHODS
 	 */
@@ -360,7 +361,7 @@ void BorisTestMode(dictionary *ini){
 	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
 	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
 
-
+    printf("testBorisafter");
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;

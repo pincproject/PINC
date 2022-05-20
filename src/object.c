@@ -222,8 +222,8 @@ void oComputeCapacitanceMatrix(PincObject *obj, dictionary *ini, const MpiInfo *
 	gZero(phiCap);
 	gAdd(phiCap, realTol); // for large grids if the whole phi grid is zero the
 	// MG solver converges in one iteration. This fixes this issue.
-	double rhoSumTest = 0.0; // Delete this, debug
-	double phiSumTest = 0.0;
+	//double rhoSumTest = 0.0; // Delete this, debug
+	//double phiSumTest = 0.0;
 	//gSetBndSlices(ini, phiCap, mpiInfo);
 
     // Find the number of surface nodes for each object.
@@ -392,7 +392,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
     int biasOn = obj->biasOn;
     //double *objectCurrent = obj->objectCurrent;
     //double totObjCharge = 0;
-    int nSpecies = 2;//pop->nSpecies;
+    //int nSpecies = 2;//pop->nSpecies;
 
 
 

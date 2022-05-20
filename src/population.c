@@ -450,7 +450,7 @@ void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){
 		long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
-		velTh = velTh;
+		//velTh = velTh;
 
 		for(long int i=iStart;i<iStop;i++){
 

@@ -825,7 +825,7 @@ void neVelMaxwell(const dictionary *ini, NeutralPopulation *pop, const gsl_rng *
 		long int iStop = pop->iStop[s];
 
 		double velTh = velThermal[s];
-		velTh = velTh;
+		//velTh = velTh;
 
 		for(long int i=iStart;i<iStop;i++){
 
@@ -1303,41 +1303,41 @@ static inline void neInterp3D1(	double *result, const double *pos,
 
 }
 
-static inline void neInterp3D1scalar(	double *result, const double *pos,
-	const double *val, const long int *sizeProd){
-
-		result[0] = 0;
-		// Integer parts of position
-		int j = (int) pos[0];
-		int k = (int) pos[1];
-		int l = (int) pos[2];
-
-		// Decimal (cell-referenced) parts of position and their complement
-		double x = pos[0]-j;
-		double y = pos[1]-k;
-		double z = pos[2]-l;
-		double xcomp = 1-x;
-		double ycomp = 1-y;
-		double zcomp = 1-z;
-
-		// Index of neighbouring nodes
-		long int p 		= j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
-		long int pj 	= p + sizeProd[1]; //sizeProd[1];
-		long int pk 	= p + sizeProd[2];
-		long int pjk 	= pk + sizeProd[1]; //sizeProd[1];
-		long int pl 	= p + sizeProd[3];
-		long int pjl 	= pl + sizeProd[1]; //sizeProd[1];
-		long int pkl 	= pl + sizeProd[2];
-		long int pjkl 	= pkl + sizeProd[1]; //sizeProd[1];
-
-		// Linear interpolation
-		//for(int v=0;v<3;v++)
-		result[0] =	zcomp*(	 ycomp*(xcomp*val[p]+x*val[pj])
-		+y    *(xcomp*val[pk]+x*val[pjk]) )
-		+z    *( ycomp*(xcomp*val[pl]+x*val[pjl])
-		+y    *(xcomp*val[pkl]+x*val[pjkl]) );
-
-}
+//static inline void neInterp3D1scalar(	double *result, const double *pos,
+//	const double *val, const long int *sizeProd){
+//
+//		result[0] = 0;
+//		// Integer parts of position
+//		int j = (int) pos[0];
+//		int k = (int) pos[1];
+//		int l = (int) pos[2];
+//
+//		// Decimal (cell-referenced) parts of position and their complement
+//		double x = pos[0]-j;
+//		double y = pos[1]-k;
+//		double z = pos[2]-l;
+//		double xcomp = 1-x;
+//		double ycomp = 1-y;
+//		double zcomp = 1-z;
+//
+//		// Index of neighbouring nodes
+//		long int p 		= j*sizeProd[1] + k*sizeProd[2] + l*sizeProd[3];
+//		long int pj 	= p + sizeProd[1]; //sizeProd[1];
+//		long int pk 	= p + sizeProd[2];
+//		long int pjk 	= pk + sizeProd[1]; //sizeProd[1];
+//		long int pl 	= p + sizeProd[3];
+//		long int pjl 	= pl + sizeProd[1]; //sizeProd[1];
+//		long int pkl 	= pl + sizeProd[2];
+//		long int pjkl 	= pkl + sizeProd[1]; //sizeProd[1];
+//
+//		// Linear interpolation
+//		//for(int v=0;v<3;v++)
+//		result[0] =	zcomp*(	 ycomp*(xcomp*val[p]+x*val[pj])
+//		+y    *(xcomp*val[pk]+x*val[pjk]) )
+//		+z    *( ycomp*(xcomp*val[pl]+x*val[pjl])
+//		+y    *(xcomp*val[pkl]+x*val[pjkl]) );
+//
+//}
 
 
 
@@ -1640,9 +1640,9 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 
 		long int pStart = pop->iStart[s]*3;
 		long int pStop = pop->iStop[s]*3;
-		long int removedupp = 0; //debug
-		long int removedlow = 0; //debug
-		long int exhanged = 0; //debug
+		//long int removedupp = 0; //debug
+		//long int removedlow = 0; //debug
+		//long int exhanged = 0; //debug
 		for(long int p=pStart;p<pStop;p+=3){
 
 			for(int d=0;d<3;d++) {
@@ -1682,7 +1682,7 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 				//msg(STATUS,"dummyPos[1] = %f, thresholds[1]+pos = %f",dummyPos[1],thresholds[1]+pop->pos[p*3*+d]);
 				//msg(STATUS,"dummyPos[2] = %f, thresholds[2]+pos = %f",dummyPos[2],thresholds[2]+pop->pos[p*3*+d]);
 				//printf(" \n");
-				removedupp += 1; //debug
+				//removedupp += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -1713,7 +1713,7 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 				//printf("%f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
 				//printf("%f, %f, %f \n \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
 
-				removedlow += 1; //debug
+				//removedlow += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -1763,7 +1763,7 @@ void neExtractEmigrants3DOpen(NeutralPopulation *pop, MpiInfo *mpiInfo){
 				// 	printf("offset: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
 				// }
 
-				exhanged += 1;
+				//exhanged += 1;
 				*(emigrants[ne]++) = x;
 				*(emigrants[ne]++) = y;
 				*(emigrants[ne]++) = z;
@@ -2237,7 +2237,8 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 
 	//int index = 0;
 	//printf("sizeProd[1] = %i, %i, %i, %i \n",sizeProd[1],sizeProd[2],sizeProd[3],sizeProd[4]);
-	long int fNext, fPrev, sNext, sPrev;
+	//long int fNext, fPrev, sNext, sPrev;
+    long int fNext, sNext, sPrev;
 	long int s, f;
 	//int fNext = fieldSizeProd[1];
 
@@ -2253,7 +2254,7 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 	// Centered Finite difference
 	for(int d = 1; d < rank; d++){
 		fNext = fieldstart + fieldSizeProd[d]+(d-1);
-		fPrev = fieldstart - fieldSizeProd[d]+(d-1);
+		//fPrev = fieldstart - fieldSizeProd[d]+(d-1);
 
 		sNext = start + sizeProd[d];
 		sPrev = start - sizeProd[d];
@@ -2283,7 +2284,7 @@ void neAdvectV(Grid *V,Grid *Vtilde,Grid *P,Grid *rho,NeutralPopulation *pop){
 			}
 			//exit(0);
 			fNext+=rank-1;
-			fPrev+=rank-1;
+			//fPrev+=rank-1;
 			sNext++;
 			sPrev++;
 			s ++; // fNext;
@@ -2637,11 +2638,11 @@ void neSetBndSlicesEnerg(const dictionary *ini, Grid *grid,Grid *rho,const MpiIn
 		}
 	}
 
-	double Dspeed =0;
-	for (int d = 0;d<nDims;d++){
-		//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
-		Dspeed += sqrt(veld[d]*veld[d]);
-	}
+	//double Dspeed =0;
+	//for (int d = 0;d<nDims;d++){
+	//	//msg(STATUS,"d = %i, d+s*nDims = %i",d,d+s*nDims);
+	//	Dspeed += sqrt(veld[d]*veld[d]);
+	//}
 
 	//Number of elements in slice
 	long int nSliceMax = 0;

@@ -1213,9 +1213,9 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 
 		long int pStart = pop->iStart[s]*3;
 		long int pStop = pop->iStop[s]*3;
-		long int removedupp = 0; //debug
-		long int removedlow = 0; //debug
-		long int exhanged = 0; //debug
+		//long int removedupp = 0; //debug
+		//long int removedlow = 0; //debug
+		//long int exhanged = 0; //debug
 		for(long int p=pStart;p<pStop;p+=3){
 
 			for(int d=0;d<3;d++) {
@@ -1255,7 +1255,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				//msg(STATUS,"dummyPos[1] = %f, thresholds[1]+pos = %f",dummyPos[1],thresholds[1]+pop->pos[p*3*+d]);
 				//msg(STATUS,"dummyPos[2] = %f, thresholds[2]+pos = %f",dummyPos[2],thresholds[2]+pop->pos[p*3*+d]);
 				//printf(" \n");
-				removedupp += 1; //debug
+				//removedupp += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -1286,7 +1286,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				//printf("%f, %f, %f \n",dummyPos[0], dummyPos[1], dummyPos[2]);
 				//printf("%f, %f, %f \n \n",pop->pos[p+0], pop->pos[p+1], pop->pos[p+2]);
 
-				removedlow += 1; //debug
+				//removedlow += 1; //debug
 				pos[p]   = pos[pStop-3];
 				pos[p+1] = pos[pStop-2];
 				pos[p+2] = pos[pStop-1];
@@ -1332,7 +1332,7 @@ void puExtractEmigrants3DOpen(Population *pop, MpiInfo *mpiInfo){
 				// 	printf("offset: %i, %i, %i \n \n", offset[0]+1, offset[1]+1, offset[2]+1);
 				// }
 
-				exhanged += 1;
+				//exhanged += 1;
 				*(emigrants[ne]++) = x;
 				*(emigrants[ne]++) = y;
 				*(emigrants[ne]++) = z;

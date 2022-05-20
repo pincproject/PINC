@@ -56,11 +56,11 @@ static void mccNormalize(dictionary *ini,const Units *units){
 	//numberdensityneutrals given as numberofparticles/m^3
 	double nt = iniGetDouble(ini,"collisions:numberDensityNeutrals");
 
-    printf("nt = %e \n",nt);
+    //printf("nt = %e \n",nt);
 	nt /= units->density; // assumes same for elecron and ion
 	nt /= units->weights[1];
 
-    printf("nt = %f \n",nt);
+    //printf("nt = %f \n",nt);
 	//we use computational particles that contain many real particles.
 	iniSetDouble(ini,"collisions:numberDensityNeutrals",nt);
 
@@ -376,7 +376,7 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	double maxFreqElectron = 0;
 	double pMaxIon = 0;
 	double maxFreqIon = 0;
-	double electronMassRatio = 0;
+	//double electronMassRatio = 0;
 	// double artificialLoss = 1.;
 	mccVars->pMaxElectron = pMaxElectron;
 	mccVars->maxFreqElectron = maxFreqElectron;
@@ -389,8 +389,8 @@ MccVars *mccAlloc(const dictionary *ini, const Units *units){
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
 	double *neutralDrift = iniGetDoubleArr(ini, "collisions:neutralDrift", 3*nSpeciesNeutral);
 	double *thermalVelocity = iniGetDoubleArr(ini, "population:thermalVelocity",nSpecies);
-	electronMassRatio = mass[0]*units->mass/units->weights[0];
-	electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
+	//electronMassRatio = mass[0]*units->mass/units->weights[0];
+	//electronMassRatio /= iniGetDouble(ini,"collisions:realElectronMass");
 	mccVars->neutralDrift = neutralDrift,
 	mccVars->nt = iniGetDouble(ini,"collisions:numberDensityNeutrals"); //constant for now
 	mccVars->NvelThermal = iniGetDouble(ini,"collisions:thermalVelocityNeutrals");
@@ -659,7 +659,7 @@ static void scatterElectron(double *vx_point, double *vy_point,double *vz_point,
 
 
 	if(((2.0*(newEkin))/(mass[0]))<0.0){  //debug. this should not be possible, but is chrashes if it happens.
-		velchange = sqrt( abs((2.0*(newEkin))/(mass[0])));
+		velchange = sqrt( fabs((2.0*(newEkin))/(mass[0])));
 		msg(STATUS, "corrected velchange = %.32f",velchange);
 		msg(STATUS, "Ekin = %f,newEkin = %f",Ekin,newEkin);
 	}else{
@@ -802,9 +802,9 @@ static void scatterIon(double *vx_point, double *vy_point,double *vz_point,
 	// unittest
 	double energydiffexpr = Ekin-Ekin*(cos(angleChi)*cos(angleChi)); //ekin aftr
 	double energydiff = Ekin-ekinafter;
-	if(abs(energydiffexpr-energydiff)>1e-31){
+	if(fabs(energydiffexpr-energydiff)>1e-31){
 		msg(WARNING,"too large energy error in collide Ion = %e",
-		(abs(energydiffexpr-energydiff)));
+		(fabs(energydiffexpr-energydiff)));
 	}
 	if(Ekin<newEkin){
 		msg(WARNING,"energy increased in Ion collission!");
@@ -1622,6 +1622,7 @@ static void mccMode(dictionary *ini){
 									mccFunctionalCrossect_set);
 
 	//
+    
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
 	void (*solverFree)() = NULL;
@@ -1969,18 +1970,22 @@ static void oCollMode(dictionary *ini){
 												mgSolver_set
 												//sSolver_set
 											);
-
+    
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
 	void (*solverFree)() = NULL;
+    
 	solverInterface(&solve, &solverAlloc, &solverFree);
-
+   
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
+    //msg(STATUS, "yeehaa before");
 	Units *units=uAlloc(ini);
+    //msg(STATUS, "yeehaa after");
 	uNormalize(ini, units);
 	mccNormalize(ini,units);
+    
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
 	//MpiInfo *mpiInfoNeut = gAllocMpi(ini);

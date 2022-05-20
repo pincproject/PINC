@@ -17,7 +17,7 @@ LLOCAL =	-Ilib/iniparser/src\
 
 EXEC	= pinc
 CADD	= # Additional CFLAGS accessible from CLI
-CFLAGS	= -std=c11 -Wall $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
+CFLAGS	= -std=c11 -Wall -Wconstant-logical-operand  $(CLOCAL) $(COPT) $(CADD) # Flags for compiling
 DFLAGS 	= $(DOPT) -fno-eliminate-unused-debug-symbols -std=c11 -Wall $(CLOCAL) $(CADD) #flags for debugging
 LFLAGS	= -std=c11 -Wall $(LLOCAL) $(COPT) $(CADD) # Flags for linking
 

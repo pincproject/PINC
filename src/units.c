@@ -59,18 +59,18 @@ void uFree(Units *units){
 }
 
 Units *uAlloc(dictionary *ini){
-
+    //msg(STATUS, "units before");
 	parseIndirectInput(ini);
-
+    
 	char *method = iniGetStr(ini, "methods:normalization");
-
+    
 	Units *units = NULL;
 	if(!strcmp(method, "semiSI"))	units = uSemiSI(ini);
 	else if(!strcmp(method, "SI"))	units = uSI(ini);
 	else msg(ERROR, "methods:normalization not valid (must be SI or semiSI)");
 
 	free(method);
-
+    //msg(STATUS, "units after");
 	uAddDerivedUnits(units);
 	return units;
 }
@@ -150,29 +150,33 @@ static void parseIndirectInput(dictionary *ini){
 	/*
 	 * APPLIES MULTIPLIERS TO ELEMENTS WITH SUFFICES
 	 */
-
+    //printf("parsebefore\n");
 	int nDims = iniGetInt(ini, "grid:nDims");
-
+    
 	double V = (double)gGetGlobalVolume(ini);
-
+    
 
 	int *trueSize = iniGetIntArr(ini,"grid:trueSize",nDims);
-
+    //printf(" After: %i, %i, %i\n", trueSize[0],trueSize[1],trueSize[2]);
 
 	double localV = (double)aiProd(trueSize,nDims);
-
+    
 	int *L = gGetGlobalSize(ini);
 	double *mul = malloc(nDims*sizeof(nDims));
 	for(int i=0;i<nDims;i++) mul[i] = 1.0/L[i];
-
+    //printf(" After: %f, %f, %f\n", mul[0],mul[1],mul[2]);
 	iniApplySuffix(ini, "population:nParticles", "pc", &V, 1);
+    //iniparser_set(ini,"population:nParticles", "16");
+    //printf("test iniApplySuffix after\n");
 	iniApplySuffix(ini, "population:nAlloc", "pc", &V, 1);
-	iniApplySuffix(ini, "grid:nEmigrantsAlloc", "pc", &localV, 1);
-	iniApplySuffix(ini, "grid:stepSize", "tot", mul, nDims);
-
+    //iniparser_set(ini,"population:nAlloc", "32");
+    iniApplySuffix(ini, "grid:nEmigrantsAlloc", "pc", &localV, 1);
+	//iniApplySuffix(ini, "grid:stepSize", "tot", mul, nDims);
+    iniparser_set(ini,"grid:stepSize", "0.0142");
 	free(trueSize);
 	free(mul);
 	free(L);
+    //printf("parseafter\n");
 }
 static Units *uSemiSI(dictionary *ini){
 
@@ -183,9 +187,9 @@ static Units *uSemiSI(dictionary *ini){
 	double timeStep = iniGetDouble(ini, "time:timeStep");
 
 	const double tol = 1e-10;
-	if(abs(charge[0]+1)>tol)
+	if(fabs(charge[0]+1)>tol)
 		msg(ERROR, "Species 0 must have charge -1 with this normalization");
-	if(abs(mass[0]-1)>tol)
+	if(fabs(mass[0]-1)>tol)
 		msg(ERROR, "Species 0 must have mass 1 with this normalization");
 
 	adScale(charge, nSpecies, elementaryCharge);
@@ -208,25 +212,31 @@ static Units *uSemiSI(dictionary *ini){
 
 static Units *uSI(const dictionary *ini){
 
-
+    //printf("we're in uSI\n");
 	int nDims = iniGetInt(ini, "grid:nDims");
 	int nSpecies = iniGetInt(ini, "population:nSpecies");
 	double timeStep = iniGetDouble(ini, "time:timeStep");
+    
 	double *stepSize = iniGetDoubleArr(ini, "grid:stepSize", nDims);
+    
 	long int *nParticles = iniGetLongIntArr(ini, "population:nParticles", nSpecies);
-	double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
+    //printf("made it?\n");
+    double *density = iniGetDoubleArr(ini, "population:density", nSpecies);
+    
+
 	double *charge = iniGetDoubleArr(ini, "population:charge", nSpecies);
 	double *mass = iniGetDoubleArr(ini, "population:mass", nSpecies);
 
-	double V  = gGetGlobalVolume(ini)*pow(stepSize[0],nDims);
-
+    double V  = gGetGlobalVolume(ini)*pow(stepSize[0],nDims);
+    //double V  = gGetGlobalVolume(ini)*pow(0.0142,nDims);
+    //printf("tot hier\n");
 	double *weights = (double*)malloc(nSpecies*sizeof(*weights));
 	for(int s=0; s<nSpecies; s++){
 		weights[s] = density[s]*V/nParticles[s];
 		//printf("weights[%i] = %f \n",s,weights[s]);
 	}
 
-	double X  = stepSize[0];
+    double X  = stepSize[0];
 	double T  = timeStep;
 	double Q  = weights[0]*fabs(charge[0]);
 	double M  = pow(T*Q,2)/(vacuumPermittivity*pow(X,nDims));
