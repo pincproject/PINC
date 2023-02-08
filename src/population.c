@@ -1272,7 +1272,7 @@ void pOpenH5(	const dictionary *ini, Population *pop, const Units *units,
 	/*
 	 * CREATE FILE
 	 */
-	hid_t file = openH5File(ini,fName,"pop");
+	hid_t file = openH5File(ini,fName,"pop",COLLECTIVE);
 
 	/*
 	 * CREATE GROUPS

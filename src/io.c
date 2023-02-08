@@ -563,8 +563,11 @@ void iniApplySuffix(dictionary *ini, const char *key,
  * DEFINING HDF5 FUNCTIONS (expanding HDF5 API)
  *****************************************************************************/
 
-hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
+hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt, fileAccess access){
 
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+	
 	// Determine filename
 	char *fPrefix = iniGetStr(ini,"files:output");
 
@@ -576,30 +579,58 @@ hid_t openH5File(const dictionary *ini, const char *fName, const char *fSubExt){
 
 	char *fTotName = strCatAlloc(6,fPrefix,sep,fName,".",fSubExt,".h5");
 
-	// Enable MPI-I/O access
-	hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
+	if (access==COLLECTIVE){
+		// Enable MPI-I/O access
+		hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
+		H5Pset_fapl_mpio(pList,MPI_COMM_WORLD,MPI_INFO_NULL);
 
-	// Make sure parent folder exist
-	if(makePath(fTotName))
-		msg(ERROR,"Could not open or create folder for '%s'.",fTotName);
+		// Make sure parent folder exist
+		if(makePath(fTotName))
+			msg(ERROR,"Could not open or create folder for '%s'.",fTotName);
 
-	hid_t file;	// h5 file handle
+		hid_t file;	// h5 file handle
 
-	// Open or create file (if it doesn't exist)
-	FILE *fh = fopen(fTotName,"r");
-	if(fh!=NULL){
-		fclose(fh);
-		file = H5Fopen(fTotName,H5F_ACC_RDWR,pList);
-	} else {
-		file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
+		// Open or create file (if it doesn't exist)
+		FILE *fh = fopen(fTotName,"r");
+		if(fh!=NULL){
+			fclose(fh);
+			file = H5Fopen(fTotName,H5F_ACC_RDWR,pList);
+		} else {
+			file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
+		}
+
+		H5Pclose(pList);
+		free(fPrefix);
+		free(fTotName);
+		return file;
 	}
+	if (access==SINGLE){
+		if(mpiRank==0){
+			hid_t pList = H5Pcreate(H5P_FILE_ACCESS);
 
-	H5Pclose(pList);
-	free(fPrefix);
-	free(fTotName);
+			// Make sure parent folder exist
+			if(makePath(fTotName))
+				msg(ERROR,"Could not open or create folder for '%s'.",fTotName);
 
-	return file;
+			hid_t file;	// h5 file handle
+
+			// Open or create file (if it doesn't exist)
+			FILE *fh = fopen(fTotName,"r");
+			if(fh!=NULL){
+				fclose(fh);
+				file = H5Fopen(fTotName,H5F_ACC_RDWR,pList);
+			} else {
+				file = H5Fcreate(fTotName,H5F_ACC_EXCL,H5P_DEFAULT,pList);
+			}
+
+			H5Pclose(pList);
+			free(fPrefix);
+			free(fTotName);
+			return file;
+			
+		}
+	}
+	return 0;
 
 }
 
@@ -660,12 +691,12 @@ void createH5Group(hid_t h5, const char *name){
 // xyzProbe versions write an array instead of a point
 hid_t xyOpenH5(const dictionary *ini, const char *fName){
 
-	return openH5File(ini,fName,"xy");
+	return openH5File(ini,fName,"xy",SINGLE);
 }
 
 hid_t arrOpenH5(const dictionary *ini, const char *fName){
 
-	return openH5File(ini,fName,"xyz");
+	return openH5File(ini,fName,"xyz",SINGLE);
 }
 
 void xyCreateDataset(hid_t h5, const char *name){
@@ -673,25 +704,29 @@ void xyCreateDataset(hid_t h5, const char *name){
 	int mpiRank;
 	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
 
-	createH5Group(h5,name);	// Creates parent groups
+		if(mpiRank==0){
+		
+			createH5Group(h5,name);	// Creates parent groups
 
-	const int arrSize=2;
+			const int arrSize=2;
 
-	// Enable chunking of data in order to use extendible (unlimited) datasets
-	hsize_t chunkDims[] = {1,2};
-	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(pList, arrSize, chunkDims);
+			// Enable chunking of data in order to use extendible (unlimited) datasets
+			hsize_t chunkDims[] = {1,2};
+			hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
+			H5Pset_chunk(pList, arrSize, chunkDims);
 
-	// Create dataspace for file initially empty but extendable
-	hsize_t fileDims[] = {0,2};
-	hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
-	hid_t fileSpace = H5Screate_simple(arrSize,fileDims,fileDimsMax);
+			// Create dataspace for file initially empty but extendable
+			hsize_t fileDims[] = {0,2};
+			hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
+			hid_t fileSpace = H5Screate_simple(arrSize,fileDims,fileDimsMax);
 
-	// Create dataset in file using mentioned dataspace
-	hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
-
-	H5Sclose(fileSpace);
-	H5Dclose(dataset);
+			// Create dataset in file using mentioned dataspace
+			hid_t dataset = H5Dcreate(h5,name,H5T_IEEE_F64LE,fileSpace,H5P_DEFAULT,pList,H5P_DEFAULT);
+	
+			H5Sclose(fileSpace);
+			H5Dclose(dataset);
+		}
+	
 
 }
 
@@ -749,24 +784,28 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 	// Reduce data across nodes
 	double yReduced;
 	MPI_Reduce(&y,&yReduced,1,MPI_DOUBLE,op,0,MPI_COMM_WORLD);
+	
+	//hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
+	//H5Pset_dxpl_mpio(dxpl_id,H5FD_MPIO_COLLECTIVE); //H5FD_MPIO_INDEPENDENT is default
 
-	// Load dataset
-	hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
-
-	// Extend dataspace in file by one row (must be done on all MPI nodes)
-	const int arrSize=2;
-	hid_t fileSpace = H5Dget_space(dataset);
-	hsize_t fileDims[arrSize];
-	H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
-	fileDims[0]++;
-	H5Dset_extent(dataset,fileDims);
-
-	// update fileSpace after change
-	H5Sclose(fileSpace);
-	fileSpace = H5Dget_space(dataset);
-
-	// Write only from MPI rank 0
 	if(mpiRank==0){
+		// Load dataset
+		hid_t dataset = H5Dopen(h5,name,H5P_DEFAULT);
+	
+		// Extend dataspace in file by one row (must be done on all MPI nodes)
+		const int arrSize=2;
+		hid_t fileSpace = H5Dget_space(dataset);
+		hsize_t fileDims[arrSize];
+		H5Sget_simple_extent_dims(fileSpace,fileDims,NULL);
+		fileDims[0]++;
+		H5Dset_extent(dataset,fileDims);
+
+		// update fileSpace after change
+		H5Sclose(fileSpace);
+		fileSpace = H5Dget_space(dataset);
+		
+		// Write only from MPI rank 0
+		//if(mpiRank==0){
 		// Select hyperslab to write to
 		hsize_t offset[] = {fileDims[0]-1,0};
 		hsize_t count[] = {1,1};
@@ -775,13 +814,14 @@ void xyWrite(hid_t h5, const char* name, double x, double y, MPI_Op op){
 
 		// Write to file
 		double data[] = {x,yReduced};
+		//printf("data=%.1f,%.32f \n",data[0],data[1]); // Double check if data is actually zero at any point
 		hid_t memSpace = H5Screate_simple(arrSize,memDims,NULL);
 		H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memSpace, fileSpace, H5P_DEFAULT, data);
-		H5Sclose(memSpace);
+		H5Sclose(memSpace);	
+		//}
+		H5Sclose(fileSpace);
+		H5Dclose(dataset);
 	}
-
-	H5Sclose(fileSpace);
-	H5Dclose(dataset);
 
 }
 
@@ -923,8 +963,11 @@ void xyzWriteProbe(hid_t xyz, Grid *grid,MpiInfo *mpiInfo){
 }
 
 void xyCloseH5(hid_t h5){
-
-	H5Fclose(h5);
+	int mpiRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+		if(mpiRank==0){
+		H5Fclose(h5);
+	}
 }
 
 void arrCloseH5(hid_t h5){

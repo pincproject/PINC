@@ -9,6 +9,17 @@
 #define IO_H
 
 /**
+  * @brief Defines different types of MPI file access modes
+  * 
+  */
+ typedef enum{
+ 	SINGLE = 0x01,		///< Single file access only from process 0.
+ 	COLLECTIVE = 0x02,		///< COLLECTIVE file access (all proc).
+ } fileAccess;
+
+
+
+/**
  * @brief	Function selector for assigning function pointers
  * @param	ini		Input file dictionary
  * @param	key		Key to method parameter ("section:key")
@@ -308,6 +319,7 @@ void freeStrArr(char** strArr);
  * @param	ini		Input file dictionary
  * @param	fName	File name
  * @param	fSubExt	File sub-extension
+ * @param	access	MPI file access mode
  * @return	HDF5 file identifier
  * @see		H5Fcreate(), H5Fclose()
  *
@@ -342,7 +354,7 @@ void freeStrArr(char** strArr);
  *
  * Close return value using H5Fclose().
  */
-hid_t openH5File(const dictionary* ini, const char *fName, const char *fSubExt);
+hid_t openH5File(const dictionary* ini, const char *fName, const char *fSubExt, fileAccess access);
 
 /**
  * @brief Sets array of double as attributes in h5-file

@@ -10,12 +10,12 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho_e"#"rhoNeutral" #"P"
 
 ppc = 6 #64 # particle per cell (for rho plots)
 
 # timesteps:
-start = 100#50600 #4950#50713#45715 # Must exist in dataset
+start = 9000#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -24,10 +24,10 @@ interval = 0.01#in seconds
 
 #Restrict data values (can be values from 0-1):
 restr_max = 1 # (0.5 = half of positive values)
-restr_min = 0.01 #(1 = all of negative values)
+restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
-plane = 'XY' # XY, XZ, YZ
+plane = 'XZ' # XY, XZ, YZ
 
 show_anim = False#True 
 
@@ -71,9 +71,9 @@ for i in timesteps:
 	if (plane == 'XY'):
 		data = np.transpose((data[:,:,int(len(data[0,0,:])/2) ]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'YZ'):
-		data = np.transpose((data[int(len(data[0,0,:])/2),:,:]))*denorm #int(len(data[0,0,:])/2)
+		data = np.transpose((data[int(len(data[0,:,0])/2),:,:]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'XZ'):
-		data = np.transpose((data[:,int(len(data[0,0,:])/2),:]))*denorm #int(len(data[0,0,:])/2)
+		data = np.transpose((data[:,int(len(data[:,0,0])/2),:]))*denorm #int(len(data[0,0,:])/2)
 	if("rho" in file_name ):
 		if("rho_e" in file_name ):
 			data = -1*data

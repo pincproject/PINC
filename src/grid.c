@@ -1875,7 +1875,7 @@ void gOpenH5(const dictionary *ini, Grid *grid, const MpiInfo *mpiInfo,
 	 * CREATE FILE
 	 */
 
-	hid_t file = openH5File(ini,fName,"grid");
+	hid_t file = openH5File(ini,fName,"grid",COLLECTIVE);
 
 	/*
 	 * CREATE ATTRIBUTES
