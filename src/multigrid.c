@@ -2020,36 +2020,23 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 	int nMGCycles = mgRho->nMGCycles;
 	int bottom = mgRho->nLevels-1;
 	int nLevels = mgRho->nLevels;
-	long int mpiSize=mpiInfo->mpiSize;
+	//long int mpiSize=mpiInfo->mpiSize;
 
 	//gZero(mgPhi->grids[0]);
 	double tol = mgRho->tol;//1.E-3; //1.E-10;
-	double barRes = 2.;
+	double barRes = 2000000.;
 	double normRho = 2.;
-
-	//gBnd(mgPhi->grids[0], mpiInfo);
-	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
-
+	int minIters=5;
 
 	normRho = mgSumTrueSquared(mgRho->grids[0]); // does total grid not "true" grid
 	normRho = sqrt(normRho);
-	//msg(STATUS, "normRho = %f", normRho);
+	normRho /= (gTotTruesize(mgRho->grids[0],mpiInfo));
 
 	int iterations = 0;
 	if(nLevels >1){
-		for(int i =0;i<5;i++){// min iters
-			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
-			gHaloOp(setSlice, mgRes->grids[0],mpiInfo,TOHALO);
-			barRes = mgSumTrueSquared(mgRes->grids[0]); // does total grid not "true" grid
-			barRes = sqrt(barRes);
-			iterations += 1;
-		}
-		while(barRes > normRho*tol && barRes > 1e-50){
-		//for(int c = 0; c < nMGCycles; c++){
-			//gBnd(mgRes->grids[0],mpiInfo);
-			//gBnd(mgRho->grids[0],mpiInfo);
-			//gBnd(mgPhi->grids[0],mpiInfo);
+		while((barRes > tol*normRho  && barRes > 1e-50) || iterations<minIters){
+
+			
 			mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
 			mgResidual(mgRes->grids[0],mgRho->grids[0], mgPhi->grids[0], mpiInfo);
 			//gBnd(mgRes->grids[0],mpiInfo);
@@ -2057,41 +2044,33 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 			//gBnd(mgPhi->grids[0], mpiInfo);
 			barRes = mgSumTrueSquared(mgRes->grids[0]); // does total grid not "true" grid
 			barRes = sqrt(barRes);
-			//barRes /= (gTotTruesize(mgRho->grids[0],mpiInfo)*mpiSize);
+			barRes /= (gTotTruesize(mgRho->grids[0],mpiInfo));
 
-
-
-			//barRes = sqrt(barRes);
-
-
-			//msg(STATUS, "normRho*tol = %f", normRho*tol);
-			//msg(STATUS, "barRes = %f", barRes);
-			//exit(0);
-			//adPrint(mgPhi->grids[0]->val,mgPhi->grids[0]->sizeProd[4]);
 			iterations += 1;
-			if (iterations > ( 1000+10*mpiSize -(1/mpiSize)) ){
+			
+
+			if (iterations >10000 ){
 				msg(WARNING,"MGsolver did not converge, continuing with residual= %e",barRes);
 				barRes = 0.0;
 			}
+			if (barRes > 1e10){ // Divergence detected
+				msg(ERROR,"MGsolver diverged, last  avg residual value = %e",barRes);
+			}
 		}
-		//exit(0);
-		// for(int c = 0; c < nMGCycles; c++){
-		// 	mgAlgo(0, bottom, 0, mgRho, mgPhi, mgRes, mpiInfo);
-		//
-		// }
-	}	else {
+
+	}else {
 		for(int c = 0; c < nMGCycles; c++){
 
 			Grid *phi = mgPhi->grids[0];
 			Grid *rho = mgRho->grids[0];
 			gHaloOp(setSlice, rho, mpiInfo, TOHALO);
 			//gBnd(rho, mpiInfo);
-			mgRho->coarseSolv(phi, rho,
-								mgRho->nCoarseSolve, mpiInfo);
+			mgRho->coarseSolv(phi, rho,mgRho->nCoarseSolve, mpiInfo);
 		}
+		
 	}
 	msg(STATUS,"MG iterations = %i",iterations);
-	//gNeutralizeGrid(mgPhi->grids[0], mpiInfo);
+
 	return;
 }
 
