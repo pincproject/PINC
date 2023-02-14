@@ -167,6 +167,8 @@ funPtr selectInner(const dictionary *ini, const char *key, const char *list,...)
 	return setFunction(ini);
 }
 
+
+
 void msg(msgKind kind, const char* restrict format,...){
 
 	// Retrieve argument list
@@ -215,6 +217,7 @@ void msg(msgKind kind, const char* restrict format,...){
 	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
 
 }
+
 
 void fMsg(const dictionary *ini, const char* restrict fNameKey, const char* restrict format, ...){
 
