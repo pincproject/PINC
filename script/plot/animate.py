@@ -10,20 +10,26 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
+# figure default params
+#print(plt.rcParams)
+#plt.rcParams['figure.figsize'] = (6.4, 4.8) # Default
+plt.rcParams['figure.figsize'] = (0.5*4.8, 2*6.4)
+
+
 file_name = "rho_e"#"rhoNeutral" #"P"
 
-ppc = 6 #64 # particle per cell (for rho plots)
+ppc = 8 #64 # particle per cell (for rho plots)
 
 # timesteps:
-start = 9000#50600 #4950#50713#45715 # Must exist in dataset
+start = 20000#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
 levels = 500 ## granularity of contourf
-interval = 0.01#in seconds
+interval = 0.5#in seconds
 
 #Restrict data values (can be values from 0-1):
-restr_max = 1 # (0.5 = half of positive values)
+restr_max = 0.8 # (0.5 = half of positive values)
 restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
@@ -31,11 +37,11 @@ plane = 'XZ' # XY, XZ, YZ
 
 show_anim = False#True 
 
-save_figs = True
+save_figs = False#True
 
 
 ## Needs ffmpeg codec
-save_anim = False ## Bool (if false anim is only shown on screen)
+save_anim = True ## Bool (if false anim is only shown on screen)
 ########################
 
 
@@ -58,7 +64,13 @@ for item in h5:
 timesteps = np.array(timesteps,dtype =float)
 timesteps = np.sort(timesteps)
 #print(timesteps)
+#timesteps=timesteps[0:5]
 
+
+for i in range(len(timesteps)):
+    if (start==timesteps[i]):
+        start_index=i
+timesteps = timesteps[start_index:]
 
 DATA = []
 for i in timesteps:
@@ -139,27 +151,30 @@ def animate(i):
 
         if(save_figs == True): 
             plt.savefig("anim_output/"+file_name+"_timestep_%03d"%(timesteps[i])+".png")
+        print(timesteps[i])
     
-for i in range(len(DATA[:,0,0])):
-    if (start==timesteps[i]):
-        start_index=i
 
-DATA = DATA[start_index:,:,:]
-timesteps = timesteps[start_index:]
+
+#DATA = DATA[start_index:,:,:]
+#timesteps = timesteps[start_index:]
 ani = animation.FuncAnimation(fig,animate,len(DATA[:,0,0]),interval=interval*1e+3,blit=False)
 
 if(save_figs == True):
     print("Writing to anim_output/")
 
 if(save_anim == True):
-    try:
-        Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=(1/interval), metadata=dict(artist='Me'), bitrate=1800)
-    except RuntimeError:
-        print("ffmpeg not available trying ImageMagickWriter")
-        writer = animation.ImageMagickWriter(fps=(1/interval))
+    print(animation.writers)
+    #try:
+    #    Writer = animation.writers['ffmpeg']
+    #    writer = Writer(fps=(1/interval), metadata=dict(artist='Me'), bitrate=1800)
+    #except RuntimeError:
+    #    print("ffmpeg not available trying ImageMagickWriter")
+    #    writer = animation.ImageMagickWriter(fps=(1/interval))
 
-    ani.save('animation.mp4')
+    #ani.save('animation.mp4')
+    ani.save("anim_output/"+file_name+"_animation.gif")
+    
+    
 else:
     if (show_anim == True):
         plt.show()

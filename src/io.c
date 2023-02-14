@@ -210,7 +210,7 @@ void msg(msgKind kind, const char* restrict format,...){
 	if((kind&ALL) || rank==0){
 		fprintf(stream,"%s\n",buffer);
 	}
-
+	MPI_Barrier(MPI_COMM_WORLD); // Safety test 14.02.2023
 	// Quit if error
 	if((kind&0x0F)==ERROR) exit(EXIT_FAILURE);
 

@@ -2069,7 +2069,7 @@ void mgSolveRaw(funPtr mgAlgo, Multigrid *mgRho, Multigrid *mgPhi, Multigrid *mg
 		}
 		
 	}
-	msg(STATUS,"MG iterations = %i",iterations);
+	//msg(STATUS,"MG iterations = %i",iterations);
 
 	return;
 }

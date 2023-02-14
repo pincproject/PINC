@@ -2222,16 +2222,15 @@ static void oCollMode(dictionary *ini){
 	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
 	for(int n = 1; n <= nTimeSteps; n++){
 
-
-		tStart(t);
-
-		long int totPs0 = (pop->iStop[0]- pop->iStart[0]); //debug
-		long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
-		MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-		MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
 		msg(STATUS,"Computing time-step %i",n);
-        	msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
-		msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
+		tStart(t);
+		
+		//long int totPs0 = (pop->iStop[0]- pop->iStart[0]); //debug
+		//long int totPs1 = (pop->iStop[1]- pop->iStart[1]);
+		//MPI_Allreduce(MPI_IN_PLACE, &totPs0, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		//MPI_Allreduce(MPI_IN_PLACE, &totPs1, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+        	//msg(STATUS, "Nr. of particles s=0 %i: ",totPs0);
+		//msg(STATUS, "Nr. of particles s=1 %i: ",totPs1);
 		//msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 
 
@@ -2797,7 +2796,7 @@ static void neutTest(dictionary *ini){
 
 		//printf("\n");
 		msg(STATUS," Computing time-step %i",n);
-    msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
+		msg(STATUS, "Nr. of particles %i: ",(neutralPop->iStop[0]- neutralPop->iStart[0]));
 		double gridEnerg = gSumTruegrid(IE);
 		double Vsum = gSumTruegrid(V);
 		double rhosum = gSumTruegrid(rhoNeutral);

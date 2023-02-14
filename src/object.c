@@ -758,7 +758,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
         //printf("invNrSurfNod[a] = %f, nodCorGlob[(a+1)*(size+1)] = %li",1./invNrSurfNod[a],nodCorGlob[(a+1)*(size)]);
     }
 
-    int cutNumber = 0;
+    //int cutNumber = 0;
     for(int s=0;s<nSpecies;s++) {
 
         long int iStart = pop->iStart[s];
@@ -805,7 +805,7 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
                         //msg(STATUS,"j,k,l: %i,%i, %i",j,k,l);
                         //msg(STATUS,"j,k,l: %f,%f,%f",pos[0],pos[1],pos[2]);
                         pCut(pop, s, pIndex, pop->pos, pop->vel);
-                        cutNumber += 1;
+                        //cutNumber += 1;
                         //msg(STATUS,"iStop = %li",iStop);
                         iStop--;
 
@@ -817,9 +817,9 @@ void oCollectObjectCharge(Population *pop, Grid *rhoObj, PincObject *obj, const 
         }
     }
 
-    MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    msg(STATUS,"cutNumber = %i ",cutNumber);
-    cutNumber = 0;
+    //MPI_Allreduce(MPI_IN_PLACE, &cutNumber, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    //msg(STATUS,"cutNumber = %i ",cutNumber);
+    //cutNumber = 0;
 
     MPI_Allreduce(MPI_IN_PLACE, chargeCounter, obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     //MPI_Allreduce(MPI_IN_PLACE, objectCurrent, nSpecies*obj->nObjects, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
