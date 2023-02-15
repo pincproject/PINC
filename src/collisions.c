@@ -1885,7 +1885,8 @@ static void mccMode(dictionary *ini){
 
 	}
 
-	if(mpiInfo->mpiRank==0) tMsg(t->total, "Time spent: ");
+	//if(mpiInfo->mpiRank==0) 
+	tMsg(t->total, "Time spent: ");
 
 
 	/*
@@ -2425,9 +2426,9 @@ static void oCollMode(dictionary *ini){
 		xyWrite(history,"/potential/dataset",(double)n,units->potential*(*obj->bias),MPI_MAX);
 	}
 
-	if(mpiInfo->mpiRank==0) {
+	//if(mpiInfo->mpiRank==0) {
     tMsg(t->total, "Time spent: ");
-}
+//}
 
 	/*
 	 * FINALIZE PINC VARIABLES
@@ -2899,9 +2900,9 @@ static void neutTest(dictionary *ini){
 		//pWriteEnergy(history,pop,(double)n,units);
 	}
 
-	if(mpiInfoNeut->mpiRank==0) {
+	//if(mpiInfoNeut->mpiRank==0) {
     tMsg(t->total, "Time spent: ");
-	}
+	//}
 
 	/*
 	 * FINALIZE PINC VARIABLES

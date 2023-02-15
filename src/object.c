@@ -445,7 +445,7 @@ void oApplyCapacitanceMatrix(Grid *rho, const Grid *phi, const PincObject *obj, 
 
 		//printf("capMatrixSum[a] = %f\n",capMatrixSum[a] );
 		//printf("capMatrixPhiSum = %f\n",capMatrixPhiSum );
-        msg(STATUS,"Potential-check for object %ld : %f",a,(units->potential*capMatrixPhiSum));
+        //msg(STATUS,"Potential-check for object %ld : %f",a,(units->potential*capMatrixPhiSum));
         //capMatrixPhiSum=0.03;
 
         for (long int j=beginIndex; j<endIndex; j++) {
@@ -2024,9 +2024,9 @@ static void oMode(dictionary *ini){
 	xyWrite(history,"/potential/dataset",(double)n,units->potential*(*obj->bias),MPI_MAX);
 	}
 
-	if(mpiInfo->mpiRank==0) {
+	//if(mpiInfo->mpiRank==0) {
     tMsg(t->total, "Time spent: ");
-}
+//}
 
 	/*
 	 * FINALIZE PINC VARIABLES

@@ -5,9 +5,9 @@ import numpy as np
 
 k_B=1.380649*10**(-23) # boltzman constant SI units
 
-Geometry="None" #"Cylinder" "Sphere"
+Geometry= "Sphere"#"None" #"Cylinder"
 
-If using a geometry define params for OML current
+#If using a geometry define params for OML current
 #electron current
 n=5.8977e9 #m^-3
 q=-1.60217662e-19 #C
