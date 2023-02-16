@@ -1630,8 +1630,8 @@ static inline void exchangeMigrants(Population *pop, MpiInfo *mpiInfo, Grid *gri
 
 		MPI_Status status;
 		//2*nSpecies*nDims*nImmigrantsAlloc
-		adSetAll(immigrants,2*nSpecies*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
-		//PINC still chrashes in puMigrate under certain conditions
+		//adSetAll(immigrants,2*nSpecies*nDims*nImmigrantsAlloc,0.0); // Ad-Hoc fix.. maybe?
+		//PINC still chrashes in puMigrate under certain conditions ..?
 		MPI_Recv(immigrants,2*nDims*nImmigrantsAlloc,MPI_DOUBLE,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 		int ne = status.MPI_TAG;	// Which neighbor it is from equals the tag
 
