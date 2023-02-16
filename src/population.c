@@ -393,6 +393,8 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 
+	int err=0;
+	
 	for(int s=0; s<nSpecies; s++){
 
 		long int iStart = pop->iStart[s];
@@ -402,12 +404,18 @@ void pPosAssertInLocalFrame(const Population *pop, const Grid *grid){
 			for(int d=0; d<nDims; d++){
 
 				if(pos[i*nDims+d]>size[d+1]-1 || pos[i*nDims+d]<0){
-					msg(ERROR,	"Particle i=%li (of specie %i) is out of bounds"
+					msg(ALL,	"Particle i=%li (of specie %i) is out of bounds"
 					 			"in dimension %i: %f>%i",
 								i, s, d, pos[i*nDims+d], size[d+1]-1);
+					err=1;
 				}
 			}
 		}
+	}
+	MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(err>=1){ // make shure error is brodcast so every process exits
+		msg(ERROR,"Particle moving to fast");
 	}
 }
 
@@ -418,6 +426,8 @@ void pVelAssertMax(const Population *pop, double max){
 	int nSpecies = pop->nSpecies;
 	int nDims = pop->nDims;
 
+	int err=0;
+	
 	for(int s=0; s<nSpecies; s++){
 
 		long int iStart = pop->iStart[s];
@@ -427,13 +437,21 @@ void pVelAssertMax(const Population *pop, double max){
 			for(int d=0;d<nDims;d++){
 
 				if(vel[i*nDims+d]>max){
-					msg(ERROR,	"Particle i=%li (of specie %i) travels too"
+					msg(ALL,	"Particle i=%li (of specie %i) travels too"
 					 			"fast in dimension %i: %f>%f",
 								i, s, d, vel[i*nDims+d], max);
+					err=1;
 				}
+			
 			}
 		}
 	}
+	MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(err>=1){ // make shure error is brodcast so every process exits
+		msg(ERROR,"Particle moving to fast");
+	}
+	
 }
 
 void pVelMaxwell(const dictionary *ini, Population *pop, const gsl_rng *rng){

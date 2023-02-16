@@ -1668,18 +1668,30 @@ void puMigrate(Population *pop, MpiInfo *mpiInfo, Grid *grid){
 
 void puAssertEmigrantsAlloc(long int count,int ne, MpiInfo *mpiInfo){
 	long int *nEmigrantsAlloc = mpiInfo->nEmigrantsAlloc;
+	int err=0;
 	//printf("On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
 	if (count > nEmigrantsAlloc[ne]){//2*mpiInfo->nDims*
-		msg(STATUS,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+		msg(ALL,"On proc = %i, count = %li,  nEmigrantsAlloc[ne] = %li\n",mpiInfo->mpiRank,count,nEmigrantsAlloc[ne] );
+		err=1;
+	}
+	MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(err>=1){ // make shure error is brodcast so every process exits
 		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
 	}
 }
 
 void puAssertImmigrantsAlloc(long int count, MpiInfo *mpiInfo){
 	long int nImmigrantsAlloc = mpiInfo->nImmigrantsAlloc;
+	int err=0;
 	//printf("On proc = %i, count = %li,  nImmigrantsAlloc  = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
 	if (count > nImmigrantsAlloc){
-		msg(STATUS,"On proc = %i, count = %li,  nImigrantsAlloc = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
+		msg(ALL,"On proc = %i, count = %li,  nImigrantsAlloc = %li\n",mpiInfo->mpiRank,count,nImmigrantsAlloc );
+		err=1;
+	}
+	MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(err>=1){ // make shure error is brodcast so every process exits
 		msg(ERROR,"number of emmigrants ran out of bounds in exchangeNMigrants");
 	}
 }
