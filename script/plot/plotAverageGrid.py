@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 
 ## Setup Params: #######
 
-file_name = "phi"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 6 # particle per cell (for rho plots)
 
@@ -50,7 +50,8 @@ save_anim = False ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
+# h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../instability/two-stream/data_dx_0.035/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
@@ -120,7 +121,7 @@ if scale_max==True:
 print("restricting values to %f, %f"%(vMin,vMax))
 
 fig,ax = plt.subplots()
-ax.set_aspect('equal')
+# ax.set_aspect('equal')
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 div = make_axes_locatable(ax)

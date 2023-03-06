@@ -13,15 +13,15 @@ import matplotlib.animation as animation
 # figure default params
 #print(plt.rcParams)
 #plt.rcParams['figure.figsize'] = (6.4, 4.8) # Default
-plt.rcParams['figure.figsize'] = (0.5*4.8, 2*6.4)
+# plt.rcParams['figure.figsize'] = (0.5*4.8, 2*6.4)
 
 
-file_name = "rho_e"#"rhoNeutral" #"P"
+file_name = "rho"#"rhoNeutral" #"P"
 
 ppc = 8 #64 # particle per cell (for rho plots)
 
 # timesteps:
-start = 20000#50600 #4950#50713#45715 # Must exist in dataset
+start = 1#50600 #4950#50713#45715 # Must exist in dataset
 #step = 1
 
 # Plot:
@@ -29,7 +29,7 @@ levels = 500 ## granularity of contourf
 interval = 0.5#in seconds
 
 #Restrict data values (can be values from 0-1):
-restr_max = 0.8 # (0.5 = half of positive values)
+restr_max = 1 # (0.5 = half of positive values)
 restr_min = 1 #(1 = all of negative values)
 
 cmap = 'jet'
@@ -37,11 +37,11 @@ plane = 'XZ' # XY, XZ, YZ
 
 show_anim = False#True 
 
-save_figs = False#True
+save_figs = True#True
 
 
 ## Needs ffmpeg codec
-save_anim = True ## Bool (if false anim is only shown on screen)
+save_anim = False ## Bool (if false anim is only shown on screen)
 ########################
 
 
@@ -53,7 +53,7 @@ save_anim = True ## Bool (if false anim is only shown on screen)
 
 
 
-h5 = h5py.File('../../data/'+file_name+'.grid.h5','r')
+h5 = h5py.File('../../instability/two-stream/data/'+file_name+'.grid.h5','r')
 
 dimen = h5.attrs["Axis denormalization factor"][0]
 denorm = h5.attrs["Quantity denormalization factor"][0]
@@ -80,11 +80,11 @@ for i in timesteps:
 	#print(" ")
 	#print(data.shape)
 	data = np.transpose(data)
-	if (plane == 'XY'):
+	if (plane == 'XZ'):
 		data = np.transpose((data[:,:,int(len(data[0,0,:])/2) ]))*denorm #int(len(data[0,0,:])/2)
 	if (plane == 'YZ'):
 		data = np.transpose((data[int(len(data[0,:,0])/2),:,:]))*denorm #int(len(data[0,0,:])/2)
-	if (plane == 'XZ'):
+	if (plane == 'XY'):
 		data = np.transpose((data[:,int(len(data[:,0,0])/2),:]))*denorm #int(len(data[0,0,:])/2)
 	if("rho" in file_name ):
 		if("rho_e" in file_name ):
@@ -104,7 +104,7 @@ vMax=restr_max*np.amax(DATA)
 print("restricting values to %f, %f"%(vMin,vMax))
 
 fig,ax = plt.subplots()
-ax.set_aspect('equal')
+# ax.set_aspect('equal')
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -151,7 +151,8 @@ def animate(i):
 
         if(save_figs == True): 
             plt.savefig("anim_output/"+file_name+"_timestep_%03d"%(timesteps[i])+".png")
-        print(timesteps[i])
+            #plt.show()
+        # print(timesteps[i])
     
 
 

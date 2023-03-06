@@ -135,10 +135,11 @@ static void regular(dictionary *ini){
 	 */
 
 	// Initalize particles
-	pPosUniform(ini, pop, mpiInfo, rngSync);
+	// pPosUniform(ini, pop, mpiInfo, rngSync);
+	pPosUniformCell(ini,rho,pop,rng);
 	//pPosLattice(ini, pop, mpiInfo);
 	//pVelZero(pop);
-	pVelMaxwell(ini, pop, rng);
+	// pVelMaxwell(ini, pop, rng);
 	double maxVel = iniGetDouble(ini,"population:maxVel");
 
 
@@ -280,13 +281,13 @@ static void regular(dictionary *ini){
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n>=0){
+		if(n%100==0){
 		//Write h5 files
     	//gWriteH5(E, mpiInfo, (double) n);
 			gWriteH5(rho, mpiInfo, (double) n);
 
 			gWriteH5(phi, mpiInfo, (double) n);
-		  //pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		    pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
 		}
 		pWriteEnergy(history,pop,(double)n,units);
 	}

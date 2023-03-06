@@ -3,7 +3,7 @@ import pylab as plt
 import numpy as np
 
 
-hist = h5py.File('../../data/history.xy.h5','r')
+hist = h5py.File('../../instability/two-stream/data/history.xy.h5','r')
 pot = hist['/energy/potential/total']
 kin = hist['/energy/kinetic/total']
 

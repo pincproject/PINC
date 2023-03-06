@@ -1025,6 +1025,7 @@ void pPosUniformCell(const dictionary *ini, Grid *rho,Population *pop, const gsl
 						//generate velocity for particle
 						for(int d=0;d<nDims;d++){
 							vel[d] = velDrift[(s*nDims)+d] + gsl_ran_gaussian_ziggurat(rng,velTh);
+							// printf("%f \n",velDrift[(s*nDims)+d]);
 						}
 
 						// Generate position for particle
