@@ -42,3 +42,4 @@ object_files/**
 script/plot/lobes/**
 **.h5
 **.log
+instability/figures

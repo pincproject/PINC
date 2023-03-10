@@ -13,37 +13,40 @@
 #include "spectral.h"
 #include "object.h"
 #include "collisions.h"
+#include "iniparser.h"
+
+/******** INIPARSER ************/
 
 static void regular(dictionary *ini);
-funPtr regular_set(dictionary *ini){ return regular; }
+funPtr regular_set(dictionary *ini) { return regular; }
 
-//delete BorisTest in final Version
+// delete BorisTest in final Version
 static void BorisTestMode(dictionary *ini);
-funPtr BorisTestMode_set(dictionary *ini){ return BorisTestMode; }
+funPtr BorisTestMode_set(dictionary *ini) { return BorisTestMode; }
 
-
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 
 	/*
 	 * INITIALIZE PINC
 	 */
-	MPI_Init(&argc,&argv);
-	dictionary *ini = iniOpen(argc,argv); // No printing before this
-	msg(STATUS, "PINC %s started.", VERSION);    // Needs MPI
+	MPI_Init(&argc, &argv);
+	dictionary *ini = iniOpen(argc, argv);	  // No printing before this
+	msg(STATUS, "PINC %s started.", VERSION); // Needs MPI
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	/*
 	 * CHOOSE PINC RUN MODE
 	 */
-	void (*run)() = select(ini,"methods:mode",	regular_set,
-												mccMode_set,
-												BorisTestMode_set,
-												mgMode_set,
-												mgModeErrorScaling_set,
-												sMode_set,
-												oMode_set,
-											    oCollMode_set,
-												neutTest_set);
+	void (*run)() = select(ini, "methods:mode", regular_set,
+						   mccMode_set,
+						   BorisTestMode_set,
+						   mgMode_set,
+						   mgModeErrorScaling_set,
+						   sMode_set,
+						   oMode_set,
+						   oCollMode_set,
+						   neutTest_set);
 	run(ini);
 
 	/*
@@ -51,38 +54,39 @@ int main(int argc, char *argv[]){
 	 */
 	iniClose(ini);
 	MPI_Barrier(MPI_COMM_WORLD);
-	msg(STATUS,"PINC completed successfully!"); // Needs MPI
+	msg(STATUS, "PINC completed successfully!"); // Needs MPI
 	MPI_Finalize();
 
 	return 0;
 }
 
-static void regular(dictionary *ini){
+static void regular(dictionary *ini)
+{
 
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   			= select(ini,	"methods:acc",
-												puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set);
+	void (*acc)() = select(ini, "methods:acc",
+						   puAcc3D1_set,
+						   puAcc3D1KE_set,
+						   puAccND1_set,
+						   puAccND1KE_set,
+						   puAccND0_set,
+						   puAccND0KE_set);
 
-	void (*distr)() 			= select(ini,	"methods:distr",
-												puDistr3D1_set,
-												puDistrND1_set,
-												puDistrND0_set);
+	void (*distr)() = select(ini, "methods:distr",
+							 puDistr3D1_set,
+							 puDistrND1_set,
+							 puDistrND0_set);
 
-	void (*extractEmigrants)()	= select(ini,	"methods:migrate",
-												puExtractEmigrants3D_set,
-												puExtractEmigrantsND_set,
-												puExtractEmigrants3DOpen_set);
+	void (*extractEmigrants)() = select(ini, "methods:migrate",
+										puExtractEmigrants3D_set,
+										puExtractEmigrantsND_set,
+										puExtractEmigrants3DOpen_set);
 
-	void (*solverInterface)()	= select(ini,	"methods:poisson",
-												mgSolver_set,
-												sSolver_set);
+	void (*solverInterface)() = select(ini, "methods:poisson",
+									   mgSolver_set,
+									   sSolver_set);
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
@@ -92,14 +96,14 @@ static void regular(dictionary *ini){
 	/*
 	 * INITIALIZE PINC VARIABLES
 	 */
-	Units *units=uAlloc(ini);
+	Units *units = uAlloc(ini);
 	uNormalize(ini, units);
 
 	MpiInfo *mpiInfo = gAllocMpi(ini);
-	Population *pop = pAlloc(ini,mpiInfo);
-	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
-	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
-	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
+	Population *pop = pAlloc(ini, mpiInfo);
+	Grid *E = gAlloc(ini, VECTOR, mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR, mpiInfo);
 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 	// Creating a neighbourhood in the rho to handle migrants
@@ -108,11 +112,10 @@ static void regular(dictionary *ini){
 	// Setting Boundary slices
 	gSetBndSlices(ini, phi, mpiInfo);
 
-
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
+	gsl_rng_set(rng, mpiInfo->mpiRank + 1); // Seed needs to be >=1
 
 	/*
 	 * PREPARE FILES FOR WRITING
@@ -121,11 +124,10 @@ static void regular(dictionary *ini){
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
-	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+	gOpenH5(ini, E, mpiInfo, units, units->eField, "E");
 
-
-	hid_t history = xyOpenH5(ini,"history");
-	pCreateEnergyDatasets(history,pop);
+	hid_t history = xyOpenH5(ini, "history");
+	pCreateEnergyDatasets(history, pop);
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
@@ -136,55 +138,49 @@ static void regular(dictionary *ini){
 
 	// Initalize particles
 	// pPosUniform(ini, pop, mpiInfo, rngSync);
-	pPosUniformCell(ini,rho,pop,rng);
-	//pPosLattice(ini, pop, mpiInfo);
-	//pVelZero(pop);
-	// pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
-
-
+	pPosUniformCell(ini, rho, pop, rng);
+	// pPosLattice(ini, pop, mpiInfo);
+	// pVelZero(pop);
+	//  pVelMaxwell(ini, pop, rng);
+	double maxVel = iniGetDouble(ini, "population:maxVel");
 
 	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
+	// pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
 
-	//exit(0);
+	// exit(0);
 	puMigrate(pop, mpiInfo, rho);
 
-	//add influx of new particles on boundary
-	//pInfluxDrift(ini,pop,rng,mpiInfo);
-
+	// add influx of new particles on boundary
+	// pInfluxDrift(ini,pop,rng,mpiInfo);
 
 	/*
 	 * INITIALIZATION (E.g. half-step)
 	 */
-
 
 	// Get initial charge density
 
 	distr(pop, rho);
 	gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-
 	// Get initial E-field
 
-	//gNeutralizeGrid(phi, mpiInfo);
-	//gNeutralizeGrid(rho, mpiInfo);
-	//gNeutralizeGrid
-	//gBnd(phi, mpiInfo);
-	//gBnd(phi, mpiInfo);
-	//gBnd(rho, mpiInfo);
+	// gNeutralizeGrid(phi, mpiInfo);
+	// gNeutralizeGrid(rho, mpiInfo);
+	// gNeutralizeGrid
+	// gBnd(phi, mpiInfo);
+	// gBnd(phi, mpiInfo);
+	// gBnd(rho, mpiInfo);
 
 	solve(solver, rho, phi, mpiInfo);
-	//gBnd(phi, mpiInfo);
+	// gBnd(phi, mpiInfo);
 
 	gFinDiff1st(phi, E);
 
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
-
 
 	// Advance velocities half a step
 	gMul(E, 0.5);
@@ -199,76 +195,64 @@ static void regular(dictionary *ini){
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	for(int n = 1; n <= nTimeSteps; n++){
+	int nTimeSteps = iniGetInt(ini, "time:nTimeSteps");
+	for (int n = 1; n <= nTimeSteps; n++)
+	{
 
-
-		msg(STATUS,"Computing time-step %i",n);
-        msg(STATUS, "Nr. of particles %i: ",(pop->iStop[0]- pop->iStart[0]));
-
+		msg(STATUS, "Computing time-step %i", n);
+		msg(STATUS, "Nr. of particles %i: ", (pop->iStop[0] - pop->iStart[0]));
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,maxVel);
+		pVelAssertMax(pop, maxVel);
 
 		tStart(t);
 
-
 		// Move particles
 		puMove(pop);
-
-
 
 		// Migrate particles (periodic boundaries)
 		extractEmigrants(pop, mpiInfo);
 		puMigrate(pop, mpiInfo, rho);
 
-		//add influx of new particles on boundary
-		//pInfluxDrift(ini,pop,rng,mpiInfo);
+		// add influx of new particles on boundary
+		// pInfluxDrift(ini,pop,rng,mpiInfo);
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		pPosAssertInLocalFrame(pop, rho);
-		//pPurgeGhost(pop, rho);
-		//pFillGhost(ini,pop,rng,mpiInfo);
+		// pPurgeGhost(pop, rho);
+		// pFillGhost(ini,pop,rng,mpiInfo);
 
 		// Compute charge density
-
-
 
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		//gBnd(phi, mpiInfo);
-		//gBnd(rho, mpiInfo);
+		// gBnd(phi, mpiInfo);
+		// gBnd(rho, mpiInfo);
 		solve(solver, rho, phi, mpiInfo);
 		gBnd(phi, mpiInfo);
-		//gZero(phi);
+		// gZero(phi);
 
-		//msg(STATUS,"phi size = %i",phi->sizeProd[4]);
-		//for (long int q = 0; q<phi->rank;q++){
-			//adPrint(phi->val,phi->sizeProd[4] );
-			//}
-		//exit(0);
-		//gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
+		// msg(STATUS,"phi size = %i",phi->sizeProd[4]);
+		// for (long int q = 0; q<phi->rank;q++){
+		// adPrint(phi->val,phi->sizeProd[4] );
+		// }
+		// exit(0);
+		// gHaloOp(setSlice, phi, mpiInfo, TOHALO); // Needed by sSolve but not mgSolve
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
-		//adPrint(E->val,E->sizeProd[4] );
-		//exit(0);
+		// adPrint(E->val,E->sizeProd[4] );
+		// exit(0);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 
-		//gAssertNeutralGrid(E, mpiInfo);
-		// Apply external E
-		// gAddTo(Ext);
-
-
+		// gAssertNeutralGrid(E, mpiInfo);
+		//  Apply external E
+		//  gAddTo(Ext);
 
 		// Accelerate particle and compute kinetic energy for step n
 		acc(pop, E);
-
-
-
-
 
 		tStop(t);
 
@@ -276,23 +260,43 @@ static void regular(dictionary *ini){
 		pSumKinEnergy(pop);
 
 		// Compute potential energy for step n
-		gPotEnergy(rho,phi,pop);
+		gPotEnergy(rho, phi, pop);
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		if(n%100==0){
-		//Write h5 files
-    	//gWriteH5(E, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
+		// if(n%100==0){
+		// //Write h5 files
+		// //gWriteH5(E, mpiInfo, (double) n);
+		// 	gWriteH5(rho, mpiInfo, (double) n);
 
-			gWriteH5(phi, mpiInfo, (double) n);
-		    pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		// 	gWriteH5(phi, mpiInfo, (double) n);
+		//     pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
+		// }
+		// data writing for two different interval
+		
+		int growthPeriod = iniGetInt(ini, "intervals:growthPeriod"); // timestep afterwhich the interval of writing changes
+		int interval1 = iniGetInt(ini, "intervals:interval1");
+		int interval2 = iniGetInt(ini, "intervals:interval2");
+
+		if (n <= growthPeriod && n % interval1 == 0)
+		{
+			gWriteH5(rho, mpiInfo, (double)n);
+			gWriteH5(phi, mpiInfo, (double)n);
+			pWriteH5(pop, mpiInfo, (double)n, (double)n + 0.5);
 		}
-		pWriteEnergy(history,pop,(double)n,units);
+		else if (n % interval2 == 0)
+		{
+			gWriteH5(rho, mpiInfo, (double)n);
+			gWriteH5(phi, mpiInfo, (double)n);
+			pWriteH5(pop, mpiInfo, (double)n, (double)n + 0.5);
+		}
+
+		//
+		pWriteEnergy(history, pop, (double)n, units);
 	}
 
-	//if(mpiInfo->mpiRank==0) 
+	// if(mpiInfo->mpiRank==0)
 	tMsg(t->total, "Time spent: ");
 
 	/*
@@ -321,36 +325,34 @@ static void regular(dictionary *ini){
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
-
 }
-
 
 // delete below here in final version
 
-void BorisTestMode(dictionary *ini){
-
+void BorisTestMode(dictionary *ini)
+{
 
 	/*
 	 * SELECT METHODS
 	 */
-	void (*acc)()   = select(ini,"methods:acc",	puAcc3D1_set,
-												puAcc3D1KE_set,
-												puAccND1_set,
-												puAccND1KE_set,
-												puAccND0_set,
-												puAccND0KE_set,
-												puBoris3D1_set,
-												puBoris3D1KE_set,
-												puBoris3D1KETEST_set);
+	void (*acc)() = select(ini, "methods:acc", puAcc3D1_set,
+						   puAcc3D1KE_set,
+						   puAccND1_set,
+						   puAccND1KE_set,
+						   puAccND0_set,
+						   puAccND0KE_set,
+						   puBoris3D1_set,
+						   puBoris3D1KE_set,
+						   puBoris3D1KETEST_set);
 
-	void (*distr)() = select(ini,"methods:distr",	puDistr3D1_set,
-													puDistrND1_set,
-													puDistrND0_set);
+	void (*distr)() = select(ini, "methods:distr", puDistr3D1_set,
+							 puDistrND1_set,
+							 puDistrND0_set);
 
-	void (*solverInterface)() = select(ini,"methods:poisson", mgSolver_set);
+	void (*solverInterface)() = select(ini, "methods:poisson", mgSolver_set);
 
-	void (*extractEmigrants)() = select(ini,"methods:migrate",	puExtractEmigrants3D_set,
-																puExtractEmigrantsND_set);
+	void (*extractEmigrants)() = select(ini, "methods:migrate", puExtractEmigrants3D_set,
+										puExtractEmigrantsND_set);
 
 	// char *str;
 	//
@@ -359,8 +361,6 @@ void BorisTestMode(dictionary *ini){
 	// if(!strcmp(str,"puAcc3D1")) acc = puAcc3D1_set();
 	// if(!strcmp(str,"puAcc3D1KE")) acc = puAcc3D1KE_set();
 	// if(acc==NULL) msg(ERROR,"methods:acc=%s is an invalid option")
-
-
 
 	void (*solve)() = NULL;
 	void *(*solverAlloc)() = NULL;
@@ -371,24 +371,22 @@ void BorisTestMode(dictionary *ini){
 	 * INITIALIZE PINC VARIABLES
 	 */
 
-	Units *units=uAlloc(ini);
- 	uNormalize(ini, units);
+	Units *units = uAlloc(ini);
+	uNormalize(ini, units);
 
- 	MpiInfo *mpiInfo = gAllocMpi(ini);
- 	Population *pop = pAlloc(ini,mpiInfo);
- 	Grid *E   = gAlloc(ini, VECTOR,mpiInfo);
- 	Grid *rho = gAlloc(ini, SCALAR,mpiInfo);
- 	Grid *phi = gAlloc(ini, SCALAR,mpiInfo);
- 	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
-
-
+	MpiInfo *mpiInfo = gAllocMpi(ini);
+	Population *pop = pAlloc(ini, mpiInfo);
+	Grid *E = gAlloc(ini, VECTOR, mpiInfo);
+	Grid *rho = gAlloc(ini, SCALAR, mpiInfo);
+	Grid *phi = gAlloc(ini, SCALAR, mpiInfo);
+	void *solver = solverAlloc(ini, rho, phi, mpiInfo);
 
 	// Object *obj = oAlloc(ini);
 
 	// using Boris algo
 	int nSpecies = pop->nSpecies;
-	double *S = (double*)malloc((3)*(nSpecies)*sizeof(double));
-	double *T = (double*)malloc((3)*(nSpecies)*sizeof(double));
+	double *S = (double *)malloc((3) * (nSpecies) * sizeof(double));
+	double *T = (double *)malloc((3) * (nSpecies) * sizeof(double));
 
 	// Creating a neighbourhood in the rho to handle migrants
 	gCreateNeighborhood(ini, mpiInfo, rho);
@@ -396,14 +394,13 @@ void BorisTestMode(dictionary *ini){
 	// Setting Boundary slices
 	gSetBndSlices(ini, phi, mpiInfo);
 
-	//Set mgSolve
-	//MgAlgo mgAlgo = getMgAlgo(ini);
+	// Set mgSolve
+	// MgAlgo mgAlgo = getMgAlgo(ini);
 
 	// Random number seeds
 	gsl_rng *rngSync = gsl_rng_alloc(gsl_rng_mt19937);
 	gsl_rng *rng = gsl_rng_alloc(gsl_rng_mt19937);
-	gsl_rng_set(rng,mpiInfo->mpiRank+1); // Seed needs to be >=1
-
+	gsl_rng_set(rng, mpiInfo->mpiRank + 1); // Seed needs to be >=1
 
 	/*
 	 * PREPARE FILES FOR WRITING
@@ -421,45 +418,46 @@ void BorisTestMode(dictionary *ini){
 	pOpenH5(ini, pop, units, "pop");
 	gOpenH5(ini, rho, mpiInfo, units, units->chargeDensity, "rho");
 	gOpenH5(ini, phi, mpiInfo, units, units->potential, "phi");
-	gOpenH5(ini, E,   mpiInfo, units, units->eField, "E");
+	gOpenH5(ini, E, mpiInfo, units, units->eField, "E");
 	// oOpenH5(ini, obj, mpiInfo, units, 1, "test");
 	// oReadH5(obj, mpiInfo);
 
-	hid_t history = xyOpenH5(ini,"history");
-	pCreateEnergyDatasets(history,pop);
+	hid_t history = xyOpenH5(ini, "history");
+	pCreateEnergyDatasets(history, pop);
 
 	// Add more time series to history if you want
 	// xyCreateDataset(history,"/group/group/dataset");
 
-	//free(denorm);
-	//free(dimen);
+	// free(denorm);
+	// free(dimen);
 
 	/*
 	 * INITIAL CONDITIONS
 	 */
 
 	// Initalize particles
-	//pPosUniform(ini, pop, mpiInfo, rngSync);
-	//pPosLattice(ini, pop, mpiInfo);
-	//pVelZero(pop);
-	double *velThermal = iniGetDoubleArr(ini,"population:thermalVelocity",nSpecies);
-	//msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
-	//pVelConstant(pop, velThermal[0], velThermal[1]); //constant values for vel.
-	//pVelMaxwell(ini, pop, rng);
-	double maxVel = iniGetDouble(ini,"population:maxVel");
+	// pPosUniform(ini, pop, mpiInfo, rngSync);
+	// pPosLattice(ini, pop, mpiInfo);
+	// pVelZero(pop);
+	double *velThermal = iniGetDoubleArr(ini, "population:thermalVelocity", nSpecies);
+	// msg( STATUS, "velthermal1 = %f, velthermal2 = %f", velThermal[0], velThermal[1]);
+	// pVelConstant(pop, velThermal[0], velThermal[1]); //constant values for vel.
+	// pVelMaxwell(ini, pop, rng);
+	double maxVel = iniGetDouble(ini, "population:maxVel");
 
 	// Manually initialize a single particle
-	if(mpiInfo->mpiRank==0){
+	if (mpiInfo->mpiRank == 0)
+	{
 		double pos[3] = {31., 31., 31.};
 		double vel[3] = {velThermal[0], 0., 0.};
 		pNew(pop, 0, pos, vel);
 		double pos1[3] = {31., 31., 31.};
-		double vel1[3] = { velThermal[1], 0., 0.};
-		pNew(pop, 1, pos1, vel1); //second particle
+		double vel1[3] = {velThermal[1], 0., 0.};
+		pNew(pop, 1, pos1, vel1); // second particle
 	}
 
 	// Perturb particles
-	//pPosPerturb(ini, pop, mpiInfo);
+	// pPosPerturb(ini, pop, mpiInfo);
 
 	// Migrate those out-of-bounds due to perturbation
 	extractEmigrants(pop, mpiInfo);
@@ -478,7 +476,6 @@ void BorisTestMode(dictionary *ini){
 	gFinDiff1st(phi, E);
 	gHaloOp(setSlice, E, mpiInfo, TOHALO);
 	gMul(E, -1.);
-
 
 	// Advance velocities half a step
 	puAddEext(ini, pop, E);
@@ -507,22 +504,23 @@ void BorisTestMode(dictionary *ini){
 
 	// n should start at 1 since that's the timestep we have after the first
 	// iteration (i.e. when storing H5-files).
-	int nTimeSteps = iniGetInt(ini,"time:nTimeSteps");
-	for(int n = 1; n <= nTimeSteps; n++){
+	int nTimeSteps = iniGetInt(ini, "time:nTimeSteps");
+	for (int n = 1; n <= nTimeSteps; n++)
+	{
 
-		msg(STATUS,"Computing time-step %i ",n);
+		msg(STATUS, "Computing time-step %i ", n);
 
 		// Check that no particle moves beyond a cell (mostly for debugging)
-		pVelAssertMax(pop,maxVel);
+		pVelAssertMax(pop, maxVel);
 
 		tStart(t);
 
 		// Move particles
-		//adPrint(pop->pos, 3);
-		x_min = pop->pos[0]<x_min ? pop->pos[0] : x_min;
-		x_max = pop->pos[0]>x_max ? pop->pos[0] : x_max;
-		y_min = pop->pos[1]<y_min ? pop->pos[1] : y_min;
-		y_max = pop->pos[1]>y_max ? pop->pos[1] : y_max;
+		// adPrint(pop->pos, 3);
+		x_min = pop->pos[0] < x_min ? pop->pos[0] : x_min;
+		x_max = pop->pos[0] > x_max ? pop->pos[0] : x_max;
+		y_min = pop->pos[1] < y_min ? pop->pos[1] : y_min;
+		y_max = pop->pos[1] > y_max ? pop->pos[1] : y_max;
 		puMove(pop);
 		// oRayTrace(pop, obj);
 
@@ -532,32 +530,31 @@ void BorisTestMode(dictionary *ini){
 
 		// Check that no particle resides out-of-bounds (just for debugging)
 		pPosAssertInLocalFrame(pop, rho);
-		//msg(STATUS, "HEEEEEEEEEEERRRRRRRRRRREEEEEEEEEEEE");
-		// Compute charge density
+		// msg(STATUS, "HEEEEEEEEEEERRRRRRRRRRREEEEEEEEEEEE");
+		//  Compute charge density
 		distr(pop, rho);
 		gHaloOp(addSlice, rho, mpiInfo, FROMHALO);
 
-		//gAssertNeutralGrid(rho, mpiInfo);
+		// gAssertNeutralGrid(rho, mpiInfo);
 
 		// Compute electric potential phi
 		solve(solver, rho, phi, mpiInfo);
 
-		//gAssertNeutralGrid(phi, mpiInfo);
+		// gAssertNeutralGrid(phi, mpiInfo);
 
 		// Compute E-field
 		gFinDiff1st(phi, E);
 		gHaloOp(setSlice, E, mpiInfo, TOHALO);
 		gMul(E, -1.);
 
-		//gAssertNeutralGrid(E, mpiInfo);
-
+		// gAssertNeutralGrid(E, mpiInfo);
 
 		// Apply external E
 		// gAddTo(Ext);
-		gZero(E); //remove interparticle forces
+		gZero(E); // remove interparticle forces
 		puAddEext(ini, pop, E);
 
-		//puAddEext(ini, pop, E);
+		// puAddEext(ini, pop, E);
 
 		// Accelerate particle and compute kinetic energy for step n
 
@@ -569,26 +566,26 @@ void BorisTestMode(dictionary *ini){
 		pSumKinEnergy(pop);
 
 		// Compute potential energy for step n
-		gPotEnergy(rho,phi,pop);
+		gPotEnergy(rho, phi, pop);
 
 		// Example of writing another dataset to history.xy.h5
 		// xyWrite(history,"/group/group/dataset",(double)n,value,MPI_SUM);
 
-		//Write h5 files
-		if(n%10==0){
-			//gWriteH5(E, mpiInfo, (double) n);
-			gWriteH5(rho, mpiInfo, (double) n);
-			gWriteH5(phi, mpiInfo, (double) n);
-			pWriteH5(pop, mpiInfo, (double) n, (double)n+0.5);
-			pWriteEnergy(history,pop,(double)n,units);
+		// Write h5 files
+		if (n % 10 == 0)
+		{
+			// gWriteH5(E, mpiInfo, (double) n);
+			gWriteH5(rho, mpiInfo, (double)n);
+			gWriteH5(phi, mpiInfo, (double)n);
+			pWriteH5(pop, mpiInfo, (double)n, (double)n + 0.5);
+			pWriteEnergy(history, pop, (double)n, units);
 		}
-
 	}
 
 	msg(STATUS, "x in [%f, %f]", x_min, x_max);
 	msg(STATUS, "y in [%f, %f]", y_min, y_max);
 
-	//if(mpiInfo->mpiRank==0) 
+	// if(mpiInfo->mpiRank==0)
 	tMsg(t->total, "Time spent: ");
 
 	/*
@@ -608,12 +605,12 @@ void BorisTestMode(dictionary *ini){
 	xyCloseH5(history);
 
 	// Free memory
-	//mgFree(mgRho);
-	//mgFree(mgPhi);
-	//mgFree(mgRes);
+	// mgFree(mgRho);
+	// mgFree(mgPhi);
+	// mgFree(mgRes);
 	gFree(rho);
 	gFree(phi);
-	//gFree(res);
+	// gFree(res);
 	gFree(E);
 	pFree(pop);
 	solverFree(solver);
@@ -621,5 +618,4 @@ void BorisTestMode(dictionary *ini){
 
 	gsl_rng_free(rngSync);
 	gsl_rng_free(rng);
-
 }

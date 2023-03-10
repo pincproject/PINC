@@ -68,7 +68,8 @@ nec0 = 0.4e10
 ud  = 20*vthEh
 wp = np.sqrt((nec0*Q*Q)/(mE*EPS0))
 # timeStep = 0.01/wpE
-t = 32*1.66053907e-27
+# t = 32*1.66053907e-27
+t = wp*3e-10
 
 # print('nec0 = ', nec0)
 # print('neh0 = ', neh0)

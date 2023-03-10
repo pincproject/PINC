@@ -24,7 +24,7 @@ folder = args.folder
 config = args.config
 both = args.both
 
-interval = 100  # in seconds
+# interval = 100  # in seconds
 
 # DIR ="../../data/"
 
@@ -42,35 +42,19 @@ h5 = h5py.File(os.path.join(folder, file_name), 'r')
 
 # file = h5py.File('../../probe/mag_5e-5_64_128_832/data_10/pop.pop.h5','r')
 
-Nt = 10000
-dp = 100
+n = 1500000
+dp = 1000
+# dp1 = 500
 
-# X = pos[:,0]
-# Vx= vel[:,0]
-# Y = pos[:,1]
-# Vy = vel[:,1]
-# Z = pos[:,2]
-# Vz = vel[:,2]  
+growthPeriod = 50000
+interval1 = 100
+interval2  = 200
 
-# plt.scatter(X, Vx, s=1)
-# plt.xlabel('x')
-# plt.ylabel('vx')
-# plt.show()
+if (n <= growthPeriod and n % interval1 == 0):
+    data_num = np.arange(start=100.0, stop=n, step=dp)
+elif (n % interval2 == 0):
+    data_num = np.arange(start=200.0, stop=n, step=dp)
 
-# # scatter
-# exit()
-
-
-# Nt   =  int(h5.attrs["Nt"])
-
-
-data_num = np.arange(start=100.0, stop=Nt, step=dp)
-# data_num = np.linspace(1,Nt,dtype=int)*1.0
-# a = np.around(data_num,2)
-# b = data_num.round(decimals=2)
-# print(data_num)
-# np.around([0.37, 1.64], decimals=1)
-# exit(0)
 
 
 if (show_anim == True):
@@ -183,15 +167,27 @@ if both:
     fig, ax1 = plt.subplots(figsize=figsize/25.4, constrained_layout=True, dpi=ppi)
 else:
     fig,(ax1, ax2,ax3) = plt.subplots(3, 1, figsize=figsize/25.4, constrained_layout = True, dpi=ppi)
-ani = animation.FuncAnimation(fig, animate, frames=len(data_num), interval=interval, blit=False)
+
+if (n <= growthPeriod and n % interval1 == 0):
+    ani = animation.FuncAnimation(fig, animate, frames=len(data_num), interval=interval1, blit=False)
+elif (n % interval2 == 0):
+    ani = animation.FuncAnimation(fig, animate, frames=len(data_num), interval=interval2, blit=False)
+
 if (show_anim == True):
     plt.show()
 if (save_anim ==True):
     try:
         Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=(1/interval), metadata=dict(artist='Me'), bitrate=1800)
+        if (n <= growthPeriod and n % interval1 == 0):
+            writer = Writer(fps=(1/interval1), metadata=dict(artist='Me'), bitrate=1800)
+        elif (n % interval2 == 0):
+            writer = Writer(fps=(1/interval2), metadata=dict(artist='Me'), bitrate=1800)
     except RuntimeError:
         print("ffmpeg not available trying ImageMagickWriter")
-        writer = animation.ImageMagickWriter(fps=(1/interval))
+        if (n <= growthPeriod and n % interval1 == 0):
+            writer = animation.ImageMagickWriter(fps=(1/interval1))
+        elif (n % interval2 == 0):
+            writer = animation.ImageMagickWriter(fps=(1/interval2))
+        
     print("Saving movie to "+figPath+"/. Please wait .....")
     ani.save(figPath+'/phasespace_animation_PICSP.mp4')
