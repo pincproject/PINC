@@ -718,6 +718,9 @@ void xyCreateDataset(hid_t h5, const char *name){
 			hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
 			H5Pset_chunk(pList, arrSize, chunkDims);
 
+			// Set compression filter and level
+			// H5Pset_deflate(pList, 6);
+
 			// Create dataspace for file initially empty but extendable
 			hsize_t fileDims[] = {0,2};
 			hsize_t fileDimsMax[] = {H5S_UNLIMITED,2};
@@ -746,6 +749,9 @@ void arrCreateDataset(hid_t h5, const char *name, const int arrSize){
 	hsize_t chunkDims[] = {1,arrSize};
 	hid_t pList = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_chunk(pList, 2, chunkDims);
+
+	// Add compression filter
+    // H5Pset_deflate(pList, 6);
 
 	// Create dataspace for file initially empty but extendable
 	hsize_t fileDims[] = {0,arrSize};

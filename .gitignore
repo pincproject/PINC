@@ -43,3 +43,5 @@ script/plot/lobes/**
 **.h5
 **.log
 instability/figures
+**.npz
+**.csv
