@@ -24,7 +24,6 @@ h5 = h5py.File(os.path.join(folder, file_name), 'r')
 def sort_by_number(name):
     return float(name.split('=')[1])
 
-
 for p in tqdm(range(species), desc='Loading species data', unit='species'):
     pos = []
     vel = []
@@ -40,15 +39,16 @@ for p in tqdm(range(species), desc='Loading species data', unit='species'):
         # Access the dataset and extract its data as a NumPy array
         pos_dataset = pos_group[d_name]
         # Append the array to the list of data arrays
-        pos.append(np.array(pos_dataset))
+        pos.append(np.array(pos_dataset, dtype='float16'))
         tqdm.write('Processed species position data {}'.format(d_name), end='\r')
     for d_name in tqdm(sorted_vel_names, desc='Processing velocity data', leave=False):
         # Access the dataset and extract its data as a NumPy array
         vel_dataset = vel_group[d_name]
         # Append the array to the list of data arrays
-        vel.append(np.array(vel_dataset))
+        vel.append(np.array(vel_dataset, dtype='float16'))
         tqdm.write('Processed species velocity data {}'.format(d_name), end='\r')
-    print(np.array(pos).shape)
-    np.savez_compressed(os.path.join(folder, f'pop_species{p}.npz'), time=np.array(time_list), pos=np.array(pos), vel=np.array(vel))
+    # print(np.array(pos).shape)
+    np.savez_compressed(os.path.join(folder, f'pop_species{p}.npz'), pos=np.array(pos, dtype='float16'), vel=np.array(vel, dtype='float16'))
     # Save the data to the CSV file
-    np.savetxt("time.csv", np.array(time_list), delimiter=",")
+    np.savetxt(os.path.join(folder, "time.csv"), np.array(time_list), delimiter=",")
+

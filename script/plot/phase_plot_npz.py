@@ -28,17 +28,17 @@ both = args.both
 def sort_by_name(file_path):
     return file_path.split('/')[-1]
 
-file_name = os.path.join('data', 'pop.pop.h5')  # rhoNeutral" #"P"
+# file_name = os.path.join('data', 'pop.pop.h5')  # rhoNeutral" #"P"
 
-# ========== Figure Directory Setup =============
-figPath = os.path.join(folder, "figures")  # DO NOT CHANGE THE PATH
-if os.path.exists(figPath):
-    print("figure directory exists. Existing figures will be replaced.")
-else:
-    os.mkdir(figPath)
+# # ========== Figure Directory Setup =============
+# figPath = os.path.join(folder, "figures")  # DO NOT CHANGE THE PATH
+# if os.path.exists(figPath):
+#     print("figure directory exists. Existing figures will be replaced.")
+# else:
+#     os.mkdir(figPath)
 
 
-h5 = h5py.File(os.path.join(folder, file_name), 'r')
+# h5 = h5py.File(os.path.join(folder, file_name), 'r')
 
 npz_files = sorted(glob.glob(os.path.join(folder, '*.npz')), key=sort_by_name)
 print(npz_files)
