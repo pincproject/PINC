@@ -21,16 +21,16 @@ https://github.com/paulo-herrera/PyEVTK
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from evtk.hl import gridToVTK
+from pyevtk.hl import gridToVTK
 
 file_name = "phi"#"rhoNeutral" #"P"
 
 ppc = 128 # particle per cell (for rho plots)
 
 # timesteps:
-start = 1800# # Must exist in dataset
+start = 10 # # Must exist in dataset
 
-nx, ny, nz = 64, 16, 16
+nx, ny, nz = 32, 32, 32
 # lx, ly, lz = 50, 0.05, 0.05
 dx, dy, dz = 0.781250,0.781250,0.781250 #lx/nx, ly/ny, lz/nz
 lx, ly, lz = (nx-1)*dx, (ny-1)*dx, (nz-1)*dx

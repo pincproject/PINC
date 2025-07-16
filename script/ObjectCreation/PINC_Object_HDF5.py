@@ -11,7 +11,8 @@
 
 import h5py
 import numpy as np
-import pylab as plt
+# import pylab as plt
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
 
