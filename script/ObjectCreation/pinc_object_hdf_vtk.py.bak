@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""
+PINC Object Creation Using HDF5 + VTK Export
+
+Generates a sphere or box object mask in a 3D grid, writes it to HDF5,
+then exports the same data as a VTK structured grid for ParaView.
+"""
+import h5py
+import numpy as np
+import os
+
+# PyVista for VTK export
+try:
+    import pyvista as pv
+except ImportError:
+    raise ImportError("PyVista is required for VTK export: pip install pyvista")
+
+##################### INPUT ###########################
+# PINC DOMAIN
+domainSizeX = 32  # Domain size in X (cells)
+domainSizeY = 32  # Domain size in Y (cells)
+domainSizeZ = 32  # Domain size in Z (cells)
+
+# PINC OBJECT
+OBJ = "sphere"     # "sphere" or "box"
+
+# OBJECT LOCATION (center for sphere, origin for box)
+ObjLocX = domainSizeX // 2
+ObjLocY = domainSizeY // 2
+ObjLocZ = domainSizeZ // 2
+
+if OBJ == "sphere":
+    ObjR = 3        # Object radius (cells)
+elif OBJ == "box":
+    ObjSizeX = 4    # Box size in X (cells)
+    ObjSizeY = 4    # Box size in Y (cells)
+    ObjSizeZ = 4    # Box size in Z (cells)
+else:
+    raise ValueError("OBJ must be 'sphere' or 'box'")
+
+# Create empty domain array: shape (Z, Y, X)
+domain = np.zeros((domainSizeZ, domainSizeY, domainSizeX), dtype=int)
+
+# Fill domain mask
+if OBJ == "sphere":
+    # Spherical object: sample in radial, azimuthal, polar coords
+    rad, phi, theta = np.mgrid[
+        0:ObjR:50j,
+        0:2*np.pi:50j,
+        0:np.pi:50j
+    ]
+    # Compute float coordinates
+    Xf = ObjLocX + rad * np.sin(theta) * np.cos(phi)
+    Yf = ObjLocY + rad * np.sin(theta) * np.sin(phi)
+    Zf = ObjLocZ + rad * np.cos(theta)
+    # Round, cast, and clamp
+    X = np.clip(np.round(Xf).astype(int), 0, domainSizeX - 1)
+    Y = np.clip(np.round(Yf).astype(int), 0, domainSizeY - 1)
+    Z = np.clip(np.round(Zf).astype(int), 0, domainSizeZ - 1)
+    # Vectorized fill
+    domain[Z, Y, X] = 1
+
+elif OBJ == "box":
+    # Box object: fill axis-aligned block
+    domain[
+        ObjLocZ : ObjLocZ + ObjSizeZ,
+        ObjLocY : ObjLocY + ObjSizeY,
+        ObjLocX : ObjLocX + ObjSizeX
+    ] = 1
+
+# Ensure output directory exists
+data_dir = 'data'
+if not os.path.isdir(data_dir):
+    os.makedirs(data_dir)
+
+# 1) Write HDF5 file
+h5_path = os.path.join(data_dir, 'object.grid.h5')
+with h5py.File(h5_path, 'w') as hf:
+    hf.create_dataset('Object', data=domain)
+print(f"HDF5 written to: {h5_path}")
+
+# 2) Write VTK file via PyVista
+# Use ImageData since UniformGrid may not exist in this PyVista version
+data = domain  # alias for clarity
+
+# Build an ImageData (uniform grid) with point dimensions = (nx+1, ny+1, nz+1)
+grid = pv.ImageData(
+    dimensions=(domainSizeX + 1, domainSizeY + 1, domainSizeZ + 1),
+    origin=(0.0, 0.0, 0.0),
+    spacing=(1.0, 1.0, 1.0)
+)
+# Attach cell data (mask) flattened in C order
+grid.cell_data['Object'] = data.flatten(order='C')
+
+vtk_path = os.path.join(data_dir, 'object.vtk')
+grid.save(vtk_path)
+print(f"VTK written to: {vtk_path}")
+
+# List contents of data directory
+print("\nContents of data/:")
+for fname in os.listdir(data_dir):
+    fpath = os.path.join(data_dir, fname)
+    size_kb = os.path.getsize(fpath) / 1024
+    print(f"  {fname}\t{size_kb:.1f} KB") 
