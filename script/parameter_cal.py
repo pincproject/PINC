@@ -7,21 +7,23 @@ eps0= 8.85418782e-12
 kb  = 1.38e-23
 mE  = 9.11E-31
 mI  = mE*1836
-r = 1e-3  # object radius
+
 
 
 
 nI  = 1e10
 nE  = nI
 
-tEeV  = 1.24                  
+# tEeV  = 1.24                  
 # tEK   = tEeV*11604.525  
 tEK   = 2900       
 vthE  = np.sqrt(2*(tEeV*Q)/mE)   
-tIeV  = 1.24                
+# tIeV  = 1.24                
 # tIK   = tIeV*11604.525   
 tIK = 1800    
 vthI  = np.sqrt(2*(tIeV*Q)/mI)   
+dL    = np.sqrt((eps0*tEK*kb)/(nE*Q*Q)) 
+r = dL  # object radius
 
 #To convert workfunction (WF) from electron volts (eV) to wave number (cm⁻¹), the following conversion factor is used: 1 eV = 8065.5 cm⁻¹. Therefore: 
 # 4.06 eV * 8065.5 cm⁻¹/eV = 32749.7 cm⁻¹
@@ -34,6 +36,7 @@ print('tEK =',tEK )
 print('tIK =',tIK )
 print('vthE =',vthE )
 print('vthI =',vthI )
-print('surface_area =',surface_area )
+print('dL =',dL )
+# print('surface_area =',surface_area )
 
 
