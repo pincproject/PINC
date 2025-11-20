@@ -17,5 +17,7 @@ Authors:
 - Jan Deca (see separate branches): Capacitance matrix method for plasma-object interactions
 - Trym Erik Nielsen (see seperate branch): Photoelectric emission
 - `Sayan Adhikari`_ (see seperate branch): Photoelectric emission
+- `Rinku Mishra`_ (see seperate branch): instability
 .. _`Sigvald Marholm`: mailto:sigvald@marebakken.com
 .. _`Sayan Adhikari`: mailto:sayan.adhikari@fys.uio.no
+.. _`Rinku Mishra`: mailto:rinku.mishra@fys.uio.no
